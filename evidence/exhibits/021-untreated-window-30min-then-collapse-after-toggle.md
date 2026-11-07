@@ -102,7 +102,8 @@ finding — and because it happened while the observation it describes was runni
 |---|---|
 | captured | `2026-08-14T21:14:47+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `9d973714` |
+| capture boot id | `9d973714` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

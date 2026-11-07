@@ -1,0 +1,19 @@
+[Unit]
+Description=Copy the journal's last files at shutdown
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+# Started at boot and does nothing then; its ExecStop runs at shutdown. Ordered after
+# journald and the mounts, so at shutdown it stops BEFORE them: journald can still
+# rotate and the archive's filesystem is still mounted.
+After=systemd-journald.service local-fs.target
+RequiresMountsFor=/root /var/log/journal
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+# --rotate closes the active files first, so the copy reaches the last minutes.
+ExecStop=/usr/local/bin/bt-journal-files --rotate
+TimeoutStopSec=5min
+
+[Install]
+WantedBy=multi-user.target

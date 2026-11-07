@@ -1,0 +1,11 @@
+test: Cover A2DP endpoint release with an acquired transport
+
+Add a host plugin registering an A2DP Source endpoint through
+RegisterApplication, as sound servers do, and acquiring its transport,
+and two tests releasing the endpoint while the stream is locked: when
+the application leaves the bus, and when bluetoothd loses the bus and
+exits without powering the adapter off.
+
+Built with AddressSanitizer, bluetoothd reports a heap-use-after-free
+in media_endpoint_remove() in both without the first patch, and in
+clear_endpoint() on exit without the second.

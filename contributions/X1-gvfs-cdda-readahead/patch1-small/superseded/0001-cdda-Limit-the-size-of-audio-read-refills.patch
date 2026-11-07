@@ -1,0 +1,61 @@
+From 1a49c71d9a843c1d06077d2500c6040c1d405383 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Tue, 3 Nov 2026 12:36:17 +0100
+Subject: [PATCH] cdda: Limit the size of audio read refills
+
+Playing an audio CD track through gvfs, for example in Totem, stops
+for about 3 seconds every 16 seconds on a USB drive. do_read() gets one
+sector at a time from cdio_paranoia_read(), but whenever paranoia's
+buffer is used up, that call first reads a whole cache model from the
+drive: 1200 sectors by default, 16 seconds of audio, also in the
+PARANOIA_MODE_DISABLE used here. The client's read waits until all of
+it has arrived, and a player reading the track in real time runs dry.
+
+Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
+cdparanoiasrc does for playback. Only the size of the refills changes.
+
+Tested with an ASUS SDRW-08D2S-U USB drive and Totem reading through
+gvfsd-fuse, playing a 5:09 track twice per build from a stopped drive:
+without this change the player's stream ran dry 19 times in the middle
+of the track in both runs, with it not once. Copying the whole track
+took 29.8 s before and 29.0 s after, and the audio was identical to a
+direct read with cd-paranoia.
+
+Builds against a libcdio-paranoia without cdio_paranoia_cachemodel_size()
+keep the current behaviour.
+---
+ daemon/gvfsbackendcdda.c | 5 +++++
+ meson.build              | 1 +
+ 2 files changed, 6 insertions(+)
+
+diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
+index ce01630..cb5f648 100644
+--- a/daemon/gvfsbackendcdda.c
++++ b/daemon/gvfsbackendcdda.c
+@@ -640,6 +640,11 @@ do_open_for_read (GVfsBackend *backend,
+ 
+   read_handle->paranoia = cdio_paranoia_init (cdda_backend->drive);
+   cdio_paranoia_modeset (read_handle->paranoia, PARANOIA_MODE_DISABLE);
++#ifdef HAVE_PARANOIA_CACHEMODEL_SIZE
++  /* Use short refills for playback, as GStreamer's cdparanoiasrc does */
++  cdio_paranoia_cachemodel_size (read_handle->paranoia,
++                                 2 * CDIO_CD_FRAMES_PER_SEC);
++#endif
+ 
+   cdda_backend->num_open_files++;
+ 
+diff --git a/meson.build b/meson.build
+index 1a5b6d4..1a5ac0b 100644
+--- a/meson.build
++++ b/meson.build
+@@ -429,6 +429,7 @@ if enable_cdda
+ 
+   libcdio_paranoia_dep = dependency('libcdio_paranoia', version: '>= 0.78.2')
+   config_h.set('HAVE_PARANOIA_NEW_INCLUDES', cc.has_header('cdio/paranoia/paranoia.h', dependencies: libcdio_paranoia_dep))
++  config_h.set('HAVE_PARANOIA_CACHEMODEL_SIZE', cc.has_function('cdio_paranoia_cachemodel_size', dependencies: libcdio_paranoia_dep))
+ 
+   config_h.set('HAVE_CDDA', enable_cdda)
+ endif
+-- 
+2.43.0
+

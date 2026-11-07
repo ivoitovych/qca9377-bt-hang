@@ -75,7 +75,8 @@ hci0:	Type: Primary  Bus: USB
 |---|---|
 | captured | `2026-09-23T01:22:27+02:00` |
 | kernel | `7.0.0-31-generic` |
-| boot id | `eb117101` |
+| capture boot id | `eb117101` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `yes` |

@@ -1,0 +1,37 @@
+RESULT U101 PASS Acquire on idle: START requested, no reply yet
+RESULT U102 PASS START completes: Acquire answered with fd, active
+RESULT U103 PASS START fails: Acquire error, owner gone, unlocked
+RESULT U104 PASS Release while active: SUSPEND, then reply
+RESULT U105 PASS SUSPEND fails: Release still succeeds
+RESULT U106 PASS two Acquire/Release cycles
+RESULT U107 PASS Acquire while acquired (same owner): NotAuthorized
+RESULT U108 PASS Acquire while acquired (other client): NotAuthorized
+RESULT U109 PASS Release by a non-owner: NotAuthorized
+RESULT U110 PASS Release with no owner: NotAuthorized
+RESULT U111 PASS a2dp_resume refuses: Acquire NotAuthorized, unlocked
+RESULT U112 PASS TryAcquire on idle: NotAvailable
+RESULT U113 PASS remote start then TryAcquire
+RESULT U114 PASS Release during pending TryAcquire: InProgress
+RESULT U115 PASS remote suspend while active: owner removed
+RESULT U116 PASS second Release / Acquire while suspending
+RESULT U117 PASS owner exits while active
+RESULT U118 PASS owner exits while Release waits for SUSPEND
+RESULT U119 PASS stream gone when START completes: Acquire fails
+RESULT U120 PASS Release during pending Acquire: no ABORT
+RESULT U121 PASS Release during pending Acquire: Acquire answered (error)
+RESULT U122 PASS Release during pending Acquire: waits START, SUSPEND, reply
+RESULT U123 PASS after the cancelled Acquire, a new Acquire works
+RESULT U124 PASS Acquire while the cancelled START is pending: refused
+RESULT U125 PASS START fails while Release waits
+RESULT U126 PASS SUSPEND cannot start after the cancelled START
+RESULT U127 PASS owner exits during pending Acquire: START cancelled
+RESULT U128 PASS owner exits while Release waits for cancelled START
+RESULT U129 PASS owner exits between START done and deferred SUSPEND
+RESULT U130 PASS transport destroyed during pending Acquire
+RESULT U131 PASS transport destroyed while Release waits
+RESULT U132 PASS transport destroyed before the deferred SUSPEND
+RESULT U133 PASS two cancel cycles then a normal one
+RESULT U134 PASS every call answered exactly once
+RESULT U135 PASS remote suspend while Release waits
+SUMMARY pass=35 fail=0
+harness exit 0

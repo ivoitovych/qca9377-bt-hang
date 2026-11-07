@@ -80,7 +80,8 @@ command timeouts this boot: 0
 |---|---|
 | captured | `2026-09-26T21:58:29+02:00` |
 | kernel | `7.0.0-34-generic` |
-| boot id | `226965f1` |
+| capture boot id | `226965f1` |
+| evidence boot ids | `226965f1` |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

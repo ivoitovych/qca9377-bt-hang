@@ -2,7 +2,7 @@
 
 *Written 2026-09-24 by the test-suite maintainer at the operator's request, before the
 kernel patch was mailed (it was sent that evening and applied 2026-09-29 as `86ef0f58bdec`).
-Kept on a private branch until 2026-10-09; the patch and its checks are now in
+Kept separately until 2026-10-09; the patch and its checks are now in
 [`patches/kernel/`](../patches/kernel/README.md).*
 
 > ⚠️ **Different corners of Linux have different rules, and this project has now sent patches
@@ -27,7 +27,7 @@ and the BlueZ record in [`patches/bluez/README.md`](../patches/bluez/README.md) 
 named after — that one does not exist yet (`BT-1`, BRIEF §9.6) — and none of
 [`pre-submission-checklist.md`](pre-submission-checklist.md) §2–§4 are about it.
 
-To read it before it goes: the held branch on the private remote, or on the investigation
+To read it before it goes: the held branch, or on the investigation
 machine `devtools/held edit` → `patches/kernel/`, or `scripts/export-kernel-review.sh`, which
 writes the exact reviewer package to `tmp/review-kernel-0001/`. Its `0001-*.patch` is in
 `git format-patch` form — **that file is the mail body**, headers included. It is on no public
@@ -124,7 +124,7 @@ does is a decision to take on purpose.**
 
 ## 5. The moment after sending — what must change publicly
 
-The held branch stays private only until the mail exists; after that the patch is on lore.
+The held branch stays separate only until the mail exists; after that the patch is on lore.
 Then, and not before:
 
 - [`README.md`](../README.md) says *"No kernel patch exists yet."* True for the controller

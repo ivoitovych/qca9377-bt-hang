@@ -1,0 +1,24 @@
+media: Fix use-after-free of app removing a locked A2DP endpoint
+
+If the stream of an A2DP endpoint is locked by an acquired transport,
+media_endpoint_remove() returns once a2dp_remove_sep() has deferred the
+removal, without unlinking the endpoint from its application. When the
+application goes away, app_free() then frees it while the endpoint
+still points to it, and once the transport is released, unlocking the
+stream unregisters the SEP and removes the endpoint again, which reads
+the freed application:
+
+ ERROR: AddressSanitizer: heap-use-after-free
+ READ of size 8 thread T0
+     #0 media_endpoint_remove profiles/audio/media.c:321
+     #1 a2dp_unregister_sep profiles/audio/a2dp.c:2893
+     #2 a2dp_sep_unlock profiles/audio/a2dp.c:3588
+     #3 transport_a2dp_suspend profiles/audio/transport.c:469
+     #4 service_filter gdbus/watch.c:493
+
+This happens when a sound server leaves the bus while streaming, and
+on exit, where path_free() frees the applications first.
+
+Unlink the endpoint from its application before removing its SEP.
+
+Fixes: 7482aceece70 ("profiles/audio: fix UAF on external media service teardown")

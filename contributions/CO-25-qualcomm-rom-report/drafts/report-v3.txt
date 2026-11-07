@@ -1,0 +1,100 @@
+To: linux-bluetooth@vger.kernel.org
+Cc: Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+    Zijun Hu <zijun.hu@oss.qualcomm.com>,
+    Shuai Zhang <shuai.zhang@oss.qualcomm.com>,
+    Bartosz Golaszewski <brgl@kernel.org>,
+    Tibor Harcsa <silurust@gmail.com>
+Subject: [REPORT] btusb: QCA9377 13d3:3503 on ROM firmware: HCI hang
+ during mSBC SCO
+
+Hi,
+
+A report with two questions, mainly for Qualcomm; not a patch. For
+13d3:3503 the kernel side is already fixed: dc16388d45ec ("Bluetooth:
+btusb: Add IMC Networks QCA9377 to quirks table") is in v7.3, in
+stable 7.2.10, 6.18.56, 6.12.113 and 6.6.160, and in the 6.1, 5.15
+and 5.10 release candidates, so I am not asking for another fix for
+this ID. The entry was sent for BLE-scan errors; it also avoids the
+failure below, which is worse.
+
+Summary
+-------
+Without a btusb entry this QCA9377 runs its ROM firmware (ROM 0x302,
+build 0x111). On that firmware, once a transparent (mSBC) SCO link is
+up, the first HCI command issued after it gets no reply, and the
+controller then answers nothing until power is removed. With the QCA
+setup path, which loads qca/rampatch_usb_00000302.bin and
+qca/nvm_usb_00000302.bin, 74 SCO links logged no command timeout.
+What goes wrong inside the controller I do not know.
+
+Questions
+---------
+1. Is this known for ROME ROM 0x302 build 0x111? Is there an erratum,
+   an affected ROM range, or a rampatch/NVM revision that addresses
+   it?
+
+2. Is there a list of ROME-based USB IDs that could be compared with
+   btusb's table? This year three were added one at a time, each after
+   a user ran into the 0x2005 BLE-scan errors: 13d3:3503
+   (dc16388d45ec), 0b05:1868 (d54601f21faf) and 0b05:1825
+   (cfa67a1dbfd9).
+
+On the ROM firmware
+-------------------
+The device has isochronous alternate settings 1-5 (wMaxPacketSize
+9/17/25/33/49) and no alt 6, so for transparent air mode btusb uses
+alt 1, and each 27-byte SCO packet from the audio stack goes out as
+three 9-byte USB packets. Setup Synchronous Connection (0x0428) is
+answered and the link streams. One of the twelve failures (kernel
+log, Bluetooth dynamic debug on; "evt 5" is
+HCI_NOTIFY_ENABLE_SCO_TRANSP in btusb_notify()):
+
+  02:09:36.646940 hci0 opcode 0x0428 plen 17
+  02:09:36.718906 hci0 evt 5
+  02:09:44.049893 hci0: handle 0x06 reason 0x13
+  02:09:44.049956 hci0: Opcode 0x0406
+  02:09:46.067797 Bluetooth: hci0: command 0x0406 tx timeout
+
+Here the stream ran about 7.3 s before the Disconnect. In all twelve
+failures the first command after link-up timed out, 34 ms to 9.65 s
+after it: 0x0406 Disconnect in six, 0x0c1a Write Scan Enable in one,
+the bare "command tx timeout" in five. Whether the command causes the
+hang or only finds it, I cannot tell from the host side.
+
+No later command was answered. In one failure I probed the USB side:
+two GET_DESCRIPTOR transfers timed out with -110 while the device
+stayed enumerated. Removing power recovered the controller; a warm
+reboot did not always.
+
+The twelve were on Ubuntu 7.0.0-29, -30, -31 and -34 kernels with
+stock btusb and three headset models from three vendors. I have no
+count of ROM-firmware links that did not fail, so no failure rate.
+
+With the QCA setup path
+-----------------------
+Before setup the controller reports ROM 0x302, build 0x111 and a
+status with neither QCA_PATCH_UPDATED nor QCA_SYSCFG_UPDATED set, so
+btusb_setup_qca() loads both files and logs "QCA: patch rome 0x302
+build 0x3e8". Then, on the same laptop with the same three headset
+models, the same alt 1 and the same legacy 0x0428 (btusb_setup_qca()
+sets HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN), 74 SCO links, 50
+mSBC and 24 CVSD, logged no command timeout:
+
+  58 on a diagnostic build giving this ID BTUSB_QCA_ROME only (no
+     BTUSB_WIDEBAND_SPEECH) and no reset callback, so no reset could
+     have hidden a timeout;
+  16 with the exact dc16388d45ec entry.
+
+This does not separate the rampatch from the NVM or from the rest of
+the setup.
+
+For anyone searching the archive: a QCA USB adapter that works until
+its first hands-free call and then needs a power cycle may be running
+its ROM firmware; a missing btusb entry is the first thing to check.
+
+Kernel log extracts, with the commands that produced them:
+<link to EVIDENCE.md at a fixed commit>
+
+Thanks,
+Iaroslav Voitovych

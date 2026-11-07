@@ -1,0 +1,40 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: Zijun Hu <zijun.hu@oss.qualcomm.com>,
+    linux-bluetooth@vger.kernel.org
+Cc: Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+    Shuai Zhang <shuai.zhang@oss.qualcomm.com>,
+    Bartosz Golaszewski <brgl@kernel.org>,
+    Tibor Harcsa <silurust@gmail.com>
+Subject: Re: [REPORT] btusb: QCA9377 13d3:3503 on ROM firmware: HCI hang
+ during mSBC SCO
+In-Reply-To: <bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>
+References: <20261029013350.360574-1-yaroslav.voytovych@gmail.com>
+ <bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>
+
+On Thu, 29 Oct 2026 at 18:42 +0800, Zijun Hu wrote:
+> QCA9377 is not ROME(QCA6174A), btusb driver does not support it,
+> linux-firmware repo also does not have firmware it.
+>
+> See table @qca_devices_table for supported controllers from ROME.
+
+Thank you for looking at it. "QCA9377" is the module's name (IMC
+Networks), as in dc16388d45ec and in the earlier 04ca:3015 and
+0cf3:e500 entries. This is what the controller itself reports to
+btusb_setup_qca(), with the files from linux-firmware:
+
+  QCA_GET_TARGET_VERSION: rom_version 0x00000302, patch 0x111
+  status 0x20, so both files are loaded:
+    qca/rampatch_usb_00000302.bin  returns 0
+    qca/nvm_usb_00000302.bin       returns 0
+  version read afterwards: patch 0x3e8
+
+0x00000302 is the "Rome 3.2" entry of qca_devices_table. So, if I
+read you right, the Bluetooth part of this module is a Rome 3.2
+(QCA6174A) core, and QCA9377 is only the module's name?
+
+If so, question 1 stands for Rome 3.2 on its ROM firmware. If not,
+which setup should this device get instead?
+
+Thanks,
+Iaroslav Voitovych

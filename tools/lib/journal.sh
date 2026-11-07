@@ -205,8 +205,99 @@ bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or
     bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -m1 -E "$re"
 }
 
+# ── KERNEL QUERIES, ONE FILE AT A TIME, IN PARALLEL ──────────────────────
+#
+# Measured 2026-10-23 (devtools/journal-speed/): journalctl reading the whole journal
+# merges ~100 files entry by entry, and that merge, not the matching, is the cost:
+# 1.2 M kernel lines of a 3-hour window took 73 s whether filtered by --grep, by grep,
+# or not at all (16 500 lines/s). The same journalctl reading ONE file with --file does
+# 356 000 lines/s, and the whole journal's 6.8 M kernel lines read file by file, 16 at
+# a time, took 2.9 s. The 2026-10-23 hand close of trial E3 #2 spent 887 s on reads
+# like these.
+#
+# Kernel entries live only in the system files, which journald writes one at a time,
+# so each file's output, concatenated in order of the files' first entries, is the
+# merged output. `-k` means `_TRANSPORT=kernel` plus a boot (the current one unless -b
+# says otherwise); with --file that boot must be named by id, so it is resolved here.
+#
+# Returns 3 when the query is not one it reproduces exactly; bt_journal then runs plain
+# journalctl. Equality with plain journalctl is checked by devtools/test-journal-fast.sh
+# on the real journal. BT_JOURNAL_FAST=0 turns it off.
+bt_journal_kernel_fast() {
+    [[ "${BT_JOURNAL_FAST:-1}" == 1 ]] || return 3
+    local kernel=0 boot=0 grep_given=0 quiet=0 a
+    local -a rest=()
+    while (( $# )); do
+        a="$1"
+        case "$a" in
+            -k|--dmesg) kernel=1; shift ;;
+            -b|--boot)
+                if [[ "${2:-}" =~ ^(-?[0-9]+|[0-9a-f]{32})$ ]]; then boot="$2"; shift 2; else boot=0; shift; fi ;;
+            -b[0-9]*|-b-[0-9]*) boot="${a#-b}"; shift ;;
+            --boot=*) boot="${a#--boot=}"; shift ;;
+            -q|--quiet) quiet=1; shift ;;
+            --no-pager) shift ;;
+            -g|-S|-U|-p|-o|--since|--until|--priority|--output)
+                [[ $# -ge 2 ]] || return 3
+                [[ "$a" == -g ]] && grep_given=1
+                rest+=("$a" "$2"); shift 2 ;;
+            --grep=*) grep_given=1; rest+=("$a"); shift ;;
+            --since=*|--until=*|--priority=*|--output=*|-S*|-U*|-p*|-o*) rest+=("$a"); shift ;;
+            *) return 3 ;;
+        esac
+    done
+    (( kernel )) || return 3
+
+    local dir="${BT_JOURNAL_DIR:-/var/log/journal/$(cat /etc/machine-id 2>/dev/null)}"
+    [[ -d "$dir" ]] || return 3
+    local bid="$boot"
+    if [[ ! "$bid" =~ ^[0-9a-f]{32}$ ]]; then
+        bid=$(journalctl --list-boots --no-pager 2>/dev/null | awk -v i="$boot" '$1 == i { print $2; exit }')
+        [[ "$bid" =~ ^[0-9a-f]{32}$ ]] || return 3
+    fi
+
+    local tmp f n=0 hex i=0 par
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/bt-journal-fast.XXXXXX") || return 3
+    # Order the system files by their first entry: the header's "Head realtime
+    # timestamp" line ends with it in hex microseconds, e.g. "(65e67f894cb04)". A file
+    # with no entries has no such line and sorts first, harmlessly.
+    for f in "$dir"/system.journal "$dir"/system@*.journal "$dir"/system@*.journal~; do
+        [[ -r "$f" ]] || continue
+        hex=$(journalctl --file="$f" --header 2>/dev/null \
+              | awk '/^Head realtime timestamp:/ { s = $NF; gsub(/[()]/, "", s); print s; exit }')
+        [[ "$hex" =~ ^[0-9a-f]+$ ]] || hex=0
+        printf '%d\t%s\n' "$((16#$hex))" "$f"
+    done | sort -n -k1,1 | cut -f2- > "$tmp/files"
+    [[ -s "$tmp/files" ]] || { rm -rf "$tmp"; return 3; }
+
+    # One journalctl per file, at most one per core; outputs numbered in file order.
+    local -a args=(-q --no-pager "${rest[@]}" _TRANSPORT=kernel "_BOOT_ID=$bid")
+    par=$(nproc 2>/dev/null || echo 4)
+    # In a subshell, so `jobs` and `wait` see only these readers, never the caller's
+    # own background jobs.
+    (
+        while IFS= read -r f; do
+            i=$((i + 1))
+            while (( $(jobs -rp | wc -l) >= par )); do wait -n; done
+            journalctl --file="$f" "${args[@]}" > "$tmp/$(printf '%06d' "$i").out" 2>/dev/null &
+        done < "$tmp/files"
+        wait
+    )
+
+    for f in "$tmp"/*.out; do [[ -e "$f" ]] || continue; [[ -s "$f" ]] && n=1; cat "$f"; done
+    rm -rf "$tmp"
+    if (( ! n )); then
+        (( quiet )) || echo "-- No entries --"
+        (( grep_given )) && return 1
+    fi
+    return 0
+}
+
 bt_journal() {
     if [[ -z "${BT_JOURNAL_FIXTURE:-}" ]]; then
+        local rc
+        bt_journal_kernel_fast "$@"; rc=$?
+        [[ $rc -eq 3 ]] || return $rc
         journalctl "$@"
         return $?
     fi

@@ -1,8 +1,8 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. Over twenty distinct problems have been observed on this machine by 2026-10-11
-(nine `BT`, three `M`, ten `U`, one unexplained `bluetoothd` core), and
+one defect. Over thirty distinct problems have been observed on this machine by 2026-10-28
+(thirteen `BT`, three `M`, twenty `U`, one unexplained `bluetoothd` core), and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
@@ -12,9 +12,26 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
+## Current state — 2026-10-28 (what changed since the 2026-10-11 state below)
+
+The register's current-state blocks stopped at 2026-10-11 while the issues went on in
+`docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
+page for what is current.
+- **New issues:** `U12` (10-19) to `U20` (10-24) and `U21` (10-29), in the userspace section; `BT-10` to `BT-15`
+  (10-23 to 10-28), each with a section below BT-9. Added 2026-10-31, in the userspace table:
+  - `U22`: the 09-08 bluetoothd crash, CO-23's `a2dp_reconfig()` use-after-free. It was in
+    the dossiers but never registered.
+  - `U23` and `U24`: two use-after-frees at bluetoothd exit, found by ASan in CO-03's VM runs.
+- **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
+  affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
+- **Stable:** the QCA9377 entry and our BT-8 and BT-9 work are released in 6.6.160 (10-21) as
+  well; 6.1, 5.15 and 5.10 are still at their 10-17 release candidates.
+- **The machine** runs `7.0.0-38` with E3 and, since 2026-10-23, the CO-02 `bluetooth.ko`.
+  Ubuntu's next kernel, `-42`, lacks the entry; E3 is rebuilt before it boots.
+
 ## Current state — 2026-10-11 (what changed since the 2026-10-09 state below)
 
-- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery ended with the reboot into `7.0.0-38` on 10-11, a kernel that carries the fix.
+- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery had already ended on 10-10 at 15:02, at the operator's adapter power cycle (corrected 2026-10-14; `docs/STATUS.md`); the reboot into `7.0.0-38` on 10-11 brought the kernel that carries the fix.
 - **U10 (new, 2026-10-11):** a speaker silent on SBC-XQ (section below, with the userspace items).
 - **U11 (new, 2026-10-13):** a headset that has just connected does not get the sound; WirePlumber's history of earlier choices outranks it (section below).
 - **The machine** runs `7.0.0-38` with the upstream entry (E3) since 2026-10-11; QCA firmware loaded.
@@ -30,7 +47,7 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 - **M-1 is not sent as one series.** An outside research review (10-05) found that the mesh
   transmit path has never had one ownership model and that other 2026 work is fixing other
   pieces of it; the patches are being split into separate contributions (`STATUS.md`).
-  Findings from that work were kept private until each had its patch; since 2026-10-09 kernel
+  Findings from that work were kept separately until each had its patch; since 2026-10-09 kernel
   findings are recorded here as they are found, and that work is being ported to `main`.
 - **M-3 (new, BlueZ `shared/mgmt`)** — `mgmt_unregister()` from a notification callback
   leaked the entry, and unregistering the next entry was a use-after-free. Fix and unit tests
@@ -66,7 +83,7 @@ register keeps each issue's evidence, reasoning and falsifiers. What changed sin
   `mesh-tester` on every patch since June: the mesh instance keeps advertising after its
   count, the done path completes the wrong request, and a scheduler window starts a packet
   twice (M-1, three patches under outside review); a `u16 duration` overflow for timeouts
-  above 65 s (M-2, note only). Both are developed on a private branch until sent; this
+  above 65 s (M-2, note only). Both are developed separately until sent; this
   register records the facts.
 - **U1–U9** — the userspace audio items are listed in their own section below, each tagged
   [log] / [operator] / [inference]; `STATUS.md` carries their lifecycle states (U5 withdrawn,
@@ -210,6 +227,9 @@ cannot be executed, and this repository has already shipped one that was false.
 **Independence matters for submission.** A small, deterministic, well-evidenced bug is far
 more likely to be fixed than a large intermittent one, and bundling them means the weakest
 member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` is not.
+*(Written 2026-09-18. Since then: BT-1's cause was found and fixed upstream, BT-2 turned out to
+be fixed by the same entry, and BT-4 matches upstream fixes; neither is reported separately. Each
+issue's section and `docs/STATUS.md` give the current state.)*
 
 ---
 
@@ -391,7 +411,14 @@ the same device shape observed here. A kernel carrying it runs `btusb_setup_qca(
 a reset callback; **neither has been tested on this machine**. Everything below describes
 the kernels that were run.
 
-**Status:** confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
+**Status (2026-10-28): superseded into BT-1, and the missing entry IS the cause.** E1 (the
+entry's firmware setup alone) and E3 (the exact upstream entry, `dc16388d45ec`) ran 74 SCO links
+with 0 timeouts (`EX-055` to `EX-058`; BT-1; `BRIEF.md` §3), and the stable backport of the
+entry was requested on 2026-10-02 and is released (`docs/STATUS.md`). The two paragraphs below
+are the reading of 2026-09-18 to 2026-09-25, kept as written; they were not updated when E1/E3
+settled it, which left this section contradicting BT-1 until 2026-10-28.
+
+*As written before E1/E3:* confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
 read as a consequence for recovery, not a candidate cause** — the wedge is located
 elsewhere (see "Current state"), and this entry explains why no software recovers it.
 **Reportable:** ⚠️ the patch is trivial and is **not proposed**: the reset it installs
@@ -619,7 +646,7 @@ Start Discovery pending when the adapter powered off was answered with Command S
 (`EX-032`, `EX-041`). BlueZ patch `0001` guards the daemon; this fix makes the kernel say
 Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power off held in
 `Write Scan Enable` while a Start Discovery is submitted — status `0x00` before, `0x0f`
-(Not Powered) after. Developed and reviewed on a private branch until sent; ported to
+(Not Powered) after. Developed and reviewed separately until sent; ported to
 `main` on 2026-10-09: the patch, its review record and the reproducer in `patches/kernel/`,
 `EX-044`, `EX-049`, `EX-050`, `tools/bt-ctrl-window`.
 
@@ -685,6 +712,8 @@ lines and on bluetooth-next with the fix reverted, and passes with the fix and w
 backport; the normal-order control passes everywhere. **Stable request sent 2026-10-10 04:25
 +0200** (three mails); the BlueZ emulator leak fix and the BlueZ test series sent to
 linux-bluetooth 05:18 +0200, each its own submission (`docs/STATUS.md`). **Next:** replies.
+**Since (2026-10-28):** the backports are released in 6.12.113 and 6.6.160 and in the 6.1.191
+release candidate; the BlueZ commits are applied. Nothing is owed (`docs/STATUS.md`).
 
 **What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
 scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same
@@ -721,22 +750,166 @@ specific to this controller.
 
 ---
 
-## U1–U10 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+*BT-10 to BT-13 were registered in `docs/STATUS.md` and their dossiers from 2026-10-23 on, but
+not here; these sections were added on 2026-10-28. Each points at where its evidence is.*
+
+## BT-10 — l2cap-tester "L2CAP Ext-Flowctl Server - Accept 2 Close 1" hangs on every released kernel
+
+**Status 2026-10-28: fixed upstream, fix identified, not in any stable line; send package ready
+for review.** The case (deferred ECRED accept with two channels, the first accepted and closed
+before the second) never finishes on 7.3, 7.2.12, 6.18.58, 6.12.114, 6.6.160 and Ubuntu
+7.0.0-38's code, and passes on bluetooth-next (`results/bt10-l2cap-hang-2026-10-23/`). It is a
+self-deadlock: with the hung-task detector on, v7.3 and v6.1.190 show the tester's task holding
+its socket's lock from `l2cap_sock_recvmsg()` and waiting for the same lock in
+`l2cap_sock_teardown_cb()` (taken nested, so lockdep is silent). The path dates from
+`9aa9d9473f15` (v6.3; backported to 6.1.22, 5.15.105 and 5.10.177; corrected 2026-11-01, this
+said v5.7, whose `15f02b9105625` only collects the CIDs): v6.1.190, v5.15.223 and v5.10.272 hang too once ECRED is enabled
+(`enable_ecred=1`; off by default before v6.2). The fix is Pauli Virtanen's `32d86e048d8ef`
+("L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer") with its helpers `608e0b7a675b2`, in
+mainline since the 7.4 merge window, without `Cc: stable`; on 7.2.13, and on v7.3 with BT-15's
+fix, the pair turns the hang into a pass and the full l2cap-tester runs 111/111
+(`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).
+**Reportable:** the CO-35 send package (an option-2 request for 7.3.y and 7.2.y, backport series
+for 6.18.y, 6.12.y and 6.6.y): an outside review, then the operator's decision. 6.1.y, 5.15.y
+and 5.10.y: the pair does not apply; no fix yet (open). Not specific to this controller.
+
+## BT-11 — KASAN use-after-free in `iso_conn_hold_unless_zero` on Ubuntu 7.0.0-38's code
+
+**Status 2026-10-28: resolved for Ubuntu by `7.0.0-42`.** iso-tester "ISO Defer Close - Success"
+reads a freed `iso_conn` on `-38`'s code (reproduced 2026-10-23 and again 2026-10-28). `-38` lacks
+three of Pauli Virtanen's ISO fixes (`0786469ee2429`, `aa9f7cb2bd3a2`, `fdfde532ab1ca`); the pending
+`-42` carries them (`scripts/commit-in-tree.py`, with a positive control). 7.2.12 runs iso-tester
+141/141 clean; 6.12.114 shows no such report, but four timeouts, a lockdep "possible recursive
+locking" warning and a stall, not analysed (`docs/STATUS.md`). The laptop's controller has no ISO.
+**Reportable:** nothing for Ubuntu; for 6.12.y only if that observation proves a defect.
+
+## BT-12 — ioctl-tester registers two cases under one name
+
+**Status 2026-10-28: patch ready to send** (`contributions/CO-34-ioctl-tester-duplicate-name/`).
+"Set Pkt Type - 2-DH" is registered twice in BlueZ `tools/ioctl-tester.c` (l.918 and l.921), the
+second running the 3-DH test; found when `scripts/compare-tester-verdicts.py` refused the pair.
+**Reportable:** the one-line patch is the report; the operator's decision.
+
+## BT-13 — `hci_connect_sco()`'s `-ENOLINK` path drops a hold the caller never got
+
+**Status 2026-10-28: confirmed in source, not reproduced; a cold path.** A new connection starts at
+`refcnt` 0, so a failed link allocation leaves it at −1, with no `disc_work` queued and still in
+the connection hash (bluetooth-next `hci_conn.c` around l.1914; since `06149746e720`). Found in the
+Sashiko-rule review of CO-02 (`contributions/CO-02-…/log.md`, 2026-10-27).
+**Reportable:** after CO-02 lands: a fault-injection reproducer, then a separate patch.
+
+---
+
+## BT-14 — Linux 6.12.114: every `getsockopt()` on an L2CAP socket fails with EOPNOTSUPP
+
+**Status 2026-10-28: cause found in source; seen in l2cap-tester under QEMU; not yet seen on a
+6.12.114 machine.** 6.12.114 took two of mainline's three getsockopt_iter commits as
+"Stable-dep-of" `ca2c4c264986` ("Bluetooth: L2CAP: access chan->conn safely in get/setsockopt"):
+`41fbf726915b0` (= `67fab22a7adc`, the `getsockopt_iter` field in `include/linux/net.h`) and
+`22ebe6ab0b679` (= `bf01627cc04b`, L2CAP converted to `.getsockopt_iter`), but not
+`5bd0dec150f56` ("net: call getsockopt_iter if available", the `net/socket.c` dispatch). In
+v6.12.114, `git grep getsockopt_iter -- net include` finds only `include/linux/net.h:218` and
+`net/bluetooth/l2cap_sock.c:2070`: nothing calls it, and L2CAP no longer sets `.getsockopt`.
+Found by the CO-35 backport runs: on plain v6.12.114 every L2CAP `getsockopt` in l2cap-tester
+returns `Operation not supported (95)`, 78 of 111 cases fail
+(`contributions/CO-35-…/experiments/results-backports-2026-10-28.md`). bluetoothd reads L2CAP
+options with `getsockopt()` (security level, MTUs), so a 6.12.114 system is likely affected
+beyond the tester. 6.18.59 and 6.6.160 have no `getsockopt_iter` at all (unaffected); 6.1 and
+older not checked. `5bd0dec150f56` applies to v6.12.114 (`git apply --check`: hunks 2 and 3 at
+offset −4); not yet built or run.
+**Already reported and queued (checked 2026-10-28, after an outside reviewer pointed to it):**
+patchwork 14907537, "[6.12.y] net: call getsockopt_iter if available", Emanuele Ghidoli,
+2026-10-22, a clean cherry-pick of `5bd0dec150f56` with the same diagnosis; Sasha Levin replied
+"Queued for 6.12, thanks." on 2026-10-23 (`scripts/patchwork-state.py --files 14907537`; raw
+JSON `tmp/patchwork/patch-14907537.json`). Nothing for us to send. Watch: the next 6.12.y
+release carries it; then 6.12's l2cap-tester totals become meaningful for CO-35. Ubuntu's
+noble kernels (`-38`, `-42`) are not on 6.12.y.
+
+## BT-15 — Linux 7.3: l2cap-tester stalls in its SCI cases
+
+**Status 2026-10-28: cause found; fixed in mainline, not in 7.3.y.** On plain v7.3 under QEMU
+the whole l2cap-tester stalls at "L2CAP LE Client - SCI Fast Mode" (it times out, the kernel logs
+"Invalid response length for 0x20a3", the teardown never ends), with or without CO-35's pair.
+v7.3 has the SCI feature `2f8784cfe8a9` ("Bluetooth: Add support for Shorter Connection Interval
+(SCI) feature", from v7.3-rc1) but not its fix `5874f8d03268` ("Bluetooth: Fix the LE Read
+Connection Interval response layout"; mainline, `Fixes:` tag, no `Cc: stable`, not in queue-7.3
+at 20:47 UTC). With it applied the SCI cases pass and the whole suite passes 111/111
+(`contributions/CO-35-…/experiments/results-7.3-and-older-2026-10-28.md`). The same stall is what
+ended CO-35's first bisect, whose runs ran the whole suite. Ubuntu `7.0.0-42` is not affected (its
+`hci.h` has no `0x20a3`).
+**Reportable:** probably nothing: the `Fixes:` tag should bring it into 7.3.y through the stable
+team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 request only if
+7.3.y releases go without it. CO-35's request states the fact.
+
+## BT-16 — At one boot the controller came up "already patched", failed LE commands, and Bluetooth was unavailable for the whole boot
+
+**Status 2026-11-07: observed once (1 of 7 boots since 2026-10-23); cause not established.**
+Found while checking two shutdown verdicts of "HANG"
+([`evidence/trials/E3/hang-verdicts-check-2026-11-07/`](../evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md)).
+
+- **When:** boot `7323fc85`, 2026-11-05 19:33:05 to 11-06 15:47:16 (~20 h), `7.0.0-42` with E3. The
+  boot before ended with a clean power-off on 11-04 13:53:31; the machine was off about 30 h.
+- **Kernel** (`journalctl -b -1 -k`, 19:33:05–07): no `using rampatch file` and no `QCA: patch rome`
+  line; `unexpected cc 0x2007 length: 1 < 2`, `Opcode 0x2007 failed: -38`; **`usb 3-3: USB
+  disconnect, device number 2`**; re-enumerated as device 4; `using NVM file:
+  qca/nvm_usb_00000302.bin`, still no rampatch line; `unexpected cc 0x202f length: 1 < 9`,
+  `Opcode 0x202f failed: -38`. Every other boot since 10-23 logs the rampatch and `patch rome
+  0x302 build 0x3e8` with no disconnect (`boot-setup-scan-output.txt` there).
+- **Source:** `btusb_setup_qca()` downloads the rampatch only when the controller's status lacks
+  `QCA_PATCH_UPDATED` (`drivers/bluetooth/btusb.c:3783`, Ubuntu `7.0.0-42`). So the controller
+  reported its patch **already loaded**, at both enumerations, after a power-off.
+- **Userspace:** the HCI capture of that boot (`hci-20261105-193308.btsnoop`) is 11,599 bytes for
+  20 h (others: 64 MB per 15–20 min); `btmon -r` shows `New Index … hci0` at 19:33:08, then
+  bluetoothd's `Read Controller Index List` at 19:33:17 → **`Controllers: 0`**, and nothing more
+  but one `hciconfig` open at 19:38. Bluetooth was unavailable for the whole boot.
+- **At the end:** GNOME Settings' Bluetooth panel opened 15:45:46; 19 kernel rfkill lines
+  `name hci0 blocked 0` from 15:45:49 to 15:46:14 with `gsd-rfkill` "change all" events; power-off
+  15:46:57. Consistent with the operator trying to switch Bluetooth on (not confirmed).
+- **Not BT-1:** no SCO link, no command timeout. The trial closer called it a "HANG" only because
+  the installed (pre-2026-09-19) closer probes after bluetoothd has powered the adapter off at
+  shutdown; the current passive closer would not flag this boot at all (no timeout).
+
+**Falsifiers / next:** whether it recurs (scan each new boot: rampatch line present, no
+`usb 3-3: USB disconnect` at start-up); whether the laptop powers USB in S5 (a controller keeping
+RAM through power-off would explain "already patched"); whether bluetoothd's empty list means the
+index was still in setup or was registered unconfigured (`btmgmt info`, the unconfigured index
+list, on a recurrence, read-only). **Reportable:** not yet; one occurrence, no mechanism.
+
+---
+
+## U1–U29 — userspace problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|
 | U1 | first codec/profile line unselectable in handsfree mode (GNOME Settings) | observed |
-| U2 | volume display/route oddities after a profile switch | observed |
+| U2 | volume display/route oddities after a profile switch | observed; **the microphone gain values explained 2026-11-01** from the archived capture: 0.00 is the headset's own 0 (U15), 0.27 and 0.08 are laptop-side `+VGM: 4` and `+VGM: 1` (`contributions/research-2026-11-01/`) |
 | U3 | profile priority comparison (WirePlumber, design) | observed, not a defect |
 | U4 | GNOME codec row shows a profile/route mismatch | observed, lead weakened |
-| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator |
-| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 |
+| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator; the open case (no saved choice) answered from source 2026-11-01: every path picks the best codec (CO-24, `contributions/research-2026-11-01/`) |
+| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 (6 commits, apply to 46.7; no Ubuntu SRU). **2026-11-01:** 46.7 does re-target the meter (journal 10-24 08:04:59, 10-29 04:46:01), and Ubuntu's 2-second WirePlumber patch (U19) then destroys it, so on Ubuntu the GNOME fix alone would not help (CO-07 merged with CO-32) |
 | U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
-| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
+| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed. **2026-11-01:** no fault on the host side of the HCI boundary (the capture cannot see USB framing, the controller or the air; the same-earbuds E3 test decides). The laptop sent valid mSBC carrying the test sounds, and the microphone stream was complete. Every `corrupted SCO packet` line of the session came at link teardown, none during a call (CO-20's teardown effect). The earbuds' side stays open (`contributions/research-2026-11-01/`) |
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
-| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
+| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open. **2026-11-01:** the captures are in `archive/hci-capture/hci-20261010-230942` and `-004736` (not `archive/bt-trace`); every SBC-XQ test sound was single-channel, so "silent" cannot tell none from one-sided; a fourth test at 01:40:19; the decisive test is designed (CO-08) |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
-| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
+| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19; again 2026-10-31) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
+| U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
+| U14 | a Bluetooth headset is forced into Handsfree while an application records from any microphone, and a manual return to A2DP is undone when the recording ends (2026-10-21) | confirmed in the log and the source (WirePlumber 0.4.17); fixed upstream by the 0.5 rewrite |
+| U15 | the MOMENTUM 4 says "mute on" at every hands-free start: it reports a microphone gain of 0 at connect, and PipeWire sends that 0 back as `+VGM: 0` (2026-10-23) | mechanism confirmed in the log, the capture and the state; no upstream quirk entry for this headset |
+| U16 | after a failed Connect from GNOME Settings, its device search stops for good: the "searching" spinner is gone and no new device appears until Bluetooth is switched off and on (2026-10-23; same pattern 2026-10-11) | confirmed in the bluetoothd debug log, the system bus record and the source (BlueZ 5.72); not fixed in BlueZ master, no duplicate found |
+| U17 | after an HFP codec switch whose SCO connect is refused (the CO-02 kernel), the headset is silent for 5 s: PipeWire's retries are immediate and all fail, and only WirePlumber's 5 s idle-suspend of the failed node starts the audio again (2026-10-24) | confirmed in the logs, the HCI capture and the source; not fixed in PipeWire or WirePlumber master, no duplicate found |
+| U18 | a headset paired over LE shows "Connected" in GNOME Settings with no audio: Connect resolves its BR/EDR services, then answers success without connecting any, because a connected LE service (GAP, Battery) counts as "one connected" (2026-10-24, Shure AONIC 50) | confirmed in the bluetoothd debug log, the system bus record, the HCI capture and the source (BlueZ 5.72; master the same) |
+| U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: the meter's new stream is destroyed by Ubuntu's 2-second Bluetooth-transition patch in WirePlumber, and the panel never retries (2026-10-24, Shure AONIC 50, twice) | confirmed in the journal, the audio policy log and the source; Ubuntu-only (LP #2122640's patch), upstream WirePlumber not affected |
+| U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture; headset behaviour inferred |
+| U21 | after forgetting and re-pairing the Shure AONIC 50 it comes up in Handsfree, and GNOME Settings' Sound panel shows **no codec/profile row at all** (not only an unusable first line, as in U1); a disconnect and reconnect gives the same (2026-10-29 ~04:38–04:48) | observed by the operator (screenshot: Output and Input "Handsfree - Shure AONIC 50", no row below); why Handsfree: explained by the logs (below, STATUS); why no row: not known |
+| U22 | bluetoothd crashed with a bad `free()` on 2026-09-08 10:23:43, when a codec switch arrived while an AVDTP Close was pending: `a2dp_reconfig()` writes to the setup after `avdtp_close()`/`avdtp_abort()` freed it (registered 2026-10-31; investigated as CO-23 event 1, 2026-10-28) | confirmed in the daemon's debug log and the binary; reproduced under ASan on BlueZ master `82667d713949`; not fixed upstream; our fix ready (CO-23) |
+| U23 | at bluetoothd exit with an A2DP media endpoint registered, `clear_endpoint()` (`profiles/audio/media.c:300`) reads an `a2dp_sep` that `a2dp_unregister_sep()` already freed (2026-10-31) | ASan report in QEMU guests, 3 of 10 runs on 5.72 and 2 of 10 on 5.72 with the CO-03 backport; **present on master, fix series ready (CO-37, 2026-11-01)**; 2026-11-02: the duplicate `MediaEndpoint1.Release` the series exposed is fixed by a sixth mail (a `released` flag; CO-37 `log.md`); not seen on the laptop, whose build has no ASan |
+| U24 | at bluetoothd exit, `discovery_cleanup()` → `invalidate_rssi_and_tx_power()` calls `device_set_rssi_with_delta()` (`src/device.c:6167`) on a device already freed by its D-Bus interface removal (2026-10-31) | ASan report in QEMU guests, twice on 5.72 at the teardown of PipeWire's `test_pipewire_a2dp`; **fixed upstream by `7e3212fa233e`** (not released), 5.72 backport ready (CO-37); not seen on the laptop |
+| U25 | while running: an A2DP endpoint removed while another D-Bus client holds its transport; that client's `Release` then makes `a2dp_sep_unlock()` unregister the removed SEP, which frees the transport under the caller, and the suspend path calls `a2dp_sep_unlock(NULL)` (2026-11-01) | ASan SEGV `a2dp.c:3566` in QEMU guests on master `14bd6ab65`: every run of all four `Release` variants with CO-37's fixes applied (6 or 7 runs each), and of three of the four without them (the fourth hits U23's read first); `a2dp.c:3254` on 5.72, 5/5 in both variants run; **not fixed upstream**; not in CO-37's series; a local a2dp proposal clears it (CO-37 `work/review-20261101/`); not seen on the laptop. **2026-11-01 evening:** that timer proposal is rejected (it leaks the removed SEP and keeps U26); see CO-37 `log.md` |
+| U26 | while running: an A2DP endpoint removed while another D-Bus client holds its transport, then the adapter removed, then the endpoint's own client leaves the bus about 1 s later: bluetoothd reads the A2DP server that the adapter removal freed (2026-11-01) | ASan `heap-use-after-free` in `a2dp_remove_sep` (`a2dp.c:3042` on master `14bd6ab65`; the freed object allocated by `a2dp_server_register`, freed by `unload_drivers` from `adapter_remove`), reached from the bus-exit watch; QEMU guests, 10/10 test calls on master, on master with CO-37's fixes, and with the timer proposal; not with either alternative being measured; `agent-work/u25-settle-20261101/runs/q1-*`; **not fixed upstream**; not seen on the laptop |
+| U27 | **5.72 only:** an A2DP endpoint removed while another D-Bus client holds its transport, then the stream goes idle (the peer disconnects, or the power-off at SIGTERM): bluetoothd reads freed memory in `clear_endpoint()` (`media.c:300`, the signature of CO-03's original report) (2026-11-02) | ASan `heap-use-after-free` in QEMU guests: 2 of 2 and 3 of 3 runs on 5.72, on 5.72 with the CO-37 backport, and with the Release flag added; master leaks in this case instead of crashing (the settling runs); **the CO-37 5.72 backport does not cover it**; not fixed; not seen on the laptop (CO-37 `log.md`, 2026-11-02) |
+| U28 | btmon with **both** upstream `print_packet()` fixes (`fdbfe0018f6f`, `dca0f10fd560`) can still write past `line[]`: the clamp lets the text fill the buffer to its last byte, then the colour reset (`COLOR_OFF`, with colour on) and the `" %s"` extra text are written with unbounded `sprintf()` (2026-11-02) | **from source** (BlueZ master `monitor/packet.c:885-919`); an outside reviewer reproduced it under AddressSanitizer in an extracted copy of the 5.72 function, not in the package; reachable only when the text fills `line[]`, i.e. widths of 2048 columns or more (`LINE_MAX`); our replay at 3000/5000 columns did not reach it (no colour off a terminal, shorter records); not reproduced with the real binary yet; present on master (CO-11 follow-up F-82) |
+| U29 | a headset that no longer accepts the laptop's key: Connect fails as "br-connection-unknown"; after a Forget, the headset is "Not set up" and every click is refused "Pairing Not Allowed" outside pairing mode; GNOME shows nothing either time (MOMENTUM 4, 2026-11-07) | confirmed in the capture, the logs and the source (gnome-bluetooth 46.0 `bluetooth-settings-widget.c:944`, `//FIXME show an error?`; the same on master); the headset's refusals are correct; why it dropped the key (between 11-04 13:06 and 11-06 15:52) is not known; the row was kept alive for three minutes by the headset's own *non-discoverable* advertisements (BlueZ 5.72 `device_update_last_seen()` before the discoverable check); a row staying ≤ 30 s after a switch-off is BlueZ's `TemporaryTimeout` (doubtful as a defect); "br-connection-unknown" traced 11-07: the kernel refuses the A2DP channel with `ECONNREFUSED`, which 5.72's A2DP turns into `-EAGAIN`; **fixed upstream by `a6ac17f0e393`** (5.78), a backport candidate |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -822,6 +995,14 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   codec variant as a rule. So the mismatch is probably PipeWire's normal representation, not
   the cause; U4 stays "panel does not refresh" until the recorder shows a state that differs
   at the moments the dropdown is missing (mark them with `bt-mark`).
+  **2026-10-21, a new trigger (Shure AONIC 50):** **[operator]** 07:14, no Configuration row
+  for the Shure. **[log]** Since 06:48:03 every profile change was WirePlumber's own (`U14`'s
+  auto-switch and its "restores": 06:48:03, 06:49:37, 07:00:09, 07:08:17), each
+  `setting profile 3 codec:257` (the plain `headset-head-unit` index with mSBC as a codec
+  parameter); earlier, after the operator picked the mSBC entry in GNOME Settings itself, the row
+  showed "mSBC". Consistent with the panel not refreshing when the profile is changed behind it
+  (`cc_profile_combo_box_set_device()` returns early for an unchanged device, GNOME 46.7
+  `cc-profile-combo-box.c:96`, `CO-17`); not yet shown that this is the only cause.
 - **U6 — GNOME Settings' input level meter shows nothing for the internal microphone.**
   **[operator]** 23:10: internal microphone selected in the panel, loud sounds, the input
   level indicator does not move; with the headset's handsfree microphone it does.
@@ -899,7 +1080,15 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   existing SCO down first — the disconnect and the negotiation overlap (`Disconnect` completes
   between `+BCS:` and `AT+BCS=`). A later acquire by a stream does not recover it: the test
   stream and the panel's meter both linked and no setup followed. **Not a controller or kernel
-  defect**: no HCI command was issued for it to fail. **To confirm:** with the Sound panel
+  defect**: no HCI command was issued for it to fail.
+  ⚠️ **Corrected 2026-10-21:** the sentence above is wrong about the kernel. The kernel is what
+  issues no command. `hci_connect_sco()` hands a new connect the old eSCO connection while its
+  Disconnect is pending (that connection stays `BT_CONNECTED` until the Disconnection Complete),
+  sends no setup, and `sco_connect()` marks the new socket connected at once; the completion then
+  closes it with `ECONNABORTED`, and PipeWire 1.0.5 does not retry. Source reading by four outside
+  reviewers, checked here: `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV1;
+  the work: `contributions/CO-02-sco-connect-reuses-closing-link/`. Still to be shown by a
+  reproducer. **To confirm:** with the Sound panel
   closed (its meter keeps the SCO up), switch codec by `pactl set-card-profile` once with the
   SCO idle and once while a stream plays; and read PipeWire master's `backend-native.c` codec
   switch path (`rfcomm_hfp_ag_set_codec` and what follows `AT+BCS`) for a fix after 1.0.5.
@@ -1080,6 +1269,13 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - **[log]** At 19:34:07.109, the microphone stream gone, WirePlumber logs "Failed to restore profile". Nothing reconnected A2DP: at 19:50 PipeWire and bluetoothd still had the headset in Handsfree only.
   - **[log] Not the controller:** the mSBC eSCO link set up at 19:33:58.815 completed with Success at 19:33:59.028, two more followed at 19:40:56 and 19:41:11, and the kernel log has no error and no command timeout from 18:00 on. The HCI trace is continuous across the failure (`gaps.log`: size rotations only).
 
+  **Second occurrence, 2026-10-31** (local time; same headset, same chain, `EX-084`, `EX-085`, `EX-087`, `EX-088`):
+  - **[operator]** At about 14:50 GNOME Settings again offered only "Handsfree - MOMENTUM 4" as output (screenshot in this session); the card itself offered no A2DP profile, only `off` and the three hands-free profiles (`scripts/pw-card-routes.py` on the saved graph).
+  - **[log]** At 13:42:16.187 WirePlumber starts acquiring the A2DP transport for a Google Chrome playback stream; at .274 it switches the card to `headset-head-unit-msbc` and releases the transport while the acquire is pending (`EX-087`). bluetoothd cancels the setup (`Start: Operation canceled (125)`), drops the headset's late answer (`Transaction label doesn't match`), and at 18.961 the Abort times out: A2DP disconnected (`EX-085`).
+  - **[capture] Over the air** (`EX-084`): Start (label 8) at 16.187828, Abort (label 9) at 16.275333, 87.5 ms later; the headset's only answer is Start accepted (label 8, `82 07`) at 16.444751; nothing for the Abort until bluetoothd closes three L2CAP channels at 18.962. An mSBC eSCO link completes with Success at 16.464811 meanwhile.
+  - **[log]** No A2DP state change in bluetoothd's log from 13:42:19 to 14:55 (`EX-088`; the same filter matched at 13:42:18 in `EX-085`): 72 minutes and counting on Handsfree only.
+  - Raw: `archive/incidents/20261031-momentum-headphones-missing/` (the HCI capture, both journal cuts, the PipeWire graph at 14:5x).
+
   **[source] The cause.** In BlueZ 5.72's `profiles/audio/transport.c`, a `Release()` during a pending `Acquire()` reaches `transport_a2dp_cancel()`, which calls `a2dp_cancel()`: an AVDTP Abort. Upstream `a14d59725` (Pauli Virtanen, 2024-11-02, "transport: don't disconnect A2DP if canceling Acquire() with Release()", first in 5.80) describes the result: "forcing AVDTP state transition to IDLE, and A2DP profile disconnects". Its fix answers the Acquire with an error, waits for the Start to complete, then suspends. Here the headset's silence made the disconnect certain, through the 2 s timeout.
   - The running bluetoothd is this project's build (`20-patched-bluetoothd.conf`, `/usr/local/libexec/bluetooth/bluetoothd`, built 2026-08-25 from 5.72-0ubuntu5.5's source with the two BT-7 fixes). Its `transport.c` keeps the old path (line 487, no `cancel_resume`).
   - Ubuntu's changelog through 5.72-0ubuntu5.8 (`/usr/share/doc/bluez/changelog.Debian.gz`) has no entry for it.
@@ -1090,7 +1286,345 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   2. The operator installs it and repeats the trigger: an application opening the microphone just as A2DP starts.
   3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word.
 
-  **Evidence:** `EX-063`, `EX-064`. Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
+  **Evidence:** `EX-063`, `EX-064`; second occurrence `EX-084`, `EX-085`, `EX-087`, `EX-088` (`EX-086` is a failed extraction, kept). Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
+
+- **U13 — a headset that bluetoothd knows only from its LE advertising cannot be set up from GNOME Settings: every click pairs over LE, the headset refuses, and nothing is shown** *(confirmed in the HCI capture, the log and the source, 2026-10-21; not fixed upstream)*.
+
+  **What happened** (local time, 2026-10-21):
+  - **[operator]** The Shure AONIC 50 (a public address with Shure's prefix, `00:0E:DD`) was listed in GNOME Settings' Bluetooth panel as "Not set up". Each click turned "Not set up" into a spinner for a fraction of a second, then back. About a dozen clicks.
+  - **[log] Thirteen pairing attempts, 06:20:39 to 06:23:10, all over LE:** `grep -c "Requesting bonding for <the Shure>"` on the day's bluetoothd journal → 13. Each is `adapter_bonding_attempt() … type 1` (LE public), then `pair_device_complete() Authentication Failed (0x05)` and `device_bonding_failed() status 5`, in about 0.2 s.
+  - **[capture] The headset refuses LE pairing outright** (`scripts/capture-window.sh` on `bt-20261021-013411.btsnoop`, 06:20:38 to 06:20:40): `MGMT Command: Pair Device … LE Address`, `LE Create Connection`, `LE Enhanced Connection Complete: Success`, our `SMP: Pairing Request` (Bonding, MITM, SC) at 06:20:39.599, the headset's **`SMP: Pairing Failed … Reason: Pairing not supported (0x05)`** at .820, `Pair Device … Status: Authentication Failed (0x05)`, Disconnect. In the saved window 06:20:30 to 06:21:10: 9 Pairing Requests, 9 "Pairing not supported".
+  - **[capture] Its advertising hides its BR/EDR side:** the AONIC 50 sends connectable `ADV_IND` with **`Flags: 0x00`** and its name; the scan response carries TX power and Shure's company data. For comparison, the MOMENTUM 4 in the same second sends `Flags: 0x18` (Simultaneous LE and BR/EDR, Controller and Host).
+  - **[state] bluetoothd knew it as LE only:** its storage `info` file (read about 06:25) said `AddressType=public`, `SupportedTechnologies=LE;`, no `[LinkKey]`; `busctl get-property … Device1` gave no `Class` (that comes only from a BR/EDR inquiry), `Paired false`. The device directory was created at 06:20; the entry expired at 06:30:41.
+  - **[log] The earlier pairing was already gone before 2026-10-20:** the AONIC 50 worked over BR/EDR on 2026-10-13 (`U11`). Its two removals on 2026-10-20 (08:48:53, 17:32:41) are each 30 s after it was last seen, the temporary-device expiry of an unpaired entry. When the bond was lost is not on record here.
+
+  **[source] Why every click goes to LE** (BlueZ 5.72, the running base; same in master):
+  - `Pair()` (`src/device.c:3032-3037`): with neither bearer bonded, the bearer is `select_conn_bearer()`, which returns the LE address type when the device is known on LE only (`:2510-2511`).
+  - The BR/EDR side is learnt from LE advertising only through the Flags: `if (bdaddr_type != BDADDR_BREDR && eir_data.flags && !(eir_data.flags & EIR_BREDR_UNSUP)) device_set_bredr_support(dev)` (`src/adapter.c:7277-7279`). **A Flags field of `0x00` counts as no Flags at all**, because `eir_data` cannot tell the two apart. Yet `0x00` has the "BR/EDR Not Supported" bit clear, i.e. the headset does not deny BR/EDR. Master still reads it this way (`src/adapter.c:7696-7697` at upstream `master`; last changed by Philipp Dunkel, 2026-07-17, to public addresses only; the `flags &&` test from Luiz Augusto von Dentz, 2016).
+  - `PreferredBearer` (Luiz Augusto von Dentz, 2025-02-26, first in BlueZ 5.80) does not help: master exposes it only for a device known on both bearers (`device_prefer_bearer_str()`, `src/device.c:391-393`).
+  - Listing a device whose Flags say "not discoverable" is by design: with a discovery filter set, 5.72 treats every report as discoverable (`device_is_discoverable()`, `src/adapter.c:7141-7142`); GNOME's `Discoverable` filter field makes the adapter discoverable while scanning, it does not filter results.
+
+  **Three parts, three owners:**
+  1. **The headset** advertises connectable LE with Flags `0x00` under its public BR/EDR address, and answers LE pairing with "Pairing not supported". Shure's firmware.
+  2. **BlueZ** reads Flags `0x00` as no information, so it never learns the BR/EDR side from the advertising, and it has no fallback when LE pairing is refused as not supported. A patch candidate: track whether the Flags field was present, and treat a present Flags without "BR/EDR Not Supported" as BR/EDR support (then `select_conn_bearer()` prefers BR/EDR for equal times, `:2513-2516`). The risk to weigh: LE-only devices that send Flags `0x00`.
+  3. **GNOME Settings** shows no error for a failed `Pair()`: the row returns to "Not set up" with nothing said. **Read in source 2026-11-07 (`U29`):** gnome-bluetooth 46.0 `lib/bluetooth-settings-widget.c:944-951` logs a failed setup and shows nothing (`//FIXME show an error?`); the same on master.
+
+  **Workaround, confirmed 06:40:** the operator put the headset into its pairing mode (off, then a long press: "Bluetooth pairing mode"). At 06:40:14 bluetoothd learnt its BR/EDR services; at 06:40:44 the click paired over BR/EDR (`adapter_bonding_attempt() … type 0`, `new_link_key_callback() … type 4`, `bonding_attempt_complete() … type 0 status 0x0`); HFP, A2DP and AVRCP connected at 06:40:45 to :46. Before that, at 06:37:49, the headset itself connected over BR/EDR and dropped after 4 s (reason 3), and three more clicks at 06:38:03 to 06:39:10 still went over LE and failed: the list showed it before its pairing mode was on. **[operator]** It was listed, and clickable to no effect, while not in pairing mode: what a user does not expect.
+
+  **Evidence:** raw and unfiltered, on this machine only: `archive/incidents/20261021-shure-le-pair/` (the bluetoothd journal 06:00 to 06:40, the whole journal 06:15 to 06:40, the decoded capture 06:20:30 to 06:21:10, a copy of the capture file, BlueZ's cache entry, `SHA256SUMS`; saved by `tmp/incident-20261021-shure/save-raw.sh`; the `info` file had expired by then, its content is quoted above). Dossier: `contributions/CO-27-le-only-pairing-u13/`.
+
+- **U14 — a Bluetooth headset is forced into Handsfree while an application on WirePlumber's list records from any microphone, the laptop's own included; a manual return to A2DP is undone when the recording ends, and the wrong profile is saved for next time** *(confirmed in the log and the source, 2026-10-21; WirePlumber 0.4.17, Ubuntu 24.04; fixed upstream by the 0.5 rewrite)*.
+
+  **What happened** (local time, 2026-10-21, the Shure AONIC 50 just paired, see `U13`; Chrome's dictation input open the whole time):
+  - **[log] Handsfree 85 ms after connecting, for a recording from the laptop's microphone.** `Google Chrome input` had been open since 06:35:20, linked to the built-in microphone (`link Google Chrome input <-> alsa_input.pci-0000_03_00.6.analog-stereo`). At 06:40:45.955 WirePlumber set `a2dp-sink`; at 06:40:46.040 `Setting profile of 'Shure AONIC 50' from: a2dp-sink to: headset-head-unit-msbc`.
+  - **[operator] The hiss came with the Sound page:** at 06:40:59 GNOME Settings' Sound panel opened its input meter (`restore values from Input/Audio:application.id:org.gnome.VolumeControl`), which runs the Handsfree source and so the SCO link; its background noise was audible from that moment, and the panel showed Handsfree, mono, with no codec row. (The meter on the headset source is `U6`; the missing codec row belongs with `U4`; the Handsfree line without a codec, silent in the sound test, is `U1`.)
+  - **[operator]** A2DP chosen by hand: LDAC, stereo, clean; SBC clean; Handsfree mSBC and CVSD audible (CVSD clearly worse); the hiss present only while in Handsfree.
+  - **[log] A manual choice undone:** at 06:45:36, with the headset in Handsfree, Chrome's input appeared again: `Current profile has input route, not switching`. At 06:47:41 the operator chose A2DP. Chrome's dictation ended; at 06:48:03.637 `Setting saved headset profile to: a2dp-sink`, then `Restoring profile of 'Shure AONIC 50' from: a2dp-sink to: headset-head-unit-msbc`. **[operator]** "the background noise reappeared … no matter I switched manually to headset before it".
+  - **[log] And again:** 06:48:28.949 `Current profile has input route, not switching`; 06:49:37.115 `Restoring profile … from: headset-head-unit-msbc to: headset-head-unit-msbc`. While dictation runs with the headset in Handsfree, it stays in Handsfree.
+  - **[state] The wrong profile persists:** `~/.local/state/wireplumber/policy-bluetooth` (`use-persistent-storage = true`) holds `a2dp-sink` as the saved headset profile of three other headsets, a profile without a microphone: their next call would "switch" to it.
+
+  **[source] Why** (`/usr/share/wireplumber/scripts/policy-bluetooth.lua`, 0.4.17; config `policy.lua.d/10-default-policy.lua`: `media-role.use-headset-profile = true`, `media-role.applications` lists `"Google Chrome input"`, `"Firefox"` and others):
+  1. `checkStreamStatus()` asks only whether the stream is from a listed application (or has `media.role` Communication) and whether the **default sink** is Bluetooth; it never asks whether the stream records from the Bluetooth source. Any listed recording forces the headset into Handsfree.
+  2. `switchProfile()` calls `saveLastProfile(device, cur_profile_name)`, which marks the device switched, **before** `if hasProfileInputRoute(device, index) then … "not switching"`. A recording that starts while the headset is already in Handsfree records Handsfree as the profile to restore, without switching.
+  3. `restoreProfile()`, 2 s after the last such stream ends, saves the **current** profile as the headset profile (`saveHeadsetProfile`, persisted) and restores the recorded one, so a manual A2DP choice made in between is both reverted and stored as the "headset profile".
+
+  **Upstream:** WirePlumber master (`src/scripts/device/autoswitch-bluetooth-profile.lua`, 0.5 series, cached at `fcc8d79`, 2026-10-16) switches only when a capture stream is linked to the Bluetooth loopback source, records the profile on every change, discards a saved headset profile without a headset input route, restores only from a headset profile, and cancels a pending restore on an explicit headset choice ("Explicit headset (pactl/settings) must not be reverted by a restore timer armed when the previous capture stream closed."). Not in Ubuntu 24.04 (0.4.17).
+
+  **Workaround [inference, the operator's choice]:** a user override that empties `media-role.applications` or sets `media-role.use-headset-profile = false` (then a call needs the profile chosen by hand); and clearing the three wrong `a2dp-sink` entries in the state file.
+
+  **Evidence:** raw and unfiltered, on this machine only: `archive/incidents/20261021-shure-autoswitch/` (the WirePlumber, bluetoothd and full journals 06:30 to 06:55, the state files, the installed script and config, `SHA256SUMS`; saved by `tmp/incident-20261021-shure/save-raw-autoswitch.sh`).
+
+- **U15 — the MOMENTUM 4 says "mute on" at every hands-free start and "mute off" when it ends, with nothing muted on the desktop** *(mechanism confirmed in the log, the HCI capture and the saved state, 2026-10-23; PipeWire 1.0.5 / WirePlumber 0.4.17; whether the microphone is really silenced in a call is not yet checked)*.
+
+  **What happened** (local time, 2026-10-23; the operator wearing the MOMENTUM 4, dictating into a transcription input; "many times already"):
+  - **[operator]** "mute on" in the headset when dictation starts, "mute off" when it ends; no mute set for the headset or the Handsfree profile in the settings. A manual switch to Handsfree also gave "mute on"; dictation started after that gave nothing.
+  - **[log] Each "mute on" is a hands-free start.** WirePlumber switched the headset from `a2dp-sink` to `headset-head-unit-msbc` at 02:26:18, 02:32:03, 02:35:33 and 02:57:30 (dictation, `U14`'s automatic switch) and back at 02:27:11, 02:32:54, 02:37:04 and 02:57:38; at 02:58:49 `Current profile has input route, not switching` (the manual Handsfree already set).
+  - **[capture] The laptop tells the headset its microphone gain is 0.** About 23 ms after each eSCO link came up (02:26:18.545, 02:32:03.757, 02:35:33.212, 02:57:30.666, and 02:58:22.338 for the manual switch) the laptop sent `+VGS: 9` and `+VGM: 0` on the HFP RFCOMM channel, and both again 1.5 s later (`EX-066`).
+  - **[state]** `~/.local/state/wireplumber/default-routes` holds `channelVolumes=0.0` for both of the MOMENTUM's hands-free inputs (`headset-hf-input`, `bluetooth-hf-input`); `wpctl status` shows its source at `vol: 0.00`, not muted.
+  - **[log] The zero comes from the headset.** At every hands-free connect the MOMENTUM itself reports `AT+VGS=09` (or `12`) and `AT+VGM=00`, and PipeWire logs `volume changed 0`: 32 of 32 connects the journal holds (2026-10-19 to 2026-10-23), never another microphone gain; the Shure AONIC 50 reports `AT+VGM=15` (`EX-065`).
+
+  **[source] Why** (PipeWire master `662fe053a`, `spa/plugins/bluez5/backend-native.c`; 1.0.5's copy not yet compared): the gateway takes a headset's `AT+VGM=<n>` as the microphone volume (`rfcomm_emit_volume_changed(…, SPA_BT_VOLUME_ID_RX, gain)`, l.1380–1383) unless the device lacks the `hw-volume-mic` feature (`broken_mic_hw_volume`, set from the quirk table at l.3584); WirePlumber saves the route volume; at a hands-free start `rfcomm_ag_set_volume()` sends the volume as `+VGM: <n>` when it is marked active (l.3119–3137, called at l.3249–3250 and 3280–3281). The MOMENTUM reports 0 and announces a received `+VGM: 0` as mute. **[inference]** With the quirk the report is ignored; whether the microphone volume then stays inactive, so that no `+VGM` is sent at all, is not traced yet. Upstream has a per-device switch for such headsets: `bluez-hardware.conf` lists one, `{ name = "Air 1 Plus", no-features = [ hw-volume-mic ] }` (`9d38d375d`, 2021: "Some headsets emit AT+VGM even though +VGM commands do not actually adjust the recording volume"); no MOMENTUM 4 entry on master (`662fe053a`, 2026-09-04). Same mechanism as `U2`'s unexplained saved microphone volume.
+
+  **[source] The second send is deliberate.** `sco_ready()` (this said `sco_start_source()` until 2026-10-31) calls `rfcomm_ag_sync_volume()` at once and again after 1.5 s (l.2791–2807, `d82b3d647`, 2022-06-16, in 1.0.5): some headsets change their HFP volume during A2DP without reporting it, and some take the first `+VGS` after a connect only partly (Sennheiser HD-250BT). The reasoning is about the speaker volume; the microphone gain is resent with it. One `+VGM: 0` is enough for the announcement, so dropping the repeat would not fix U15. `sco_set_volume_cb()` skips a value the headset already has (l.3168); the connect-time sync does not.
+
+  **[source] How a headset's microphone volume is detected.** HFP's supported-features bit 4 (`SPA_BT_HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL`, `defs.h:275`) covers the speaker and the microphone together; there is no microphone-only bit. Both PipeWire and PulseAudio treat a headset's own `AT+VGM` report as the sign that its microphone gain works (PipeWire: `volumes[id].active` is set only by a report, l.676–684; PulseAudio `!528`, 2021: "these `AT+VG[MS]` commands are also used to determine support for it"). Without a report, the volume is applied in software and no `+VGM` is sent. Headsets that report a gain that does nothing are known since PipeWire issue `#678` (2021-02-05, still open: "on none of the headsets does the VGM value actually affect the volume of the recorded audio"); the quirk table is the answer upstream chose. The MOMENTUM reports a gain of 0, which the protocol allows (0–15), so the detection takes it at its word. **[state]** The Tronsmart T8 speaker (`U10`) also advertises Hands-Free (UUID `0x111e`; class `0x240404`: Audio/Video, wearable headset; BlueZ's stored record, read 2026-10-23); it made no hands-free connection in the journal since 2026-10-19, so whether it reports a microphone gain is not known.
+
+  **2026-10-31: "mute on" at the END of a dictation** (local time; the operator, about a minute later: "mute on" in the headset "when I stopped dictation"; boot `e672b454`, `-42` + E3; raw in `archive/incidents/20261031-momentum-mute-on-at-stop/`: a copy of the live capture `hci-20261030-200531.btsnoop` taken at 03:01, `journal-0254-0259.txt` from `journalctl -b 0 --since "2026-10-31 02:54:30" --until "2026-10-31 02:59:20" -o short-precise`, and `capture-window-0254-0259.txt` from `scripts/capture-window.sh <copy> "2026-10-31 02:54:40" "2026-10-31 02:59:20" 'RFCOMM\|[+]BCS\|[+]CIEV\|VG[SM]\|Synchronous\|Air mode\|Disconnect\|Setup Synchronous\|Accept Synchronous'`):
+  - **[log] Dictation start, 02:54:51.77: the browser records from the laptop's own microphone, and the headset is switched to hands-free anyway (`U14`).** `CREATE_RECORD_STREAM … source-name:(null)`, then `link Google Chrome input <-> alsa_input.pci-0000_03_00.6.analog-stereo`; in the same millisecond `Setting profile of 'MOMENTUM 4' from: a2dp-sink to: headset-head-unit-msbc`. The browser's playback stream was linked to the hands-free sink and stayed corked.
+  - **[capture] No audio link for the four minutes of dictation.** The first `Setup Synchronous Connection` after 02:54:40 is at 02:58:54.882, so there was no `+VGM` and nothing announced at the start. The headset's microphone was never used, and for those four minutes its playback was held in the hands-free profile.
+  - **[log] Dictation stop, 02:58:54.573:** `[Google Chrome input] CORK_RECORD_STREAM … cork:yes`, then `DELETE_STREAM`. At 02:58:54.639 the browser opened a new playback stream (`CREATE_PLAYBACK_STREAM`, mono), linked to the hands-free sink still in place (`link Google Chrome <-> bluez_output.<addr>.1`); `+CIEV: 2,1` followed at 02:58:54.648.
+  - **[capture] The short link that announced "mute on".** `Setup Synchronous Connection` at 02:58:54.882; `Synchronous Connect Complete` at 02:58:55.054 (eSCO, Air mode Transparent, handle 4); `+VGS: 11` and `+VGM: 0` at 02:58:55.067, and both again at 02:58:56.567. At 02:58:56.575 `Restoring profile of 'MOMENTUM 4' from: headset-head-unit-msbc to: a2dp-sink`, `+CIEV: 2,0` and `Disconnect` of handle 4 (`Disconnect Complete` at 02:58:56.587). The link lasted 1.7 s, and the profile was restored 2.0 s after the recording ended.
+  - **[log]** After the link was gone the kernel logged `Bluetooth: hci0: SCO packet for unknown connection handle 4` three times at 02:58:56.61 and once at 02:59:15.45.
+  - **[inference]** This time "mute on" came from playback, not recording: a sound the browser played in the 2 s between the end of the recording and WirePlumber's switch back opened a hands-free link, and that link carried `+VGM: 0`. Fixing U15 (no `+VGM: 0`) would stop the announcement. Fixing `U14` (no switch to hands-free while the recording uses another microphone) would have kept the headset in A2DP for the whole dictation.
+
+  **2026-10-31 03:33, "mute on" twice at the end of the next dictation** (the operator: "'mute on' twice this time at about 3:33:30"; same folder: `hci-20261031-031927.btsnoop` copied at 03:35, `journal-0329-0334.txt` from `journalctl -b 0 --since "2026-10-31 03:29:50" --until "2026-10-31 03:34:00" -o short-precise`; the window read with `scripts/capture-window.sh <copy> "2026-10-31 03:29:50" "2026-10-31 03:33:40" 'Synchronous Conn|[+]CIEV|VG[SM]|Disconnect'`):
+  - **[log]** The same pattern: the dictation started at 03:30:00.078 on the laptop's microphone (`link Google Chrome input <-> alsa_input.pci-0000_03_00.6.analog-stereo`), with the headset switched to `headset-head-unit-msbc` at 03:30:00.080; it stopped at 03:33:21.920 (`CORK_RECORD_STREAM … cork:yes`, `DELETE_STREAM`); at 03:33:22.020 the browser opened a playback stream on the hands-free sink.
+  - **[capture] The first "mute on", with the link up:** `+CIEV: 2,1` at 03:33:22.037; `Setup Synchronous Connection` at 03:33:22.272; `Synchronous Connect Complete` (eSCO, Transparent, handle 5) at 03:33:22.456; `+VGS: 11` and `+VGM: 0` at 03:33:22.469.
+  - **[capture] The second "mute on", after the link was gone:** WirePlumber restored `a2dp-sink` at 03:33:23.923; `+CIEV: 2,0` and `Disconnect` of handle 5 at 03:33:23.925; `Disconnect Complete` at 03:33:23.931. Then **`+VGS: 11` and `+VGM: 0` again at 03:33:23.969, 38 ms after the link was closed** and 1.500 s after the first pair. The link had lasted 1.475 s, under the 1.5 s resend delay. (At 02:58 the link lasted 1.7 s, so both pairs arrived while it was up, and the operator heard one announcement.)
+  - **[source] Why the resend outlives the link** (PipeWire master `662fe053a`, `spa/plugins/bluez5/backend-native.c`; the 1.0.5 tag has the same calls at l.904, 1565–1566 and 1971–1982; Ubuntu's `1.0.5-1ubuntu3.3` patches not checked): `sco_ready()`, when the link is ready, arms a 1.5 s timer (`rfcomm_ag_sync_volume(…, true)` → `volume_sync_start_timer()`, l.3255–3271). `volume_sync_stop_timer()` is called only when a codec selection `AT+BCS` arrives (l.1236) and from the timer's own handler (l.3246). Releasing the hands-free link (`sco_release_cb()` → `sco_destroy_cb()`, l.2852–2894) does not stop it. The handler checks only that `rfcomm->transport` exists (l.3248) and sends `+VGS`/`+VGM` again. So a hands-free link released less than 1.5 s after it became ready is followed by a second `+VGM: 0` after it has closed.
+  - **[log] Not only here, and not only this headset.** `scripts/hfp-late-vgm-scan.py` over every boot in the journal (2026-10-22 to 2026-10-31): 91 hands-free links, 11 released within 3 s, 3 with the resend after the release: at a MOMENTUM 4 connect (2026-10-22 20:25, 1.081 s after `released`), at the end of a dictation with the Lenovo thinkplus GM2 pro (2026-10-23 23:53, 72 ms after), and 03:33 above. The evidence package for an upstream PipeWire report, which the operator writes and files under PipeWire's rules, is `contributions/CO-36-pipewire-hfp-volume-resend-after-release/`.
+
+  **Open:** is the microphone really silenced while "mute on" (a test call or a recording through the MOMENTUM; if so, the other side of every call hears nothing)? Does `+VGM: 15` give "mute off"?
+
+  **Fix options [the operator's choice]:** a local quirk override (WirePlumber's `bluez5.hardware-database` property with the stock table plus `{ name = "MOMENTUM 4", no-features = [ hw-volume-mic ] }`), which stops the stored 0 (and, to be checked, the `+VGM`); a one-off volume reset (undone at the next connect, when the headset reports 0 again); then the same one-line entry upstream in PipeWire. **PipeWire's contributor rules** (the contributor-rules file in its tree, read 2026-10-23): no tool-written merge request descriptions, commit messages, issue text or replies to reviewers, and no automated posting; the operator writes and submits it, and evidence gathered with tools (verbatim logs) may be attached. This project gathers the evidence only.
+
+  **Evidence:** `EX-065`, `EX-066`; raw on this machine only: `archive/incidents/20261023-momentum-mic-gain-zero/` (the user journal around the connect and the sessions, every gain line the journal holds, the state files, `wpctl status`, the captures' gain packets, `SHA256SUMS`; saved by `tmp/incident-20261023-momentum/save.sh`).
+
+- **U16 — after a failed Connect from GNOME Settings, its device search stops for good** *(confirmed in the bluetoothd debug log, the system bus record and the source, 2026-10-23; BlueZ 5.72, this project's build; GNOME Settings 46.7; not fixed in BlueZ master `a0580dad5`, no duplicate found)*.
+
+  **What happened** (local time, 2026-10-23; the Lenovo `联想thinkplus-GM2 pro` earbuds were connected to another device, a phone, so they could not answer):
+  - **[operator]** 21:53:32 a click on the earbuds in the Bluetooth panel: a spinner, then nothing; at 21:54:28 no "searching" spinner in the panel any more; Bluetooth off at 21:54:59 and on at 21:55:17 brought the search back.
+  - **[log] The connect and the stop are sent together** (`journalctl -u bluetooth`, debug on): 21:53:32.744031 `stop_discovery() sender :1.207` (GNOME Settings), at once `connect_profiles() …/dev_<earbuds> (all), client :1.207`, and MGMT command `0x0007` (Set Connectable) is sent at .744300. **No `0x0024` (Stop Discovery) is sent yet**: BlueZ's `shared/mgmt.c` sends one command at a time, and the kernel answers Set Connectable only after the connection attempt ends.
+  - **[log] Five seconds later the connect fails, and the client restarts its search into the gap:** 21:53:37.873568 `connect_failed_callback() … status 4` (Page Timeout); `resume_discovery()`, `trigger_start_discovery()`; at .883635 `set_discovery_filter() sender :1.207`, at .884120 `start_discovery() sender :1.207`. Set Connectable completes at .894140.
+  - **[log] Then the stale stop lands and removes the client:** .903192 MGMT `0x0024` sent, .906124 complete, `stop_discovery_complete() status 0x00`, `discovery_remove() owner :1.207`, `discovering_callback() hci0 type 7 discovering 0`. No discovery until the power cycle: 21:55:18.290614 `start_discovery() sender :1.207`, `discovering 1` at .308847.
+  - **[log] The same exchange on 2026-10-11 00:26:54, same earbuds** (the system bus monitor of `bt-ui-capture`, `system-bus.log` lines 70600–70630; that monitor was not running at 21:53 on 10-23): `StopDiscovery` and `Device1.Connect` sent 20 µs apart; `Connect` → `org.bluez.Error.Failed "br-connection-page-timeout"` 5.15 s later; `SetDiscoveryFilter` → ok; **`StartDiscovery` → `org.bluez.Error.InProgress`**; then the pending **`StopDiscovery` → `org.bluez.Error.InProgress`** as well, 22 ms later.
+
+  **[source] Why** (BlueZ 5.72, `src/adapter.c`):
+  1. `discovery_stop()` (l.2423) leaves the client in `discovery_list` while its MGMT Stop Discovery is pending (`adapter->client = client`, `-EINPROGRESS`, l.2453–2459).
+  2. A `StartDiscovery` from that client in the meantime finds itself still listed and is refused (`get_discovery_client()` → `btd_error_busy()`, l.2512–2519; D-Bus `org.bluez.Error.InProgress`).
+  3. When the stale stop completes, `stop_discovery_complete()` (l.2145) removes the client (`discovery_remove()`, l.2153–2155) and marks the adapter not discovering. The client's new request is gone and nothing restarts it.
+  4. The window is as long as the MGMT command ahead of the stop takes: here the 5 s of a paging attempt to a headset that does not answer. A connect to a reachable device ends in well under a second, which is why this is rare.
+
+  **[inference] Three owners, to be confirmed:** BlueZ (a start from the client whose stop is still pending could cancel or follow the stop, instead of being refused and then dropped); GNOME Settings / gnome-bluetooth (it does not wait for the `StopDiscovery` reply before `Connect`, does not retry an `InProgress` start, and shows no message); the kernel only in holding Set Connectable for the length of the page, which is its documented serialisation, not a defect.
+
+  **Workaround:** Bluetooth off and on in the panel.
+
+  **Upstream check, 2026-10-24: not fixed, no duplicate found.**
+  - **BlueZ master `a0580dad5` (2026-10-23) has the same logic.** `discovery_remove`, `discovery_complete`, `stop_discovery_complete`, `discovery_stop`, `start_discovery` and `stop_discovery` are textually identical to 5.72's (`tmp/u16-dup-check/cmp.sh`). In master: `start_discovery()` `if (is_discovering) return btd_error_busy(msg);` l.2562; `discovery_stop()` `return -EINPROGRESS;` l.2503; a second `StopDiscovery` while one is pending is refused at l.2944 (`if (client->msg)`), which is the `InProgress` reply seen on 2026-10-11.
+  - **The nearest earlier fix is a different trigger:** `8486b4cd2` (Luiz Augusto von Dentz, 2020-05-28, "adapter: Fix not removing client from discovery list") removes the client when a *start* fails; it is in 5.72. The 2020 list thread it answered: https://www.spinics.net/lists/linux-bluetooth/msg85293.html.
+  - **Trackers (web search, read only):** BlueZ issue #1554 (this project's report; InProgress on restart, a kernel simultaneous-discovery race, no Connect involved) and #343 (the kernel rejects the stop) are related, not the same; client-side InProgress reports (bluer #47, bleak #1036, Home Assistant #76186 and #76544) are different. No hit on GNOME's GitLab, Launchpad or lore for this sequence [inference: by web search only].
+  - **gnome-bluetooth 46.2 (the 46.x line Ubuntu 24.04 ships; master the same):** `lib/bluetooth-settings-widget.c:1049` and `:1077-1080` turn setup mode off just before `setup_device`/`connect_service`; `lib/bluetooth-client.c:1241-1250` turns that into an `adapter1_call_stop_discovery` without waiting for its reply; after the connect, setup mode on → `SetDiscoveryFilter` + `StartDiscovery` (`~1197-1210`); `start_discovery_cb` (`~1165-1182`) only logs an error with `g_debug`, sets `discovery_started = FALSE` and does not retry.
+
+  **Patch candidates:** BlueZ: drop the client from `discovery_list` as soon as its stop is queued, or let a start from a client whose stop is pending cancel or follow that stop. gnome-bluetooth: wait for the `StopDiscovery` reply before `Connect`, or retry a start refused `InProgress`.
+
+  **Next:** a reproducer on the laptop (the operator: earbuds off in their closed case, the panel searching, a click on them, is the spinner still there 10 s later?) and in the emulator (a connect to an absent address while discovering); then the BlueZ patch.
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-earbuds-discovery-and-sco-gap/` (`journal-bluetoothd-2152-2156.txt`, `system-bus-20261011-002654.txt`, `system-bus-discovery-calls.txt`, `capture-connect-2153.txt`, the user journal 21:52–21:59, `SHA256SUMS`; saved by `tmp/incident-20261024-earbuds/save.sh`; real addresses inside).
+
+- **U17 — after an HFP codec switch whose SCO connect is refused, the headset is silent for 5 s** *(confirmed in the logs, the HCI capture and the source, 2026-10-24; on the CO-02 kernel; PipeWire 1.0.5 / WirePlumber 0.4.17; not fixed in PipeWire master `73974598f` or WirePlumber master `ce5d858`, no duplicate found)*.
+
+  **What happened** (local time; the Lenovo earbuds, A2DP → Handsfree, YouTube playing):
+  - **[operator]** 2026-10-24 06:12:22 mSBC → CVSD: "No sound. Oh, sound appeared at 6:12:31." 06:12:47 CVSD → mSBC: "Big delay. The sound returned in mSBC. About three seconds of delay." A third refusal on 2026-10-23 at 22:00:33 (mSBC → CVSD) with no stream playing: the next link came with the test sound, `Setup Synchronous Connection` at 22:00:46.198849.
+  - **[capture] The headset answers before the old link is gone, which is `U7`'s ordering** (`scripts/sco-switch-windows.sh` on `hci-20261023-233436.btsnoop`):
+
+    | switch | AG `+BCS:` + Disconnect | headset `AT+BCS=` | old link's Disconnect Complete (after `+BCS:`) | new `Setup Synchronous Connection` | new link up |
+    |---|---|---|---|---|---|
+    | 06:12:22 mSBC → CVSD | .298580 / .298592 (handle 5) | .324563 | .491861 (+193 ms) | 06:12:27.350650 | .386887, CVSD, handle 6 |
+    | 06:12:47 CVSD → mSBC | .690751 / .690774 (handle 6) | .714559 | .886915 (+196 ms) | 06:12:52.743599 | .786897, Transparent, handle 7 |
+
+  - **[log] The kernel refuses the connect, PipeWire retries at once, and the node fails** (`scripts/user-journal.sh`, WirePlumber debug): 06:12:22.340902 `sco_do_connect, codec=1`; .340952 `connect(): Software caused connection abort. Remaining retry:1`, .340996 `Remaining retry:0`, .341032 `connect(): Software caused connection abort` — three attempts in 130 µs, all 151 ms before the old link's Disconnection Complete; `state changed 0 -> -1`, `Failure in Bluetooth audio transport`; pipewire: `bluez_output… running -> error (Received error event)`.
+  - **[log] The audio comes back only through the idle timer:** 06:12:27.344984 WirePlumber `was idle for a while; suspending ...` for both nodes; `error -> suspended`; .350496 `sco_acquire_cb`, `sco_do_connect`; .399865 `ready`, `acquire complete`. The same at 06:12:47.735 → 06:12:52.739 → link at .786897. **5.004 s each time.**
+  - **[log] History:** the journal (from 2026-10-20) holds only these three refused connects (22:00:33, 06:12:22, 06:12:47), all on the boot with the CO-02 module (`journal-user-abort-history.txt`).
+
+  **[source] Why:**
+  1. PipeWire's `sco_do_connect()` (`spa/plugins/bluez5/backend-native.c`, master `662fe053a` l.2677–2688) retries a connect that fails with `ECONNABORTED` twice, **immediately**, with no wait. The retry was added for this very situation: `d439b7cdd` (Huang-Huang Bao, 2021-03-22), "When I enforing HFP codec switching between HFP profiles, it has a chance of being aborted by ECONNABORTED. Seems a retry is sufficient for work around it."
+  2. On failure the transport goes to error and the node to `error`. WirePlumber 0.4.17 `suspend-node.lua` starts its idle timer on `idle` **or `error`** (`session.suspend-timeout-seconds`, default 5) and then sends `Suspend`; the suspended node is started again by the stream still linked to it, which acquires and connects afresh, by then after the old link is gone.
+  3. Before the CO-02 series the kernel did not refuse: it handed the connect the closing link and reported success with no link behind it (`U7`, `EX-060`), and no link followed at all: on 2026-09-29 new test sounds started 3, 2 and 26 s after the failed switches stayed silent, and the next codec change ended the first silence (corrected 2026-10-26: this said "silence until the stream was restarted by hand", which the record does not show). The series turns that into a refusal, and PipeWire's existing recovery turns the refusal into a 5 s gap. Shorter needs one of: a retry in PipeWire that waits for the old link's teardown (it knows it has just closed it), or a kernel that queues the new connect until the Disconnection Complete instead of refusing.
+
+  **Why it matters for CO-02:** the cover letter must say that on the earbuds the user gets the audio back after about 5 s rather than never; the maintainers may prefer the kernel to wait. To be weighed before the series is sent.
+  **Done:** the cover letter sent on 2026-10-27 says it, and offers the deferral as a question
+  (`CO-30`); the PipeWire side is `CO-31`.
+
+  **Upstream check, 2026-10-24: not fixed, no duplicate found.**
+  - **PipeWire master `73974598f` still retries at once:** `sco_do_connect()` has the same `for (int retry = 2;;)` loop with `continue` on `ECONNABORTED` and no wait; 1.0.5 has it at `backend-native.c:1447`. `git log -S ECONNABORTED -- spa/plugins/bluez5` gives only `d439b7cdd` (above) and `5a22d0bfc` (Pauli Virtanen, 2021-01-04, "bluez5: delay SCO transport releases in case they get reacquired").
+  - **PipeWire already knows the error means "too soon after the previous close"**, and handles it for a different case only. Master `spa/plugins/bluez5/bluez5-dbus.c:275-283`: "SCO socket connect may fail with ECONNABORTED if it is done too soon after previous close. To avoid this in cases where nodes are toggled between stopped/started rapidly, postpone release until the transport has remained unused for a time." (`TRANSPORT_RELEASE_TIMEOUT_MSEC 1000`). A codec switch frees the old transport and creates a new one, so that delay does not apply. The same error for the same cause is therefore not new with the CO-02 series: the series makes the kernel return it in one more case, on the first `connect()`.
+  - **No commit since 1.0.5 touches the retry or the codec-switch timing** (about 90 commits to `backend-native.c`, judged by subject). The #5467 fix (`d80b80602`, `b7246d0d5`, September 2026) concerns error counting on A2DP↔HFP switches, a different path (`userspace-upstream-check-2026-10-03.md`).
+  - **WirePlumber master `ce5d858` still suspends `error` nodes on the timer:** `src/scripts/node/suspend-node.lua:131` `if new_state == "idle" or new_state == "error" then`. Its only error recovery (`monitorNodeError`, `439143e`, 2026-10-19) is for ALSA.
+  - **Trackers:** PipeWire's GitLab refused automated reads (an "Access Denied" bot check), so it was searched through a web search only: #1817 (ETIMEDOUT), #2783, #2896 and #1827 are different. PulseAudio MR !622 "bluetooth: Try to reconnect SCO" is the same scenario in PulseAudio (a connect right after a disconnect occasionally fails), related. No kernel patch or thread on a SCO connect arriving while the previous SCO to the same peer is disconnecting [inference: by web search only].
+
+  **Next:** PipeWire's tracker read by the operator in a browser (the bot check blocks tools); a PipeWire change that waits for the old link, or retries `ECONNABORTED` after a short delay instead of at once, is the operator's to write and submit, with verbatim logs attached (`pipewire-contribution-rules`); the kernel side in `hci_connect_sco()`: whether waiting for the Disconnection Complete is feasible; then the same switch on the MOMENTUM 4 as the control (it answers after its old link is gone, so no refusal is expected).
+
+  **Control, the Shure AONIC 50 on the same boot (2026-10-24, `sco-switch-windows.sh` on `hci-20261024-062043.btsnoop`):** mSBC → CVSD at 06:36:44 and CVSD → mSBC at 06:37:03; the old link's Disconnection Complete came **before** the headset's `AT+BCS=` (.394622 vs .424559; .384621 vs .426581), and `Setup Synchronous Connection` followed the AG's `OK` by 31 ms and 23 ms (links up at .548701 CVSD and 06:37:03.530667 Transparent); no refusal in the journal. **[operator]** "Switches fast." The third headset to take the fresh path.
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-earbuds-discovery-and-sco-gap/` (`capture-switches-0611-0613.txt`, `capture-switch-2200.txt`, `journal-user-0607-0614.txt`, `journal-user-2200.txt`, `journal-user-abort-history.txt`, `wireplumber-suspend-node.lua.txt`, `SHA256SUMS`; saved by `tmp/incident-20261024-earbuds/save.sh`; real addresses inside); the Shure control in `archive/incidents/20261024-shure-le-connected-no-audio/capture-switches-0636-0637.txt`.
+
+- **U18 — a headset paired over LE shows "Connected" in GNOME Settings, with no audio and no entry in the sound settings** *(confirmed in the bluetoothd debug log, the system bus record, the HCI capture and the source, 2026-10-24; BlueZ 5.72, this project's build; the same code in master `a0580dad5`; no duplicate found, BlueZ #2037 possibly the same)*. A sequel of `U13`: the same first step (a device known on LE only is paired over LE), this time with the headset in its pairing mode, where it accepts LE pairing.
+
+  **What happened** (local time, 2026-10-24; the Shure AONIC 50 in its pairing mode):
+  - **[operator]** 06:27:29 a click on the Shure in the Bluetooth panel; the panel said "Connected" (06:28:12), the headset announced nothing ("usually Shure is staying connected"); the Sound panel had no Shure (06:28:46, 06:30:19), the sound stayed on the laptop's speakers. Connection off and on in the device page: "connected" again, still no sound, no Shure in the Sound panel. Forget at 06:30:48; a long press into pairing mode; at 06:31:53 the Shure listed as "Not set up"; one click, "connected" announced by the headset, LDAC.
+  - **[log] Paired over LE** (`journalctl -u bluetooth`, debug on): 06:27:33.589223 `adapter_bonding_attempt() … type 1` (LE public); `LE Create Connection` at .723590 (capture); SMP Pairing Request with `LinkKey` in both key distributions, the headset's Pairing Response keeps `LinkKey` (.083718); LE encryption at 06:27:35.388; `new_link_key_callback() … type 7` (a BR/EDR key derived from the LE pairing) and `bonding_attempt_complete() … type 1 status 0x0` at 06:27:35.49; GATT `gap-profile` and `batt-profile` **connected** at .665.
+  - **[log] Connect looks up the audio services, then connects none:** system bus: `Device1.Pair` → ok at 06:27:35.672060; `Device1.Connect` at .672332. bluetoothd: `connect_profiles() … (all), client :1.292`, `Resolving services` at .672424; the capture: BR/EDR `Create Connection` at .672596, `Connect Complete` 06:27:36.849665, an SDP search answered with Audio Sink (`0x110b`), A/V Remote Control, Remote Control Target, **Handsfree (`0x111e`)** and two Serial Port records by .983568. bluetoothd: `device_svc_resolved() … err 0` at 06:27:37.026961; **`Connect` → method return at 06:27:37.027484**; the next bluetoothd line is GNOME's `set_discovery_filter()` at .029043 — no second `connect_profiles()`, no HFP or A2DP connect. The SDP channel closed at 06:27:39.2 and the idle BR/EDR link was dropped at 06:27:41.376 (`Disconnect`, reason "Remote User Terminated"; `dev_disconnected() … reason 2`). The LE link stayed: GNOME's "Connected".
+  - **[capture] The off/on toggle worked on LE only:** off: LE `Disconnect` 06:29:35.199976; on: `LE Create Connection` 06:29:55.822138, `gap-profile`/`batt-profile` connected at 06:29:56.37; no BR/EDR connection.
+  - **[log] The working pairing went over BR/EDR:** after the Forget, the headset in pairing mode was found by inquiry (`a2dp_sink_probe()` and Hands-Free probes at 06:31:44.94, from its BR/EDR data), so the click paired with `type 0` (06:32:01.841094), `new_link_key_callback() … type 4`, then HFP connected at 06:32:03.449 and A2DP at .753.
+
+  **[source] Why** (BlueZ 5.72 `src/device.c`; master `a0580dad5` the same, `dev_connect()` at l.2892–2912):
+  1. After the SDP search, `browse_request_complete()` (l.2756) calls `dev_connect()` again for the pending `Connect` (l.2810–2811).
+  2. `dev_connect()` (l.2523): with the BR/EDR link up, "Check if services have been resolved and there is at least one connected before switching to connect LE": `if (dev->bredr_state.svc_resolved && find_service_with_state(dev->services, BTD_SERVICE_STATE_CONNECTED)) bdaddr_type = dev->bdaddr_type;` (l.2529–2537). `find_service_with_state()` searches **all** the device's services. The LE GATT services `gap-profile` and `batt-profile` were connected, so the check passes and the bearer becomes the device's LE address type although no BR/EDR service is connected.
+  3. Then `if (dev->le_state.connected) return dbus_message_new_method_return(msg);` (l.2548–2549): success, nothing connected.
+  **[inference]** The branch is read from the absence of a second `connect_profiles()` debug line, which the BR/EDR path prints first (l.2414); the other routes to the same return need the BR/EDR link down or unknown, and the capture shows it up from 06:27:36.85 to 06:27:41.38.
+
+  **Owners:** BlueZ (the check should ask for a connected *BR/EDR* service, or `Connect` should not report success with no BR/EDR profile connected when the device offers audio); `U13`'s LE-first pairing choice (the Flags `0x00` reading) is what put the headset on LE in the first place. GNOME shows "Connected" because BlueZ's `Connected` is true for the LE link; it has no way to see that the audio is missing.
+
+  **Workaround:** Forget, then pair again with the headset in pairing mode and the panel searching, so that it is found over BR/EDR first (worked at 06:32:01).
+
+  **Upstream check, 2026-10-24: not fixed, no duplicate found.**
+  - **Origin of the check:** `aa0b1a0c1` (Luiz Augusto von Dentz, 2016-08-12, "core/device: Fix not connecting services properly"): "Device.Connect shall check if the service discovery is pending or no service have been connected yet before switching to LE otherwise these services may never be connected." Its case is a BR/EDR device whose BR/EDR services are not connected yet; connected LE services were not considered.
+  - **Master `a0580dad5` keeps it** (`src/device.c:2901-2911`, then `if (dev->le_state.connected) return dbus_message_new_method_return(msg);` at l.2925), and the same pattern a second time in `device_connect_profiles` (l.2855-2860: no pending profile, services refreshed, any connected service → success). `find_service_with_state()` (l.367) has no bearer argument. Later changes to this region (`03240630b` PreferredBearer, `6d8260cf6`, `1c2ec2990` and others) do not change the check (judged by reading the current code; not every diff read).
+  - **PreferredBearer does not avoid it:** it is applied in `select_conn_bearer()` (l.2915), which `dev_connect()` reaches only when the BR/EDR link is down; here the SDP link is up when `dev_connect()` runs again [inference from the code].
+  - **The fix has what it needs:** profiles declare their bearer (`src/profile.h:15-17`, `BTD_PROFILE_BEARER_ANY/LE/BREDR`), GAP and Battery as LE (`profiles/gap/gas.c:353`, `profiles/battery/battery.c:329`), A2DP and AVRCP as BR/EDR (`profiles/audio/a2dp.c:3852`, `:3872`, `avrcp.c:4915`, `:4999`), and `device_remove_pending_services()` already filters by it (`device.c:8560-8563`).
+  - **Trackers (web search, read only):** BlueZ #2037 (a Sony WH-1000XM6, `Connected: yes` and `LE.Connected: yes` with no audio card; closed as stale 2026-10-01, no root cause) is possibly this bug, unconfirmed; #2700 (a neckband paired over LE only, then "br-connection-key-missing") is related, a different failure. lore returned 403; Launchpad and GNOME's GitLab not searched.
+
+  **Patch candidate:** count only services whose profile bearer is not LE in the two checks (`dev_connect()` and `device_connect_profiles()`), e.g. a bearer argument for `find_service_with_state()`; a test in the emulator (a dual-mode device with a connected LE GATT service, then `Connect`); together with `U13`'s Flags patch. #2037 is worth a comment from the operator once the patch exists.
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-le-connected-no-audio/` (`journal-bluetoothd-0626-0633.txt`, `system-bus-pair-connect-062733.txt`, `capture-pair-062733.txt`, `capture-toggle-0629.txt`, `capture-pair-063201.txt`, the user journal 06:26–06:38, `SHA256SUMS`; saved by `tmp/incident-20261024-shure/save.sh`; real addresses inside).
+
+- **U19 — after a headset leaves Handsfree for A2DP, the Sound panel's input meter stays dead on the laptop's microphone** *(observed by the operator; confirmed in the user journal, the audio policy log and the source, 2026-10-24; caused by Ubuntu's patch `lp-2122640-bluetooth-audio-glitch.patch` in WirePlumber 0.4.17-1ubuntu4.1, not in upstream WirePlumber; GNOME Settings 46.7-0ubuntu0.24.04.6, PipeWire 1.0.5)*.
+
+  **What happened** (local time, 2026-10-24; the Shure AONIC 50; GNOME Settings' Sound panel open):
+  - **[operator]** After the switch from Hands-free to Headset (A2DP) the Input section showed the laptop's internal microphone, but its level meter did not move while the operator spoke or made loud sounds; mute and unmute changed nothing. Back in Hands-free the meter worked on the Shure's microphone; choosing the internal microphone by hand while in Hands-free made its meter work, and it followed the input volume. Back to Headset: dead again ("It appears a bug … Once again").
+  - **[log] The panel opens no capture on the new default source** (`journalctl -u bt-audio-policy`; `capture[GNOME Settings]` lists the sources the panel's streams record from):
+    - 08:04:59 GNOME Settings' capture `Shure AONIC 50` → none; `default audio.source` `Shure AONIC 50` → `bluez_input.<the Shure>.0` → the laptop's microphone (`Family 17h/19h HD Audio Controller Analog Stereo`); profile `headset-head-unit-msbc` → `a2dp-sink`; 08:05:00 capture → `monitor of Shure AONIC 50` only (the output meter). No capture on the laptop's microphone. (The middle value is the recorder's: `scripts/bt-audio-policy.py:71-74` prints a node's raw name once the node is gone; the default itself did not pass through a removed node.)
+    - 08:07:07 (in Hands-free, the input picked by hand): capture → `Family …; Family …; monitor of Shure AONIC 50`: the meter is attached.
+    - 08:08:42 the same as 08:04:59.
+  - **[log] The opposite direction works:** 08:03:51–52, A2DP → Hands-free, default source the laptop's microphone → `Shure AONIC 50`, capture none → `Shure AONIC 50; monitor of Shure AONIC 50`: the meter followed the new default.
+  - **[log] The panel does open the meter; WirePlumber destroys it** (`archive/…/journal-user-0755-0812.txt`, lines 28294–29305):
+    - 08:04:59.044924 `Bluetooth device removed, preventing non-Bluetooth devices from linking for 2 seconds`;
+    - 08:04:59.051861 `[GNOME Settings] CREATE_RECORD_STREAM tag:478 … source-name:53` (53 is the laptop's microphone, the index the hand pick at 08:07 used);
+    - 08:04:59.734–.753 `... target not found, reconnect:false` / `... destroy node`;
+    - 08:04:59.754620 `[GNOME Settings]: ERROR … tag:478 error:25 (Input/output error)`.
+    - 08:08:42 the same (window .030108, the meter as tag 1173, destroyed from .051).
+
+  **[source] Why** (installed `/usr/share/wireplumber/scripts/policy-node.lua`, 0.4.17-1ubuntu4.1):
+  1. When a Bluetooth node is removed, Ubuntu's patch disables linking of non-Bluetooth targets for 2 s (l.1024–1042; changelog: "Prevent bluetooth profile switch to output some sound on another device during the transition (LP: #2122640)").
+  2. A new stream whose target is not Bluetooth gets `skip_this_target = true` (l.755–760): no link, nothing logged.
+  3. `si_flags[si.id].was_handled = true` is still set (l.822), although nothing was linked.
+  4. The level bar opens its stream with `PA_STREAM_DONT_MOVE` (GNOME Settings 46.7 `panels/sound/cc-level-bar.c:197`), which pipewire-pulse makes "don't reconnect"; at the next rescan "dont-reconnect and was already linked" drops the target (l.766–768), and the stream is told "target not found" and destroyed (l.789–816).
+  5. GNOME Settings does not retry: the level bar sets no state or failure callback (`cc-level-bar.c:187-188`); it re-attaches only when the default source changes again (`cc-sound-panel.c:151-169`, `191-209`), which after a switch to A2DP it does not.
+  The opposite switch works because the new target is the Bluetooth source, which the patch lets through; the hand pick works because no Bluetooth removal falls in its 2 s.
+  **[inference]** Any stream opened with "don't move" to a non-Bluetooth device within 2 s of a Bluetooth node's removal is lost the same way (other level meters, some recorders).
+
+  **Owner:** Ubuntu's WirePlumber package (`d/p/lp-2122640-bluetooth-audio-glitch.patch`, Antoine Lassagne, 2025-09-11; LP #2122640, Fix Released for Noble). Upstream WirePlumber is not affected: its master (`src/scripts/linking/rescan.lua`) only pauses the rescan triggers and never marks an unlinked stream as handled [read in master; MR 655, which the patch is said to rewrite, could not be fetched].
+
+  **Impact:** the panel names a working microphone as the input and shows no signal from it, so a user concludes that the microphone is broken. Whether an application recording at that moment gets the laptop's microphone was not tested.
+
+  **Patch candidate (an Ubuntu SRU):** set `was_handled` only when a link was made:
+  ```lua
+  if skip_this_target == false then
+    createLink (si, si_target, can_passthrough, exclusive)
+    si_flags[si.id].was_handled = true
+  end
+  ```
+  so that the rescan at the end of the 2 s links the meter [inference, not run]. Optional, GNOME side: the level bar could retry when its stream fails (unchanged on gnome-control-center main).
+
+  **Upstream check, 2026-10-24:** Noble has nothing newer than 0.4.17-1ubuntu4.1; LP #2122640's comments report no such regression; no Launchpad or GNOME report matches. Related, not the same: gnome-control-center #1550 (the panel not refreshed when devices change elsewhere), WirePlumber #682 (a 0.5.4 crash at a profile switch).
+
+  **Again, 2026-10-26 [operator]:** Hands-free → Headset with the Shure's microphone as the input: the meter froze at the level it showed at the switch (05:34:04, 05:36:16). At 05:32:25 the input was already the internal microphone before the switch, and the meter kept working. This agrees with the traced cause: only a meter stream attached to the Bluetooth source is destroyed when that source goes. Not yet read in the journal for these times.
+
+  **Next:** a test on the laptop (the patched line in a user override of `policy-node.lua`, then the Hands-free → A2DP switch; the operator's decision); whether a recording application loses its stream the same way; then a Launchpad report with the patch, the operator's.
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-mic-meter-and-vgm/` (`audio-policy-0755-0812.txt`, `atspi-0755-0812.txt`, the user and bluetoothd journals 07:55–08:12, `SHA256SUMS`; saved by `tmp/incident-20261024-shure-mic/save.sh`; real addresses inside).
+
+- **U20 — the Shure AONIC 50's microphone ignores the input volume in Hands-free** *(observed by the operator, the commands confirmed in the HCI capture, 2026-10-24; PipeWire 1.0.5; the headset's behaviour inferred)*. Related to `U15` (the MOMENTUM 4's microphone gain of 0 at connect): the same hardware-volume path.
+
+  **What happened:**
+  - **[operator]** In Hands-free the Input volume slider of the Shure was moved over its whole range; the level meter showed "exactly the same" whatever the level. At 0 the panel showed the muted sign; unmuting brought the meter back.
+  - **[log]** `node[Shure AONIC 50 Audio/Source] volume` 0.87 → 0.36 → 1.0 → 0.07 → 1.0 → 0.0 → 0.25, 08:04:05–08:04:43 (`journalctl -u bt-audio-policy`).
+  - **[capture] Every move went to the headset as hardware gain:** `+VGM: 13` with the link setup (08:03:51.928), then `+VGM: 12` … `5` (08:04:05.27–.67), `6` … `15` (08:04:08.50–.71), `14` … `1` (08:04:16.57–17.06), `2` … `15` (08:04:24.96–25.09), `14` … `0` (08:04:27.89–28.06), `4` (08:04:43.00) (`scripts/capture-window.sh … 'VGM|VGS|…'`).
+  - **[capture] The headset asks for it:** at the service level connection, 06:32:03.463558, the Shure sent `AT+BRSF=955` (binary `11 1011 1011`: bit 4, "remote volume control", is set) and `AT+VGM=15` at .719573.
+  - **[inference]** PipeWire applies no software gain when the headset takes the gain, so the meter shows what the headset sends; with the gain from 15 to 0 the meter did not change, so the Shure does not apply `+VGM` to its microphone. Not ruled out: an automatic gain in the headset that hides it.
+
+  **Owners:** the headset's firmware (it announces remote volume control and ignores the microphone gain); on the laptop, PipeWire's per-device quirk table (`bluez-hardware.conf`) is the place for such a headset (software gain for the Handsfree source). Under PipeWire's rules a report or entry is the operator's to write.
+
+  **Workaround:** set the recording level in the application.
+
+  **Upstream check, 2026-10-24: no quirk entry for this headset, no report found.**
+  - **[source] PipeWire 1.0.5** (master `73974598f` the same logic): `AT+BRSF` bit 4 sets `has_volume` for speaker and microphone together (`spa/plugins/bluez5/backend-native.c:793`; master l.1124); the headset's own `AT+VGM=n` makes the microphone gain active (l.1047–1063 → 401–403), unless the device has the quirk that clears `hw-volume-mic` (`broken_mic_hw_volume`, l.1049, set at l.2271–2277, which logs "microphone HW volume disabled by quirk"); a slider move becomes `+VGM: n` (l.1887–1908, 1854–1885); with the gain active the software volume of the mono source is 1.0 (`bluez5-device.c:2363–2369`).
+  - **[log]** WirePlumber at the connect (06:32:01–03): `device quirks:00000000`, `hw-volume-profiles:000000fc` (Handsfree included); no "disabled by quirk" line (`scripts/user-journal.sh --since "2026-10-24 06:31:50" --until "2026-10-24 06:32:15" -g "quirks:|hw-volume-profiles|AT\+VGM|disabled by quirk"`).
+  - **The table:** the installed `/usr/share/spa-0.2/bluez5/bluez-hardware.conf` has one `hw-volume-mic` entry, `{ name = "Air 1 Plus", no-features = [ hw-volume-mic ] },` (l.30), none for Shure or `00:0e:dd`; master the same. That entry came with `9d38d375d` (2021): "Some headsets emit AT+VGM even though +VGM commands do not actually adjust the recording volume" — this case.
+  - **Trackers (PipeWire GitLab, read only):** no issue names the AONIC 50; #678 (open, "Adjusting Bluetooth microphone hardware volume": "on none of the headsets does the VGM value actually affect the volume of the recorded audio") is the same class, where the quirk came from.
+  - **Candidate entry** (the operator's to submit, under PipeWire's rules): `{ name = "Shure AONIC 50", no-features = [ hw-volume-mic ] },` — matched on the BlueZ `Name`; with it the slider becomes software gain [inference from the code, not run]. A local test is possible through WirePlumber 0.4.17's `bluez5.hardware-database` property, which replaces the whole table (the copy must keep the adapter section: this laptop's adapter has quirk `00000004`). The test would also rule out an automatic gain in the headset.
+  - **Speaker side:** the Shure also reported `AT+VGS=06`, so the Handsfree output volume is hardware volume too; whether it honours `+VGS` needs a listening test.
+
+  **Evidence:** as `U19` (`capture-vgm-0803-0804.txt`, `capture-slc-063203.txt`, `audio-policy-0755-0812.txt`).
+
+- **U29 — a headset that no longer accepts the laptop's key: Connect fails as "br-connection-unknown"; after Forget, setting it up outside pairing mode fails, and GNOME says nothing** *(observed by the operator 2026-11-07 about 11:16–11:19; read in the bluetoothd journal, the desktop journal, the HCI capture and the source; the MOMENTUM 4; BlueZ 5.72, GNOME Settings 46.7, gnome-bluetooth 46.0)*. The GNOME half is `U13`'s silent failure, now found in source.
+
+  **What happened:**
+  - **[operator]** The MOMENTUM 4 was listed in the Bluetooth panel as "Not set up"; clicking it changed nothing, and it seemed the headset was not in pairing mode. Switched off, it stayed listed. Switched on in pairing mode, it connected and played the test sound.
+  - **[operator, asked 2026-11-07]** Whether the headset was paired with another device or reset between 11-04 and 11-06, and whether the operator clicked Forget at 09:41: **not remembered; both unknown for good.** The Lenovo earbuds: switched off by the operator within about a minute before the pairing attempts (the exact time not remembered). **[log]** This matches: the earbuds' link was ended from their side at 11:17:02.19 (`dev_disconnected() … reason 3`), exactly 60 s before the first click (11:18:02.48), and bluetoothd logged nothing more from them (its last line in the collection is 11:21:42; collected 11:32). Unrelated to the headset's failure.
+  - **[log] The headset dropped the laptop's key between 11-04 and 11-06.** The last link that worked: A2DP connected 2026-11-04 08:08:42, ended by the headset 13:05:58. The next contact, 2026-11-06 15:52:47: `bonding_attempt_complete() … status 0x5`, and so at every connect after it. The laptop's key did not change (no `new_link_key_callback()` for the headset since 2026-10-20). In between the laptop was off (11-04 13:53 → 11-05 19:33), then without Bluetooth for a whole boot (`BT-16`, to 11-06 15:47). Why the headset dropped the key is not known.
+  - **[capture] The refusal:** 2026-11-07 09:38:54.099 Link Key Request → Link Key Request Reply (the stored key) → 09:38:54.162 `Auth Complete` "Authentication Failure (0x05)"; again at .272 → .337.
+  - **[log] What the user was told:** 09:38:53, 09:40:12 and 09:41:21, Connect from the desktop (`connect_profiles() … (all), client :1.87`): Hands-free "Connection refused (111)", A2DP `-11`; GNOME Shell 09:41:21.772 `Failed to connect device "MOMENTUM 4": GDBus.Error:org.bluez.Error.Failed: br-connection-unknown`. **[inference]** The name comes from A2DP's `-11` (EAGAIN), the last profile to fail, which `btd_error_bredr_conn_from_errno()` has no case for (5.72 `src/error.c`, `default:`); the authentication failure itself is not passed on. **[log + source] Traced 2026-11-07** (an outside reviewer found the upstream fix; checked here, `reviews/2026-11-07T1341Z-u29-source-investigation-reviewer-2-verbatim.md`): AVDTP's socket got `ECONNREFUSED` at every attempt (`avdtp_connect_cb() connect to <headset>: Connection refused (111)`, 09:38:54.442, 09:39:38.40, 09:40:13.83, 09:41:21.77; once `ECONNRESET`, 09:40:27). The kernel chose it: `l2cap_security_cfm()` arms the 100 ms `L2CAP_DISC_TIMEOUT` for a `BT_CONNECT` channel whose security failed, and `l2cap_chan_timeout()` closes it with `ECONNREFUSED` (`7.0.0-42` `l2cap_core.c:7697-7701`, l.430-432; Auth Complete failure 09:38:54.337, refusal .442). A2DP's `error_to_errno()` (running tree `profiles/audio/a2dp.c:307-317`) turns it into `-EAGAIN`. **Fixed upstream by `a6ac17f0e393`** ("a2dp: Fix connection error message", Frédéric Danis, 2024-08-21, first in 5.78; one `case ECONNREFUSED:`), whose message describes this case (a peer that removed the pairing, HFP and A2DP both supported); with it the reply would be `br-connection-refused`. A backport candidate for 5.72; it still would not say "key".
+  - **[log] The headset was removed from the laptop at 09:41:42.75:** `btd_device_set_temporary() temporary 1`, removal from the accept list, then at the disconnect (09:41:44.81) "Removing temporary device" and `Unpair Device` (mgmt `0x001b`). That is BlueZ's `RemoveDevice` path. The Bluetooth panel was open 09:41:26–09:41:46 (`app-gnome-gnome\x2dbluetooth\x2dpanel-475925.scope`). **[inference]** A Forget in the panel; who clicked it is not recorded.
+  - **[capture] 11:16:09, the headset connected by itself:** Accept Connection Request (.509), three Link Key Requests (11:16:11.018, 12.620, 13.818), each answered with a Negative Reply (the laptop has no key now). No IO Capability exchange followed; the headset disconnected at 11:16:14.275, "Remote User Terminated Connection (0x13)". That connection created the device in BlueZ (`device_create()` 11:16:10.138), unpaired, which is the "Not set up" row.
+  - **[capture] 11:18:02 – 11:18:51, ten clicks, ten refusals:** each `Pair Device` paged the headset, sent Authentication Requested, gave a Negative Reply to the Link Key Request, and answered the IO Capability Request ("DisplayYesNo", "Dedicated Bonding - MITM required"). About 50 ms later the headset ended it: `Simple Pairing Complete` and `Auth Complete` "Pairing Not Allowed (0x18)" (first at 11:18:03.132). BlueZ: `pair_device_complete() Rejected (0x0b)`; GNOME Settings: `Setting up /org/bluez/hci0/dev_… failed: GDBus.Error:org.bluez.Error.AuthenticationRejected: Authentication Rejected`, ten times, nothing on screen.
+  - **[log] 11:18:57.36, the click with the headset in pairing mode:** new key 11:18:58.578, `pair_device_complete() Success`, A2DP streaming 11:19:03, GNOME Settings' test sound 11:19:07.
+
+  **The operator's two impressions, checked 2026-11-07** (`PRESENCE.md` in the evidence folder):
+  - **"Not in pairing mode, so it should not be offered": supported by the capture.** Until 11:18:52 the headset was not discoverable: its LE advertisements carry flags `0x18`, with neither discoverable bit, and it answered none of nine BR/EDR inquiry rounds (11:16:16 – 11:18:39). At 11:18:52 it answered one with its full service list (pairing mode). BlueZ made no row from those advertisements (5.72 `src/adapter.c` `device_is_discoverable()`; the first one, 11:16:06.81, created nothing). The row came from the headset's own connection at 11:16:09. **[source]** After that, each non-discoverable advertisement kept the row: `btd_adapter_device_found()` calls `device_update_last_seen()` for an existing device *before* the check that drops a non-discoverable report, and that restarts the 30 s temporary-device timer (`src/device.c`). So for three minutes the panel offered "Not set up" for a headset whose own broadcasts said it could not be set up, and every click failed. "It should be absent" is one possible remedy; another is telling the user to put it in pairing mode. Which one fits BlueZ and GNOME is not settled.
+  - **"Switched off, it stayed listed": true, and expected.** The headset was silent from 11:18:29.74 to 11:18:49.11 (19.4 s) while the laptop was scanning (8 reports from other devices, an inquiry round ended 11:18:39.74), which fits the switch-off. BlueZ drops an unpaired device 30 s after it was last seen (`TemporaryTimeout`, the default here), and the disconnect at 11:18:31.47 restarted that timer (`device_remove_connection()` → `device_update_last_seen()`), so the row could not have gone before about 11:19:01.5. The panel gives no sign that a row is based on an old sighting. Recorded as **doubtful as a defect**, so a repeat can be measured against it: a row still there more than 30 s after a switch-off, with the laptop scanning, would be one.
+
+  **[source] Why GNOME shows nothing:** gnome-bluetooth 46.0 `lib/bluetooth-settings-widget.c:944-951` (master `de5582b4`, l.934–941): a failed setup turns the row's spinner off; in the error branch the message is commented out (`//FIXME show an error?`), and only `g_warning()` is left. The `AuthenticationFailed` and `AuthenticationCanceled` branches are empty FIXMEs. `U13` (the Shure, refused over LE) goes through the same branch. **Ubuntu's package changes neither file** (read 2026-11-07: `46.0-1ubuntu1`, installed, carries two patches, both upstream backports, `de707f59` "lib: Don't trigger discovering if adapter is unpowered" in `lib/bluetooth-client.c` and its test `3d45205c` in `tests/integration-test.py`; the `.debian.tar.xz` from Launchpad, SHA-256 `4661cc83…` as in its `.dsc`, kept in `cache/gnome-bluetooth3-46.0-1ubuntu1/`).
+
+  **Not defects:** the headset refusing to pair outside pairing mode (as it should), and the laptop's Negative Reply after the Forget.
+
+  **Owners:** gnome-bluetooth (show the failure; for `AuthenticationRejected` the useful text is "put the device in pairing mode"); BlueZ (a Connect that fails because the peer rejects the stored key could say so: `src/error.c` already has a key-missing name for `EBADE`) [inference]. The kernel reports this rejection as `ECONNREFUSED`, the same as any refused channel, so a key-specific name would need the bonding status (master `00969bdb17ea` does that for `MGMT_STATUS_AUTH_FAILED` on another path; whether it reaches this one is not checked).
+
+  **Impact:** the panel never says that the headset no longer knows the laptop, or that it has to be put in pairing mode. The user sees "unknown" errors, then clicks that do nothing.
+
+  **Next:** a gnome-bluetooth report for the silent setup failure, covering `U13` and this case (the operator's); `a6ac17f0e393` as a 5.72 backport candidate (with an emulator test); the row-lifetime experiment under emulation (the reviewer's §7, item 1).
+
+  **Evidence:** sanitised from 11:15:30, `evidence/sessions/20261107-113143-momentum4-not-set-up/` (the headset is `AA:BB:CC:00:00:01`, the other headset `AA:BB:CC:00:00:07`). Raw: bluetoothd journal (`journalctl -o short-iso-precise _COMM=bluetoothd --since … --until … --grep …`, windows 2026-11-04 08:00 → 11-06 15:50, 11-06 15:50 → 11-07 09:38:50, 09:41:30 → 09:43:05), the desktop journal (`scripts/user-journal.sh --since "2026-11-07 09:41:00" --until "2026-11-07 09:41:50"`, and 11:15:30 → 11:19:10 with `-g 'gnome-shell|control-center|…'`), the captures `hci-20261106-165649` (09:38:53–09:38:55) and `hci-20261107-110649` (11:16:09–11:16:15, 11:18:02–11:18:06) read with `scripts/capture-window.sh`. Those decodes show the link key, so none is kept.
+
+---
+
+## X1 — Off-topic: an audio CD in Totem stops every 16 s (not Bluetooth)
+
+**Tag: off-topic** — outside this project's Bluetooth scope; registered because the operator met it
+on the laptop and it looks like a defect of Ubuntu 24.04's standard CD playback chain. Off-topic
+issues take the prefix `X`; they get the same evidence rules but no contribution work unless the
+operator asks.
+
+| | |
+|---|---|
+| Seen | 2026-11-02 19:36–19:37 (and earlier the same evening), the operator: "regular" interruptions, "impossible to listen" |
+| Setup | ASUS SDRW-08D2S-U external USB DVD writer (0e8d:1887, `usb-storage`); Totem 43.0-2ubuntu4 opened from Nautilus; the CD browsed through `gvfsd-cdda` (gvfs-backends 1.54.4-0ubuntu1~24.04.4); GStreamer 1.24.2; PipeWire 1.0.5; output a Bluetooth speaker (A2DP, SBC) |
+| Measured | four `UNDERFLOW`s on Totem's own playback stream, 16.32 / 15.62 / 16.34 s apart, at 14.8 / 31.1 / 46.7 / 63.0 s of audio; the stream's buffer target 0.11–0.16 s; no error on the Bluetooth output; the drive never runtime-suspended; no kernel read error during playback |
+| Ruled out | Bluetooth discovery (off in this run), the drive's USB autosuspend, kernel I/O errors |
+| Inferred | the disc is read in bursts and the drive idles between them; the next read arrives later than the tiny stream buffer can absorb; no layer (gvfsd-cdda, GIO, Totem/GStreamer, the stream) reads ahead enough. Which one should is not established |
+| Root cause (run 2, 19:52–19:55, traced) | **found, measured and from source:** `gvfsd-cdda` (gvfs 1.54.4, `gvfsbackendcdda.c:707`) answers each read with a synchronous `cdio_paranoia_read()`; when libcdio-paranoia's block of `CACHEMODEL_SECTORS` = 1,200 sectors (= 16.0 s of audio; `p_block.h:34`, `paranoia.c:2626`) is used up, that one read blocks while the next 16 s are read (48 reads × 25 sectors, 3.0–3.3 s with spin-up after a 13 s idle). Totem pulls through `giosrc` with no read-ahead, so its request blocks ~3 s and the 0.1 s stream buffer underflows: 11 of 11 underflows at the burst starts |
+| State | **root cause found** (gvfs CD backend + paranoia block size + no player-side buffering); not reported anywhere; upstream not yet searched |
+| Next | the same track through GStreamer's own CD source, bypassing gvfsd-cdda; a passive USB capture of the drive's reads during Totem playback; the same to the laptop's speakers. Workaround meanwhile: rip the CD to files and play those |
+| Evidence | [`evidence/off-topic/X1-cd-playback-underflow-every-16s.md`](../evidence/off-topic/X1-cd-playback-underflow-every-16s.md) (extraction command and exact output); recorder `tmp/cd-gaps/` (local) |
+| **Submitted 2026-11-07** | gvfs issue [#893](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/893), MR [!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368) (150-sector cache model). The invalid-track defect found on the way went as [#894](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/894) / [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369). Record: `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md`; current state: `docs/STATUS.md` |
+
+## X2 — Off-topic: gvfs cdda leaks a GError on four failure paths
+
+Found during the X1 reviews (R7, G19; `do_unmount` added 2026-11-07). Source only, gvfs master
+`2d30ce9b`: `g_vfs_job_failed_from_error()` takes a `const GError *` and stores a copy
+(`daemon/gvfsjob.c:272-281`), so a caller that does not free its own error leaks it.
+`daemon/gvfsbackendcdda.c` allocates with `g_error_new()` and never frees at
+`do_unmount` `:426-432` (busy, files open) and `do_query_info` `:917-919` ("No such file"),
+`:924-926` ("File doesn't exist"), `:931-933` (not an audio track). The other sites in the file
+free theirs (`:306-308`, `:320-322`, `:338-341`, `:351-354`, `:401-403`). !369 fixes the
+`do_open_for_read` site only. A few bytes per failed request; no user-visible effect.
+**State:** registered, not reported. **Fix:** `g_vfs_job_failed()` directly (no GError), as
+!369 does, or `g_error_free()` after each call; one small MR, after !368/!369 are answered.
+
+## X3 — Off-topic: gvfs cdda lists and describes tracks as if numbered from 1
+
+Found during the X1 reviews (H4, H26). Source, gvfs master `2d30ce9b`, `daemon/gvfsbackendcdda.c`:
+`do_enumerate` lists `Track n.wav` for `n = 1 … drive->tracks` (`:958`), a count, not the disc's
+track numbers; `do_query_info` refuses `track_num > drive->tracks` (`:922`); metadata is looked
+up as list element `track_num - 1` (`:854`), while `fetch_metadata` fills that list from the
+disc's first track (`:189-192`). On a disc whose tracks are numbered 2–4, the listing would show
+Track 1–3 (not 2–4), query_info would refuse Track 4, and Track 3's title and duration would
+come from track 4. Direct open of Track 4 works on master and after !369 (bounded by the real
+first/last numbers; MR 2's simulated-drive table). **Not seen on hardware:** no such disc here;
+inferred from source. **State:** registered, not reported. **Fix:** use
+`cdio_get_first_track_num()`/`cdio_get_last_track_num()` in enumerate and query_info and
+index metadata from the first track; a separate issue and MR.
+
+## X4 — Off-topic: gvfs cdda ignores a failed seek and returns another sector's audio
+
+Found during the X1 reviews (R7, F33). Source, gvfs master `2d30ce9b`,
+`daemon/gvfsbackendcdda.c:714`: `do_read` calls `cdio_paranoia_seek()` and discards its result,
+then sets `sector_cursor` and reads. R7's fault injection (a failing seek at sector 1801)
+returned job success with bytes of another sector (REVIEW-ACTIONS F33: "job error 0, matches
+sector 1801: 0"); reviewer-run, not repeated here. **State:** registered, not reported; not seen
+in normal use. **Fix:** treat a failed seek as a read error; check first what
+`cdio_paranoia_seek()` returns on failure in libcdio-paranoia (R7 notes that a successful seek
+returns the previous cursor), then a test like MR 2's simulated drive.
 
 ---
 

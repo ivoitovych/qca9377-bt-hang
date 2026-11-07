@@ -19,7 +19,7 @@ sent; its final form went out on 2026-10-18 as A1, in
 | v2 mail (moot — sent after v1 was applied) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204706.211385-1-yaroslav.voytovych@gmail.com/) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204711.211409-1-yaroslav.voytovych@gmail.com/) |
 | v2 patchwork (state *new*, nobody's hand on it) | [14836499](https://patchwork.kernel.org/project/bluetooth/patch/20260921204706.211385-1-yaroslav.voytovych@gmail.com/), series [1170690](https://patchwork.kernel.org/series/1170690/) | [14836500](https://patchwork.kernel.org/project/bluetooth/patch/20260921204711.211409-1-yaroslav.voytovych@gmail.com/), series [1170691](https://patchwork.kernel.org/series/1170691/) |
 | v2 bot result | does not apply (v1 already in tree); no PR | all PASS; [#2559](https://github.com/bluez/bluez/pull/2559) would add the guard twice; **closed unmerged by the bot 2026-10-07 00:04 UTC** as stale (open > 2 weeks) — expected: v1 is the applied commit |
-| first BlueZ release to carry them | the next tag after `5.87` (none cut as of 2026-09-22) | same |
+| first BlueZ release to carry them | **5.88** (tagged 2026-11-05; checked 2026-11-07, [`results/bluez-5.88-release-check-2026-11-07/`](../../results/bluez-5.88-release-check-2026-11-07/README.md)) | same |
 
 `lore` links open in a browser (its anti-bot page blocks `curl`); the kernel.org
 commit links serve the raw patch with `/patch/?id=`.
@@ -121,9 +121,9 @@ form** (A1, retitled "a2dp: Remove duplicate check in transport_cb"):
 | `mail-notes/` | the text below `---` in every mail |
 
 Both versions stay, with their as-sent forms. The v1s are what is in BlueZ master;
-the v2s are on the list with an open state and whatever the maintainer does with
-them — ignores, marks, or asks about — is answered from these files, not from
-memory. Nothing under `patches/bluez/` is deleted or renamed after a send.
+of the v2s, `0002` was applied as well on 2026-10-07 (`d84171e6c`, above; its duplicate
+check removed by `b79d4a887` on 2026-10-19) and `0001` stays on the list unapplied. Whatever
+the maintainer does with them is answered from these files, not from memory. Nothing under `patches/bluez/` is deleted or renamed after a send.
 
 ## Sent
 
@@ -259,7 +259,9 @@ of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
 
 ⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
 `g_main_loop_run`) is at neither patched site, occurred in a process that never
-took either guard path, and is **not** part of this submission.
+took either guard path, and is **not** part of this submission. Its mechanism was found on
+2026-10-29: a use-after-free in `a2dp_reconfig()`, present in BlueZ master. The fix is a
+separate contribution, CO-23 (`contributions/CO-23-one-off-events/`).
 
 ⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
 `setup->stream` is cleared while the setup is still on the `setups` list.

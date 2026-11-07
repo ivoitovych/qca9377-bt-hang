@@ -3,7 +3,7 @@
 # plain files, taken from the held branch without checking it out: everything
 # under patches/kernel/ (the patch, its README, the reviewer brief
 # REVIEW-TASK.md, the reproducer) and the exhibits the README cites.
-# Nothing is pushed anywhere; the operator hands the directory over privately.
+# Nothing is pushed anywhere; the operator hands the directory over.
 # The brief itself lives on the held branch, not here: it describes the
 # finding, and this public file must not (BRIEF §7).
 #

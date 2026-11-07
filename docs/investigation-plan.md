@@ -69,7 +69,7 @@ Each run is expected to cost a power cycle.
 Nothing has changed here and it is worth stating plainly: **there is no denominator.**
 `EX-018`'s "13 of 34 boots" is withdrawn — its journal has rotated out and neither we nor a
 reviewer can re-derive it. Every A/B/C/D comparison remains gated on A4, and A4 needs the
-machine, a deterministic reproducer, and a family willing to lose Bluetooth repeatedly.
+machine, a deterministic reproducer, and the laptop's users willing to lose Bluetooth repeatedly.
 
 **And it is now harder than the plan assumed**, because `EX-030`, `EX-031` and `EX-032`
 establish that at least four distinct failure modes present identically to an operator. A
@@ -505,7 +505,7 @@ kernel issues resets.
 
 Raised by the operator on 2026-08-16, immediately after `EX-026`: capturing an incident
 took roughly a dozen hand-written commands over several minutes, some of them stopping for
-permission prompts, while the fault window was live and the family was waiting for the
+permission prompts, while the fault window was live and the laptop's users were waiting for the
 machine.
 
 **Why this is an evidence problem and not an ergonomics one.** The cost falls entirely on
@@ -692,7 +692,7 @@ at the cost of someone remembering to say "I'm shutting down now".
 
 > For the cases when it is not me who shuts down.
 
-This is a family laptop. The person who closes the lid or holds the power button is
+The laptop is in daily use. The person who closes the lid or holds the power button is
 frequently not the person running the investigation, and a procedure that has to be
 recalled *by whoever happens to be at the keyboard* is not a control at all. The 90 s cost
 was accepted explicitly; the dependence on memory was not.

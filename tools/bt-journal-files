@@ -1,0 +1,116 @@
+#!/bin/bash
+# bt-journal-files — copy every CLOSED journal file off the ring, as it is.
+#
+#   bt-journal-files            copy the closed files not copied yet; verify each
+#   bt-journal-files --rotate   close the active files first (journalctl --rotate), then copy:
+#                               the shutdown run, so the last minutes are kept too
+#   bt-journal-files --status   what is copied and what is not; writes nothing
+#
+# WHY (2026-10-23). bt-backup-journal exports a boot only once it has ENDED, on the
+# premise that a live boot cannot rotate away. It can: the 10-19 boot lost its first
+# ~14 h while still running (journald's default SystemMaxFiles=100, one file every ~8
+# minutes under the Bluetooth debug logging), and the 10-06 boot lost its start to
+# SystemKeepFree. Both were gone before the boot ended, so the export never saw them.
+#
+# A journal file never changes once journald has closed it (`<name>@<seqnum-id>-<head
+# seqnum>-<head realtime>.journal`, or `*.journal~` for one closed uncleanly). So the
+# backup is a copy: no decoding, no boot boundaries, no prefix problem. Each copy is
+# zstd-compressed and verified by decompressing it and comparing the SHA-256 with the
+# source's before it is filed. `journalctl --file=<copy after zstd -d>` reads it back.
+#
+# Never deletes. Refuses to start below FREE_MIN_GB free, because journald deletes its
+# own oldest files when free space falls under SystemKeepFree (20G here): a backup that
+# pushed the disk under that line would cost the history it exists to keep.
+#
+# ⚠️ UNSANITISED: journal files carry MAC addresses and Wi-Fi BSSIDs. The archive lives
+# outside the repository and is never committed.
+
+set -uo pipefail
+export LC_ALL=C
+
+SRC_ROOT="${BT_JOURNAL_SRC:-/var/log/journal}"
+DEST_ROOT="${BT_JOURNAL_FILES_DIR:-/root/bt-journal-archive/files}"
+FREE_MIN_GB="${BT_JOURNAL_FILES_FREE_MIN_GB:-25}"
+BUDGET_GB="${BT_JOURNAL_FILES_BUDGET_GB:-30}"
+
+ROTATE=0; STATUS=0
+for a in "$@"; do
+	case "$a" in
+		--rotate) ROTATE=1 ;;
+		--status) STATUS=1 ;;
+		-h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+		*) echo "bt-journal-files: unknown option: $a" >&2; exit 2 ;;
+	esac
+done
+
+refuse() { echo "bt-journal-files: REFUSING — $*" >&2; exit 2; }
+
+command -v zstd >/dev/null 2>&1 || refuse "zstd not found"
+[[ -d "$SRC_ROOT" ]] || refuse "no journal directory at $SRC_ROOT"
+
+free_gb() { df -P --block-size=1G "$1" | awk 'NR==2 {print $4}'; }
+used_gb() { du -s --block-size=1G "$DEST_ROOT" 2>/dev/null | awk '{print $1+0}'; }
+
+if (( ROTATE && ! STATUS )); then
+	# Closing the active files is what makes the shutdown run complete. A failure here
+	# only means the newest minutes wait for the next boot's run, so it is reported,
+	# not fatal.
+	journalctl --rotate 2>&1 | sed 's/^/  rotate: /' || echo "  rotate: failed; copying what is closed"
+fi
+
+mkdir -p "$DEST_ROOT" || refuse "cannot create $DEST_ROOT"
+MAN="$DEST_ROOT/MANIFEST.tsv"
+[[ -e "$MAN" ]] || printf 'file\tbytes\tsha256\tzst_bytes\tcopied_at\n' > "$MAN"
+
+shopt -s nullglob
+have=0; new=0; copied=0; failed=0; vanished=0
+for dir in "$SRC_ROOT"/*/; do
+	mid=$(basename "$dir")
+	mkdir -p "$DEST_ROOT/$mid" || refuse "cannot create $DEST_ROOT/$mid"
+	for f in "$dir"*@*.journal "$dir"*.journal~; do
+		name=$(basename "$f")
+		out="$DEST_ROOT/$mid/$name.zst"
+		if [[ -e "$out" ]]; then have=$((have + 1)); continue; fi
+		new=$((new + 1))
+		(( STATUS )) && { echo "  not copied: $mid/$name"; continue; }
+
+		fg=$(free_gb "$DEST_ROOT")
+		(( fg >= FREE_MIN_GB )) || refuse "only ${fg} GB free (< ${FREE_MIN_GB}): copying more would push journald under SystemKeepFree; $copied copied this run"
+		ug=$(used_gb)
+		(( ug < BUDGET_GB )) || refuse "archive at ${ug} GB reached its ${BUDGET_GB} GB budget; nothing is deleted, the operator decides"
+
+		part="$out.partial"
+		rm -f "$part"
+		# The source can vanish mid-copy (journald vacuums the oldest file). That is a
+		# loss the next lines name; it is not a backup failure.
+		if ! src_sha=$(sha256sum < "$f" 2>/dev/null | awk '{print $1}') || [[ -z "$src_sha" ]] \
+			|| ! zstd -q -T0 -3 -c < "$f" > "$part" 2>/dev/null; then
+			rm -f "$part"
+			if [[ ! -e "$f" ]]; then
+				echo "  VANISHED before it was copied: $mid/$name"; vanished=$((vanished + 1))
+			else
+				echo "  FAILED to copy: $mid/$name"; failed=$((failed + 1))
+			fi
+			continue
+		fi
+		back_sha=$(zstd -dc < "$part" 2>/dev/null | sha256sum | awk '{print $1}')
+		if [[ "$back_sha" != "$src_sha" ]]; then
+			rm -f "$part"
+			echo "  FAILED verification (copy differs from source): $mid/$name"; failed=$((failed + 1))
+			continue
+		fi
+		mv "$part" "$out" || { rm -f "$part"; echo "  FAILED to file: $mid/$name"; failed=$((failed + 1)); continue; }
+		printf '%s/%s\t%s\t%s\t%s\t%s\n' "$mid" "$name" "$(stat -c %s "$f" 2>/dev/null || echo ?)" \
+			"$src_sha" "$(stat -c %s "$out")" "$(date --iso-8601=seconds)" >> "$MAN"
+		copied=$((copied + 1))
+	done
+done
+
+if (( STATUS )); then
+	printf 'bt-journal-files: %s closed file(s) copied, %s not yet; archive %s GB at %s\n' "$have" "$new" "$(used_gb)" "$DEST_ROOT"
+	exit 0
+fi
+printf 'bt-journal-files: %s copied now, %s already, %s failed, %s vanished; archive %s GB of %s at %s\n' \
+	"$copied" "$have" "$failed" "$vanished" "$(used_gb)" "$BUDGET_GB" "$DEST_ROOT"
+(( $(used_gb) * 100 >= BUDGET_GB * 80 )) && echo "  ⚠️ archive above 80% of its budget"
+(( failed == 0 ))

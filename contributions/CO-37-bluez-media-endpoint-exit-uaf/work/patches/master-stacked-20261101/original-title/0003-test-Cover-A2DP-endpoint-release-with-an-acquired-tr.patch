@@ -1,0 +1,346 @@
+From a1fe74a79e3779bd2ec42d0882961befbfe960a9 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 31 Oct 2026 23:08:18 +0100
+Subject: [PATCH BlueZ 3/3] test: Cover A2DP endpoint release with an acquired
+ transport
+
+Add a host plugin registering an A2DP Source endpoint through
+RegisterApplication, as sound servers do, and acquiring its transport,
+and two tests releasing the endpoint while the stream is locked: when
+the application leaves the bus, and when bluetoothd loses the bus and
+exits without powering the adapter off.
+
+Built with AddressSanitizer, bluetoothd reports a heap-use-after-free
+in media_endpoint_remove() in both without the first patch, and in
+clear_endpoint() on exit without the second.
+---
+ doc/functional-a2dp.rst      |  47 +++++++
+ test/functional/test_a2dp.py | 243 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 290 insertions(+)
+
+diff --git a/doc/functional-a2dp.rst b/doc/functional-a2dp.rst
+index 84b4c8251..98ec3a340 100644
+--- a/doc/functional-a2dp.rst
++++ b/doc/functional-a2dp.rst
+@@ -168,3 +168,50 @@ test_a2dp_reconfigure_during_close
+ 	central: completing the request freed its setup before
+ 	``a2dp_reconfig()`` set ``reconfigure`` on it, which
+ 	AddressSanitizer reports (`bootstrap-configure` enables it).
++
++test_a2dp_app_exit_with_acquired_transport
++------------------------------------------
++
++:Setup: As above, except that the A2DP Source endpoint of the central
++	is registered with ``org.bluez.Media1.RegisterApplication`` by a
++	host plugin on its own bus connection, as sound servers do, and the
++	central uses `bluetoothctl` only to pair and connect.
++
++:Steps:
++	1. Pair, trust and connect as above.
++	2. The plugin acquires the transport its endpoint is configured
++	   with, which locks the stream.
++	3. The plugin closes its bus connection, without unregistering the
++	   application or releasing the transport.
++	4. Stop `bluetoothd` on the central with ``SIGTERM``.
++
++:Expected:
++	1. ``Connection successful``, and ``SetConfiguration`` on the
++	   plugin's endpoint.
++	2. ``Acquire`` replies with a file descriptor.
++	3. The transport is removed (``[DEL] Transport``).
++	4. `bluetoothd` exits with status 0.
++
++:Notes: Regression test for a use-after-free in `bluetoothd`: the
++	endpoint, whose removal was deferred while its stream was locked,
++	still pointed to its freed application when the transport was
++	released.
++
++test_a2dp_exit_with_acquired_transport
++--------------------------------------
++
++:Setup: As ``test_a2dp_app_exit_with_acquired_transport``.
++
++:Steps:
++	1. Pair, trust, connect and acquire the transport as above.
++	2. Kill the system bus daemon of the central with ``SIGKILL``.
++
++:Expected: `bluetoothd` exits with status 0.
++
++:Notes: Regression test for a use-after-free in `bluetoothd` on exit.
++	Losing the bus makes `bluetoothd` exit without powering the adapter
++	off, so the stream is still locked when the endpoints are
++	released; with ``SIGTERM`` the adapter is powered off first and
++	this is not reached. Killing
++	the bus daemon also keeps it from announcing that the application
++	left, which would release the endpoint before `bluetoothd` exits.
+diff --git a/test/functional/test_a2dp.py b/test/functional/test_a2dp.py
+index 4ac61492b..e37234d60 100644
+--- a/test/functional/test_a2dp.py
++++ b/test/functional/test_a2dp.py
+@@ -5,8 +5,11 @@ Tests for A2DP using bluetoothctl in VM instances
+ """
+ 
+ import logging
++import os
+ import signal
+ 
++import dbus
++import dbus.service
+ import pytest
+ 
+ from pytest_bluezenv import (
+@@ -14,7 +17,9 @@ from pytest_bluezenv import (
+     HostPlugin,
+     Pexpect,
+     find_exe,
++    get_dbus,
+     host_config,
++    mainloop_wrap,
+     wait_until,
+ )
+ from pytest_bluezenv.utils import bluez_src_dir
+@@ -297,3 +302,241 @@ def test_a2dp_reconfigure_during_close(a2dp_hosts):
+     source.send(f"connect {host1.bdaddr}\n")
+     source.expect(TRANSPORT_RE)
+     source.expect("Connection successful")
++
++
++MEDIA_INTERFACE = "org.bluez.Media1"
++MEDIA_ENDPOINT_INTERFACE = "org.bluez.MediaEndpoint1"
++MEDIA_TRANSPORT_INTERFACE = "org.bluez.MediaTransport1"
++OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
++
++MEDIA_APP_PATH = "/test/media_app"
++
++# SBC: all channel modes, frequencies, block lengths and subbands,
++# bitpool 2 to 64
++SBC_CAPABILITIES = [0xFF, 0xFF, 2, 64]
++
++# SBC: joint stereo, 44.1 kHz, 16 blocks, 8 subbands, loudness,
++# bitpool 2 to 32
++SBC_CONFIGURATION = [0x21, 0x15, 2, 32]
++
++
++class MediaEndpoint(dbus.service.Object):
++    """
++    org.bluez.MediaEndpoint1 accepting any configuration, with SBC
++    """
++
++    def __init__(self, bus, path, owner):
++        self.owner = owner
++        self.path = dbus.ObjectPath(path)
++        super().__init__(bus, path)
++
++    def properties(self):
++        return {
++            "UUID": dbus.String(A2DP_SOURCE_UUID),
++            "Codec": dbus.Byte(0x00),
++            "Capabilities": dbus.Array(SBC_CAPABILITIES, signature="y"),
++        }
++
++    @dbus.service.method(
++        MEDIA_ENDPOINT_INTERFACE, in_signature="ay", out_signature="ay"
++    )
++    def SelectConfiguration(self, capabilities):
++        return dbus.Array(SBC_CONFIGURATION, signature="y")
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE, in_signature="oa{sv}")
++    def SetConfiguration(self, transport, properties):
++        self.owner.transport = str(transport)
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE, in_signature="o")
++    def ClearConfiguration(self, transport):
++        pass
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE)
++    def Release(self):
++        pass
++
++
++class MediaApplication(dbus.service.Object):
++    """
++    Object manager exposing the endpoints to RegisterApplication
++    """
++
++    def __init__(self, bus, path, endpoint):
++        self.endpoint = endpoint
++        super().__init__(bus, path)
++
++    @dbus.service.method(OBJECT_MANAGER_INTERFACE, out_signature="a{oa{sa{sv}}}")
++    def GetManagedObjects(self):
++        return {
++            self.endpoint.path: {MEDIA_ENDPOINT_INTERFACE: self.endpoint.properties()}
++        }
++
++
++class MediaApp(HostPlugin):
++    """
++    Host plugin registering an A2DP Source endpoint with SBC through
++    org.bluez.Media1.RegisterApplication, as sound servers do, and
++    acquiring the transport it is configured with.
++    """
++
++    name = "media_app"
++    depends = [Bluetoothd()]
++
++    def setup(self, impl):
++        self.transport = None
++        self.fd = None
++        self.result = None
++
++        self._register()
++        wait_until(lambda: self.result is not None)
++        if self.result is not True:
++            raise RuntimeError(f"RegisterApplication: {self.result}")
++
++    def teardown(self):
++        if self.fd is not None:
++            os.close(self.fd)
++
++    def _done(self, *a):
++        self.result = True
++
++    def _error(self, err):
++        self.result = str(err)
++
++    @mainloop_wrap
++    def _register(self):
++        self.bus = get_dbus(private=True)
++        self.endpoint = MediaEndpoint(self.bus, MEDIA_APP_PATH + "/ep0", self)
++        self.app = MediaApplication(self.bus, MEDIA_APP_PATH, self.endpoint)
++
++        media = dbus.Interface(
++            self.bus.get_object("org.bluez", "/org/bluez/hci0"), MEDIA_INTERFACE
++        )
++        media.RegisterApplication(
++            dbus.ObjectPath(MEDIA_APP_PATH),
++            dbus.Dictionary({}, signature="sv"),
++            reply_handler=self._done,
++            error_handler=self._error,
++        )
++
++    def get_transport(self):
++        return self.transport
++
++    def acquire(self):
++        """
++        Acquire the transport, and return True or the error
++        """
++        self.result = None
++        self._acquire()
++        wait_until(lambda: self.result is not None)
++        return self.result
++
++    def _acquired(self, fd, imtu, omtu):
++        self.fd = fd.take()
++        self.result = True
++
++    @mainloop_wrap
++    def _acquire(self):
++        transport = dbus.Interface(
++            self.bus.get_object("org.bluez", self.transport),
++            MEDIA_TRANSPORT_INTERFACE,
++        )
++        transport.Acquire(reply_handler=self._acquired, error_handler=self._error)
++
++    @mainloop_wrap
++    def exit(self):
++        """
++        Leave the bus without unregistering or releasing anything, as the
++        sound server does when it exits or crashes
++        """
++        self.bus.close()
++
++
++def find_pid(comm):
++    for pid in os.listdir("/proc"):
++        if not pid.isdigit():
++            continue
++
++        try:
++            with open(f"/proc/{pid}/comm") as f:
++                if f.read().strip() == comm:
++                    return int(pid)
++        except OSError:
++            continue
++
++    return None
++
++
++def stop_bluetoothd(how):
++    """
++    Make the bluetoothd of the host this runs on exit, and return its
++    exit code: with SIGTERM, or by killing the system bus daemon, so that
++    it exits as soon as it loses the bus, without powering off.
++    """
++    pid = find_pid("bluetoothd")
++
++    if how == "sigterm":
++        os.kill(pid, signal.SIGTERM)
++    else:
++        os.kill(find_pid("dbus-daemon"), signal.SIGKILL)
++
++    _, status = os.waitpid(pid, 0)
++
++    if how != "sigterm":
++        # Remove the socket left behind, or the bus daemon of the next
++        # test on this host is taken as ready before it listens
++        address = os.environ["DBUS_SYSTEM_BUS_ADDRESS"]
++        os.unlink(address.removeprefix("unix:path="))
++
++    return os.waitstatus_to_exitcode(status)
++
++
++media_app_host_config = host_config(
++    [Bluetoothd(), Pexpect(), MediaApp()],
++    [Bluetoothd(), Pexpect()],
++)
++
++
++def acquire_media_app_transport(host0, host1):
++    """
++    Connect A2DP from the media application of host0 to the bluetoothctl
++    endpoint of host1, and acquire the transport, which locks the stream.
++    """
++    source = host0.pexpect.spawn([find_exe("client", "bluetoothctl")])
++    source.send("power on\n")
++    source.expect("Changing power on succeeded")
++
++    sink = start_bluetoothctl(host1, "a2dp-sink-sbc.bt")
++
++    pair(host0, source, host1, sink)
++
++    source.send(f"connect {host1.bdaddr}\n")
++    source.expect("Connection successful")
++
++    wait_until(lambda: host0.media_app.get_transport() is not None)
++    assert host0.media_app.acquire() is True
++
++    return source, sink
++
++
++@media_app_host_config
++def test_a2dp_app_exit_with_acquired_transport(hosts):
++    host0, host1 = hosts
++
++    source, sink = acquire_media_app_transport(host0, host1)
++    transport = host0.media_app.get_transport()
++
++    host0.media_app.exit()
++
++    # The endpoint is released, and its transport with it
++    source.expect(rf"DEL\S*\] Transport {transport}")
++
++    assert host0.call(stop_bluetoothd, "sigterm") == 0
++
++
++@media_app_host_config
++def test_a2dp_exit_with_acquired_transport(hosts):
++    host0, host1 = hosts
++
++    acquire_media_app_transport(host0, host1)
++
++    assert host0.call(stop_bluetoothd, "bus") == 0
+-- 
+2.43.0
+

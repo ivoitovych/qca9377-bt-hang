@@ -1,0 +1,33 @@
+From 0da10f03ad27d5f1822ac1a15fcc8de9faead595 Mon Sep 17 00:00:00 2001
+From: Automeris naranja <<email>>
+Date: Fri, 24 May 2024 20:37:58 -0300
+Subject: [PATCH] sound: Don't show "No Input Devices" if an input device is
+ present
+
+In [1], the "input_no_devices_group" group, which contains the
+"No Input Devices" row, was incorrectly set as visible even if
+cc_device_combo_box_get_device returns an input device.
+
+[1] https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/bf6f72278e5b6168ab13b774d4e20ca2cc3fadee#70e2cb14ab74f7db514bb2315ba0112a97aee1b8_208_196
+
+Closes https://gitlab.gnome.org/GNOME/gnome-control-center/-/issues/3070
+---
+ panels/sound/cc-sound-panel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
+index bf8228a07..93abf3cb6 100644
+--- a/panels/sound/cc-sound-panel.c
++++ b/panels/sound/cc-sound-panel.c
+@@ -193,7 +193,7 @@ input_device_update_cb (CcSoundPanel *self,
+   device = cc_device_combo_box_get_device (self->input_device_combo_box);
+ 
+   gtk_widget_set_visible (GTK_WIDGET (self->input_group), device != NULL);
+-  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device != NULL);
++  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device == NULL);
+ 
+   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);
+   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->input_profile_combo_box) > 1);
+-- 
+2.43.0
+

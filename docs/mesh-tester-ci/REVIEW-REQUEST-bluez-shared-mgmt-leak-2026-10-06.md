@@ -33,7 +33,7 @@ The patch, exactly as it would be sent (identical to the file `git send-email` w
 
 ## The evidence
 
-Private validation record,
+Validation record,
 [`docs/mesh-tester-ci/validation-2026-10-05.md`](validation-2026-10-05.md), sections:
 
 * **B1** — the standalone branch and the exact commit tested;

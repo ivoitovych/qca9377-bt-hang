@@ -1,0 +1,13 @@
+2026-11-01 research-policy: CO-08, CO-15, CO-16, CO-24 (research only; nothing sent)
+- read: STATUS U rows, issues.md U3/U5/U9/U10/U11, contributions README rows, CO-08 dossier, patches/wireplumber draft, tooling-index
+- trees used read-only: pipewire-upstream origin/master 4cfc471123a0 (2026-10-30), tag 1.0.5; wireplumber-upstream origin/master 4ab992fa2931 (= 0.5.19, 2026-10-30), tag 0.4.17; bluez-upstream origin/master 14bd6ab65f4a (2026-10-29); libgnome-volume-control-91f3f414; gnome-control-center-46.7
+- CO-08: archive/bt-trace has NO bt-20261011-* capture (manifest: 10-10..10-17 absent); the U10 window is in archive/hci-capture/hci-20261010-230942 + hci-20261011-004736 (sha256 verified after decompression into the session scratchpad, not kept here: real addresses)
+- CO-08: scripts/sbc-channel-levels.py written (per-channel scale-factor split); SBC-XQ test sounds were left-only then right-only
+- GitLab API: notes endpoint answers 401 anonymously; scripts/gitlab.py falls back to the public discussions.json
+- background: journal reads (WirePlumber profile switches; bluetoothd policy lines); lore linux-bluetooth epoch 0 full clone into cache/ (server ignores --filter)
+- lore Atom search works with our user agent (web/lore-q-*.atom); the full clone finished too (cache/lore-linux-bluetooth-0.git, newest 2026-10-31)
+- CO-16: archived boots show policy disconnect reason 21 (raw HCI 0x15) at soft blocks, 2026-08-12 to 2026-10-11; kernel c1cec2bbbeb5 translates it to 3 (in Ubuntu -38/-42, not -31/-34)
+- CO-16: BlueZ #294 closed by the stale bot; the maintainer had proposed an opt-in ReconnectStartup
+- CO-15: no new-device-default option in WirePlumber 0.5.19; PipeWire module-switch-on-connect with a blocklist is the configuration route
+- CO-24: answered from source (highest-priority headset profile = mSBC on 1.0.5); no device test needed
+- notes/CO-08.md, CO-15.md, CO-16.md, CO-24.md written; nothing sent, posted or filed

@@ -1,0 +1,118 @@
+From 3d9900eb754d277ef6abf21bed827cdc9e79ddb4 Mon Sep 17 00:00:00 2001
+From: Arkadiusz Bokowy <arkadiusz.bokowy@gmail.com>
+Date: Tue, 8 Oct 2024 22:09:26 +0200
+Subject: [PATCH] transport: Delay existence based on delay reporting
+ capability
+
+In case when the existence of the delay property is based on its value
+not being zero it is not possible to read the delay if sink sets it to
+zero on purpose (or it was not updated by the sink at all). However,
+client might expect it to be readable, if SEP reports delay reporting
+as available.
+
+Instead of checking the value, we should check the capabilities of
+the AVDTP stream. Also, by doing that we can allow this property to
+be writable in the future - the exists() callback is used in the
+properties_set() function as well.
+---
+ profiles/audio/avdtp.c     |  4 ++++
+ profiles/audio/avdtp.h     |  1 +
+ profiles/audio/transport.c | 27 ++++++++++++++++++++-------
+ 3 files changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/profiles/audio/avdtp.c b/profiles/audio/avdtp.c
+index 448ee2730..289b40827 100644
+--- a/profiles/audio/avdtp.c
++++ b/profiles/audio/avdtp.c
+@@ -3203,6 +3203,10 @@ gboolean avdtp_stream_has_capabilities(struct avdtp_stream *stream,
+ 	return TRUE;
+ }
+ 
++gboolean avdtp_stream_has_delay_reporting(struct avdtp_stream *stream) {
++	return stream->delay_reporting;
++}
++
+ struct avdtp_remote_sep *avdtp_stream_get_remote_sep(
+ 						struct avdtp_stream *stream)
+ {
+diff --git a/profiles/audio/avdtp.h b/profiles/audio/avdtp.h
+index 102a2603e..500b814ac 100644
+--- a/profiles/audio/avdtp.h
++++ b/profiles/audio/avdtp.h
+@@ -252,6 +252,7 @@ struct avdtp_service_capability *avdtp_stream_get_codec(
+ 						struct avdtp_stream *stream);
+ gboolean avdtp_stream_has_capabilities(struct avdtp_stream *stream,
+ 					GSList *caps);
++gboolean avdtp_stream_has_delay_reporting(struct avdtp_stream *stream);
+ struct avdtp_remote_sep *avdtp_stream_get_remote_sep(
+ 						struct avdtp_stream *stream);
+ 
+diff --git a/profiles/audio/transport.c b/profiles/audio/transport.c
+index 6b6365289..68192bae6 100644
+--- a/profiles/audio/transport.c
++++ b/profiles/audio/transport.c
+@@ -379,13 +379,22 @@ static gboolean media_transport_set_fd(struct media_transport *transport,
+ 	return TRUE;
+ }
+ 
++static void *transport_a2dp_get_stream(struct media_transport *transport)
++{
++	struct a2dp_sep *sep = media_endpoint_get_sep(transport->endpoint);
++
++	if (!sep)
++		return NULL;
++
++	return a2dp_sep_get_stream(sep);
++}
++
+ static void a2dp_resume_complete(struct avdtp *session, int err,
+ 							void *user_data)
+ {
+ 	struct media_owner *owner = user_data;
+ 	struct media_request *req = owner->pending;
+ 	struct media_transport *transport = owner->transport;
+-	struct a2dp_sep *sep = media_endpoint_get_sep(transport->endpoint);
+ 	struct avdtp_stream *stream;
+ 	int fd;
+ 	uint16_t imtu, omtu;
+@@ -396,7 +405,7 @@ static void a2dp_resume_complete(struct avdtp *session, int err,
+ 	if (err)
+ 		goto fail;
+ 
+-	stream = a2dp_sep_get_stream(sep);
++	stream = transport_a2dp_get_stream(transport);
+ 	if (stream == NULL)
+ 		goto fail;
+ 
+@@ -854,9 +863,13 @@ static gboolean delay_reporting_exists(const GDBusPropertyTable *property,
+ 							void *data)
+ {
+ 	struct media_transport *transport = data;
+-	struct a2dp_transport *a2dp = transport->data;
++	struct avdtp_stream *stream;
++
++	stream = media_transport_get_stream(transport);
++	if (stream == NULL)
++		return FALSE;
+ 
+-	return a2dp->delay != 0;
++	return avdtp_stream_has_delay_reporting(stream);
+ }
+ 
+ static gboolean get_delay_reporting(const GDBusPropertyTable *property,
+@@ -2055,9 +2068,9 @@ static void *transport_asha_init(struct media_transport *transport, void *data)
+ #define A2DP_OPS(_uuid, _init, _set_volume, _destroy) \
+ 	TRANSPORT_OPS(_uuid, transport_a2dp_properties, NULL, NULL, _init, \
+ 			transport_a2dp_resume, transport_a2dp_suspend, \
+-			transport_a2dp_cancel, NULL, NULL, \
+-			transport_a2dp_get_volume, _set_volume, \
+-			_destroy)
++			transport_a2dp_cancel, NULL, \
++			transport_a2dp_get_stream, transport_a2dp_get_volume, \
++			_set_volume, _destroy)
+ 
+ #define BAP_OPS(_uuid, _props, _set_owner, _remove_owner) \
+ 	TRANSPORT_OPS(_uuid, _props, _set_owner, _remove_owner,\
+-- 
+2.43.0
+

@@ -1,0 +1,13 @@
+# LOCAL EXPERIMENT ONLY (CO-36 variant v2), not a proposed change; base PipeWire 4cfc471123a0e041fcd6fec5887c40dbddd40325
+--- a/spa/plugins/bluez5/backend-native.c
++++ b/spa/plugins/bluez5/backend-native.c
+@@ -3250,7 +3250,8 @@
+ 
+ 	volume_sync_stop_timer(rfcomm);
+ 
+-	if (rfcomm->transport) {
++	if (rfcomm->transport &&
++			rfcomm->transport->state == SPA_BT_TRANSPORT_STATE_ACTIVE) {
+ 		rfcomm_ag_set_volume(rfcomm->transport, SPA_BT_VOLUME_ID_TX);
+ 		rfcomm_ag_set_volume(rfcomm->transport, SPA_BT_VOLUME_ID_RX);
+ 	}

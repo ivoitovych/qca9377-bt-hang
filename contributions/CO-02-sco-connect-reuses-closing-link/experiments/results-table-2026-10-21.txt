@@ -1,0 +1,31 @@
+# results-table.sh 2026-10-21 04:42:45 UTC  (logs in /root/exp/qca9377-bt-hang/tmp/co02-w2/logs)
+
+## sco-tester -s Reconnect, 'During Disconnect' (the reproducer) and 'After Disconnect' (the control)
+kernel (guest)                     | During (reproducer)            | After (control)               
+base 1 UP                          | 0 passed, 5 failed of 5        | 5 passed, 0 failed of 5       
+base 4vcpu-UP                      | 0 passed, 5 failed of 5        | 5 passed, 0 failed of 5       
+fix1(refuse,pre-amend) 1           | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+fix1 4vcpu-UP                      | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+ser2(refuse+hold) 1                | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+ser2 4vcpu-UP                      | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+fix2(defer) 1                      | 3 passed, 0 failed of 3        | 3 passed, 0 failed of 3       
+fix2final(defer) 1                 | 3 passed, 0 failed of 3        | 3 passed, 0 failed of 3       
+series(Hitalo 6) 1                 | 0 passed, 5 failed of 5        | 5 passed, 0 failed of 5       
+seriesfix(series+refuse+hold) 1    | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+smp-base SMP4                      | 0 passed, 10 failed of 10      | 10 passed, 0 failed of 10     
+smp-ser2 SMP4                      | 10 passed, 0 failed of 10      | 10 passed, 0 failed of 10     
+smp-fix2 SMP4                      | 10 passed, 0 failed of 10      | 10 passed, 0 failed of 10     
+kcsan-base KCSAN-SMP4              | 0 passed, 5 failed of 5        | 5 passed, 0 failed of 5       
+kcsan-ser2 KCSAN-SMP4              | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+kcsan-fix2 KCSAN-SMP4              | 5 passed, 0 failed of 5        | 5 passed, 0 failed of 5       
+
+## experiment cases (tmp/co02-w2/bin/sco-tester-exp)
+kernel                             | Connect Twice              | Connect Twice ACL          | Reconnect During ... Retry
+base                               | 0 passed, 3 failed of 3    | 0 passed, 0 failed of 0    | 0 passed, 3 failed of 3   
+fix1(refuse)                       | 0 passed, 3 failed of 3    | 0 passed, 0 failed of 0    | 0 passed, 3 failed of 3   
+fix3(refuse+hold,pre-amend)        | 3 passed, 0 failed of 3    | 0 passed, 0 failed of 0    |                           
+ser2(refuse+hold)                  | 3 passed, 0 failed of 3    | 3 passed, 0 failed of 3    | 0 passed, 3 failed of 3   
+fix2(defer)                        | 0 passed, 0 failed of 0    | 0 passed, 0 failed of 0    | 3 passed, 0 failed of 3   
+smp-base                           | 0 passed, 3 failed of 3    | 0 passed, 3 failed of 3    | 0 passed, 3 failed of 3   
+smp-ser2                           | 3 passed, 0 failed of 3    | 3 passed, 0 failed of 3    | 0 passed, 3 failed of 3   
+smp-fix2                           | 0 passed, 3 failed of 3    | 0 passed, 3 failed of 3    | 3 passed, 0 failed of 3   

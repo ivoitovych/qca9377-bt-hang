@@ -59,8 +59,8 @@ the series:
 
 The bot does not report this check, and the mail does not list it. Nothing to do.
 
-The run logs, their SHA256SUMS and the four outside review rounds are on the project's private
-branch, kept with the rest of the mesh work; this directory records the facts.
+The run logs, their SHA256SUMS and the four outside review rounds are kept
+separately with the rest of the mesh work; this directory records the facts.
 
 ## How it was shaped
 

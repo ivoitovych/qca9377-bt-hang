@@ -1,7 +1,6 @@
 # Contribution roadmap (as of 2026-09-26)
 
-*Written on the private branch `plan/contributions` on 2026-09-26 and ported to `main` on
-2026-10-09 unchanged in substance; the current state of every item is `docs/STATUS.md`.*
+*Written on 2026-09-26 and kept separately until 2026-10-09, unchanged in substance; the current state of every item is `docs/STATUS.md`.*
 
 One row per defect this project has found or met: the upstream project, how the defect is
 known, whether current upstream already fixes it, and what the contribution would be.
@@ -23,7 +22,7 @@ PipeWire 1.0.5, WirePlumber 0.4.17, GNOME Settings 46.7.
 | MGMT | Flushed pending commands answered `0x00` instead of NOT_POWERED/INVALID_INDEX | Linux (mgmt) | [log] EX-044 | No | **Patch sent 2026-09-24**; CI 13/14 (the bot's standing failure) | Watch; ping ~2026-10-01 if silent |
 | BT-4 | btmon aborts during capture (`hciconfig hci0 name` reproduces) | BlueZ | [log] EX-011; one abort in the 09-26 survey run too | *pending research* | *pending* | *pending* |
 | BT-7 | bluetoothd NULL dereferences (adapter, a2dp) | BlueZ | [log] EX-041 | **Yes**: `a734b0605`, `0bed9886c` (ours, applied 2026-09-21) | Done | Watch for the release tag |
-| BZ-free | bluetoothd bad `free()` under `g_main_loop_run`, 09-08, patched binary | BlueZ | [log] one core | unknown | none yet: one occurrence, no mechanism | Keep the core; wait for a second |
+| BZ-free | bluetoothd bad `free()` under `g_main_loop_run`, 09-08, patched binary | BlueZ | [log] the daemon's debug log and binary (the core is gone) | No: use-after-free in `a2dp_reconfig()`, in master since 5.51 (`5071fadb97b8`) | **CO-23** (2026-10-29): reproduced under ASan on master, fix and send package ready | the operator's word on the route; then a 5.72 backport candidate |
 | U1 | Plain "Headset Head Unit (HSP/HFP)" entry gives no sound / does not stick | PipeWire | [log] + [operator] | *pending research* | *pending* | *pending* |
 | U2 | Headset microphone volume moves with no user action (0.00 → 0.27 → 0.08) | PipeWire / BlueZ HFP | [log] values; cause [inference] | *pending research* | *pending* | `AT+VGM` in the capture |
 | U3 | Handsfree headset's microphone does not become the default input | WirePlumber | [log] configured default wins over priority 2010 > 2009 | *pending research* | Report (operator's position) | *pending* |
@@ -78,7 +77,7 @@ stable takes "applies and fixes a real bug"; a note that only 7.0 was run is eno
 
 ## 2. MGMT: flushed commands answered as success
 
-Held branch `kernel/mgmt-flush-status` (private). Sent 2026-09-24 19:11 after four
+Held branch `kernel/mgmt-flush-status`. Sent 2026-09-24 19:11 after four
 external reviews; the list's CI passed 13 of 14 (its standing `mesh-tester` failure).
 No action until about 2026-10-01; then a polite ping on the thread if there is no reply.
 

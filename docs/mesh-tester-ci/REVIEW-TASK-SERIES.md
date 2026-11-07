@@ -1,12 +1,12 @@
 # Review task — the mesh advertising series, before it goes to the maintainers
 
-**Private until sent. Do not post, mail or comment anywhere about it.** The purpose of
+**Kept separately until sent. Do not post, mail or comment anywhere about it.** The purpose of
 this review is to spare the Bluetooth maintainers work: whatever they would find, we want
 found here first. Please be adversarial.
 
 ## What is being reviewed
 
-On this branch (`diag/mesh-tester-ci`, then in the project's private repository; the same
+On this branch (`diag/mesh-tester-ci`; the same
 paths are on `main` since 2026-10-09):
 
 - `patches/mesh-tester/series/0001-Bluetooth-MGMT-remove-the-mesh-advertising-instance-.patch`

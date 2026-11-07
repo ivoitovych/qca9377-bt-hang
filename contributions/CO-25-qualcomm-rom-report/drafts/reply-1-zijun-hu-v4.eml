@@ -1,0 +1,42 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: Zijun Hu <zijun.hu@oss.qualcomm.com>,
+    linux-bluetooth@vger.kernel.org
+Cc: Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+    Shuai Zhang <shuai.zhang@oss.qualcomm.com>,
+    Bartosz Golaszewski <brgl@kernel.org>,
+    Tibor Harcsa <silurust@gmail.com>
+Subject: Re: [REPORT] btusb: QCA9377 13d3:3503 on ROM firmware: HCI hang
+ during mSBC SCO
+In-Reply-To: <bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>
+References: <20261029013350.360574-1-yaroslav.voytovych@gmail.com>
+ <bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>
+
+On Thu, 29 Oct 2026 at 18:42 +0800, Zijun Hu wrote:
+> QCA9377 is not ROME(QCA6174A), btusb driver does not support it,
+> linux-firmware repo also does not have firmware it.
+>
+> See table @qca_devices_table for supported controllers from ROME.
+
+Thank you for clarifying Qualcomm's classification of QCA9377 and the
+absence of a QCA9377-specific USB firmware image in linux-firmware.
+
+The kernel side is what I am unsure about. btusb lists three QCA9377
+modules with BTUSB_QCA_ROME: 04ca:3015, 0cf3:e500 and 13d3:3503. I can
+measure only 13d3:3503: its ROM reports rom_version 0x00000302, so
+btusb_setup_qca() loads qca/rampatch_usb_00000302.bin and
+qca/nvm_usb_00000302.bin, the files linux-firmware lists for QCA61x4
+USB chips. The kernel then logs:
+
+  QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302 build 0x111
+
+Is this the intended initialization and firmware for these three
+QCA9377 IDs? If not, what should they use instead?
+
+And separately: is there a known erratum affecting transparent (mSBC)
+SCO in the ROM firmware, rome 0x302 build 0x111? On that firmware the
+controller stopped answering HCI commands once such a link was
+streaming.
+
+Thanks,
+Iaroslav Voitovych

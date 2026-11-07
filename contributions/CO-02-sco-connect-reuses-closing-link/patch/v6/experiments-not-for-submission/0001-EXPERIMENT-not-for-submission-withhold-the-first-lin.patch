@@ -1,0 +1,105 @@
+From 6a6413d59ddbe656e9606fdd078c8bff3e53471c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 26 Oct 2026 03:37:51 +0100
+Subject: [PATCH 1/2] EXPERIMENT (not for submission): withhold the first link,
+ report the first socket after teardown
+
+---
+ tools/sco-tester.c | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 8149d4dcf..1508579d4 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -66,6 +66,7 @@ struct test_data {
+ 	unsigned int sync_complete;
+ 	unsigned int setup_cmds;
+ 	unsigned int disc_cmds;
++	int exp_first_fd;	/* EXPERIMENT: the first socket's descriptor */
+ };
+ 
+ enum reconnect_mode {
+@@ -104,6 +105,9 @@ struct sco_client_data {
+ 
+ 	/* A second socket connects to the same peer, see the modes above */
+ 	enum reconnect_mode reconnect;
++
++	/* EXPERIMENT: the first Synchronous Connection Complete never comes */
++	bool exp_withhold_first;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -314,10 +318,26 @@ static void test_post_teardown(const void *test_data)
+ static void test_data_free(void *test_data)
+ {
+ 	struct test_data *data = test_data;
++	const struct sco_client_data *scodata = data->test_data;
+ 
+ 	if (data->io_id > 0)
+ 		g_source_remove(data->io_id);
+ 
++	/* EXPERIMENT: is the first socket still open after the teardown? */
++	if (scodata && scodata->exp_withhold_first) {
++		int proto = 0;
++		socklen_t plen = sizeof(proto);
++
++		if (getsockopt(data->exp_first_fd, SOL_SOCKET, SO_PROTOCOL,
++					&proto, &plen) == 0 && proto == BTPROTO_SCO)
++			printf("EXP-RESULT: first socket fd %d still OPEN after "
++					"teardown\n", data->exp_first_fd);
++		else
++			printf("EXP-RESULT: first socket fd %d closed (%s)\n",
++					data->exp_first_fd, strerror(errno));
++		fflush(stdout);
++	}
++
+ 	free(data);
+ }
+ 
+@@ -390,6 +410,11 @@ static const struct sco_client_data reconnect_after = {
+ 	.reconnect = RECONNECT_AFTER,
+ };
+ 
++static const struct sco_client_data exp_reconnect_withheld = {
++	.reconnect = RECONNECT_AFTER,
++	.exp_withhold_first = true,
++};
++
+ static const struct sco_client_data reconnect_during = {
+ 	.reconnect = RECONNECT_DURING,
+ };
+@@ -1486,6 +1511,11 @@ static bool hook_reconnect_sync(const void *buf, uint16_t len, void *user_data)
+ 	if (len < sizeof(*evt) || data->done)
+ 		return true;
+ 
++	if (((const struct sco_client_data *) data->test_data)->exp_withhold_first) {
++		tester_print("EXP: withholding the Synchronous Connection Complete");
++		return false;
++	}
++
+ 	if (evt->status) {
+ 		tester_print("Synchronous Connection Complete failed: "
+ 					"status 0x%02x", evt->status);
+@@ -1850,6 +1880,7 @@ static void test_reconnect(const void *test_data)
+ 	}
+ 
+ 	data->sk = sk;
++	data->exp_first_fd = sk;
+ 
+ 	io = g_io_channel_unix_new(sk);
+ 	g_io_channel_set_close_on_unref(io, FALSE);
+@@ -2091,6 +2122,10 @@ int main(int argc, char *argv[])
+ 					&connect_twice, setup_powered,
+ 					test_reconnect, false, false, false, 8);
+ 
++	test_sco_full("eSCO CVSD - EXP First Withheld",
++					&exp_reconnect_withheld, setup_powered,
++					test_reconnect, false, false, false, 3);
++
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+ 
+-- 
+2.43.0
+

@@ -131,7 +131,7 @@ in `tests/run-tests` — that stays exactly as it is.
 ## 4. Your §4.1: `EX-031` and the two opcodes
 
 I have nothing to add on whether to run both setups on one device — that is the
-operator's call about a family laptop, as you say, and I will not push it.
+operator's call about the laptop, as you say, and I will not push it.
 
 One thing from the tree side: **the discriminating measurement may not need a
 new hang at all**, and it is already written down. §8.3 of

@@ -1,0 +1,30 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: stable@vger.kernel.org
+Cc: Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+ Marcel Holtmann <marcel@holtmann.org>,
+ linux-bluetooth@vger.kernel.org
+Subject: Please backport 5874f8d03268 (Bluetooth: Fix the LE Read Connection Interval response layout) to 7.3.y
+
+Hello,
+
+please apply this mainline commit to 7.3.y:
+
+  5874f8d03268d34189c6c12c56586b64d26a8bcc
+  ("Bluetooth: Fix the LE Read Connection Interval response layout")
+
+It fixes 2f8784cfe8a9 ("Bluetooth: Add support for Shorter Connection
+Interval (SCI) feature"), which v7.3.1 has and v7.2.14 does not, so
+7.3.y is the only stable line concerned. The commit is in mainline
+since the 7.4 merge window, carries a Fixes: tag, and is not in
+queue-7.3 of the stable-queue tree (checked 2026-11-01 09:45 UTC).
+
+Without it, on v7.3.1 BlueZ's l2cap-tester stalls in the case "L2CAP LE
+Client - SCI Fast Mode", which times out with "Invalid response length
+for 0x20a3" in the kernel log, and the run does not get past it. The
+commit cherry-picks cleanly onto v7.3.1. Tested in QEMU/KVM (4 vCPUs)
+with BlueZ's doc/tester.config: with it applied, the eight SCI cases
+pass, and with it and the two L2CAP commits from my other mail applied,
+the whole l2cap-tester passes 111 of 111 on v7.3.1.
+
+Thanks,
+Iaroslav

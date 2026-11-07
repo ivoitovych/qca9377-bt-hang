@@ -4,6 +4,8 @@
 
 **Relevance.** Isolates the firmware setup from the entry's other effects: wideband, alt 1 and legacy 0x0428 are as in the deaths, the reset callback cannot have rescued anything, and the isolated change is enabling the QCA setup path, which loads the rampatch and NVM instead of leaving the controller on its ROM firmware. Per-link rows name the headset, air mode, alt-1 buffer count, seconds streamed and the outcome of the first command after the stream. The three boots are named by their ids, which do not change at the next reboot.
 
+**Correction, 2026-10-29.** The Claim and Relevance above (kept as written) overstate what E1 separates. "Applies only the QCA setup part" and "isolates the firmware setup from the entry's other effects" are not exact: `BTUSB_QCA_ROME` sets six things at probe (`setup_on_usb = btusb_setup_qca`, `shutdown`, `set_bdaddr`, `reset`, `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, `btusb_check_needs_reset_resume()`; Ubuntu's `btusb.c` lines 4400-4406, the same block as mainline `btusb_main.c` 4648-4655), and E1 removed only the reset callback. E1 therefore separates the QCA ROME path from the entry's `BTUSB_WIDEBAND_SPEECH` flag and from the reset callback; it does not separate firmware loading from the shutdown handler, `set_bdaddr`, the simultaneous-discovery quirk or the reset-resume check. The commands, output and counts below are unchanged. (Found in the outside review of CO-25's report, round 9.)
+
 ## Extraction method
 
 Re-runnable as-is on the affected machine:

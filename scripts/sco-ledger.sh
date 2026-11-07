@@ -12,7 +12,14 @@
 #
 # Columns: setup time | headset | air (msbc/cvsd/?) | alt-1 27-byte buffers |
 # streamed s (air-mode notify to the next command) | outcome:
-#   hangup-ok <ms>     0x0406 Disconnect answered, latency
+#   hangup-ok <ms>     0x0406 Disconnect answered, latency: the kernel's
+#                      "opcode 0x0406 status" line, which hci_event_packet()
+#                      prints with status 0 for ANY Disconnection Complete while
+#                      a Disconnect is pending (no handle, not the event's own
+#                      status); a failed Command Status prints its status. It
+#                      shows the controller answered, not which link closed: for
+#                      that, scripts/sco-link-closure.py on the capture.
+#   DISC-FAILED <st>   the Disconnect's Command Status carried an error
 #   TIMEOUT <opcode>   the first command after the stream timed out
 #   open               no command yet (link still up, or log ends)
 set -uo pipefail
@@ -58,7 +65,11 @@ BEGIN {
 /len 27 mtu 9/ { if (open) n27++; next }
 /reason 0x13/ { if (open) { tcmd = secs($1); pending = 1 } next }
 /opcode 0x0406 status/ {
-	if (open && pending) close_link(sprintf("hangup-ok %d ms", (secs($1) - tcmd) * 1000))
+	# a nonzero status is a failed Command Status of the Disconnect, not an answer
+	if (open && pending) {
+		if ($NF == "0x00") close_link(sprintf("hangup-ok %d ms", (secs($1) - tcmd) * 1000))
+		else close_link("DISC-FAILED " $NF)
+	}
 	next
 }
 /command( 0x[0-9a-f]+)? tx timeout/ {

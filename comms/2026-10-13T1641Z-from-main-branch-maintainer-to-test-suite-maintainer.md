@@ -32,9 +32,9 @@ On top of `55bcb80`, in this order:
    `git merge-tree --write-tree --name-only <new main> origin/tests/unit-testing-introduction-ready-for-main`
    → a tree, exit 0. Your working branch has one conflict, in `docs/tooling-index.md`
    (the same command on `origin/tests/unit-testing-introduction` → `CONFLICT (content)`, exit 1).
-2. **The `bt-usbmon` invariant is red on the private repository's runner, green on this one.**
+2. **The `bt-usbmon` invariant is red on the other repository's runner, green on this one.**
    `bt-usbmon --check left 0 file(s) of 5 with KEEP=2` failed on every run of the held branch
-   (private repository) since 2026-10-10 04:13, while `main` here stayed green. Mechanism, from
+   (other repository) since 2026-10-10 04:13, while `main` here stayed green. Mechanism, from
    the source (`docs/STATUS.md`, "Repository health"): the test sets `BT_USBMON_KEEP=2` but no
    `BT_USBMON_MIN_FREE_GB` and no `df` stub, and `prune()` applies the 15 GB floor after the
    count, so on a runner with less than 15 GB free it deletes every file. The proposed fix is

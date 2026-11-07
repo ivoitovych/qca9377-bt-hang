@@ -1,0 +1,14 @@
+[Unit]
+Description=Copy closed journal files every 3 hours and after each boot
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+
+[Timer]
+# After boot: the file that was active at the last shutdown is closed when journald
+# starts, so this run picks up the end of the previous boot.
+OnBootSec=5min
+# The operator's interval (2026-10-23). A run copies only the files closed since the
+# last one, so it takes seconds.
+OnUnitActiveSec=3h
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,41 @@
+S1 one mSBC link
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, transparent                core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S2 one mSBC link; an ACL/LE connection is deleted while its setup is pending (the 2026-09-02 shape)
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  ACL/LE connection deleted          core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, transparent                core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S3 one CVSD link; an ACL/LE connection is added while its setup is pending
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  ACL/LE connection added            core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, CVSD                       core-sco 1  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S4 two CVSD links (two headsets); one goes down
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, CVSD                       core-sco 1  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO setup pending (no notify)      core-sco 2  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO up, CVSD                       core-sco 2  drv sco_num 2 air_mode 4  alt 4  refused-urbs 0
+  SCO link down                      core-sco 1  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S5 two mSBC links (two headsets); one goes down
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, transparent                core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO setup pending (no notify)      core-sco 2  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO up, transparent                core-sco 2  drv sco_num 2 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S6 mSBC link up; a second headset's setup fails (event air mode transparent)
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, transparent                core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO setup pending (no notify)      core-sco 2  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO setup failed, deleted          core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0
+S7 CVSD link up; a second headset's setup is pending when the first goes down; it comes up mSBC
+  SCO setup pending (no notify)      core-sco 1  drv sco_num 0 air_mode 0  alt 0  refused-urbs 0
+  SCO up, CVSD                       core-sco 1  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO setup pending (no notify)      core-sco 2  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO link down                      core-sco 1  drv sco_num 1 air_mode 4  alt 2  refused-urbs 0
+  SCO up, transparent                core-sco 1  drv sco_num 1 air_mode 5  alt 1  refused-urbs 0
+  SCO link down                      core-sco 0  drv sco_num 0 air_mode 6  alt 0  refused-urbs 0

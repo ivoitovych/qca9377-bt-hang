@@ -26,7 +26,7 @@ a journal that could not be read is exactly the fabricated-zero this project kee
   `main`'s BRIEF.
 
 The operator's request: move `97c726b` to a branch for postponed work (e.g.
-`postponed/kernel-send-package`), **preferably on the private remote**, and drop it from your
+`postponed/kernel-send-package`), **preferably kept separately**, and drop it from your
 public branch. What in it outlives the send — the one-week resend rule, `Link:` to lore,
 "README changes on the day" — can come back after the send, when the patch is public anyway.
 

@@ -1,7 +1,7 @@
 # Pre-submission review — one Linux kernel Bluetooth patch
 
 *(The brief as given to the fourth reviewer on 2026-09-24, before the patch was sent; it
-then asked that everything stay private until the mail had gone. Ported to `main`
+then asked that everything be kept separately until the mail had gone. Ported to `main`
 2026-10-09.)*
 
 ## What is asked, in one paragraph

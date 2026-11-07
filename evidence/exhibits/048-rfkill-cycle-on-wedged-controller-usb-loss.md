@@ -68,7 +68,8 @@ hci0:	Type: Primary  Bus: USB
 |---|---|
 | captured | `2026-09-24T04:03:10+02:00` |
 | kernel | `7.0.0-31-generic` |
-| boot id | `20fbb9a2` |
+| capture boot id | `20fbb9a2` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `yes` |

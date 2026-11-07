@@ -1,7 +1,7 @@
 # Outside research and review of 2026-10-05 — kept with its verification
 
-The answer to `RESEARCH-AND-REVIEW-TASK-2026-10-05.md`, received 2026-10-05, read at private
-snapshot `b40987d`. Kept here as a summary of its findings with what was checked against the
+The answer to `RESEARCH-AND-REVIEW-TASK-2026-10-05.md`, received 2026-10-05, read at a
+snapshot kept separately. Kept here as a summary of its findings with what was checked against the
 sources the same day; the operator holds the full text.
 
 ## Its verdict
@@ -65,7 +65,7 @@ order:
   BlueZ `shared/mgmt` leak fix on its own; 3 — the power-off fix (4/5) as a single patch; 4 — the
   Count RFC; 5 — the core ownership series, after the cleanup and the August lifetime
   discussion settle; 6 — the duration overflow.
-- **An organising document, private, not for upstream yet:** write the state machine down —
+- **An organising document, not for upstream yet:** write the state machine down —
   request states, who owns a `mesh_tx`, who owns the mesh advertising instance, who may remove
   a request, who hands ownership over, the lock and context of each transition, and what
   happens on cancel, error, power-off and unregister — then map every current and historical

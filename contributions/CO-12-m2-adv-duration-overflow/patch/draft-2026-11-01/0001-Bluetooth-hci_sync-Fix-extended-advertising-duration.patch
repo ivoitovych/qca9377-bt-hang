@@ -1,0 +1,50 @@
+From 63eacb6ae6823ad5f7091dd0cf04a816fd0967a8 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 01:17:27 +0100
+Subject: [PATCH] Bluetooth: hci_sync: Fix extended advertising duration
+ overflow
+
+hci_enable_ext_advertising_sync() computes the advertising set Duration
+from the instance timeout in a u16. The timeout comes from MGMT Add
+Advertising or Add Extended Advertising Parameters in seconds, so any
+timeout above 65 s wraps: 66 s is sent as a Duration of 46 (460 ms) and
+the instance is removed after less than half a second, 655 s becomes
+65.17 s, and timeouts congruent to 0 or 6357 modulo 8192 encode
+Duration 0, which the controller reads as no limit, so such an instance
+is never removed.
+
+Compute the duration in a u32 and limit the encoded value to the
+field's maximum of 0xffff (655.35 s). Timeouts up to 655 s are now
+passed exactly; longer ones end at 655.35 s instead of at an arbitrary
+earlier time or never.
+
+Fixes: 10bbffa3e88e ("Bluetooth: Fix using advertising instance duration as timeout")
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_sync.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index 9d829c20c3160..d4359653937c6 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -1699,11 +1699,11 @@ int hci_enable_ext_advertising_sync(struct hci_dev *hdev, u8 instance)
+ 	 * scheduling it.
+ 	 */
+ 	if (adv && adv->timeout) {
+-		u16 duration = adv->mesh ? adv->timeout :
++		u32 duration = adv->mesh ? adv->timeout :
+ 					   adv->timeout * MSEC_PER_SEC;
+ 
+-		/* Time = N * 10 ms */
+-		set->duration = cpu_to_le16(duration / 10);
++		/* Time = N * 10 ms, at most 0xffff (655.35 s) */
++		set->duration = cpu_to_le16(min_t(u32, duration / 10, U16_MAX));
+ 	}
+ 
+ 	/* Track which instance owns the advertising set since the handle
+
+base-commit: 42b8c2d729268a65a2d98064e8dc59ff53646b14
+-- 
+2.43.0
+

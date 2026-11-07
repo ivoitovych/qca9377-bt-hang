@@ -145,7 +145,7 @@ and not `BT-1`. `bt-crash` separates them in one command.
 ## 5. What I could not settle
 
 - **Whether `0x0428` and `0x043D` really differ.** Settling it needs both setups
-  on one device in one session, which risks wedging the controller on a family
+  on one device in one session, which risks wedging the controller on the
   laptop. Operator's call, not mine.
 - **The `bluetoothd` crash's function.** Offsets only: `ddebs` ships
   `5.72-0ubuntu5` against an installed `5.72-0ubuntu5.5`, and mismatched symbols

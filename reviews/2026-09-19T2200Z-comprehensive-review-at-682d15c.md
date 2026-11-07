@@ -43,7 +43,7 @@ record is now version-qualified and names the commit: BRIEF §1/§3, README, `do
 `docs/issues.md` BT-3 (retitled "was absent … added upstream 2026-08-07"),
 `docs/missing-quirks-entry.md` (superseded banner). The setup/reset path the entry installs is
 recorded as **untested here**; testing a build that carries it is the review's item 5 and is
-the operator's call (it means a kernel build on the family laptop).
+the operator's call (it means a kernel build on the laptop).
 
 ## DR-02 — `len 27 mtu 9` is a split, not an overflow: confirmed, record corrected
 

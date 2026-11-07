@@ -1,0 +1,119 @@
+From e91bde9d3ab87cf004fbb101db62e24fc9513cab Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 11:15:23 +0100
+Subject: [RFC PATCH BlueZ] PROPOSAL, local experiment: a2dp: unregister a
+ removed SEP from idle on unlock
+
+Not part of the series. A SEP removed while one of its streams was
+locked is unregistered by a2dp_sep_unlock(), which the transport code
+calls while it still uses the stream, its setup and the transport: the
+suspend completion of a Release, or media_transport_free() while the
+endpoint's transports are cleared. Unregistering calls the endpoint's
+destroy callback, which releases the endpoint and destroys those
+transports, or frees the endpoint, under the callers.
+
+Unregister such a SEP from a timeout instead, cancelled if the SEP is
+unregistered first; if a stream was locked again meanwhile, the next
+unlock unregisters it. SEPs still waiting when the server goes are
+dropped.
+---
+ profiles/audio/a2dp.c | 47 +++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 45 insertions(+), 2 deletions(-)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 3ef191dc2..980b663b5 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -82,6 +82,7 @@ struct a2dp_sep {
+ 	gboolean delay_reporting;
+ 	void *user_data;
+ 	GDestroyNotify destroy;
++	unsigned int unregister_id;
+ };
+ 
+ struct a2dp_setup_cb {
+@@ -127,6 +128,7 @@ struct a2dp_server {
+ 	GIOChannel *io;
+ 	struct queue *seps;
+ 	struct queue *channels;
++	GSList *unregistering;
+ };
+ 
+ struct a2dp_remote_sep {
+@@ -2919,6 +2921,12 @@ static void a2dp_unregister_sep(struct a2dp_sep *sep)
+ {
+ 	struct a2dp_server *server = sep->server;
+ 
++	if (sep->unregister_id) {
++		timeout_remove(sep->unregister_id);
++		server->unregistering = g_slist_remove(server->unregistering,
++									sep);
++	}
++
+ 	if (sep->destroy) {
+ 		sep->destroy(sep->user_data);
+ 		sep->endpoint = NULL;
+@@ -2941,6 +2949,17 @@ static void a2dp_unregister_sep(struct a2dp_sep *sep)
+ 
+ static void a2dp_server_unregister(struct a2dp_server *server)
+ {
++	GSList *l;
++
++	/* Removed SEPs still waiting to be unregistered are dropped */
++	for (l = server->unregistering; l; l = l->next) {
++		struct a2dp_sep *sep = l->data;
++
++		timeout_remove(sep->unregister_id);
++		sep->unregister_id = 0;
++	}
++	g_slist_free(server->unregistering);
++
+ 	servers = g_slist_remove(servers, server);
+ 	queue_destroy(server->channels, channel_free);
+ 	queue_destroy(server->seps, NULL);
+@@ -3591,6 +3610,23 @@ gboolean a2dp_sep_lock(struct a2dp_sep *sep, struct avdtp *session)
+ 	return TRUE;
+ }
+ 
++static bool unregister_sep_cb(void *user_data)
++{
++	struct a2dp_sep *sep = user_data;
++	struct a2dp_server *server = sep->server;
++
++	sep->unregister_id = 0;
++	server->unregistering = g_slist_remove(server->unregistering, sep);
++
++	/* Locked again meanwhile: the next unlock unregisters it */
++	if (queue_find(sep->streams, match_locked, NULL))
++		return false;
++
++	a2dp_unregister_sep(sep);
++
++	return false;
++}
++
+ gboolean a2dp_sep_unlock(struct a2dp_sep *sep, struct avdtp *session)
+ {
+ 	struct a2dp_server *server = sep->server;
+@@ -3613,9 +3649,16 @@ gboolean a2dp_sep_unlock(struct a2dp_sep *sep, struct avdtp *session)
+ 	else
+ 		l = server->sinks;
+ 
+-	/* Unregister sep if it was removed */
++	/* Unregister sep if it was removed, once the caller, which may still
++	 * use the stream, the setup and the transport, has returned.
++	 */
+ 	if (g_slist_find(l, sep) == NULL) {
+-		a2dp_unregister_sep(sep);
++		if (!sep->unregister_id) {
++			sep->unregister_id = timeout_add(0, unregister_sep_cb,
++								sep, NULL);
++			server->unregistering = g_slist_prepend(
++						server->unregistering, sep);
++		}
+ 		return TRUE;
+ 	}
+ 
+-- 
+2.43.0
+

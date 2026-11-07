@@ -1,6 +1,6 @@
 # Research and review task — Bluetooth Mesh in the Linux kernel and BlueZ, and our patch series
 
-**Private. Do not post, mail, comment, open issues or contact anyone about it.** Nothing here has
+**Kept separately. Do not post, mail, comment, open issues or contact anyone about it.** Nothing here has
 been sent upstream. The author of the patches, and the only attribution in this repository, is
 Iaroslav Voitovych.
 
@@ -26,7 +26,7 @@ can give us.
 
 ## What you can read
 
-The project's private repository, branch `diag/mesh-tester-ci` at commit **`1806e72`** (or
+The project's branch `diag/mesh-tester-ci` at commit **`1806e72`** (or
 later). Everything below is under that branch (on `main` since 2026-10-09, same paths).
 
 | path | what it is |

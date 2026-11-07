@@ -1,0 +1,30 @@
+From 1012a6df229e53d359f3fd0a2d0824ed8a7a444b Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Tue, 27 Oct 2026 17:19:31 +0100
+Subject: [PATCH BlueZ] ioctl-tester: Fix name of the 3-DH packet type test
+
+The test for set_pkt_type_3dh was registered as "Set Pkt Type - 2-DH",
+the name of the test before it, so both cases were reported under the
+same name and a 3-DH failure would be shown as a 2-DH one.
+
+Fixes: 0da759f1a36d ("tools/ioctl-tester - Add ioctl-tester")
+---
+ tools/ioctl-tester.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/ioctl-tester.c b/tools/ioctl-tester.c
+index e957b0d01..2143a7c6d 100644
+--- a/tools/ioctl-tester.c
++++ b/tools/ioctl-tester.c
+@@ -918,7 +918,7 @@ int main(int argc, char *argv[])
+ 	test_ioctl("Set Pkt Type - 2-DH", &set_pkt_type_2dh,
+ 				NULL, test_ioctl_common);
+ 
+-	test_ioctl("Set Pkt Type - 2-DH", &set_pkt_type_3dh,
++	test_ioctl("Set Pkt Type - 3-DH", &set_pkt_type_3dh,
+ 				NULL, test_ioctl_common);
+ 
+ 	test_ioctl("Set Pkt Type - ALL", &set_pkt_type_all,
+-- 
+2.43.0
+

@@ -1,0 +1,11 @@
+Trial E3 #3 is NOT a plain E3 trial (written 2026-10-23 11:30 local, by hand).
+
+The boot unit opened it automatically at 2026-10-23 11:04:46 with build=E3, but this boot also
+loads the CO-02 bluetooth.ko from updates/ (srcversion 0D084A056A9EEFB98E8F331, sha256
+702186d9d17dc6cc8e91b905f1aca56debaf17d39ee84f87795c9d704377cbff; installed 2026-10-23 09:40
+with scripts/module-updates.sh, after E3 #2 was closed by hand). btusb is E3's
+(D1DEA96A0C95BFAB05CEE01). `scripts/module-updates.sh status` after the boot showed both loaded.
+
+It serves as the record of the CO-02 hardware run and the "day of normal use" step of
+contributions/CO-02-sco-connect-reuses-closing-link/experiments/hardware-run-plan.md. Its row is
+kept apart from E3's counts.

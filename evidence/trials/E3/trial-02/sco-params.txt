@@ -1,0 +1,3594 @@
+# trial window: 2026-10-19 21:53:22 .. 2026-10-23 09:42:11 (local time)
+# kernel setups in the window: 55 (journalctl -k --grep='opcode 0x04(28|3d)')
+# decoded with: btmon -T --columns=200 -r <file>; addresses replaced by <addr>
+# both capture paths are shown; a request present in only one
+# is an instrumentation finding, not evidence about the controller.
+
+===== source: /var/log/bt-health/capture =====
+# 401 captures retained; the oldest, hci-20261006-143707.btsnoop, starts 2026-10-06 14:37:07
+# files decoded: hci-20261019-220816.btsnoop, hci-20261020-115940.btsnoop, hci-20261020-123158.btsnoop, hci-20261020-213331.btsnoop, hci-20261021-064340.btsnoop, hci-20261021-155531.btsnoop, hci-20261022-014616.btsnoop, hci-20261022-105610.btsnoop, hci-20261022-190425.btsnoop, hci-20261022-223418.btsnoop, hci-20261023-000423.btsnoop, hci-20261023-002426.btsnoop, hci-20261023-015049.btsnoop, hci-20261023-022237.btsnoop, hci-20261023-025521.btsnoop, hci-20261023-035719.btsnoop
+
+--- hci-20261019-220816.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #130721 [hci0] 2026-10-20 11:52:50.419965
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261019-220816.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #130722 [hci0] 2026-10-20 11:52:50.422900
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261019-220816.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #130725 [hci0] 2026-10-20 11:52:50.649005
+        Status: Success (0x00)
+        Handle: 9
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261019-220816.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #142762 [hci0] 2026-10-20 11:55:20.158062
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261019-220816.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #142763 [hci0] 2026-10-20 11:55:20.161026
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261019-220816.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #142766 [hci0] 2026-10-20 11:55:20.391179
+        Status: Success (0x00)
+        Handle: 10
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261019-220816.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #159193 [hci0] 2026-10-20 11:55:59.757076
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261019-220816.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #159194 [hci0] 2026-10-20 11:55:59.760094
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261019-220816.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #159197 [hci0] 2026-10-20 11:55:59.833087
+        Status: Success (0x00)
+        Handle: 11
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-115940.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #799354 [hci0] 2026-10-20 12:19:37.962729
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-115940.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #799356 [hci0] 2026-10-20 12:19:37.965612
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-115940.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #799360 [hci0] 2026-10-20 12:19:38.106649
+        Status: Success (0x00)
+        Handle: 12
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-123158.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #394804 [hci0] 2026-10-20 12:41:50.902736
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-123158.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #394806 [hci0] 2026-10-20 12:41:50.905397
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-123158.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #394810 [hci0] 2026-10-20 12:41:51.087443
+        Status: Success (0x00)
+        Handle: 13
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-123158.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #408645 [hci0] 2026-10-20 12:42:13.358497
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-123158.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #408647 [hci0] 2026-10-20 12:42:13.361426
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-123158.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #408651 [hci0] 2026-10-20 12:42:13.559939
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #53171 [hci0] 2026-10-20 23:56:20.532270
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #53174 [hci0] 2026-10-20 23:56:20.538245
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #53178 [hci0] 2026-10-20 23:56:20.831262
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #87078 [hci0] 2026-10-21 00:11:19.693891
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #87079 [hci0] 2026-10-21 00:11:19.696834
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #87082 [hci0] 2026-10-21 00:11:19.959889
+        Status: Success (0x00)
+        Handle: 17
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #136435 [hci0] 2026-10-21 00:19:39.149119
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #136436 [hci0] 2026-10-21 00:19:39.152053
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #136439 [hci0] 2026-10-21 00:19:39.369172
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #154789 [hci0] 2026-10-21 02:11:47.953459
+        Handle: 20 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #154790 [hci0] 2026-10-21 02:11:47.956417
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #154793 [hci0] 2026-10-21 02:11:48.200439
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #221236 [hci0] 2026-10-21 03:57:41.555996
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #221237 [hci0] 2026-10-21 03:57:41.558960
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #221240 [hci0] 2026-10-21 03:57:41.778014
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #223558 [hci0] 2026-10-21 04:00:55.101828
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #223559 [hci0] 2026-10-21 04:00:55.104843
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #223562 [hci0] 2026-10-21 04:00:55.302845
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #247248 [hci0] 2026-10-21 05:07:57.732750
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #247249 [hci0] 2026-10-21 05:07:57.735730
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #247252 [hci0] 2026-10-21 05:07:57.967790
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #258463 [hci0] 2026-10-21 05:09:59.008129
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #258464 [hci0] 2026-10-21 05:09:59.011092
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #258467 [hci0] 2026-10-21 05:09:59.189104
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #303966 [hci0] 2026-10-21 05:13:52.896717
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #303967 [hci0] 2026-10-21 05:13:52.899656
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #303970 [hci0] 2026-10-21 05:13:53.165709
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #323951 [hci0] 2026-10-21 06:19:11.083622
+        Handle: 2 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #323952 [hci0] 2026-10-21 06:19:11.086607
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #323955 [hci0] 2026-10-21 06:19:11.378592
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #347429 [hci0] 2026-10-21 06:19:53.900680
+        Handle: 2 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #347430 [hci0] 2026-10-21 06:19:53.903677
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #347433 [hci0] 2026-10-21 06:19:53.971727
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261020-213331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #372437 [hci0] 2026-10-21 06:40:59.128886
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261020-213331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #372440 [hci0] 2026-10-21 06:40:59.134846
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261020-213331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #372443 [hci0] 2026-10-21 06:40:59.274892
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261021-064340.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #28222 [hci0] 2026-10-21 06:45:17.730705
+        Handle: 3
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-064340.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #28224 [hci0] 2026-10-21 06:45:17.733498
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-064340.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #28232 [hci0] 2026-10-21 06:45:17.877502
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261021-064340.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #66738 [hci0] 2026-10-21 06:46:15.433578
+        Handle: 3
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 10
+        Setting: 0x0060
+          Input Coding: Linear
+          Input Data Format: 2's complement
+          Input Sample Size: 16-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: CVSD
+        Retransmission effort: Optimize for power consumption (0x01)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-064340.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #66740 [hci0] 2026-10-21 06:46:15.435775
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-064340.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #66745 [hci0] 2026-10-21 06:46:15.674821
+        Status: Success (0x00)
+        Handle: 6
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x02
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: CVSD (0x02)
+--- hci-20261021-064340.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #84325 [hci0] 2026-10-21 06:47:09.431579
+        Handle: 3
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-064340.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #84327 [hci0] 2026-10-21 06:47:09.434072
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-064340.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #84332 [hci0] 2026-10-21 06:47:09.636117
+        Status: Success (0x00)
+        Handle: 7
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261021-064340.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #113253 [hci0] 2026-10-21 06:48:03.780305
+        Handle: 3
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-064340.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #113255 [hci0] 2026-10-21 06:48:03.783387
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-064340.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #113261 [hci0] 2026-10-21 06:48:03.904397
+        Status: Success (0x00)
+        Handle: 8
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261021-155531.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #148002 [hci0] 2026-10-22 01:41:07.275761
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-155531.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #148003 [hci0] 2026-10-22 01:41:07.278714
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-155531.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #148006 [hci0] 2026-10-22 01:41:07.453862
+        Status: Success (0x00)
+        Handle: 13
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261021-155531.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #175439 [hci0] 2026-10-22 01:43:10.778962
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261021-155531.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #175440 [hci0] 2026-10-22 01:43:10.781933
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261021-155531.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #175443 [hci0] 2026-10-22 01:43:11.053975
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                               #3398 [hci0] 2026-10-22 01:49:46.779676
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                       #3399 [hci0] 2026-10-22 01:49:46.782656
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                        #3402 [hci0] 2026-10-22 01:49:47.040691
+        Status: Success (0x00)
+        Handle: 15
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #48748 [hci0] 2026-10-22 01:52:49.187962
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #48749 [hci0] 2026-10-22 01:52:49.190919
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #48752 [hci0] 2026-10-22 01:52:49.512022
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #70185 [hci0] 2026-10-22 01:58:39.648593
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #70186 [hci0] 2026-10-22 01:58:39.651633
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #70189 [hci0] 2026-10-22 01:58:39.939618
+        Status: Success (0x00)
+        Handle: 17
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #104751 [hci0] 2026-10-22 02:05:51.042968
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #104752 [hci0] 2026-10-22 02:05:51.045959
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #104755 [hci0] 2026-10-22 02:05:51.226982
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #135587 [hci0] 2026-10-22 02:14:02.083578
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #135588 [hci0] 2026-10-22 02:14:02.086556
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #135591 [hci0] 2026-10-22 02:14:02.311589
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #163523 [hci0] 2026-10-22 02:14:58.150226
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #163525 [hci0] 2026-10-22 02:14:58.152654
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #163529 [hci0] 2026-10-22 02:14:58.405688
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-014616.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #183639 [hci0] 2026-10-22 02:16:54.096817
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-014616.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #183640 [hci0] 2026-10-22 02:16:54.099825
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-014616.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #183643 [hci0] 2026-10-22 02:16:54.514851
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-105610.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #14174 [hci0] 2026-10-22 10:57:36.478133
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-105610.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #14176 [hci0] 2026-10-22 10:57:36.479718
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-105610.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #14180 [hci0] 2026-10-22 10:57:36.684774
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-105610.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #58765 [hci0] 2026-10-22 11:01:41.338914
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-105610.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #58767 [hci0] 2026-10-22 11:01:41.341077
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-105610.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #58771 [hci0] 2026-10-22 11:01:41.466013
+        Status: Success (0x00)
+        Handle: 15
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-105610.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #64605 [hci0] 2026-10-22 11:02:11.521833
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-105610.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #64607 [hci0] 2026-10-22 11:02:11.524792
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-105610.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #64611 [hci0] 2026-10-22 11:02:11.760546
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-190425.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #138878 [hci0] 2026-10-22 20:25:27.285126
+        Handle: 16 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-190425.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #138880 [hci0] 2026-10-22 20:25:27.286288
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-190425.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #138884 [hci0] 2026-10-22 20:25:27.465341
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-223418.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #88720 [hci0] 2026-10-22 23:35:32.139595
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-223418.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #88721 [hci0] 2026-10-22 23:35:32.142594
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-223418.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #88724 [hci0] 2026-10-22 23:35:32.414607
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-223418.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #218258 [hci0] 2026-10-22 23:38:55.586327
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-223418.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #218259 [hci0] 2026-10-22 23:38:55.589328
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-223418.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #218262 [hci0] 2026-10-22 23:38:55.815339
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261022-223418.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #251247 [hci0] 2026-10-22 23:55:56.766603
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261022-223418.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #251248 [hci0] 2026-10-22 23:55:56.769526
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261022-223418.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #251251 [hci0] 2026-10-22 23:55:57.158487
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #54034 [hci0] 2026-10-23 00:07:28.744915
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #54035 [hci0] 2026-10-23 00:07:28.747852
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #54038 [hci0] 2026-10-23 00:07:29.006892
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #194033 [hci0] 2026-10-23 00:11:11.984913
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #194034 [hci0] 2026-10-23 00:11:11.987881
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #194037 [hci0] 2026-10-23 00:11:12.294911
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #204121 [hci0] 2026-10-23 00:11:35.249478
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #204122 [hci0] 2026-10-23 00:11:35.252485
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #204125 [hci0] 2026-10-23 00:11:35.427476
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #214355 [hci0] 2026-10-23 00:11:57.277101
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #214356 [hci0] 2026-10-23 00:11:57.280103
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #214359 [hci0] 2026-10-23 00:11:57.470122
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #287932 [hci0] 2026-10-23 00:18:43.106339
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #287934 [hci0] 2026-10-23 00:18:43.109075
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #287938 [hci0] 2026-10-23 00:18:43.312101
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-000423.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #303164 [hci0] 2026-10-23 00:19:33.919649
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-000423.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #303166 [hci0] 2026-10-23 00:19:33.922452
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-000423.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #303170 [hci0] 2026-10-23 00:19:34.066506
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-002426.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #122032 [hci0] 2026-10-23 00:50:55.071480
+        Handle: 17 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 10
+        Setting: 0x0060
+          Input Coding: Linear
+          Input Data Format: 2's complement
+          Input Sample Size: 16-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: CVSD
+        Retransmission effort: Optimize for power consumption (0x01)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-002426.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #122033 [hci0] 2026-10-23 00:50:55.074020
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-002426.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #122049 [hci0] 2026-10-23 00:50:55.229029
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x02
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: CVSD (0x02)
+--- hci-20261023-002426.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #136046 [hci0] 2026-10-23 01:48:31.752914
+        Handle: 18 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-002426.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #136048 [hci0] 2026-10-23 01:48:31.754940
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-002426.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #136052 [hci0] 2026-10-23 01:48:31.968139
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-015049.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #33588 [hci0] 2026-10-23 01:54:31.104507
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-015049.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #33590 [hci0] 2026-10-23 01:54:31.106875
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-015049.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #33593 [hci0] 2026-10-23 01:54:31.278992
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-022237.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #33392 [hci0] 2026-10-23 02:26:18.420462
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-022237.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #33394 [hci0] 2026-10-23 02:26:18.423004
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-022237.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #33398 [hci0] 2026-10-23 02:26:18.545060
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-022237.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #113013 [hci0] 2026-10-23 02:32:03.554143
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-022237.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #113015 [hci0] 2026-10-23 02:32:03.556556
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-022237.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #113019 [hci0] 2026-10-23 02:32:03.757576
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-022237.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #170995 [hci0] 2026-10-23 02:35:33.103722
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-022237.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #170997 [hci0] 2026-10-23 02:35:33.106387
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-022237.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #171001 [hci0] 2026-10-23 02:35:33.212441
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-025521.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #19498 [hci0] 2026-10-23 02:57:30.499848
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-025521.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #19500 [hci0] 2026-10-23 02:57:30.501917
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-025521.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #19504 [hci0] 2026-10-23 02:57:30.666024
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-025521.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #31261 [hci0] 2026-10-23 02:58:22.188063
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-025521.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #31263 [hci0] 2026-10-23 02:58:22.191063
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-025521.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #31267 [hci0] 2026-10-23 02:58:22.338180
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-035719.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #201876 [hci0] 2026-10-23 06:40:28.893264
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-035719.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #201877 [hci0] 2026-10-23 06:40:28.896267
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-035719.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #201880 [hci0] 2026-10-23 06:40:29.180287
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-035719.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #211326 [hci0] 2026-10-23 06:53:23.323049
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-035719.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #211327 [hci0] 2026-10-23 06:53:23.326031
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-035719.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #211330 [hci0] 2026-10-23 06:53:23.609147
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- hci-20261023-035719.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #396199 [hci0] 2026-10-23 06:59:23.721864
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- hci-20261023-035719.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #396201 [hci0] 2026-10-23 06:59:23.724729
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- hci-20261023-035719.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #396203 [hci0] 2026-10-23 06:59:24.133803
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+
+===== source: /var/log/bt-health/trace =====
+# 400 captures retained; the oldest, bt-20261005-200351.btsnoop, starts 2026-10-05 20:03:51
+# files decoded: bt-20261019-215331.btsnoop, bt-20261020-120008.btsnoop, bt-20261020-212856.btsnoop, bt-20261021-013411.btsnoop, bt-20261021-154220.btsnoop, bt-20261022-020703.btsnoop, bt-20261022-103346.btsnoop, bt-20261022-191232.btsnoop, bt-20261022-224229.btsnoop, bt-20261023-003244.btsnoop, bt-20261023-021629.btsnoop, bt-20261023-024933.btsnoop, bt-20261023-034510.btsnoop
+
+--- bt-20261019-215331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #271315 [hci0] 2026-10-20 11:52:50.419935
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261019-215331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #271316 [hci0] 2026-10-20 11:52:50.422869
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261019-215331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #271319 [hci0] 2026-10-20 11:52:50.648901
+        Status: Success (0x00)
+        Handle: 9
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261019-215331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #283356 [hci0] 2026-10-20 11:55:20.158034
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261019-215331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #283357 [hci0] 2026-10-20 11:55:20.160994
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261019-215331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #283360 [hci0] 2026-10-20 11:55:20.391034
+        Status: Success (0x00)
+        Handle: 10
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261019-215331.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #299787 [hci0] 2026-10-20 11:55:59.757065
+        Handle: 7 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261019-215331.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #299788 [hci0] 2026-10-20 11:55:59.760022
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261019-215331.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #299791 [hci0] 2026-10-20 11:55:59.833027
+        Status: Success (0x00)
+        Handle: 11
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-120008.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #780841 [hci0] 2026-10-20 12:19:37.962643
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-120008.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #780843 [hci0] 2026-10-20 12:19:37.965589
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-120008.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #780847 [hci0] 2026-10-20 12:19:38.106599
+        Status: Success (0x00)
+        Handle: 12
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-120008.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                            #1670779 [hci0] 2026-10-20 12:41:50.902680
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-120008.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                    #1670781 [hci0] 2026-10-20 12:41:50.905369
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-120008.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                     #1670785 [hci0] 2026-10-20 12:41:51.087391
+        Status: Success (0x00)
+        Handle: 13
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-120008.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                            #1684620 [hci0] 2026-10-20 12:42:13.358443
+        Handle: 7
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-120008.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                    #1684622 [hci0] 2026-10-20 12:42:13.361404
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-120008.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                     #1684626 [hci0] 2026-10-20 12:42:13.559432
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-212856.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #73813 [hci0] 2026-10-20 23:56:20.532253
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-212856.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #73816 [hci0] 2026-10-20 23:56:20.538200
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-212856.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #73820 [hci0] 2026-10-20 23:56:20.831199
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-212856.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #107720 [hci0] 2026-10-21 00:11:19.693867
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-212856.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #107721 [hci0] 2026-10-21 00:11:19.696792
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-212856.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #107724 [hci0] 2026-10-21 00:11:19.959826
+        Status: Success (0x00)
+        Handle: 17
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261020-212856.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #157077 [hci0] 2026-10-21 00:19:39.149105
+        Handle: 14 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261020-212856.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #157078 [hci0] 2026-10-21 00:19:39.152016
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261020-212856.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #157081 [hci0] 2026-10-21 00:19:39.369044
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                               #3961 [hci0] 2026-10-21 02:11:47.953421
+        Handle: 20 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                       #3962 [hci0] 2026-10-21 02:11:47.956345
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                        #3965 [hci0] 2026-10-21 02:11:48.200354
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #70408 [hci0] 2026-10-21 03:57:41.555965
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #70409 [hci0] 2026-10-21 03:57:41.558928
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #70412 [hci0] 2026-10-21 03:57:41.777938
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #72730 [hci0] 2026-10-21 04:00:55.101817
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #72731 [hci0] 2026-10-21 04:00:55.104768
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #72734 [hci0] 2026-10-21 04:00:55.302773
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #96420 [hci0] 2026-10-21 05:07:57.732731
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #96421 [hci0] 2026-10-21 05:07:57.735696
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #96424 [hci0] 2026-10-21 05:07:57.967714
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #107635 [hci0] 2026-10-21 05:09:59.008107
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #107636 [hci0] 2026-10-21 05:09:59.011024
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #107639 [hci0] 2026-10-21 05:09:59.189034
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #153138 [hci0] 2026-10-21 05:13:52.896710
+        Handle: 22 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #153139 [hci0] 2026-10-21 05:13:52.899624
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #153142 [hci0] 2026-10-21 05:13:53.165642
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #173123 [hci0] 2026-10-21 06:19:11.083586
+        Handle: 2 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #173124 [hci0] 2026-10-21 06:19:11.086521
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #173127 [hci0] 2026-10-21 06:19:11.378515
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #196601 [hci0] 2026-10-21 06:19:53.900673
+        Handle: 2 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #196602 [hci0] 2026-10-21 06:19:53.903634
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #196605 [hci0] 2026-10-21 06:19:53.971650
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #221609 [hci0] 2026-10-21 06:40:59.128867
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #221612 [hci0] 2026-10-21 06:40:59.134795
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #221615 [hci0] 2026-10-21 06:40:59.274794
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #356070 [hci0] 2026-10-21 06:45:17.730589
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #356072 [hci0] 2026-10-21 06:45:17.733434
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #356080 [hci0] 2026-10-21 06:45:17.877449
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #394586 [hci0] 2026-10-21 06:46:15.433526
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 10
+        Setting: 0x0060
+          Input Coding: Linear
+          Input Data Format: 2's complement
+          Input Sample Size: 16-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: CVSD
+        Retransmission effort: Optimize for power consumption (0x01)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #394588 [hci0] 2026-10-21 06:46:15.435748
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #394593 [hci0] 2026-10-21 06:46:15.674760
+        Status: Success (0x00)
+        Handle: 6
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x02
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: CVSD (0x02)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #412173 [hci0] 2026-10-21 06:47:09.431530
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #412175 [hci0] 2026-10-21 06:47:09.434024
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #412180 [hci0] 2026-10-21 06:47:09.636039
+        Status: Success (0x00)
+        Handle: 7
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-013411.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #441101 [hci0] 2026-10-21 06:48:03.780247
+        Handle: 3 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-013411.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #441103 [hci0] 2026-10-21 06:48:03.783309
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-013411.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #441109 [hci0] 2026-10-21 06:48:03.904316
+        Status: Success (0x00)
+        Handle: 8
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #251492 [hci0] 2026-10-22 01:41:07.275756
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #251493 [hci0] 2026-10-22 01:41:07.278689
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #251496 [hci0] 2026-10-22 01:41:07.453704
+        Status: Success (0x00)
+        Handle: 13
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #278929 [hci0] 2026-10-22 01:43:10.778948
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #278930 [hci0] 2026-10-22 01:43:10.781898
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #278933 [hci0] 2026-10-22 01:43:11.053916
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #398794 [hci0] 2026-10-22 01:49:46.779643
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #398795 [hci0] 2026-10-22 01:49:46.782585
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #398798 [hci0] 2026-10-22 01:49:47.040607
+        Status: Success (0x00)
+        Handle: 15
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #444144 [hci0] 2026-10-22 01:52:49.187952
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #444145 [hci0] 2026-10-22 01:52:49.190900
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #444148 [hci0] 2026-10-22 01:52:49.511925
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #465581 [hci0] 2026-10-22 01:58:39.648582
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #465582 [hci0] 2026-10-22 01:58:39.651546
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #465585 [hci0] 2026-10-22 01:58:39.939553
+        Status: Success (0x00)
+        Handle: 17
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261021-154220.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #500147 [hci0] 2026-10-22 02:05:51.042958
+        Handle: 11 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261021-154220.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #500148 [hci0] 2026-10-22 02:05:51.045902
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261021-154220.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #500151 [hci0] 2026-10-22 02:05:51.226904
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-020703.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                                #786 [hci0] 2026-10-22 02:14:02.083571
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-020703.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                        #787 [hci0] 2026-10-22 02:14:02.086519
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-020703.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                         #790 [hci0] 2026-10-22 02:14:02.311534
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-020703.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #28722 [hci0] 2026-10-22 02:14:58.150180
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-020703.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #28724 [hci0] 2026-10-22 02:14:58.152619
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-020703.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #28728 [hci0] 2026-10-22 02:14:58.405624
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-020703.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #48838 [hci0] 2026-10-22 02:16:54.096812
+        Handle: 11
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-020703.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #48839 [hci0] 2026-10-22 02:16:54.099782
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-020703.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #48842 [hci0] 2026-10-22 02:16:54.514787
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-103346.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #235577 [hci0] 2026-10-22 10:57:36.478055
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-103346.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #235579 [hci0] 2026-10-22 10:57:36.479690
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-103346.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #235583 [hci0] 2026-10-22 10:57:36.684701
+        Status: Success (0x00)
+        Handle: 14
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-103346.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #280168 [hci0] 2026-10-22 11:01:41.338779
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-103346.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #280170 [hci0] 2026-10-22 11:01:41.340975
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-103346.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #280174 [hci0] 2026-10-22 11:01:41.465013
+        Status: Success (0x00)
+        Handle: 15
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-103346.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #286008 [hci0] 2026-10-22 11:02:11.521452
+        Handle: 12
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-103346.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #286010 [hci0] 2026-10-22 11:02:11.524012
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-103346.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #286014 [hci0] 2026-10-22 11:02:11.760023
+        Status: Success (0x00)
+        Handle: 16
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-191232.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #64965 [hci0] 2026-10-22 20:25:27.285071
+        Handle: 16 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-191232.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #64967 [hci0] 2026-10-22 20:25:27.286264
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-191232.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #64971 [hci0] 2026-10-22 20:25:27.465271
+        Status: Success (0x00)
+        Handle: 18
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                               #7857 [hci0] 2026-10-22 23:35:32.139589
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                       #7858 [hci0] 2026-10-22 23:35:32.142529
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                        #7861 [hci0] 2026-10-22 23:35:32.414543
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #137395 [hci0] 2026-10-22 23:38:55.586319
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #137396 [hci0] 2026-10-22 23:38:55.589281
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #137399 [hci0] 2026-10-22 23:38:55.815281
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #170384 [hci0] 2026-10-22 23:55:56.766533
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #170385 [hci0] 2026-10-22 23:55:56.769452
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #170388 [hci0] 2026-10-22 23:55:57.158426
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #562853 [hci0] 2026-10-23 00:07:28.744890
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #562854 [hci0] 2026-10-23 00:07:28.747823
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #562857 [hci0] 2026-10-23 00:07:29.006828
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #702852 [hci0] 2026-10-23 00:11:11.984889
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #702853 [hci0] 2026-10-23 00:11:11.987842
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #702856 [hci0] 2026-10-23 00:11:12.294847
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #712940 [hci0] 2026-10-23 00:11:35.249467
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #712941 [hci0] 2026-10-23 00:11:35.252419
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #712944 [hci0] 2026-10-23 00:11:35.427409
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #723174 [hci0] 2026-10-23 00:11:57.277085
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #723175 [hci0] 2026-10-23 00:11:57.280005
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #723178 [hci0] 2026-10-23 00:11:57.470008
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #796751 [hci0] 2026-10-23 00:18:43.106258
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #796753 [hci0] 2026-10-23 00:18:43.109038
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #796757 [hci0] 2026-10-23 00:18:43.312038
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261022-224229.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #811983 [hci0] 2026-10-23 00:19:33.919598
+        Handle: 16
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261022-224229.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #811985 [hci0] 2026-10-23 00:19:33.922421
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261022-224229.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #811989 [hci0] 2026-10-23 00:19:34.066430
+        Status: Success (0x00)
+        Handle: 5
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-003244.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #39818 [hci0] 2026-10-23 00:50:55.071432
+        Handle: 17 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 10
+        Setting: 0x0060
+          Input Coding: Linear
+          Input Data Format: 2's complement
+          Input Sample Size: 16-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: CVSD
+        Retransmission effort: Optimize for power consumption (0x01)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-003244.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #39819 [hci0] 2026-10-23 00:50:55.074000
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-003244.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #39835 [hci0] 2026-10-23 00:50:55.229007
+        Status: Success (0x00)
+        Handle: 19
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x02
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: CVSD (0x02)
+--- bt-20261023-003244.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #53832 [hci0] 2026-10-23 01:48:31.752785
+        Handle: 18 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-003244.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #53834 [hci0] 2026-10-23 01:48:31.754795
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-003244.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #53838 [hci0] 2026-10-23 01:48:31.967823
+        Status: Success (0x00)
+        Handle: 20
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-003244.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #168737 [hci0] 2026-10-23 01:54:31.104440
+        Handle: 18 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-003244.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #168739 [hci0] 2026-10-23 01:54:31.106830
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-003244.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #168742 [hci0] 2026-10-23 01:54:31.278869
+        Status: Success (0x00)
+        Handle: 21
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-021629.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #89245 [hci0] 2026-10-23 02:26:18.420417
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-021629.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #89247 [hci0] 2026-10-23 02:26:18.422981
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-021629.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #89251 [hci0] 2026-10-23 02:26:18.544995
+        Status: Success (0x00)
+        Handle: 22
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-021629.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #168866 [hci0] 2026-10-23 02:32:03.554051
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-021629.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #168868 [hci0] 2026-10-23 02:32:03.556519
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-021629.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #168872 [hci0] 2026-10-23 02:32:03.757522
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-021629.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #226848 [hci0] 2026-10-23 02:35:33.103661
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-021629.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #226850 [hci0] 2026-10-23 02:35:33.106346
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-021629.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #226854 [hci0] 2026-10-23 02:35:33.212362
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-024933.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #72098 [hci0] 2026-10-23 02:57:30.499734
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-024933.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #72100 [hci0] 2026-10-23 02:57:30.501873
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-024933.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #72104 [hci0] 2026-10-23 02:57:30.665905
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-024933.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                              #83861 [hci0] 2026-10-23 02:58:22.187956
+        Handle: 18
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-024933.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                      #83863 [hci0] 2026-10-23 02:58:22.191038
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-024933.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                       #83867 [hci0] 2026-10-23 02:58:22.338075
+        Status: Success (0x00)
+        Handle: 4
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-034510.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #688975 [hci0] 2026-10-23 06:40:28.893250
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-034510.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #688976 [hci0] 2026-10-23 06:40:28.896229
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-034510.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #688979 [hci0] 2026-10-23 06:40:29.180216
+        Status: Success (0x00)
+        Handle: 1
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-034510.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #698425 [hci0] 2026-10-23 06:53:23.323038
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-034510.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #698426 [hci0] 2026-10-23 06:53:23.325990
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-034510.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #698429 [hci0] 2026-10-23 06:53:23.609038
+        Status: Success (0x00)
+        Handle: 2
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+--- bt-20261023-034510.btsnoop
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                             #883298 [hci0] 2026-10-23 06:59:23.721803
+        Handle: 21 Address: <addr>
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+--- bt-20261023-034510.btsnoop
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                     #883300 [hci0] 2026-10-23 06:59:23.724712
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+--- bt-20261023-034510.btsnoop
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                      #883302 [hci0] 2026-10-23 06:59:24.133724
+        Status: Success (0x00)
+        Handle: 3
+        Address: <addr>
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+
+===== summary: each kernel setup against each path (within 2 s) =====
+2026-10-20 11:52:50.420969  0x0428  capture: decoded  trace: decoded
+2026-10-20 11:55:20.158918  0x0428  capture: decoded  trace: decoded
+2026-10-20 11:55:59.758020  0x0428  capture: decoded  trace: decoded
+2026-10-20 12:19:37.962904  0x0428  capture: decoded  trace: decoded
+2026-10-20 12:41:50.902887  0x0428  capture: decoded  trace: decoded
+2026-10-20 12:42:13.358914  0x0428  capture: decoded  trace: decoded
+2026-10-20 23:56:20.532849  0x0428  capture: decoded  trace: decoded
+2026-10-21 00:11:19.694918  0x0428  capture: decoded  trace: decoded
+2026-10-21 00:19:39.149896  0x0428  capture: decoded  trace: decoded
+2026-10-21 02:11:47.953932  0x0428  capture: decoded  trace: decoded
+2026-10-21 03:57:41.556896  0x0428  capture: decoded  trace: decoded
+2026-10-21 04:00:55.102880  0x0428  capture: decoded  trace: decoded
+2026-10-21 05:07:57.732928  0x0428  capture: decoded  trace: decoded
+2026-10-21 05:09:59.008953  0x0428  capture: decoded  trace: decoded
+2026-10-21 05:13:52.896948  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:19:11.083906  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:19:53.900850  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:40:59.129959  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:45:17.731113  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:46:15.433907  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:47:09.431902  0x0428  capture: decoded  trace: decoded
+2026-10-21 06:48:03.780975  0x0428  capture: decoded  trace: decoded
+2026-10-22 01:41:07.276113  0x0428  capture: decoded  trace: decoded
+2026-10-22 01:43:10.779846  0x0428  capture: decoded  trace: decoded
+2026-10-22 01:49:46.779864  0x0428  capture: decoded  trace: decoded
+2026-10-22 01:52:49.188849  0x0428  capture: decoded  trace: decoded
+2026-10-22 01:58:39.648914  0x0428  capture: decoded  trace: decoded
+2026-10-22 02:05:51.043908  0x0428  capture: decoded  trace: decoded
+2026-10-22 02:14:02.083878  0x0428  capture: decoded  trace: decoded
+2026-10-22 02:14:58.150911  0x0428  capture: decoded  trace: decoded
+2026-10-22 02:16:54.097873  0x0428  capture: decoded  trace: decoded
+2026-10-22 10:57:36.479003  0x0428  capture: decoded  trace: decoded
+2026-10-22 11:01:41.339131  0x0428  capture: decoded  trace: decoded
+2026-10-22 11:02:11.522068  0x0428  capture: decoded  trace: decoded
+2026-10-22 20:25:27.285924  0x0428  capture: decoded  trace: decoded
+2026-10-22 23:35:32.139908  0x0428  capture: decoded  trace: decoded
+2026-10-22 23:38:55.586855  0x0428  capture: decoded  trace: decoded
+2026-10-22 23:55:56.766915  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:07:28.745871  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:11:11.985892  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:11:35.249914  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:11:57.278032  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:18:43.106966  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:19:33.919957  0x0428  capture: decoded  trace: decoded
+2026-10-23 00:50:55.071858  0x0428  capture: decoded  trace: decoded
+2026-10-23 01:48:31.753192  0x0428  capture: decoded  trace: decoded
+2026-10-23 01:54:31.104931  0x0428  capture: decoded  trace: decoded
+2026-10-23 02:26:18.420897  0x0428  capture: decoded  trace: decoded
+2026-10-23 02:32:03.554979  0x0428  capture: decoded  trace: decoded
+2026-10-23 02:35:33.103981  0x0428  capture: decoded  trace: decoded
+2026-10-23 02:57:30.500010  0x0428  capture: decoded  trace: decoded
+2026-10-23 02:58:22.188859  0x0428  capture: decoded  trace: decoded
+2026-10-23 06:40:28.893927  0x0428  capture: decoded  trace: decoded
+2026-10-23 06:53:23.323903  0x0428  capture: decoded  trace: decoded
+2026-10-23 06:59:23.722917  0x0428  capture: decoded  trace: decoded
+# capture: 55 setup command(s) decoded in the window
+# trace: 55 setup command(s) decoded in the window

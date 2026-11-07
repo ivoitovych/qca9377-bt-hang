@@ -74,7 +74,8 @@ Device AA:BB:CC:00:00:01 Shure AONIC 50
 |---|---|
 | captured | `2026-09-26T02:12:28+02:00` |
 | kernel | `7.0.0-34-generic` |
-| boot id | `e90c9c57` |
+| capture boot id | `e90c9c57` |
+| evidence boot ids | `e90c9c57` |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `yes` |

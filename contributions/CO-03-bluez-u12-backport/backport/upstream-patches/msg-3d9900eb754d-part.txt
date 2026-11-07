@@ -1,0 +1,16 @@
+transport: Add transport_a2dp_get_stream() helper
+
+Look up the A2DP stream of a transport through a helper that also copes
+with an endpoint that has no SEP, and use it in a2dp_resume_complete().
+
+This is the helper part of upstream commit 3d9900eb754d ("transport:
+Delay existence based on delay reporting capability"), which the A2DP
+Acquire()/Release() fix (upstream commit a14d59725ef3) builds on.
+
+(backported from commit 3d9900eb754d277ef6abf21bed827cdc9e79ddb4)
+[Only the transport_a2dp_get_stream() helper and its use in
+a2dp_resume_complete() are taken. The delay reporting change itself
+(avdtp_stream_has_delay_reporting() in avdtp.c/avdtp.h, the new
+delay_reporting_exists(), and wiring the helper as the A2DP get_stream
+op) is left out: it changes when the Delay property exists, which is
+not part of this fix.]

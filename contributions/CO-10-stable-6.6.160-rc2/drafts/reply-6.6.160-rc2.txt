@@ -1,0 +1,71 @@
+Reply-all to "[PATCH 6.6 0000/1651] 6.6.160-rc2 review" (Greg Kroah-Hartman, stable list,
+Tue 20 Oct 2026 09:57:46 +0200), with In-Reply-To and References set to that mail's
+Message-ID, keeping its To (stable list) and every Cc. Subject: "Re: [PATCH 6.6 0000/1651]
+6.6.160-rc2 review". The announcement's Message-ID is
+<20261020075535.084584701@linuxfoundation.org>
+(https://lore.kernel.org/stable/20261020075535.084584701@linuxfoundation.org/).
+The headers are taken from the saved copy of the announcement (development host,
+tmp/stable-6.6.160-rc2-cover-20261020.txt). The complete sendable mail, with every header and
+recipient, is beside this file: reply-6.6.160-rc2-v6.eml (v5.eml and v4.eml are kept as the
+previous versions). It is checked against the
+announcement by scripts/reply-headers-check.py: 7 of 7 PASS, and the same 20 recipients as
+the original. (Until 2026-10-21 it was kept off this public copy "because it carries mail
+addresses"; they are the public stable-review recipients, so that was wrong, BRIEF §7.)
+Deadline: Thu 22 Oct 2026 07:53:04 UTC. Nothing is sent without the operator's word.
+
+Version 6, 2026-10-21, after the four reviewers' recheck of version 5 (../log.md): "No other
+case that ran on both kernels passes on one and not on the other" instead of "either pass on
+both or fail on both". "Failed" and "Timed out" are distinct tester verdicts, so "fail on
+both" could be read as both runs ending Failed; what was measured is that no case changes
+between passing and not passing. Nothing else changed.
+
+Version 5, 2026-10-21, after the four reviewers' recheck of version 4 (what each point led
+to: ../log.md):
+- "either pass on both or fail on both" instead of "have the same verdict": one 6.6.159 run
+  of mesh "Send cancel - 1" failed where rc2 timed out. Both are non-passing, but not the
+  same verdict;
+- "No kernel warnings, sanitizer or lockdep reports".
+
+Version 4 (01:55 UTC) had brought:
+- "the BlueZ CI TestRunner suites";
+- the "all other cases that ran on both kernels" scope;
+- mesh-tester in that list.
+
+Everything below the line is the mail body.
+------------------------------------------------------------------------------------------
+On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
+> This is the start of the stable review cycle for the 6.6.160 release.
+> There are 1651 patches in this series, all will be posted as a response
+> to this one.  If anyone has any issues with these being applied, please
+> let me know.
+>
+> Responses should be made by Thu, 22 Oct 2026 07:53:04 +0000.
+> Anything received after that time might be too late.
+
+Built 6.6.160-rc2 (c578c158a368) and 6.6.159 for x86_64 with BlueZ's
+doc/tester.config (KASAN, lockdep) and ran the BlueZ CI TestRunner
+suites on both in QEMU/KVM (emulated controllers, no Bluetooth
+hardware). Four of rc2's fixes show up as intended:
+
+- "Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING":
+  mgmt-tester "Start Discovery - Simultaneous Inquiry Late" fails on
+  6.6.159 (Start Discovery answered Busy) and passes on rc2, 3 of 3.
+- "Bluetooth: MGMT: Fix status of pending commands flushed on power
+  off": a vhci reproducer gets Command Status 0x00 for Start Discovery
+  on 6.6.159 and 0x0f (Not Powered) on rc2, 2 of 2.
+- "Bluetooth: MGMT: fix crash in set_mesh_sync and set_mesh_complete":
+  mesh-tester "Mesh - Enable 2" hits KASAN stack-out-of-bounds in
+  set_mesh_sync and then a GPF in mgmt_pending_remove on 6.6.159; on
+  rc2 it passes.
+- "Bluetooth: L2CAP: fix out-of-bounds write in l2cap_ecred_connect":
+  l2cap-tester "L2CAP Ext-Flowctl Client - Defer limit" fails on 6.6.159
+  and passes on rc2, 3 of 3.
+
+No other case that ran on both kernels passes on one and not on the
+other: mgmt-tester (rc2 465 passed, 37 failed, 6 timed out; 6.6.159
+464, 38, 6), mesh-, iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan-
+and 6lowpan-tester, and l2cap-tester up to "L2CAP Ext-Flowctl Server -
+Accept 2 Close 1", which hangs on both. No kernel warnings, sanitizer
+or lockdep reports were found on rc2 in these runs.
+
+Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

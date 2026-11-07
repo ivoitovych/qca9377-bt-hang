@@ -1,6 +1,6 @@
 # External-sources review task — the open defects of the QCA9377 (`13d3:3503`) project
 
-*(The brief as given on 2026-09-29, when it was kept private until the reports and patches
+*(The brief as given on 2026-09-29, when it was kept separately until the reports and patches
 it led to were sent; ported to `main` on 2026-10-09.)*
 
 ## What is asked
@@ -177,6 +177,6 @@ did not clear it); would a fix to `tools/mesh-tester.c` or the kernel be welcome
    not yet have.
 3. Anything the outside record shows that we have not listed.
 
-Constraints: the machine is a family laptop; experiments are short and a wedge costs the
-household until the next power cycle. This task needs no experiment. Please do not post
+Constraints: the machine is a laptop; experiments are short and a wedge costs the
+laptop's users until the next power cycle. This task needs no experiment. Please do not post
 anywhere on our behalf.

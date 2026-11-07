@@ -1,9 +1,9 @@
 # The Mesh MGMT transmit path as two state machines
 
-Working design document, not a submission. Author: Iaroslav Voitovych. Written 2026-10-05 on a
-private branch; ported to `main` 2026-10-09.
+Working design document, not a submission. Author: Iaroslav Voitovych. Written 2026-10-05 and
+kept separately; ported to `main` 2026-10-09.
 Asked for by the research review of 2026-10-05 (`docs/mesh-tester-ci/research-review-2026-10-05.md`,
-"An organising document, private"). Read-only analysis: nothing was built, run, sent or committed
+"An organising document, not for upstream yet"). Read-only analysis: nothing was built, run, sent or committed
 for it.
 
 > **Update 2026-10-05, after the research gates (`gates-2026-10-05.md`).** Two findings marked

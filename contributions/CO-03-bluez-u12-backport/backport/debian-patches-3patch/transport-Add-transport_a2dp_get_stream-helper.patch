@@ -1,0 +1,63 @@
+From: Arkadiusz Bokowy <arkadiusz.bokowy@gmail.com>
+Date: Tue, 8 Oct 2024 22:09:26 +0200
+Subject: transport: Add transport_a2dp_get_stream() helper
+
+Look up the A2DP stream of a transport through a helper that also copes
+with an endpoint that has no SEP, and use it in a2dp_resume_complete().
+
+This is the helper part of upstream commit 3d9900eb754d ("transport:
+Delay existence based on delay reporting capability"), which the A2DP
+Acquire()/Release() fix (upstream commit a14d59725ef3) builds on.
+
+(backported from commit 3d9900eb754d277ef6abf21bed827cdc9e79ddb4)
+[Only the transport_a2dp_get_stream() helper and its use in
+a2dp_resume_complete() are taken. The delay reporting change itself
+(avdtp_stream_has_delay_reporting() in avdtp.c/avdtp.h, the new
+delay_reporting_exists(), and wiring the helper as the A2DP get_stream
+op) is left out: it changes when the Delay property exists, which is
+not part of this fix.]
+
+Origin: backport, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=3d9900eb754d277ef6abf21bed827cdc9e79ddb4
+Applied-Upstream: 5.79, commit:3d9900eb754d277ef6abf21bed827cdc9e79ddb4
+Last-Update: 2026-11-01
+---
+ profiles/audio/transport.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/profiles/audio/transport.c b/profiles/audio/transport.c
+index a469615..7263c17 100644
+--- a/profiles/audio/transport.c
++++ b/profiles/audio/transport.c
+@@ -368,13 +368,22 @@ static gboolean media_transport_set_fd(struct media_transport *transport,
+ 	return TRUE;
+ }
+ 
++static void *transport_a2dp_get_stream(struct media_transport *transport)
++{
++	struct a2dp_sep *sep = media_endpoint_get_sep(transport->endpoint);
++
++	if (!sep)
++		return NULL;
++
++	return a2dp_sep_get_stream(sep);
++}
++
+ static void a2dp_resume_complete(struct avdtp *session, int err,
+ 							void *user_data)
+ {
+ 	struct media_owner *owner = user_data;
+ 	struct media_request *req = owner->pending;
+ 	struct media_transport *transport = owner->transport;
+-	struct a2dp_sep *sep = media_endpoint_get_sep(transport->endpoint);
+ 	struct avdtp_stream *stream;
+ 	int fd;
+ 	uint16_t imtu, omtu;
+@@ -385,7 +394,7 @@ static void a2dp_resume_complete(struct avdtp *session, int err,
+ 	if (err)
+ 		goto fail;
+ 
+-	stream = a2dp_sep_get_stream(sep);
++	stream = transport_a2dp_get_stream(transport);
+ 	if (stream == NULL)
+ 		goto fail;
+ 

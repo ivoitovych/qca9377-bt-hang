@@ -136,7 +136,8 @@ unexplained and may or may not belong to the same story.
 |---|---|
 | captured | `2026-08-18T18:44:15+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `e9399c8c` |
+| capture boot id | `e9399c8c` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME); peer `MOMENTUM 4` |
 | exit status | `0` |
 | redacted | `yes` — peer address replaced with a documented placeholder |

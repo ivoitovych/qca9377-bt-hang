@@ -1,0 +1,16 @@
+test: Cover A2DP endpoint switch while Close is pending
+
+Add test_a2dp_reconfigure_during_close, where the peripheral's
+bluetoothd is stopped so that a Close sent by the source is left
+pending, and the source then switches endpoints with SetConfiguration,
+which aborts the stream and cancels the Close. That call must fail, as
+must a second one made while the Abort is pending, and the stream be
+configured again on reconnection, made once the link is down, as a
+connection attempted while it goes down can be refused.
+
+A host plugin stops the bluetoothd it started and resumes it, at the
+latest on teardown, so that a failing run leaves no stopped bluetoothd
+behind.
+
+Built with AddressSanitizer, bluetoothd on the source reports a
+heap-use-after-free in a2dp_reconfig() without the previous patch.

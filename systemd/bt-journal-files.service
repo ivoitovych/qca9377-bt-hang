@@ -1,0 +1,15 @@
+[Unit]
+Description=Copy closed journal files off the ring (compressed, verified)
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+# Replaces "archive a boot once it has ended" as the protection against rotation: the
+# 10-19 boot lost its first 14 h while still running (tools/bt-journal-files, header).
+RequiresMountsFor=/root /var/log/journal
+
+[Service]
+Type=oneshot
+# Reads the journal directory and writes only under /root/bt-journal-archive/files.
+# Never touches the Bluetooth controller.
+ExecStart=/usr/local/bin/bt-journal-files
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=1h

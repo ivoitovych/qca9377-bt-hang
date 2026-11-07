@@ -44,7 +44,8 @@ bt-fault-window — boot 20fbb9a2afd44795a75bc95ed3f3a27e, anchored on 2026-09-2
 |---|---|
 | captured | `2026-09-26T01:42:18+02:00` |
 | kernel | `7.0.0-34-generic` |
-| boot id | `e90c9c57` |
+| capture boot id | `e90c9c57` |
+| evidence boot ids | `20fbb9a2` |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |
@@ -70,7 +71,8 @@ bash: line 1: tools/bt-window: No such file or directory
 |---|---|
 | captured | `2026-09-24T03:56:42+02:00` |
 | kernel | `7.0.0-31-generic` |
-| boot id | `20fbb9a2` |
+| capture boot id | `20fbb9a2` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

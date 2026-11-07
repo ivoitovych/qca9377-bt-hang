@@ -1,0 +1,187 @@
+From 0fa2510080d5e1b31434d05c7a600d355df10eb9 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:37:33 +0200
+Subject: [PATCH RFC] Bluetooth: SCO: defer a connect until the link being
+ aborted is gone
+
+hci_connect_sco() now refuses a connection that is being aborted with
+-ECONNABORTED. A socket that connects right after the previous one was
+closed, as PipeWire does when the HFP codec changes during a call, still
+fails then: the Disconnection Complete of the old link comes tens to
+hundreds of milliseconds after the connect, and PipeWire's only retry is
+two further connects without any delay.
+
+When hci_connect_sco() reports that, leave the socket in BT_CONNECT, as
+for a link being set up, and queue the connect on the cmd_sync queue.
+The abort of the old link is queued there ahead of it and returns only
+after the Disconnection Complete was handled, so the connect then finds
+no connection to reuse and sets up a new link. connect() returns
+-EINPROGRESS for a non-blocking socket, and the socket becomes writable
+when the new link is up or reports the error when it is not.
+
+If the socket is closed meanwhile the queued connect does nothing. If
+the controller is closed or unregistered before it ran, the socket is
+failed with ENETDOWN.
+
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/sco.c | 115 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 113 insertions(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c
+index 8be48ca9f4c5..288ebe12daed 100644
+--- a/net/bluetooth/sco.c
++++ b/net/bluetooth/sco.c
+@@ -333,7 +333,12 @@ static int sco_chan_add(struct sco_conn *conn, struct sock *sk,
+ 	return err;
+ }
+ 
+-static int sco_connect(struct sock *sk)
++static int sco_connect_defer(struct sock *sk, struct hci_dev *hdev);
++
++/* @deferred: the connect was deferred until the previous link to the device
++ * was gone, the socket is in BT_CONNECT and has no hci_conn yet.
++ */
++static int __sco_connect(struct sock *sk, bool deferred)
+ {
+ 	struct sco_conn *conn;
+ 	struct hci_conn *hcon;
+@@ -377,6 +382,12 @@ static int sco_connect(struct sock *sk)
+ 			       READ_ONCE(sk->sk_sndtimeo));
+ 	if (IS_ERR(hcon)) {
+ 		err = PTR_ERR(hcon);
++
++		/* The link to this device is being disconnected: connect once
++		 * it is gone instead of failing.
++		 */
++		if (err == -ECONNABORTED && !deferred)
++			err = sco_connect_defer(sk, hdev);
+ 		goto unlock;
+ 	}
+ 
+@@ -392,7 +403,8 @@ static int sco_connect(struct sock *sk)
+ 	/* Recheck state after reacquiring the socket lock, as another
+ 	 * thread may have changed it (e.g., closed the socket).
+ 	 */
+-	if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND) {
++	if (deferred ? (sk->sk_state != BT_CONNECT || sco_pi(sk)->conn) :
++	    (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND)) {
+ 		release_sock(sk);
+ 		sco_conn_put(conn);
+ 		hci_conn_drop(hcon);
+@@ -417,6 +429,8 @@ static int sco_connect(struct sock *sk)
+ 	if (hcon->state == BT_CONNECTED) {
+ 		sco_sock_clear_timer(sk);
+ 		sk->sk_state = BT_CONNECTED;
++		if (deferred)
++			sk->sk_state_change(sk);
+ 	} else {
+ 		sk->sk_state = BT_CONNECT;
+ 		sco_sock_set_timer(sk, READ_ONCE(sk->sk_sndtimeo));
+@@ -430,6 +444,103 @@ static int sco_connect(struct sock *sk)
+ 	return err;
+ }
+ 
++struct sco_defer {
++	struct sock *sk;
++};
++
++static void sco_connect_fail(struct sock *sk, int err)
++{
++	lock_sock(sk);
++	if (sk->sk_state == BT_CONNECT && !sco_pi(sk)->conn) {
++		sk->sk_state = BT_CLOSED;
++		sk->sk_err = -err;
++		sk->sk_state_change(sk);
++		sock_set_flag(sk, SOCK_ZAPPED);
++	}
++	release_sock(sk);
++}
++
++/* Runs on the cmd_sync queue, behind the abort of the previous link: by now
++ * its Disconnection Complete event has been handled and the hci_conn is gone.
++ */
++static int sco_connect_sync(struct hci_dev *hdev, void *data)
++{
++	struct sco_defer *d = data;
++	struct sock *sk = d->sk;
++	int err;
++
++	/* Nothing to do if the socket was closed meanwhile */
++	lock_sock(sk);
++	if (sk->sk_state != BT_CONNECT || sco_pi(sk)->conn) {
++		release_sock(sk);
++		return 0;
++	}
++	release_sock(sk);
++
++	err = __sco_connect(sk, true);
++	if (err)
++		sco_connect_fail(sk, err);
++
++	return err;
++}
++
++static void sco_connect_destroy(struct hci_dev *hdev, void *data, int err)
++{
++	struct sco_defer *d = data;
++
++	/* Dropped without running, e.g. the controller was closed */
++	if (err == -ECANCELED)
++		sco_connect_fail(d->sk, -ENETDOWN);
++
++	sock_put(d->sk);
++	kfree(d);
++}
++
++/* Called with hdev locked. The socket waits in BT_CONNECT, as for a link being
++ * set up, and sco_connect_sync() makes the connection.
++ */
++static int sco_connect_defer(struct sock *sk, struct hci_dev *hdev)
++{
++	struct sco_defer *d;
++	int state, err;
++
++	d = kzalloc_obj(struct sco_defer);
++	if (!d)
++		return -ENOMEM;
++
++	lock_sock(sk);
++	state = sk->sk_state;
++	if (state != BT_OPEN && state != BT_BOUND) {
++		release_sock(sk);
++		kfree(d);
++		return -EBADFD;
++	}
++	sk->sk_state = BT_CONNECT;
++	release_sock(sk);
++
++	sock_hold(sk);
++	d->sk = sk;
++
++	err = hci_cmd_sync_queue(hdev, sco_connect_sync, d,
++				 sco_connect_destroy);
++	if (err) {
++		sock_put(sk);
++		kfree(d);
++
++		lock_sock(sk);
++		if (sk->sk_state == BT_CONNECT)
++			sk->sk_state = state;
++		release_sock(sk);
++	}
++
++	return err;
++}
++
++static int sco_connect(struct sock *sk)
++{
++	return __sco_connect(sk, false);
++}
++
+ static int sco_send_frame(struct sock *sk, struct sk_buff *skb,
+ 			  const struct sockcm_cookie *sockc)
+ {
+-- 
+2.43.0
+

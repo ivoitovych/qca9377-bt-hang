@@ -1,0 +1,47 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: stable@vger.kernel.org
+Cc: Quentin Strydom <qstrydom0@gmail.com>, Konstantin Nazarov <qwertyuiopyyy@gmail.com>, Marcel Holtmann <marcel@holtmann.org>, Luiz Augusto von Dentz <luiz.dentz@gmail.com>, linux-bluetooth@vger.kernel.org
+Subject: Please backport d54601f21faf and cfa67a1dbfd9 (btusb: ASUS QCA Rome IDs) to stable
+
+Hello,
+
+please consider for linux-7.3.y, linux-6.18.y, linux-6.12.y,
+linux-6.6.y, linux-6.1.y, linux-5.15.y and linux-5.10.y, in this
+order:
+
+  d54601f21faf ("Bluetooth: btusb: add ASUS 0b05:1868 to QCA Rome
+  quirks")
+  cfa67a1dbfd9 ("Bluetooth: btusb: add ASUS 0b05:1825 to QCA Rome
+  quirks")
+
+Both are in mainline since v7.4-rc1 and carry no Cc: stable tag.
+Together they add two device IDs at the head of the btusb QCA ROME
+block:
+
+	{ USB_DEVICE(0x0b05, 0x1825), .driver_info = BTUSB_QCA_ROME |
+						     BTUSB_WIDEBAND_SPEECH },
+	{ USB_DEVICE(0x0b05, 0x1868), .driver_info = BTUSB_QCA_ROME |
+						     BTUSB_WIDEBAND_SPEECH },
+
+Without an entry these ASUS controllers match only the generic
+Bluetooth class entry, btusb_setup_qca() never runs, and they stay on
+their ROM firmware. Both commit messages report repeated "unexpected
+event for opcode 0x2005" during LE scanning on that firmware. With the
+entry the events stop (both commits), and d54601f21faf records the
+driver loading qca/rampatch_usb_00000302.bin and
+qca/nvm_usb_00000302.bin. I do not have these devices; the runtime
+results are the authors'.
+
+None of the seven trees has either ID. On each tree's current tip
+(7.3.1, 6.18.60, 6.12.115, 6.6.161, 6.1.191, 5.15.224, 5.10.273) both
+commits cherry-pick cleanly with -x, and drivers/bluetooth/btusb.o
+builds with them (x86_64 defconfig, BT=m, BT_HCIBTUSB=m, W=1) with no
+new warning. (On 6.6.161 that configuration needs -Wno-error with or
+without the two commits, because of a separate btmtk.h issue.)
+
+The same kind of entry, dc16388d45ec ("Bluetooth: btusb: Add IMC
+Networks QCA9377 to quirks table"), was queued for 7.2.y down to
+5.10.y in October after a request like this one.
+
+Thank you,
+Iaroslav Voitovych

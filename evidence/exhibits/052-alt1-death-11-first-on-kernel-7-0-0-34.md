@@ -46,7 +46,8 @@ bt-fault-window — boot 5ee9ab7846eb47afb5843cb00fb1d119, anchored on 2026-09-2
 |---|---|
 | captured | `2026-09-25T23:14:18+02:00` |
 | kernel | `7.0.0-34-generic` |
-| boot id | `e90c9c57` |
+| capture boot id | `e90c9c57` |
+| evidence boot ids | `5ee9ab78` |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

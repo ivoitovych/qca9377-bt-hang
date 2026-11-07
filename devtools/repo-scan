@@ -1,15 +1,17 @@
 #!/bin/bash
 # repo-scan — refuse-to-publish scan for data that must never leave the machine.
 #
-#   repo-scan [dir] [--all] [--quiet]
+#   repo-scan [dir] [--all | --range <base> <head>] [--quiet]
 #
 #   default   scan STAGED ADDITIONS (what this commit would introduce)
 #   --all     scan every tracked file in the whole repository
+#   --range   scan the ADDED LINES between two commits (what a push would
+#             introduce); <base> may be the all-zero id for a new branch
 #
 # Exits non-zero if anything suspicious is found.
 #
 # Checks: MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4 addresses,
-# email addresses, tool attribution, and tracked binary captures.
+# email addresses, and tracked binary captures.
 #
 # WHY: this repository publishes logs. Kernel logs contain the Wi-Fi access
 # point BSSID, which public geolocation databases index — publishing one can
@@ -17,10 +19,11 @@
 
 set -uo pipefail
 
-DIR="."; ALL=0; QUIET=0; seen_dir=0
+DIR="."; ALL=0; QUIET=0; seen_dir=0; RANGE_BASE=""; RANGE_HEAD=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --all)   ALL=1 ;;
+        --range) RANGE_BASE="${2:?--range needs <base> <head>}"; RANGE_HEAD="${3:?--range needs <base> <head>}"; shift 2 ;;
         --quiet) QUIET=1 ;;
         -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
         -*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -45,6 +48,19 @@ cd "$ROOT" || exit 2
 if (( ALL )); then
     CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null)
     SCOPE="all tracked files ($(git ls-files | wc -l) files, from $ROOT)"
+elif [[ -n "$RANGE_HEAD" ]]; then
+    # What a push introduces: the added lines between the remote's tip and the
+    # local one. A branch new to the remote has the all-zero base; its whole
+    # tree is then new, so it is diffed against the empty tree.
+    base="$RANGE_BASE"
+    [[ "$base" =~ ^0+$ ]] && base=$(git hash-object -t tree /dev/null)
+    git rev-parse -q --verify "$RANGE_HEAD^{commit}" >/dev/null \
+        || { echo "  ✗ --range: $RANGE_HEAD is not a commit here" >&2; exit 2; }
+    CONTENT=$(git diff "$base" "$RANGE_HEAD" -- | grep '^+' | grep -v '^+++ ' | sed 's/^+//')
+    SCOPE="pushed additions ${RANGE_BASE:0:12}..${RANGE_HEAD:0:12}"
+    if [[ -z "$CONTENT" ]]; then
+        echo "scan clean ($SCOPE: no added lines)"; exit 0
+    fi
 else
     # ONLY ADDED LINES. Scanning the whole diff meant a commit that REMOVES a
     # leaked secret still contained it on the '-' lines, so the scan failed and
@@ -81,10 +97,19 @@ pass()   { (( QUIET )) || echo "  ✓ $1"; }
 # tools/mgmt-tester.c; 00:aa:01:01:00:00 is the emulated controller's own
 # address, built in emulator/btdev.c (bdaddr[4] = 0xaa). Matched whole, so a
 # real address sharing a prefix is still caught.
+# 00:aa:01:00:00:42 and 00:aa:01:01:00:42: the same get_bdaddr() (printed
+# 00:aa:01:<index>:<id>), index 0 and 1, id 0x42 — the two btvirt controllers of
+# PipeWire's VM tests (contributions/CO-36-*/homework/results/).
+# 00:aa:01:00:00:00: the same get_bdaddr() at index 0, id 0, the emulated
+# controller mgmt-tester prints as "Address:" when it runs on index 0
+# (contributions/research-2026-11-01/mesh/logs/).
+# 00:00:5e:00:53:xx is RFC 7042's documentation range (the MAC analogue of the
+# IPv4 TEST-NET ranges below), never assigned to hardware; the CO-36 unit
+# harness uses it for its fake adapter and device.
 macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
        | tr 'A-F_-' 'a-f::' \
-       | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' \
-       | grep -vxE '05:04:03:02:01:00|bc:9a:78:56:34:11|00:aa:01:01:00:00' \
+       | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be|00:00:5e:00:53)' \
+       | grep -vxE '05:04:03:02:01:00|bc:9a:78:56:34:11|00:aa:01:01:00:00|00:aa:01:00:00:00|00:aa:01:00:00:42|00:aa:01:01:00:42' \
        | sort -u)
 [[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || pass "no unexpected MACs"
 
@@ -93,9 +118,17 @@ macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
 # those are public constants and appear in every bluetoothd log this project
 # publishes. Flagging them blocked ordinary commits and trained people to
 # bypass the gate. Filesystem/machine UUIDs are still caught.
+# A public Message-ID can itself be <uuid>@<host> (Thunderbird writes them so). A UUID
+# passes this check only when a whole <uuid>@<host> Message-ID with it is listed in
+# devtools/repo-scan-public-addresses (the address check below still needs that whole
+# Message-ID listed); every other UUID is refused as before (CO-25's first reply,
+# 2026-10-29).
+PUB_UUIDS=$(grep -oEi '^[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@' \
+        "$ROOT/devtools/repo-scan-public-addresses" 2>/dev/null | tr -d '[:space:]@' || true)
 uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" \
         | grep -viE '^0000[0-9a-f]{4}-0000-1000-8000-00805f9b34fb$' \
         | grep -viE '^(00000000-0000-0000-0000-000000000000)$' \
+        | { [[ -n "$PUB_UUIDS" ]] && grep -viFx -f <(printf '%s\n' "$PUB_UUIDS") || cat; } \
         | sort -u)
 [[ -n "$uuids" ]] && report "UUID found (non-SIG):" $uuids || pass "no UUIDs"
 
@@ -139,26 +172,85 @@ ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo 
 # configure. It widens the allowlist by exactly one address, the same one the
 # local config would have supplied on the maintainer's machine.
 [[ -n "$ALLOW_MAIL" ]] || ALLOW_MAIL=$(git log -1 --format='%ae' 2>/dev/null || echo '')
+# ADDRESSES UPSTREAM HAS ALREADY PUBLISHED ARE PUBLIC (operator, 2026-10-13;
+# BRIEF §7). Sign-offs, maintainers, list addresses, Message-IDs and lore or
+# patchwork links are mirrored worldwide; refusing them made the maintainer
+# delete a Message-ID from STATUS, patchwork links from outside reviews and a
+# reply's recipient list (2026-10-20/21). The scanned repository's own
+# devtools/repo-scan-public-addresses lists them:
+#   "@host"  every address at exactly that host. ONLY for mailing-list hosts,
+#            where every address is a public list; never for an organisation's
+#            or a mail provider's domain, which would pass its unpublished
+#            addresses too (outside reviews of ccb46dc, 2026-10-21).
+#   other    one token, matched exactly: a person's published address, or a
+#            whole Message-ID as the pattern above reads it (git send-email
+#            writes <date>.<pid>-<n>-<sender>, read as one address).
+#   "#"      starts a comment.
+# Nothing else passes, so an unpublished address is refused even at the domain
+# of a listed person, and even when it ends with a listed address.
+PUB_LIST="$ROOT/devtools/repo-scan-public-addresses"
+PUB_EXACT=""; PUB_DOMS=""
+if [[ -r "$PUB_LIST" ]]; then
+    # sed, not tr -d '[:space:]': tr also deletes the newlines and joins every
+    # entry into one, which a one-entry test list cannot show (found 2026-10-21).
+    PUB_EXACT=$(grep -vE '^[[:space:]]*(#|$)' "$PUB_LIST" | grep -v '^@' | sed 's/[[:space:]]//g' \
+        | grep -v '^$' || true)
+    PUB_DOMS=$(grep -E '^@' "$PUB_LIST" | sed 's/[[:space:]]//g' | sed 's/\./\\./g' | paste -sd'|' || true)
+fi
+# THE MAINTAINER'S OWN ADDRESS, EXACTLY, or one of their own git send-email
+# Message-IDs (<14-digit date>.<pid>-<n>-<address>, read as one address). It was
+# a substring match, which also passed "private-<maintainer's address>" (outside
+# reviews of 05f5aef, 2026-10-21).
+ALLOW_RE=$(sed 's/[][\.*^$()+?{}|]/\\&/g' <<<"$ALLOW_MAIL")
+# Kernel.org is not a list host: its people are listed one by one in
+# devtools/repo-scan-public-addresses (2026-10-21). vger and lists.linux.dev
+# host only lists.
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
-        | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
+        | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|example\.(com|org))$' \
         | grep -viFx 'giometti@linux.it' \
         | grep -viE '^(noreply|no-reply)@' \
-        | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
+        | { [[ -n "$ALLOW_MAIL" ]] && grep -viE "^([0-9]{14}\.[0-9]+-[0-9]+-)?${ALLOW_RE}\$" || cat; } \
         | grep -viE '^modprobe@|^systemd-' \
+        | { [[ -n "$PUB_EXACT" ]] && grep -viFx -f <(printf '%s\n' "$PUB_EXACT") || cat; } \
+        | { [[ -n "$PUB_DOMS" ]] && grep -viE "($PUB_DOMS)\$" || cat; } \
         | sort -u)
+# QUOTED EXAMPLES, ALLOWED ONLY WHERE THEY ARE QUOTED. Outside reviews quote
+# made-up addresses to show a hole ("anything@<an organisation's domain>").
+# Kept verbatim, they would fail the scan; listed as public, they would pass
+# everywhere, though nobody published them (outside reviews of 05f5aef).
+# devtools/repo-scan-quoted-examples pairs each with the file that quotes it,
+# and the token passes only if no other tracked file contains it.
+QUOTE_LIST="devtools/repo-scan-quoted-examples"
+quoted_only_where_listed() {
+    local tok="$1" paths found f
+    [[ -r "$QUOTE_LIST" ]] || return 1
+    paths=$(awk -v t="${tok,,}" '!/^[[:space:]]*(#|$)/ && tolower($2) == t { print $1 }' "$QUOTE_LIST")
+    [[ -n "$paths" ]] || return 1
+    # Search the same tree the content came from: the pushed commit, the index
+    # for staged additions, and otherwise (--all, or nothing staged) the
+    # working tree, which is what `cat` read. --all once searched the index,
+    # so an unstaged copy elsewhere went unseen (outside review of 1eda14a).
+    if [[ -n "$RANGE_HEAD" ]]; then
+        found=$(git grep -l -i -F -e "$tok" "$RANGE_HEAD" -- | sed "s|^$RANGE_HEAD:||")
+    elif [[ "$SCOPE" == "staged additions" ]]; then
+        found=$(git grep -l -i -F --cached -e "$tok" --)
+    else
+        found=$(git grep -l -i -F -e "$tok" --)
+    fi
+    [[ -n "$found" ]] || return 1
+    while IFS= read -r f; do
+        [[ "$f" == "$QUOTE_LIST" ]] && continue
+        grep -qxF -- "$f" <<<"$paths" || return 1
+    done <<<"$found"
+}
+if [[ -n "$mails" ]]; then
+    unquoted=""
+    while IFS= read -r m; do
+        quoted_only_where_listed "$m" || unquoted+="$m"$'\n'
+    done <<<"$mails"
+    mails=$(printf '%s' "$unquoted")
+fi
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
-
-# --- tool attribution --------------------------------------------------------
-# REVIEWED-KEEP 2026-08-15T1752Z §5: keep the fragment assembly below and the
-# refuse-on-empty-read above — the first keeps the scanner out of its own
-# net, the second stops a failed enumeration reading as a clean tree.
-# The pattern strings are assembled from fragments so this file does not itself
-# contain a literal match. The previous approach — excluding lines that looked
-# like grep definitions — worked but broke if the pattern list was ever
-# reformatted, and a false positive here blocks every commit.
-_c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
-ta=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
-(( ${ta:-0} > 0 )) && report "tool attribution present ($ta match(es))" || pass "no tool attribution"
 
 # --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)

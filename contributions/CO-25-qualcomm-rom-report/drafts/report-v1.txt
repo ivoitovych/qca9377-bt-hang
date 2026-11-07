@@ -1,0 +1,82 @@
+To: linux-bluetooth@vger.kernel.org
+Cc: Bartosz Golaszewski <brgl@kernel.org>,
+    linux-arm-msm@vger.kernel.org,
+    Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>
+Subject: QCA9377 (13d3:3503) ROM firmware stops answering HCI after
+ a transparent SCO stream; question about ROME USB IDs
+
+Hello,
+
+This is a report with two questions, not a patch.
+
+Device: QCA9377, USB 13d3:3503 (IMC Networks), in a laptop. Its
+interface 1 has isochronous alternate settings 1 to 5 with
+wMaxPacketSize 9, 17, 25, 33 and 49, and no alternate setting 6
+(the same listing is in commit dc16388d45ec).
+
+Until dc16388d45ec ("Bluetooth: btusb: Add IMC Networks QCA9377 to
+quirks table"), btusb had no entry for this ID, so the controller
+was driven as a generic device and ran its ROM firmware. The kernel
+log of a boot with the QCA setup running reads:
+
+  hci0: QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302
+  build 0x111
+
+and, before the rampatch and NVM are loaded, the status byte read
+by btusb_setup_qca() is 0x20 (neither loaded).
+
+Symptom on the ROM firmware (stock btusb, Ubuntu 7.0.0-29 to
+7.0.0-34): with a headset in a hands-free call using the
+transparent (mSBC) air mode, btusb uses USB alternate setting 1
+(9-byte endpoint, each 27-byte SCO buffer sent as three packets).
+SCO setup by 0x0428 is answered, the link comes up and streams. The
+first HCI command issued after that gets no response and times out
+after HCI_CMD_TIMEOUT (2 s). Where the log names the command it
+is 0x0406 Disconnect in six instances and 0x0c1a Write Scan Enable
+in one; the delay from link-up to that command ranged from 34 ms to
+9.65 s, so the command itself does not seem to matter. From then
+on the controller answers no HCI command, and USB control transfers
+to it (GET_DESCRIPTOR) time out with -110, while it stays
+enumerated. Removing power recovered it; a reboot did not always.
+This happened 12 times on four kernel builds with three headset
+models.
+
+With the rampatch and NVM loaded this has not happened. Two
+diagnostic builds of btusb ran 74 SCO links without a single
+command timeout: 58 links over three boots with only the QCA setup
+path (BTUSB_QCA_ROME), and 16 links on one boot with the exact
+entry of dc16388d45ec. Every Disconnect was answered. So for users
+the upstream entry fixes it, and it has been released in stable
+kernels. It does not exercise the reset callback, which only runs
+on a timeout.
+
+What we do not know: what the ROM firmware does wrong, or why
+loading the rampatch cures it. We did not test other air modes,
+other alternate settings or another controller revision. We have
+no count of the ROM-firmware links that completed without a hang,
+so no failure rate. The firmware also differs in what it
+advertises: Read Local Supported Commands reported 197 commands
+on the ROM firmware in 149 of 159 replies surveyed, and 202 (with
+Enhanced Setup and Enhanced Accept Synchronous Connection) after
+the rampatch; we do not know whether that is related.
+
+Questions:
+
+1. Is this ROM behaviour known (a transparent SCO stream, then
+   no response to the next HCI command until power is removed)?
+   Is there an erratum or a firmware version that avoids it?
+
+2. Does Qualcomm know of other ROME-based USB IDs that ship
+   without an entry in btusb's quirks table and so also run the
+   ROM firmware? For 13d3 we see 3491, 3496 and 3501 listed as
+   BTUSB_QCA_ROME, while 3502, 3503 (now added) and 3504 are not.
+
+If the ROM source or an errata note can be shared, it would help us
+describe the cause correctly; we understand if it cannot.
+
+Logs (kernel, USB state, HCI traces) for each instance are
+available on request.
+
+Thank you,
+Yaroslav Voytovych

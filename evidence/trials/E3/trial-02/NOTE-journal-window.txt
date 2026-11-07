@@ -1,0 +1,13 @@
+The counts in E3 #2's row cover less than its duration (written 2026-10-23 11:30 local).
+
+The trial ran from 2026-10-19 21:53:22 to its hand close on 2026-10-23 09:34:50 (300842 s).
+The close counts from the journal, and when it ran the oldest journal entry was
+2026-10-20 12:06:59: journald's default SystemMaxFiles=100 had removed older files (98 archived
+files of ~58 MB each, one every ~8 minutes with the Bluetooth debug logging; 3.7 GB in all, far
+below SystemMaxUse=16G). So "55 SCO setups, 0 HCI command timeouts" covers 2026-10-20 12:06:59
+to the close, about 69 h of the 83.6 h; the first ~14 h are not counted. The HCI captures for
+that window, if not rotated, are under /var/log/bt-health/ (capture-archive timer off since
+2026-10-13).
+
+Fixed for the future the same day: SystemMaxFiles=1000 in
+etc/systemd/journald.conf.d/10-bt-investigation.conf (the operator's word).

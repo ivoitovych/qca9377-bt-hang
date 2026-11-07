@@ -73,7 +73,10 @@ while IFS= read -r f; do
     # patches/ likewise: reproducers kept beside the patch they test, which need
     # a real /dev/vhci (patches/kernel/README.md). Added 2026-10-09, when they
     # came to main and took the total from 86% to 12%.
-    case "$f" in scripts/*|retest/*|patches/*)
+    # contributions/ likewise: each dossier's experiment and VM test code runs in
+    # containers and QEMU guests elsewhere (their READMEs), never in this suite.
+    # Added 2026-11-01: CO-36's homework took the total to 49% on 2026-10-31.
+    case "$f" in scripts/*|retest/*|patches/*|contributions/*)
         IFS= read -r shebang < "$f" || continue
         case "$shebang" in '#!'*python*) PYSKIPPED+=("$f") ;; *) case "$f" in *.py) PYSKIPPED+=("$f") ;; esac ;; esac
         continue ;;
@@ -91,7 +94,7 @@ if (( ${#PYFILES[@]} == 0 )); then
     exit 2
 fi
 for f in "${PYSKIPPED[@]+"${PYSKIPPED[@]}"}"; do
-    echo "out of scope (scripts/, retest/, patches/, not shipped): $f"
+    echo "out of scope (scripts/, retest/, patches/, contributions/, not shipped): $f"
 done
 
 WORK=$(mktemp -d) || exit 1

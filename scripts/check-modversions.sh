@@ -18,13 +18,18 @@ echo "exports in new build: ${#NEW[@]}"
 rc=0
 for m in "$@"; do
 	used=0 bad=0
+	# A module whose versions cannot be read must fail, not pass as "uses 0"
+	# (until 2026-10-23 the error was discarded and the module counted clean).
+	if ! dump=$(modprobe --dump-modversions "$m" 2>&1); then
+		echo "   UNREADABLE $m: $dump"; rc=1; continue
+	fi
 	while IFS=$'\t' read -r crc sym; do
-		[[ -n "${NEW[$sym]:-}" ]] || continue
+		[[ -n "$sym" && -n "${NEW[$sym]:-}" ]] || continue
 		used=$((used + 1))
 		if [[ "$((crc))" != "$((NEW[$sym]))" ]]; then
 			bad=$((bad + 1)); echo "   MISMATCH $sym  expects $crc  new ${NEW[$sym]}"
 		fi
-	done < <(modprobe --dump-modversions "$m" 2>/dev/null)
+	done <<<"$dump"
 	printf '%-60s uses %3d  mismatched %d\n' "$(basename "$m")" "$used" "$bad"
 	(( bad == 0 )) || rc=1
 done

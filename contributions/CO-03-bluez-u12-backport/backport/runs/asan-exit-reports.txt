@@ -1,0 +1,234 @@
+==== /root/exp/agent-work/co03/runs/exitcheck-base-t311x10/pytest.log
+2026-10-31 15:43:25.875940 OUT    host.0.0.bluetoothd :  ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c948ffe0d10 at pc 0x00000046807b bp 0x7fff494ab1b0 sp 0x7fff494ab1a8
+2026-10-31 15:43:25.875992 OUT    host.0.0.bluetoothd :  READ of size 8 at 0x7c948ffe0d10 thread T0
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #0 0x00000046807a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #1 0x00000046815f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #2 0x000000468496 in path_free profiles/audio/media.c:3276
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #3 0x0000006b34f2 in remove_interface gdbus/object.c:660
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #4 0x0000006b6e02 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #5 0x000000599ea4 in unload_driver src/adapter.c:7590
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #6 0x7fb491be43bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #7 0x00000041f13d in a2dp_exit profiles/audio/a2dp.c:3575
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #8 0x0000005807a3 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #9 0x00000040fe2e in main src/main.c:1456
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #10 0x7fb49131a680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #11 0x7fb49131a797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :      #12 0x000000411ca4 in _start (/co03/build-f44/base/src/bluetoothd+0x411ca4) (BuildId: 32b8f24db84a3eaeabc9ed3e0794cb435a456827)
+2026-10-31 15:43:26.295017 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:43:26.295198 OUT    host.0.0.bluetoothd :  0x7c948ffe0d10 is located 144 bytes inside of 152-byte region [0x7c948ffe0c80,0x7c948ffe0d18)
+2026-10-31 15:43:26.295210 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:43:26.295284 OUT    host.0.0.bluetoothd :      #0 0x7fb491dd24cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:43:26.295284 OUT    host.0.0.bluetoothd :      #1 0x7fb491bc6bf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:43:26.295284 OUT    host.0.0.bluetoothd :      #2 0x000000425e24 in a2dp_unregister_sep profiles/audio/a2dp.c:2618
+2026-10-31 15:43:26.295284 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:43:26.295292 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:43:26.295363 OUT    host.0.0.bluetoothd :      #0 0x7fb491dd324f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:43:26.295363 OUT    host.0.0.bluetoothd :      #1 0x7fb491bc7721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:43:26.295363 OUT    host.0.0.bluetoothd :      #2 0x000000465e5e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:43:26.295363 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:43:26.295392 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/exitcheck-base-t311x10/pytest.log
+2026-10-31 15:46:17.894579 OUT    host.0.0.bluetoothd :  ==300==ERROR: AddressSanitizer: heap-use-after-free on address 0x7cc9754e0d10 at pc 0x00000046807b bp 0x7ffd42da3b40 sp 0x7ffd42da3b38
+2026-10-31 15:46:17.894907 OUT    host.0.0.bluetoothd :  READ of size 8 at 0x7cc9754e0d10 thread T0
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #0 0x00000046807a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #1 0x00000046815f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #2 0x000000468496 in path_free profiles/audio/media.c:3276
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #3 0x0000006b34f2 in remove_interface gdbus/object.c:660
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #4 0x0000006b6e02 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #5 0x000000599ea4 in unload_driver src/adapter.c:7590
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #6 0x7fe9770a13bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #7 0x00000041f13d in a2dp_exit profiles/audio/a2dp.c:3575
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #8 0x0000005807a3 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #9 0x00000040fe2e in main src/main.c:1456
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #10 0x7fe9767d7680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #11 0x7fe9767d7797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :      #12 0x000000411ca4 in _start (/co03/build-f44/base/src/bluetoothd+0x411ca4) (BuildId: 32b8f24db84a3eaeabc9ed3e0794cb435a456827)
+2026-10-31 15:46:18.275994 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:18.276223 OUT    host.0.0.bluetoothd :  0x7cc9754e0d10 is located 144 bytes inside of 152-byte region [0x7cc9754e0c80,0x7cc9754e0d18)
+2026-10-31 15:46:18.276235 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:46:18.276312 OUT    host.0.0.bluetoothd :      #0 0x7fe97728f4cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:46:18.276312 OUT    host.0.0.bluetoothd :      #1 0x7fe977083bf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:18.276312 OUT    host.0.0.bluetoothd :      #2 0x000000425e24 in a2dp_unregister_sep profiles/audio/a2dp.c:2618
+2026-10-31 15:46:18.276312 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:18.276318 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:46:18.276394 OUT    host.0.0.bluetoothd :      #0 0x7fe97729024f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:46:18.276394 OUT    host.0.0.bluetoothd :      #1 0x7fe977084721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:18.276394 OUT    host.0.0.bluetoothd :      #2 0x000000465e5e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:46:18.276394 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:18.276415 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/exitcheck-base-t311x10/pytest.log
+2026-10-31 15:46:54.312813 OUT    host.0.0.bluetoothd :  ==350==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c77d87e0d10 at pc 0x00000046807b bp 0x7ffe48c9af40 sp 0x7ffe48c9af38
+2026-10-31 15:46:54.313370 OUT    host.0.0.bluetoothd :  READ of size 8 at 0x7c77d87e0d10 thread T0
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #0 0x00000046807a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #1 0x00000046815f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #2 0x000000468496 in path_free profiles/audio/media.c:3276
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #3 0x0000006b34f2 in remove_interface gdbus/object.c:660
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #4 0x0000006b6e02 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #5 0x000000599ea4 in unload_driver src/adapter.c:7590
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #6 0x7f97da3be3bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #7 0x00000041f13d in a2dp_exit profiles/audio/a2dp.c:3575
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #8 0x0000005807a3 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #9 0x00000040fe2e in main src/main.c:1456
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #10 0x7f97d9af4680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #11 0x7f97d9af4797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :      #12 0x000000411ca4 in _start (/co03/build-f44/base/src/bluetoothd+0x411ca4) (BuildId: 32b8f24db84a3eaeabc9ed3e0794cb435a456827)
+2026-10-31 15:46:54.726836 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:54.726868 OUT    host.0.0.bluetoothd :  0x7c77d87e0d10 is located 144 bytes inside of 152-byte region [0x7c77d87e0c80,0x7c77d87e0d18)
+2026-10-31 15:46:54.726879 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:46:54.727362 OUT    host.0.0.bluetoothd :      #0 0x7f97da5ac4cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:46:54.727362 OUT    host.0.0.bluetoothd :      #1 0x7f97da3a0bf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:54.727362 OUT    host.0.0.bluetoothd :      #2 0x000000425e24 in a2dp_unregister_sep profiles/audio/a2dp.c:2618
+2026-10-31 15:46:54.727362 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:54.727403 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:46:54.727603 OUT    host.0.0.bluetoothd :      #0 0x7f97da5ad24f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:46:54.727603 OUT    host.0.0.bluetoothd :      #1 0x7f97da3a1721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:46:54.727603 OUT    host.0.0.bluetoothd :      #2 0x000000465e5e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:46:54.727603 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:46:54.727752 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/exitcheck-base-t311x10/pytest.log
+2026-10-31 15:48:05.024919 OUT    host.0.1.bluetoothd :  ==341==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c3ac2fe0ed0 at pc 0x000000468f6b bp 0x7ffc12269710 sp 0x7ffc12269708
+2026-10-31 15:48:05.024931 OUT    host.0.1.bluetoothd :  READ of size 8 at 0x7c3ac2fe0ed0 thread T0
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #0 0x000000468f6a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #1 0x00000046904f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #2 0x000000469386 in path_free profiles/audio/media.c:3276
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #3 0x0000006b43e2 in remove_interface gdbus/object.c:660
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #4 0x0000006b7cf2 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #5 0x00000059ad94 in unload_driver src/adapter.c:7590
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #6 0x7f5ac4c0c3bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #7 0x00000041f15d in a2dp_exit profiles/audio/a2dp.c:3575
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #8 0x000000581693 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #9 0x00000040fe4e in main src/main.c:1456
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #10 0x7f5ac4342680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #11 0x7f5ac4342797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :      #12 0x000000411cc4 in _start (/co03/build-f44/sink/src/bluetoothd+0x411cc4) (BuildId: bfc80a2d8bee3b95f1e4d353da8d89f9d8f9d270)
+2026-10-31 15:48:05.399451 OUT    host.0.1.bluetoothd :  
+2026-10-31 15:48:05.399744 OUT    host.0.1.bluetoothd :  0x7c3ac2fe0ed0 is located 144 bytes inside of 152-byte region [0x7c3ac2fe0e40,0x7c3ac2fe0ed8)
+2026-10-31 15:48:05.399789 OUT    host.0.1.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:48:05.400062 OUT    host.0.1.bluetoothd :      #0 0x7f5ac4dfa4cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:48:05.400062 OUT    host.0.1.bluetoothd :      #1 0x7f5ac4beebf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:48:05.400062 OUT    host.0.1.bluetoothd :      #2 0x000000425e44 in a2dp_unregister_sep profiles/audio/a2dp.c:2618
+2026-10-31 15:48:05.400062 OUT    host.0.1.bluetoothd :  
+2026-10-31 15:48:05.400273 OUT    host.0.1.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:48:05.400484 OUT    host.0.1.bluetoothd :      #0 0x7f5ac4dfb24f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:48:05.400484 OUT    host.0.1.bluetoothd :      #1 0x7f5ac4bef721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:48:05.400484 OUT    host.0.1.bluetoothd :      #2 0x000000466d4e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:48:05.400484 OUT    host.0.1.bluetoothd :  
+2026-10-31 15:48:05.400663 OUT    host.0.1.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/v2-l3rates/pytest.log
+2026-10-31 15:30:50.426787 OUT    host.0.0.bluetoothd :  ==154==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c97f74e0d10 at pc 0x00000046824b bp 0x7ffc16996810 sp 0x7ffc16996808
+2026-10-31 15:30:50.426901 OUT    host.0.0.bluetoothd :  READ of size 8 at 0x7c97f74e0d10 thread T0
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #0 0x00000046824a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #1 0x00000046832f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #2 0x000000468666 in path_free profiles/audio/media.c:3276
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #3 0x0000006b46c2 in remove_interface gdbus/object.c:660
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #4 0x0000006b7fd2 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #5 0x00000059aff4 in unload_driver src/adapter.c:7596
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #6 0x7fb7f90583bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #7 0x00000041f13d in a2dp_exit profiles/audio/a2dp.c:3586
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #8 0x0000005818f3 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #9 0x00000040fe2e in main src/main.c:1456
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #10 0x7fb7f878e680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #11 0x7fb7f878e797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :      #12 0x000000411ca4 in _start (/co03/build-f44/backport/src/bluetoothd+0x411ca4) (BuildId: ade9a58c636be2c715fdff8a268d02a5a29fe7fe)
+2026-10-31 15:30:50.780338 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:30:50.780376 OUT    host.0.0.bluetoothd :  0x7c97f74e0d10 is located 144 bytes inside of 152-byte region [0x7c97f74e0c80,0x7c97f74e0d18)
+2026-10-31 15:30:50.780388 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:30:50.780466 OUT    host.0.0.bluetoothd :      #0 0x7fb7f92464cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:30:50.780466 OUT    host.0.0.bluetoothd :      #1 0x7fb7f903abf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:30:50.780466 OUT    host.0.0.bluetoothd :      #2 0x000000425e94 in a2dp_unregister_sep profiles/audio/a2dp.c:2623
+2026-10-31 15:30:50.780466 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:30:50.780472 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:30:50.780550 OUT    host.0.0.bluetoothd :      #0 0x7fb7f924724f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:30:50.780550 OUT    host.0.0.bluetoothd :      #1 0x7fb7f903b721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:30:50.780550 OUT    host.0.0.bluetoothd :      #2 0x00000046602e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:30:50.780550 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:30:50.780572 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/v2-l3rates/pytest.log
+2026-10-31 15:34:28.778543 OUT    host.0.0.bluetoothd :  ==454==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c7c00de0d10 at pc 0x00000046824b bp 0x7fffccdf8db0 sp 0x7fffccdf8da8
+2026-10-31 15:34:28.778589 OUT    host.0.0.bluetoothd :  READ of size 8 at 0x7c7c00de0d10 thread T0
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #0 0x00000046824a in clear_endpoint profiles/audio/media.c:300
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #1 0x00000046832f in release_endpoint profiles/audio/media.c:566
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #2 0x000000468666 in path_free profiles/audio/media.c:3276
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #3 0x0000006b46c2 in remove_interface gdbus/object.c:660
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #4 0x0000006b7fd2 in g_dbus_unregister_interface gdbus/object.c:1394
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #5 0x00000059aff4 in unload_driver src/adapter.c:7596
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #6 0x7f9c029d83bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #7 0x00000041f13d in a2dp_exit profiles/audio/a2dp.c:3586
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #8 0x0000005818f3 in plugin_cleanup src/plugin.c:217
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #9 0x00000040fe2e in main src/main.c:1456
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #10 0x7f9c0210e680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #11 0x7f9c0210e797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :      #12 0x000000411ca4 in _start (/co03/build-f44/backport/src/bluetoothd+0x411ca4) (BuildId: ade9a58c636be2c715fdff8a268d02a5a29fe7fe)
+2026-10-31 15:34:29.119132 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:34:29.119458 OUT    host.0.0.bluetoothd :  0x7c7c00de0d10 is located 144 bytes inside of 152-byte region [0x7c7c00de0c80,0x7c7c00de0d18)
+2026-10-31 15:34:29.119507 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:34:29.119669 OUT    host.0.0.bluetoothd :      #0 0x7f9c02bc64cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:34:29.119669 OUT    host.0.0.bluetoothd :      #1 0x7f9c029babf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:34:29.119669 OUT    host.0.0.bluetoothd :      #2 0x000000425e94 in a2dp_unregister_sep profiles/audio/a2dp.c:2623
+2026-10-31 15:34:29.119669 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:34:29.119675 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:34:29.119751 OUT    host.0.0.bluetoothd :      #0 0x7f9c02bc724f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:34:29.119751 OUT    host.0.0.bluetoothd :      #1 0x7f9c029bb721 in g_malloc0 (/lib64/libglib-2.0.so.0+0x45721) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:34:29.119751 OUT    host.0.0.bluetoothd :      #2 0x00000046602e in media_endpoint_create profiles/audio/media.c:1463
+2026-10-31 15:34:29.119751 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:34:29.119775 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+
+==== /root/exp/agent-work/co03/runs/l3-smoke2/pytest.log
+2026-10-31 14:44:03.904567 OUT    host.0.0.bluetoothd :  ==97==ERROR: AddressSanitizer: heap-use-after-free on address 0x7cd215ae0685 at pc 0x00000063b7e9 bp 0x7ffc45f3ee00 sp 0x7ffc45f3edf8
+2026-10-31 14:44:03.904615 OUT    host.0.0.bluetoothd :  READ of size 1 at 0x7cd215ae0685 thread T0
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #0 0x00000063b7e8 in device_set_rssi_with_delta src/device.c:6167
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #1 0x00000059790f in invalidate_rssi_and_tx_power src/adapter.c:1706
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #2 0x7f62176543bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #3 0x7f6217657116 in g_slist_free_full (/lib64/libglib-2.0.so.0+0x65116) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #4 0x0000005cf058 in discovery_cleanup src/adapter.c:1721
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #5 0x0000005d193c in adapter_remove src/adapter.c:6978
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #6 0x0000005e7c94 in adapter_cleanup src/adapter.c:10845
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #7 0x00000040fe42 in main src/main.c:1462
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #8 0x7f6216d8a680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #9 0x7f6216d8a797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :      #10 0x000000411ca4 in _start (/co03/build-f44/base/src/bluetoothd+0x411ca4) (BuildId: 32b8f24db84a3eaeabc9ed3e0794cb435a456827)
+2026-10-31 14:44:04.266522 OUT    host.0.0.bluetoothd :  
+2026-10-31 14:44:04.266640 OUT    host.0.0.bluetoothd :  0x7cd215ae0685 is located 645 bytes inside of 680-byte region [0x7cd215ae0400,0x7cd215ae06a8)
+2026-10-31 14:44:04.266672 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 14:44:04.273600 OUT    host.0.0.bluetoothd :      #0 0x7f62178424cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 14:44:04.273600 OUT    host.0.0.bluetoothd :      #1 0x7f6217636bf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 14:44:04.273600 OUT    host.0.0.bluetoothd :      #2 0x0000006b34f2 in remove_interface gdbus/object.c:660
+2026-10-31 14:44:04.273600 OUT    host.0.0.bluetoothd :  
+2026-10-31 14:44:04.273762 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 14:44:04.274246 OUT    host.0.0.bluetoothd :      #0 0x7f621784324f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 14:44:04.274246 OUT    host.0.0.bluetoothd :      #1 0x00000061fbdc in device_new src/device.c:4187
+2026-10-31 14:44:04.274246 OUT    host.0.0.bluetoothd :  
+2026-10-31 14:44:04.274398 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free src/device.c:6167 in device_set_rssi_with_delta
+
+==== /root/exp/agent-work/co03/runs/v2-l3pw-test_pipewire_a2dp/pytest.log
+2026-10-31 15:21:21.163074 OUT    host.0.0.bluetoothd :  ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7cde1c4e0305 at pc 0x00000063c9b9 bp 0x7ffe83f9a200 sp 0x7ffe83f9a1f8
+2026-10-31 15:21:21.163384 OUT    host.0.0.bluetoothd :  READ of size 1 at 0x7cde1c4e0305 thread T0
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #0 0x00000063c9b8 in device_set_rssi_with_delta src/device.c:6167
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #1 0x000000598a5f in invalidate_rssi_and_tx_power src/adapter.c:1706
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #2 0x7f6e1e0de3bf in g_slist_foreach (/lib64/libglib-2.0.so.0+0x623bf) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #3 0x7f6e1e0e1116 in g_slist_free_full (/lib64/libglib-2.0.so.0+0x65116) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #4 0x0000005d01a8 in discovery_cleanup src/adapter.c:1721
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #5 0x0000005d2a8c in adapter_remove src/adapter.c:6984
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #6 0x0000005e8e64 in adapter_cleanup src/adapter.c:10851
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #7 0x00000040fe42 in main src/main.c:1462
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #8 0x7f6e1d814680 in __libc_start_call_main (/lib64/libc.so.6+0x3680) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #9 0x7f6e1d814797 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3797) (BuildId: 85075e2ae2e13352a1413d41c327dacf6461526c)
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :      #10 0x000000411ca4 in _start (/co03/build-f44/backport/src/bluetoothd+0x411ca4) (BuildId: ade9a58c636be2c715fdff8a268d02a5a29fe7fe)
+2026-10-31 15:21:21.522139 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:21:21.522166 OUT    host.0.0.bluetoothd :  0x7cde1c4e0305 is located 645 bytes inside of 680-byte region [0x7cde1c4e0080,0x7cde1c4e0328)
+2026-10-31 15:21:21.522176 OUT    host.0.0.bluetoothd :  freed by thread T0 here:
+2026-10-31 15:21:21.528288 OUT    host.0.0.bluetoothd :      #0 0x7f6e1e2cc4cf in free.part.0 (/lib64/libasan.so.8+0xee4cf) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:21:21.528288 OUT    host.0.0.bluetoothd :      #1 0x7f6e1e0c0bf4 in g_free (/lib64/libglib-2.0.so.0+0x44bf4) (BuildId: 772466d81a2144499cb4971c7694cc2a73bde126)
+2026-10-31 15:21:21.528288 OUT    host.0.0.bluetoothd :      #2 0x0000006b46c2 in remove_interface gdbus/object.c:660
+2026-10-31 15:21:21.528288 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:21:21.528362 OUT    host.0.0.bluetoothd :  previously allocated by thread T0 here:
+2026-10-31 15:21:21.528748 OUT    host.0.0.bluetoothd :      #0 0x7f6e1e2cd24f in calloc (/lib64/libasan.so.8+0xef24f) (BuildId: 61e8165ca90f7a4f06b73f064a938c76deaae079)
+2026-10-31 15:21:21.528748 OUT    host.0.0.bluetoothd :      #1 0x000000620dac in device_new src/device.c:4187
+2026-10-31 15:21:21.528748 OUT    host.0.0.bluetoothd :  
+2026-10-31 15:21:21.528948 OUT    host.0.0.bluetoothd :  SUMMARY: AddressSanitizer: heap-use-after-free src/device.c:6167 in device_set_rssi_with_delta
+

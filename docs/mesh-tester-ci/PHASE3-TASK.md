@@ -1,6 +1,6 @@
 # Phase 3 — make the mesh fix correct for extended advertising, split it, test both paths
 
-**Private until sent.** Follows `phase1-findings.md`, `phase2-results.md` and the outside
+**Kept separately until sent.** Follows `phase1-findings.md`, `phase2-results.md` and the outside
 review of 2026-10-02, whose findings were checked here against the source and hold.
 
 ## What the review found, verified in the tree (`bluetooth-next` 671d566d3c3b)

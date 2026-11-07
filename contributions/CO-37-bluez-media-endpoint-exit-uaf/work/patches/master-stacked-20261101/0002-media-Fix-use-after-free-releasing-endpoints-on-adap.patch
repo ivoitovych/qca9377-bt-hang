@@ -1,0 +1,71 @@
+From bbdceaa946ba47a4c060e8693ac5b91085c32d3f Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 31 Oct 2026 23:10:58 +0100
+Subject: [PATCH BlueZ 2/3] media: Fix use-after-free releasing endpoints on
+ adapter removal
+
+path_free() frees the applications before releasing the endpoints.
+Freeing an application removes its endpoints, and removing an A2DP
+endpoint whose stream is locked by an acquired transport is deferred
+by a2dp_remove_sep(), so the endpoint stays in the adapter's list.
+release_endpoint() then clears its transports, which unlocks the
+stream; a2dp_sep_unlock() unregisters the SEP as it was removed, and
+its destroy callback releases and frees the endpoint while
+clear_endpoint() is still iterating over its transports:
+
+ ERROR: AddressSanitizer: heap-use-after-free
+ READ of size 8 thread T0
+     #0 clear_endpoint profiles/audio/media.c:412
+     #1 release_endpoint profiles/audio/media.c:661
+     #2 path_free profiles/audio/media.c:3813
+     #3 remove_interface gdbus/object.c:742
+     #4 g_dbus_unregister_interface gdbus/object.c:1499
+     #5 unload_driver src/adapter.c:8027
+     #7 a2dp_exit profiles/audio/a2dp.c:3912
+     #8 plugin_cleanup src/plugin.c:251
+     #9 main src/main.c:1717
+ freed by thread T0 here:
+     #1 media_endpoint_remove profiles/audio/media.c:335
+
+This is reached when bluetoothd exits without powering the adapter off
+first, e.g. on losing the bus, while a sound server streams.
+
+Release the endpoints first, so that their transports are cleared
+while their SEPs are still registered and the removal is not deferred.
+
+Fixes: ee0f3c03fb1d ("media: Fix UnregisterApplication")
+---
+ profiles/audio/media.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index 3d2f26661..cc357d98d 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -3803,8 +3803,12 @@ static void path_free(void *data)
+ 	struct media_adapter *adapter = data;
+ 	GSList *l;
+ 
+-	queue_destroy(adapter->apps, app_free);
+-
++	/* Release the endpoints before freeing the applications, which
++	 * removes them: the removal of an A2DP endpoint whose stream is
++	 * locked by a transport is deferred, and release_endpoint() would
++	 * then unlock it while clearing the transports, freeing the
++	 * endpoint it is still using.
++	 */
+ 	for (l = adapter->endpoints; l;) {
+ 		struct media_endpoint *endpoint	= l->data;
+ 
+@@ -3813,6 +3817,8 @@ static void path_free(void *data)
+ 		release_endpoint(endpoint);
+ 	}
+ 
++	queue_destroy(adapter->apps, app_free);
++
+ 	for (l = adapter->players; l;) {
+ 		struct local_player *mp = l->data;
+ 
+-- 
+2.43.0
+

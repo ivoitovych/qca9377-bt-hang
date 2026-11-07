@@ -1,6 +1,6 @@
 # Phase 4 — revise the series after the outside review of 2026-10-02
 
-**Private until sent.** The review is `review-series-2026-10-02.md` (same directory). Its
+**Kept separately until sent.** The review is `review-series-2026-10-02.md` (same directory). Its
 verdict: *do not send this revision* — the teardown design and the two-patch split stand;
 four things must change. The following were checked here against the source and hold.
 
@@ -33,7 +33,7 @@ four things must change. The following were checked here against the source and 
    "on air" for a request that only acquired the instance, nor imply a clean valgrind run
    (18/18 functional with seven pre-existing tester findings), nor make CI-history claims
    broader than the measured signature; the original `f3cb5676e5c1` CI reply of 25 June 2025
-   already showed the same two timeouts (a fact for the private record, not a trailer).
+   already showed the same two timeouts (a fact for the record, not a trailer).
 6. **Open and acknowledged**: error-path cleanup (`mesh_send_sync()` can add the instance and
    fail to schedule; `mesh_send_start_complete()` then neither removes it nor arms done
    work) and power-transition behaviour are pre-existing and outside this series; the

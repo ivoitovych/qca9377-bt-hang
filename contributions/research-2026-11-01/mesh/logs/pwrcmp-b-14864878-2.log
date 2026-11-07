@@ -1,0 +1,3553 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x000000000497f2c4
+input_len: 0x0000000000fb1341
+output: 0x0000000001000000
+output_len: 0x000000000355e5e0
+kernel_total_size: 0x0000000004973000
+needed_size: 0x0000000004a00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002e161f0).
+Linux version 7.3.0-rc6-01715-g82fe654b156d (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Sun Nov  1 01:22:29 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/research-mesh/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp
+Changing into directory /root/exp
+New process 57 created
+ASAN_OPTIONS=quarantine_size_mb=8
+guest CPUs online: 0-3
+guest CPUs possible: 0-3
+--- boot messages about CPUs ---
+[    0.000000] Linux version 7.3.0-rc6-01715-g82fe654b156d (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Sun Nov  1 01:22:29 CET 2026
+[    0.000000] APIC: Static calls initialized
+[    0.000016] tsc: Detected 1996.255 MHz processor
+[    0.002785] found SMP MP-table at [mem 0x000f5470-0x000f547f]
+[    0.003278] ACPI: APIC 0x000000007FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.003318] ACPI: Reserving APIC table memory at [mem 0x7ffe22aa-0x7ffe2339]
+[    0.121299] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[    0.121353] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+[    0.121381] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.121450] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[    0.175037] setup_percpu: NR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[    0.263317] APIC: Switch to symmetric I/O mode setup
+[    0.263588] x2apic enabled
+[    0.264077] APIC: Switched APIC routing to: physical x2apic
+[    0.265908] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.402660] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[    0.405959] smp: Bringing up secondary CPUs ...
+[    0.406261] smpboot: x86: Booting SMP configuration:
+[    0.422110] smp: Brought up 1 node, 4 CPUs
+[    0.422121] smpboot: Total of 4 processors activated (15970.04 BogoMIPS)
+[    0.436690] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    0.438360] ACPI: Added _OSI(Processor Device)
+[    0.438360] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.513080] ACPI: Using IOAPIC for interrupt routing
+--- end ---
+
+[1;39mMesh - PwrCmp active on at once[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +3 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +4 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +4 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +5 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +7 ms[0m
+  [0;37mSending Set Powered off at +7 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +8 ms (recorded)[0m
+  [0;37mSet Powered off at +32 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +33 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +34 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +34 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +34 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +35 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +35 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +35 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +36 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +36 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +39 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +39 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +39 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +39 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +40 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +40 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +40 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +40 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +41 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +41 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +41 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +41 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +42 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +42 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +42 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +43 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +43 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +43 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +43 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +44 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +44 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +44 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +45 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +45 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +45 ms[0m
+  [0;37mSet Powered on at +46 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +46 ms[0m
+  [0;37mRead Mesh Features after power on at +46 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37mMesh Send of packet 3 at +47 ms: handle 2[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +88 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +89 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +89 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +89 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +89 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +90 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +90 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 2 (packet 3) at +171 ms[0m
+  [0;37mFinal check at +574 ms[0m
+  [0;37mRead Mesh Features at the end at +574 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +7 ms, off answered at +33 ms, on answered at +46 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +89 ms[0m
+  [0;37mPWRCMP packet 3: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +171 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp active on at once[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +0 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +1 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +2 ms (recorded)[0m
+  [0;37mSet Powered off at +32 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +80 ms, powered off[0m
+  [0;37mSending Set Powered on at +333 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +335 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +335 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +336 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +338 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +338 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +339 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +339 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +340 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +341 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +341 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +343 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +343 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +343 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +344 ms[0m
+  [0;37mSet Powered on at +345 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +345 ms[0m
+  [0;37mRead Mesh Features after power on at +345 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +346 ms: handle 2[0m
+  [0;37mHCI Command 0x2008 length 32 at +346 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +346 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +346 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +347 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +347 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +347 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 2 (packet 3) at +424 ms[0m
+  [0;37mFinal check at +825 ms[0m
+  [0;37mRead Mesh Features at the end at +826 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +32 ms, on answered at +345 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +80 ms[0m
+  [0;37mPWRCMP packet 3: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +424 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp active off 300 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +25 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +84 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +84 ms, powered off[0m
+  [0;37mSending Set Powered on at +330 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +333 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +333 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +333 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +335 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +335 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +336 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +337 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +337 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +337 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +338 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +339 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +339 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +339 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +339 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +340 ms[0m
+  [0;37mSet Powered on at +340 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +341 ms[0m
+  [0;37mRead Mesh Features after power on at +341 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +341 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +341 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +342 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +342 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +342 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +342 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +342 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +424 ms[0m
+  [0;37mFinal check at +826 ms[0m
+  [0;37mRead Mesh Features at the end at +827 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +26 ms, on answered at +341 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +84 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +85 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +424 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mMesh Send of packet 2 at +3 ms: handle 3[0m
+  [0;37mHCI Command 0x200a length 1 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +4 ms (recorded)[0m
+  [0;37mSet Powered off at +34 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +85 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +86 ms, powered off[0m
+  [0;37mSending Set Powered on at +336 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +338 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +338 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +339 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +341 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +341 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +343 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +353 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +353 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +353 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +354 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +354 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +354 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +354 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +355 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +355 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +355 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +355 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +356 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +356 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +356 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +356 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +357 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +357 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +357 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +357 ms[0m
+  [0;37mSet Powered on at +358 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +358 ms[0m
+  [0;37mRead Mesh Features after power on at +358 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +359 ms: handle 4[0m
+  [0;37mHCI Command 0x2008 length 32 at +359 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +359 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +360 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +360 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +360 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +360 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +442 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +442 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +442 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +443 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +443 ms[0m
+  [0;37mMesh set started with packet 3 (2) at +443 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +525 ms[0m
+  [0;37mFinal check at +928 ms[0m
+  [0;37mRead Mesh Features at the end at +929 ms: 0 of 3 handles pending[0m
+  [0;37mNew request (handle 4): 2 starts, 1 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mHandle 3 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +35 ms, on answered at +358 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +86 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +86 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +442 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 1 loads, 2 starts (2 after power on), 1 completions, first at +526 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 1, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: FAIL (1)[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mMesh Send of packet 2 at +2 ms: handle 3[0m
+  [0;37mHCI Command 0x200a length 1 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +28 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +28 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +30 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +30 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +30 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +30 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +32 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +32 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +32 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +32 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +33 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +33 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +33 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +33 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +34 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +34 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +34 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +35 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +35 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +36 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +36 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +37 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +37 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +38 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +38 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +38 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +38 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +39 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +39 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +39 ms[0m
+  [0;37mSet Powered on at +39 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +40 ms[0m
+  [0;37mRead Mesh Features after power on at +40 ms: 3 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 2[0m
+  [0;37m  handle 3[0m
+  [0;37mMesh Send of packet 3: Busy, retry 1 in 100 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +83 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +83 ms[0m
+  [0;37mPacket 1 loaded into the mesh set at +83 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +83 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +84 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +84 ms[0m
+  [0;37mMesh set started with packet 1 (1) at +84 ms, after power on[0m
+  [0;37mSending Mesh Send of packet 3 at +145 ms[0m
+  [0;37mMesh Send of packet 3 at +146 ms: handle 4[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +167 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +167 ms[0m
+  [0;37mPacket 2 loaded into the mesh set at +167 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +168 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +168 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +168 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +169 ms[0m
+  [0;37mMesh set started with packet 2 (1) at +169 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +251 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +251 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +251 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +252 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +252 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +252 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +253 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +253 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +335 ms[0m
+  [0;37mFinal check at +737 ms[0m
+  [0;37mRead Mesh Features at the end at +738 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +28 ms, on answered at +40 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +83 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +167 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +251 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 1 loads, 1 starts (1 after power on), 1 completions, first at +335 ms[0m
+  [0;37mPWRCMP read after on: 3 handles; at the end: 0 handles; new request answered Busy 1 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 3 on at once[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +4 ms, powered off[0m
+  [0;37mMesh Send Cancel at +4 ms: Success (0x00)[0m
+  [0;37mAdvertising Removed for instance 6 at +4 ms (recorded)[0m
+  [0;37mSet Powered off at +32 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +80 ms, powered off[0m
+  [0;37mSending Set Powered on at +334 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +336 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +336 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +337 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +339 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +340 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +340 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +340 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +341 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +342 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +343 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +343 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +343 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +344 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +344 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +344 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +345 ms[0m
+  [0;37mSet Powered on at +345 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +345 ms[0m
+  [0;37mRead Mesh Features after power on at +346 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +346 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +346 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +347 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +347 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +347 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +348 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +348 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +425 ms[0m
+  [0;37mFinal check at +826 ms[0m
+  [0;37mRead Mesh Features at the end at +826 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +33 ms, on answered at +345 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +4 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +81 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +425 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +3 ms, powered off[0m
+  [0;37mMesh Send Cancel at +4 ms: Success (0x00)[0m
+  [0;37mAdvertising Removed for instance 6 at +4 ms (recorded)[0m
+  [0;37mSet Powered off at +33 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +81 ms, powered off[0m
+  [0;37mSending Set Powered on at +335 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +337 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +337 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +338 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +340 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +340 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +341 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +341 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +342 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +343 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +343 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +344 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +344 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +345 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +345 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +345 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +345 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +346 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +346 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +346 ms[0m
+  [0;37mSet Powered on at +346 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +347 ms[0m
+  [0;37mRead Mesh Features after power on at +347 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +347 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +348 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +348 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +348 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +348 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +349 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +349 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +426 ms[0m
+  [0;37mFinal check at +827 ms[0m
+  [0;37mRead Mesh Features at the end at +827 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +34 ms, on answered at +347 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +4 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +426 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off in held start[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +82 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +82 ms[0m
+  [0;37mPacket 1 loaded into the mesh set at +82 ms[0m
+  [0;37mHolding command 0x200a at +83 ms[0m
+  [0;37mSending Set Powered off at +83 ms[0m
+Bluetooth: hci0:  [0;37mHCI Command 0x200a length 1 at +83 ms[0m Opcode 0x200a failed: -112
+
+  [0;37mBarrier Read Mesh Features answered at +84 ms with the command held: Success (0x00)[0m
+  [0;37mReleasing the held command at +84 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +84 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +85 ms, powered off[0m
+  [0;37mAdvertising Removed for instance 6 at +85 ms (recorded)[0m
+  [0;37mSet Powered off at +109 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +411 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +413 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +413 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +413 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +413 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +414 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +415 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +415 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +415 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +415 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +416 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +416 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +416 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +416 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +417 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +417 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +417 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +417 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +418 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +418 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +418 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +418 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +419 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +419 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +419 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +419 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +420 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +420 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +420 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +421 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +421 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +421 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +421 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +422 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +422 ms[0m
+  [0;37mSet Powered on at +422 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +422 ms[0m
+  [0;37mRead Mesh Features after power on at +423 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +423 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +423 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +424 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +424 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +424 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +424 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +425 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +502 ms[0m
+  [0;37mFinal check at +903 ms[0m
+  [0;37mRead Mesh Features at the end at +904 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +109 ms, on answered at +422 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +82 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 1 loads, 0 starts (0 after power on), 1 completions (while off), first at +85 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +502 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 1, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP hold: held yes, barrier while held yes[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off in held start[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +74 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +74 ms (recorded)[0m
+  [0;37mSet Powered off at +91 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +91 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +92 ms, powered off[0m
+  [0;37mSending Set Powered on at +394 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +394 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +394 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +396 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +396 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +396 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +398 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +398 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +399 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +399 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +399 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +399 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +399 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +400 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +400 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +400 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +401 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +401 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +402 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +402 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +402 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +403 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +403 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +403 ms[0m
+  [0;37mSet Powered on at +404 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +404 ms[0m
+  [0;37mRead Mesh Features after power on at +404 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +405 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +405 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +405 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +405 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +405 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +406 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +406 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +484 ms[0m
+  [0;37mFinal check at +886 ms[0m
+  [0;37mRead Mesh Features at the end at +886 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +91 ms, on answered at +404 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +92 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +92 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +484 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +0 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +78 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +79 ms (recorded)[0m
+  [0;37mSet Powered off at +93 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +93 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +94 ms, powered off[0m
+  [0;37mSending Set Powered on at +394 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +396 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +397 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +397 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +399 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +399 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +399 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +399 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +400 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +400 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +400 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +401 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +401 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +401 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +402 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +402 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +403 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +403 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +403 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +404 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +404 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +404 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +405 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +405 ms[0m
+  [0;37mSet Powered on at +405 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +406 ms[0m
+  [0;37mRead Mesh Features after power on at +406 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +406 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +407 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +407 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +407 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +407 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +408 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +408 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +488 ms[0m
+  [0;37mFinal check at +890 ms[0m
+  [0;37mRead Mesh Features at the end at +891 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +93 ms, on answered at +406 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +94 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +94 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +488 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +84 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +84 ms (recorded)[0m
+  [0;37mSet Powered off at +98 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +99 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +99 ms, powered off[0m
+  [0;37mSending Set Powered on at +400 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +402 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +402 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +402 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +404 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +404 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +404 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +404 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +405 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +405 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +405 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +405 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +405 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +406 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +406 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +407 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +407 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +407 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +407 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +407 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +408 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +408 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +408 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +408 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +409 ms[0m
+  [0;37mSet Powered on at +409 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +409 ms[0m
+  [0;37mRead Mesh Features after power on at +410 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +410 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +410 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +410 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +411 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +411 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +411 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +411 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +493 ms[0m
+  [0;37mFinal check at +896 ms[0m
+  [0;37mRead Mesh Features at the end at +896 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +98 ms, on answered at +409 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +99 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +99 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +494 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +0 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +1 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +1 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +1 ms[0m
+  [0;37mSending Set Powered off at +1 ms[0m
+  [0;37mHCIDEVDOWN at +29 ms: done[0m
+  [0;37mSet Powered off at +29 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +82 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +82 ms, powered off[0m
+  [0;37mSending Set Powered on at +331 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +333 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +333 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +333 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +335 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +335 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +336 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +336 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +336 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +337 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +337 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +337 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +338 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +338 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +339 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +339 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +339 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +340 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +340 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +340 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +340 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +340 ms[0m
+  [0;37mMesh set started with packet 0 (2) at +341 ms[0m
+  [0;37mPacket 0 started after its handle 1 completed[0m
+  [0;37mHCI Command 0x0c13 length 248 at +341 ms[0m
+  [0;37mSet Powered on at +341 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +341 ms[0m
+  [0;37mAdvertising Removed for instance 6 at +342 ms (recorded)[0m
+  [0;37mHCI Command 0x200a length 1 at +342 ms[0m
+  [0;37mRead Mesh Features after power on at +342 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +342 ms: handle 3[0m
+  [0;37mHCI Command 0x2008 length 32 at +343 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +343 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +343 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +343 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +343 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +344 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +426 ms[0m
+  [0;37mFinal check at +827 ms[0m
+  [0;37mRead Mesh Features at the end at +828 ms: 0 of 3 handles pending[0m
+  [0;37mPacket 0 started 1 times after its completion[0m
+  [0;37mViolates (e) no packet started after its completion[0m
+  [0;37mPWRCMP request 1 started at +1 ms, off answered at +29 ms, on answered at +341 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 2 loads, 2 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +83 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +426 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 1, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: FAIL (1)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +2 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +2 ms[0m
+  [0;37mMesh Send of packet 2 at +2 ms: handle 3[0m
+  [0;37mHCI Command 0x200a length 1 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mHCIDEVDOWN at +31 ms: done[0m
+  [0;37mSet Powered off at +31 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +82 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +83 ms, powered off[0m
+  [0;37mSending Set Powered on at +336 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +337 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +338 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +338 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +340 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +340 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +341 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +341 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +341 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +342 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +342 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +343 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +343 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +344 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +344 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +344 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +344 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +345 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +345 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +346 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +346 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +346 ms[0m
+  [0;37mMesh set started with packet 0 (2) at +346 ms[0m
+  [0;37mPacket 0 started after its handle 1 completed[0m
+  [0;37mHCI Command 0x0c13 length 248 at +347 ms[0m
+  [0;37mSet Powered on at +347 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +347 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +347 ms[0m
+  [0;37mRead Mesh Features after power on at +348 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mAdvertising Removed for instance 6 at +348 ms (recorded)[0m
+  [0;37mMesh Send of packet 3 at +348 ms: handle 4[0m
+  [0;37mHCI Command 0x2008 length 32 at +349 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +349 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +349 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +349 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +349 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +350 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +431 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +431 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +431 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +431 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +432 ms[0m
+  [0;37mMesh set started with packet 3 (2) at +432 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +514 ms[0m
+  [0;37mFinal check at +915 ms[0m
+  [0;37mRead Mesh Features at the end at +916 ms: 0 of 3 handles pending[0m
+  [0;37mNew request (handle 4): 2 starts, 1 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mPacket 0 started 1 times after its completion[0m
+  [0;37mViolates (e) no packet started after its completion[0m
+  [0;37mHandle 3 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +31 ms, on answered at +347 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 2 loads, 2 starts (0 after power on), 1 completions (while off), first at +83 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +83 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +431 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 1 loads, 2 starts (2 after power on), 1 completions, first at +515 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: FAIL (1)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: FAIL (1)[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +2 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +3 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +3 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +3 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +3 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +3 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +5 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +5 ms[0m
+  [0;37mSending Set Powered off at +5 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +5 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +6 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +6 ms (recorded)[0m
+  [0;37mSet Powered off at +35 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +35 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +36 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +37 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +37 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +37 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +37 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +38 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +38 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +38 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +39 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +39 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +39 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +39 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +39 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +39 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +40 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +40 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +40 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +40 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +40 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +40 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +40 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +41 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +41 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +41 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +41 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +41 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +41 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +42 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +42 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +42 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +42 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +42 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +43 ms[0m
+  [0;37mSet Powered on at +43 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +43 ms[0m
+  [0;37mRead Mesh Features after power on at +43 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37mMesh Send of packet 3 at +44 ms: handle 2[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +84 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +85 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +85 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +85 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +85 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +85 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +86 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 2 (packet 3) at +168 ms[0m
+  [0;37mFinal check at +569 ms[0m
+  [0;37mRead Mesh Features at the end at +570 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +5 ms, off answered at +35 ms, on answered at +43 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +85 ms[0m
+  [0;37mPWRCMP packet 3: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +169 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp active on at once - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +2 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +3 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +31 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +81 ms, powered off[0m
+  [0;37mSending Set Powered on at +335 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +336 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +336 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +337 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +338 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +338 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +339 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +339 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +340 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +340 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +340 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +341 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +341 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +341 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +342 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +342 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +342 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +343 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +343 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +343 ms[0m
+  [0;37mSet Powered on at +343 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +343 ms[0m
+  [0;37mRead Mesh Features after power on at +344 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +344 ms: handle 2[0m
+  [0;37mHCI Command 0x2036 length 25 at +344 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +344 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +344 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +344 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +345 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +345 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 2 (packet 3) at +426 ms[0m
+  [0;37mFinal check at +827 ms[0m
+  [0;37mRead Mesh Features at the end at +827 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +31 ms, on answered at +343 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 3: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +426 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp active off 300 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +2 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +3 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +3 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +35 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +81 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +82 ms, powered off[0m
+  [0;37mSending Set Powered on at +339 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +340 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +340 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +341 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +342 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +343 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +343 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +343 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +343 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +343 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +344 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +344 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +344 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +344 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +345 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +345 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +345 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +346 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +346 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +346 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +346 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +346 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +347 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +347 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +347 ms[0m
+  [0;37mSet Powered on at +347 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +347 ms[0m
+  [0;37mRead Mesh Features after power on at +348 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +348 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +348 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +348 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +348 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +349 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +349 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +349 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +428 ms[0m
+  [0;37mFinal check at +831 ms[0m
+  [0;37mRead Mesh Features at the end at +831 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +35 ms, on answered at +347 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +428 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 2 off 300 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mMesh Send of packet 2 at +2 ms: handle 3[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +3 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +3 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +38 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +82 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +82 ms, powered off[0m
+  [0;37mSending Set Powered on at +339 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +340 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +341 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +341 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +342 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +342 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +343 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +343 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +343 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +343 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +343 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +344 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +344 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +344 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +344 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +344 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +345 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +345 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +345 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +345 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +346 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +346 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +346 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +346 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +346 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +346 ms[0m
+  [0;37mSet Powered on at +347 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +347 ms[0m
+  [0;37mRead Mesh Features after power on at +347 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +348 ms: handle 4[0m
+  [0;37mHCI Command 0x2036 length 25 at +348 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +348 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +348 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +348 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +348 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +349 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +427 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +427 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +427 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +428 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +428 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +428 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +428 ms[0m
+  [0;37mMesh set started with packet 3 (2) at +428 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +507 ms[0m
+  [0;37mFinal check at +911 ms[0m
+  [0;37mRead Mesh Features at the end at +911 ms: 0 of 3 handles pending[0m
+  [0;37mNew request (handle 4): 2 starts, 1 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mHandle 3 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +38 ms, on answered at +347 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +427 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 2 loads, 2 starts (2 after power on), 1 completions, first at +507 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 3, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: FAIL (1)[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 3 off 300 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +2 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +2 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mMesh Send of packet 2 at +3 ms: handle 3[0m
+  [0;37mHCI Command 0x2039 length 6 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +4 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +4 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +4 ms (recorded)[0m
+  [0;37mSet Powered off at +27 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +27 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +28 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +28 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +28 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +29 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +29 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +30 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +30 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +30 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +30 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +30 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +30 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +31 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +31 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +31 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +31 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +31 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +32 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +32 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +32 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +32 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +32 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +32 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +32 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +33 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +33 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +33 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +33 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +33 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +33 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +34 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +34 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +34 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +34 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +34 ms[0m
+  [0;37mSet Powered on at +35 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +35 ms[0m
+  [0;37mRead Mesh Features after power on at +35 ms: 3 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 2[0m
+  [0;37m  handle 3[0m
+  [0;37mMesh Send of packet 3: Busy, retry 1 in 100 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +86 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +86 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +86 ms[0m
+  [0;37mPacket 1 loaded into the mesh set at +87 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +87 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +87 ms[0m
+  [0;37mMesh set started with packet 1 (1) at +87 ms, after power on[0m
+  [0;37mSending Mesh Send of packet 3 at +139 ms[0m
+  [0;37mMesh Send of packet 3 at +139 ms: handle 4[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +170 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +170 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +170 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +170 ms[0m
+  [0;37mPacket 2 loaded into the mesh set at +171 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +171 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +171 ms[0m
+  [0;37mMesh set started with packet 2 (1) at +171 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +254 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +254 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +254 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +255 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +255 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +255 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +255 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +255 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +338 ms[0m
+  [0;37mFinal check at +739 ms[0m
+  [0;37mRead Mesh Features at the end at +739 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +27 ms, on answered at +35 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +86 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 1 loads, 1 starts (1 after power on), 1 completions, first at +170 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +254 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 1 loads, 1 starts (1 after power on), 1 completions, first at +338 ms[0m
+  [0;37mPWRCMP read after on: 3 handles; at the end: 0 handles; new request answered Busy 1 times[0m
+  [0;37mPWRCMP tear-downs 4, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp backlog 3 on at once - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +2 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +3 ms, powered off[0m
+  [0;37mMesh Send Cancel at +3 ms: Success (0x00)[0m
+  [0;37mHCI Command 0x2039 length 2 at +3 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +3 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +29 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +84 ms, powered off[0m
+  [0;37mSending Set Powered on at +330 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +332 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +332 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +332 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +333 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +334 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +334 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +334 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +335 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +335 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +335 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +335 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +335 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +336 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +336 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +336 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +337 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +337 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +337 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +337 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +338 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +338 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +338 ms[0m
+  [0;37mSet Powered on at +338 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +338 ms[0m
+  [0;37mRead Mesh Features after power on at +339 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +339 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +339 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +339 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +339 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +340 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +340 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +340 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +420 ms[0m
+  [0;37mFinal check at +822 ms[0m
+  [0;37mRead Mesh Features at the end at +823 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +29 ms, on answered at +338 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +3 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +84 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +420 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +0 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +1 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +1 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +2 ms[0m
+  [0;37mSending Set Powered off at +2 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +3 ms, powered off[0m
+  [0;37mMesh Send Cancel at +3 ms: Success (0x00)[0m
+  [0;37mHCI Command 0x2039 length 2 at +3 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +3 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +3 ms (recorded)[0m
+  [0;37mSet Powered off at +33 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +80 ms, powered off[0m
+  [0;37mSending Set Powered on at +334 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +335 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +336 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +336 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +336 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +336 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +337 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +337 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +338 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +338 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +338 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +338 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +338 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +339 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +339 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +339 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +339 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +339 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +339 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +340 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +340 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +340 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +340 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +341 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +341 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +341 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +341 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +341 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +342 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +342 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +342 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +342 ms[0m
+  [0;37mSet Powered on at +343 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +343 ms[0m
+  [0;37mRead Mesh Features after power on at +343 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +343 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +343 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +343 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +343 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +344 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +344 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +344 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +424 ms[0m
+  [0;37mFinal check at +826 ms[0m
+  [0;37mRead Mesh Features at the end at +827 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +33 ms, on answered at +343 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +80 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +3 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +424 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +1 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +2 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +2 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +2 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +81 ms[0m
+  [0;37mHolding command 0x2039 at +81 ms[0m
+  [0;37mSending Set Powered off at +81 ms[0m
+Bluetooth: hci0:  [0;37mHCI Command 0x2039 length 6 at +81 ms[0m Opcode 0x2039 f
+ailed: -112
+  [0;37mBarrier Read Mesh Features answered at +82 ms with the command held: Success (0x00)[0m
+  [0;37mReleasing the held command at +82 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +82 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +82 ms, powered off[0m
+  [0;37mHCI Command 0x2039 length 2 at +82 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +82 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +83 ms (recorded)[0m
+  [0;37mSet Powered off at +103 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +407 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +410 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +410 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +411 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +411 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +411 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +413 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +413 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +414 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +415 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +417 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +418 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +418 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +418 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +418 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +419 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +419 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +419 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +420 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +420 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +420 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +421 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +424 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +424 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +425 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +425 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +425 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +425 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +425 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +426 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +426 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +426 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +426 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +427 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +428 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +428 ms[0m
+  [0;37mSet Powered on at +428 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +429 ms[0m
+  [0;37mRead Mesh Features after power on at +429 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +430 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +430 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +430 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +430 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +430 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +431 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +431 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +513 ms[0m
+  [0;37mFinal check at +915 ms[0m
+  [0;37mRead Mesh Features at the end at +919 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +2 ms, off answered at +103 ms, on answered at +429 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +81 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +82 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +513 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 3, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP hold: held yes, barrier while held yes[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off in held start - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +2 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +2 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +3 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +3 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +74 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +75 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +76 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +76 ms (recorded)[0m
+  [0;37mSet Powered off at +93 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +94 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +94 ms, powered off[0m
+  [0;37mSending Set Powered on at +398 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +399 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +399 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +400 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +401 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +401 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +401 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +403 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +403 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +403 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +403 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +404 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +404 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +404 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +404 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +405 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +405 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +405 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +405 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +406 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +406 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +406 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +407 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +407 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +407 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +407 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +408 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +408 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +408 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +409 ms[0m
+  [0;37mSet Powered on at +409 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +409 ms[0m
+  [0;37mRead Mesh Features after power on at +409 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +409 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +410 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +410 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +410 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +410 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +411 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +411 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +492 ms[0m
+  [0;37mFinal check at +894 ms[0m
+  [0;37mRead Mesh Features at the end at +895 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +94 ms, on answered at +409 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +94 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +94 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +492 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 70 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +2 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +3 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +3 ms[0m
+  [0;37mMesh Send of packet 1 at +4 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +4 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +4 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +5 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +5 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +5 ms[0m
+  [0;37mSending Set Powered off at +84 ms[0m
+  [0;37mHCI Command 0x2039 length 2 at +85 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +85 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +86 ms (recorded)[0m
+  [0;37mSet Powered off at +99 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +100 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +100 ms, powered off[0m
+  [0;37mSending Set Powered on at +404 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +407 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +407 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +407 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +408 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +411 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +411 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +411 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +412 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +413 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +413 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +413 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +414 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +414 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +415 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +415 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +415 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +416 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +416 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +417 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +417 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +417 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +418 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +418 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +418 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +419 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +419 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +420 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +420 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +420 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +421 ms[0m
+  [0;37mSet Powered on at +421 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +422 ms[0m
+  [0;37mRead Mesh Features after power on at +422 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +423 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +423 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +424 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +424 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +424 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +425 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +425 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +506 ms[0m
+  [0;37mFinal check at +908 ms[0m
+  [0;37mRead Mesh Features at the end at +909 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +6 ms, off answered at +99 ms, on answered at +422 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +100 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +100 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +506 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 75 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +2 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +3 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +3 ms[0m
+  [0;37mMesh Send of packet 1 at +3 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +4 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +4 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +4 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +5 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +5 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +86 ms[0m
+  [0;37mSending Set Powered off at +86 ms[0m
+Bluetooth: hci0:  [0;37mHCI Command 0x2039 length 6 at +87 ms[0m Opcode 0x2039 failed: -112
+
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +87 ms, powered off[0m
+  [0;37mHCI Command 0x2039 length 2 at +88 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +88 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +89 ms (recorded)[0m
+  [0;37mSet Powered off at +103 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +404 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +407 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +407 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +407 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +408 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +408 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +410 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +410 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +411 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +411 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +411 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +412 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +412 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +413 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +413 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +413 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +414 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +414 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +414 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +415 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +415 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +416 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +416 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +416 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +417 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +417 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +418 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +418 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +418 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +418 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +419 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +419 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +419 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +420 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +420 ms[0m
+  [0;37mSet Powered on at +420 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +421 ms[0m
+  [0;37mRead Mesh Features after power on at +421 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +421 ms: handle 3[0m
+  [0;37mHCI Command 0x2036 length 25 at +422 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +422 ms[0m
+  [0;37mPacket 3 loaded into the mesh set at +422 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +423 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +423 ms[0m
+  [0;37mMesh set started with packet 3 (1) at +423 ms, after power on[0m
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +506 ms[0m
+  [0;37mFinal check at +908 ms[0m
+  [0;37mRead Mesh Features at the end at +909 ms: 0 of 3 handles pending[0m
+  [0;37mPWRCMP request 1 started at +5 ms, off answered at +104 ms, on answered at +421 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions, first at +86 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +88 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 1 loads, 1 starts (1 after power on), 1 completions, first at +506 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 3, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: PASS (0)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;32mtest passed[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp off at deadline 80 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +0 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +1 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +2 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +2 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +2 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +3 ms[0m
+  [0;37mSending Set Powered off at +3 ms[0m
+  [0;37mHCIDEVDOWN at +23 ms: done[0m
+  [0;37mSet Powered off at +23 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +83 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +83 ms, powered off[0m
+  [0;37mSending Set Powered on at +324 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +325 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +325 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +325 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +326 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +326 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +326 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +326 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +327 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +327 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +327 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +327 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +327 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +328 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +328 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +328 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +328 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +329 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +329 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +329 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +329 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +330 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +330 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +330 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +330 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +331 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +331 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +331 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +331 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +332 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +332 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +332 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +332 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +333 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +333 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +333 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +333 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +334 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +334 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +334 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +334 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +334 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +335 ms[0mBluetooth: hci0:
+ Opcode 0x2039 failed: -38
+  [0;37mHCI Command 0x0c13 length 248 at +335 ms[0m
+  [0;37mSet Powered on at +335 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +336 ms[0m
+  [0;37mRead Mesh Features after power on at +336 ms: 0 of 3 handles pending[0m
+  [0;37mMesh Send of packet 3 at +336 ms: handle 3[0m
+  [0;37mHCI Command 0x2039 length 6 at +337 ms[0m
+Bluetooth: hci0: Opcode 0x2039 failed: -38
+  [0;37mMesh Packet Complete handle 3 (packet 3) at +337 ms[0m
+  [0;37mThe new request completed before it was started[0m
+  [0;37mFinal check at +740 ms[0m
+  [0;37mRead Mesh Features at the end at +740 ms: 0 of 3 handles pending[0m
+  [0;37mNew request (handle 3): 0 starts, 1 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mHandle 3 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mPWRCMP request 1 started at +3 ms, off answered at +23 ms, on answered at +336 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +83 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +84 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +337 ms[0m
+  [0;37mPWRCMP read after on: 0 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 0, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: PASS (0)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: FAIL (1)[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp devdown backlog 2 off 300 ms - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 2 at +0 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +0 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +0 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +1 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +1 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +2 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +2 ms[0m
+  [0;37mMesh Send of packet 1 at +2 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +3 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +3 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +3 ms[0m
+  [0;37mMesh Send of packet 2 at +3 ms: handle 3[0m
+  [0;37mHCI Command 0x2039 length 6 at +3 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +4 ms[0m
+  [0;37mSending Set Powered off at +4 ms[0m
+  [0;37mHCIDEVDOWN at +36 ms: done[0m
+  [0;37mSet Powered off at +37 ms: Success (0x00)[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +80 ms, powered off[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +81 ms, powered off[0m
+  [0;37mSending Set Powered on at +341 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +343 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +343 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +343 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +344 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +345 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +346 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +346 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +346 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +346 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +347 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +347 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +347 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +347 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +347 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +348 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +348 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +348 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +348 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +348 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +349 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +349 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +349 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +349 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +350 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +350 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +350 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +350 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +351 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +351 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +351 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +351 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +352 ms[0m
+Bluetooth: hci0: Opcode 0x2039 failed: -38
+  [0;37mHCI Command 0x0c13 length 248 at +352 ms[0m
+  [0;37mSet Powered on at +352 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +352 ms[0m
+  [0;37mRead Mesh Features after power on at +353 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +353 ms: handle 4[0m
+  [0;37mHCI Command 0x2039 length 6 at +353 ms[0m
+Bluetooth: hci0: Opcode 0x2039 failed: -38
+  [0;37mMesh Packet Complete handle 4 (packet 3) at +355 ms[0m
+  [0;37mThe new request completed before it was started[0m
+  [0;37mHCI Command 0x2039 length 6 at +355 ms[0mBluetooth: hci0:
+ Opcode 0x2039 failed: -38
+  [0;37mMesh Packet Complete handle 3 (packet 2) at +355 ms[0m
+  [0;37mFinal check at +758 ms[0m
+  [0;37mRead Mesh Features at the end at +758 ms: 0 of 3 handles pending[0m
+  [0;37mNew request (handle 4): 0 starts, 1 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mHandle 3 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mHandle 4 completed after power on, never started[0m
+  [0;37mViolates (h) completions after power on only of started requests[0m
+  [0;37mPWRCMP request 1 started at +4 ms, off answered at +37 ms, on answered at +352 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +81 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +81 ms[0m
+  [0;37mPWRCMP packet 2: handle 3, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +356 ms[0m
+  [0;37mPWRCMP packet 3: handle 4, 0 loads, 0 starts (0 after power on), 1 completions (unstarted), first at +355 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 0 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 3, unattributed enables 0, Advertising Removed 0, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: PASS (0)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: PASS (0)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: FAIL (2)[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp devdown backlog 3 off 300 ms - Ext[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Mesh - PwrCmp active on at once                      [0;32mPassed    [0m   0.663 seconds
+Mesh - PwrCmp active off 300 ms                      [0;32mPassed    [0m   0.871 seconds
+Mesh - PwrCmp backlog 2 off 300 ms                   [0;32mPassed    [0m   0.871 seconds
+Mesh - PwrCmp backlog 3 off 300 ms                   [0;31mFailed    [0m   0.975 seconds
+Mesh - PwrCmp backlog 3 on at once                   [0;32mPassed    [0m   0.779 seconds
+Mesh - PwrCmp cancel active then off                 [0;32mPassed    [0m   0.871 seconds
+Mesh - PwrCmp cancel queued then off                 [0;32mPassed    [0m   0.871 seconds
+Mesh - PwrCmp off in held start                      [0;32mPassed    [0m   0.950 seconds
+Mesh - PwrCmp off at deadline 70 ms                  [0;32mPassed    [0m   0.931 seconds
+Mesh - PwrCmp off at deadline 75 ms                  [0;32mPassed    [0m   0.933 seconds
+Mesh - PwrCmp off at deadline 80 ms                  [0;32mPassed    [0m   0.942 seconds
+Mesh - PwrCmp devdown backlog 2 off 300 ms           [0;31mFailed    [0m   0.871 seconds
+Mesh - PwrCmp devdown backlog 3 off 300 ms           [0;31mFailed    [0m   0.960 seconds
+Mesh - PwrCmp active on at once - Ext                [0;32mPassed    [0m   0.612 seconds
+Mesh - PwrCmp active off 300 ms - Ext                [0;32mPassed    [0m   0.865 seconds
+Mesh - PwrCmp backlog 2 off 300 ms - Ext             [0;32mPassed    [0m   0.868 seconds
+Mesh - PwrCmp backlog 3 off 300 ms - Ext             [0;31mFailed    [0m   0.951 seconds
+Mesh - PwrCmp backlog 3 on at once - Ext             [0;32mPassed    [0m   0.781 seconds
+Mesh - PwrCmp cancel active then off - Ext           [0;32mPassed    [0m   0.862 seconds
+Mesh - PwrCmp cancel queued then off - Ext           [0;32mPassed    [0m   0.868 seconds
+Mesh - PwrCmp off in held start - Ext                [0;32mPassed    [0m   0.958 seconds
+Mesh - PwrCmp off at deadline 70 ms - Ext            [0;32mPassed    [0m   0.946 seconds
+Mesh - PwrCmp off at deadline 75 ms - Ext            [0;32mPassed    [0m   0.965 seconds
+Mesh - PwrCmp off at deadline 80 ms - Ext            [0;32mPassed    [0m   0.962 seconds
+Mesh - PwrCmp devdown backlog 2 off 300 ms - Ext     [0;31mFailed    [0m   0.783 seconds
+Mesh - PwrCmp devdown backlog 3 off 300 ms - Ext     [0;31mFailed    [0m   0.800 seconds
+Total: 26, [0;32mPassed: 20 (76.9%)[0m, [0;31mFailed: 6[0m, [0;33mNot Run: 0[0m
+Overall execution time: 22.7 seconds
+Process 57 exited with status 1

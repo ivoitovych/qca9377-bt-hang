@@ -1,0 +1,113 @@
+diff -Nru bluez-5.72/debian/changelog bluez-5.72/debian/changelog
+--- bluez-5.72/debian/changelog	2026-10-13 10:28:01.000000000 +0000
++++ bluez-5.72/debian/changelog	2026-10-28 04:41:58.000000000 +0000
+@@ -1,3 +1,14 @@
++bluez (5.72-0ubuntu5.9) noble; urgency=medium
++
++  * btmon: fix abort (buffer overflow detected) in print_packet() when the
++    computed line width is negative (LP: #XXXXXX)
++    - debian/patches/monitor-Fix-crash-due-to-negative-max_len.patch:
++      upstream fdbfe0018f6f, discard the extra text when it does not fit.
++    - debian/patches/monitor-clamp-max_len-in-print_packet.patch:
++      upstream dca0f10fd560, clamp max_len to the space left in line[].
++
++ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Wed, 28 Oct 2026 04:41:58 +0000
++
+ bluez (5.72-0ubuntu5.8) noble-security; urgency=medium
+ 
+   * SECURITY REGRESSION: loading of cached A2DP remote SEPs broken by the
+diff -Nru bluez-5.72/debian/patches/monitor-Fix-crash-due-to-negative-max_len.patch bluez-5.72/debian/patches/monitor-Fix-crash-due-to-negative-max_len.patch
+--- bluez-5.72/debian/patches/monitor-Fix-crash-due-to-negative-max_len.patch	1970-01-01 00:00:00.000000000 +0000
++++ bluez-5.72/debian/patches/monitor-Fix-crash-due-to-negative-max_len.patch	2026-10-28 04:41:58.000000000 +0000
+@@ -0,0 +1,30 @@
++Description: monitor: Fix crash due to negative max_len
++ btmon aborts (buffer overflow detected, SIGABRT) in print_packet() when the
++ computed max_len is negative, for example when decoding a MGMT Open record
++ with a long label at 80 columns or fewer. Discard the extra text if there
++ is not enough space for the text and the label.
++Author: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
++Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=fdbfe0018f6f216ff089c0e1db848ec8ae16585e
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/XXXXXX
++Forwarded: not-needed
++Last-Update: 2026-10-28
++---
++diff --git a/monitor/packet.c b/monitor/packet.c
++index 2eb50896b..b186431cf 100644
++--- a/monitor/packet.c
+++++ b/monitor/packet.c
++@@ -490,6 +490,14 @@ static void print_packet(struct timeval *tv, struct ucred *cred, char ident,
++ 		int extra_len = extra ? strlen(extra) : 0;
++ 		int max_len = col - len - extra_len - ts_len - 3;
++ 
+++		/* Check if there is enough space for the text and the label, if
+++		 * there isn't then discard extra text since it won't fit.
+++		 */
+++		if (max_len <= 0) {
+++			extra = NULL;
+++			max_len = col - len - ts_len - 3;
+++		}
+++
++ 		n = snprintf(line + pos, max_len + 1, "%s%s",
++ 						label ? ": " : "", text);
++ 		if (n > max_len) {
+diff -Nru bluez-5.72/debian/patches/monitor-clamp-max_len-in-print_packet.patch bluez-5.72/debian/patches/monitor-clamp-max_len-in-print_packet.patch
+--- bluez-5.72/debian/patches/monitor-clamp-max_len-in-print_packet.patch	1970-01-01 00:00:00.000000000 +0000
++++ bluez-5.72/debian/patches/monitor-clamp-max_len-in-print_packet.patch	2026-10-28 04:41:58.000000000 +0000
+@@ -0,0 +1,48 @@
++Description: monitor: clamp max_len in print_packet
++ print_packet() derives the snprintf() bound from the terminal width and
++ never bounds it against the space left in line[]. max_len can stay negative
++ after the recovery added by the previous patch, or exceed the buffer. Clamp
++ max_len to the space remaining in line[] and only write the ellipsis when
++ there is room for it.
++Author: Chad Spensky <chad@allthenticate.com>
++Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=dca0f10fd560f8095493021ca2ac20236fde026e
++Bug: https://github.com/bluez/bluez/issues/1104
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/XXXXXX
++Forwarded: not-needed
++Last-Update: 2026-10-28
++---
++diff --git a/monitor/packet.c b/monitor/packet.c
++index f0558b656..67837b8f0 100644
++--- a/monitor/packet.c
+++++ b/monitor/packet.c
++@@ -605,13 +605,26 @@ static void print_packet(struct timeval *tv, struct ucred *cred, char ident,
++ 			max_len = col - len - ts_len - 3;
++ 		}
++ 
+++		/* col comes from the terminal and len includes the optional
+++		 * "comm[pid]: " prefix, so max_len can still be negative
+++		 * here, or larger than the space left in line[]. Both
+++		 * overflow the snprintf below, and a negative value also
+++		 * indexes before line[].
+++		 */
+++		if (max_len > (int) sizeof(line) - pos - 1)
+++			max_len = (int) sizeof(line) - pos - 1;
+++		if (max_len < 0)
+++			max_len = 0;
+++
++ 		n = snprintf(line + pos, max_len + 1, "%s%s",
++ 						label ? ": " : "", text);
++ 		if (n > max_len) {
++-			line[pos + max_len - 1] = '.';
++-			line[pos + max_len - 2] = '.';
++-			if (line[pos + max_len - 3] == ' ')
++-				line[pos + max_len - 3] = '.';
+++			if (max_len >= 3) {
+++				line[pos + max_len - 1] = '.';
+++				line[pos + max_len - 2] = '.';
+++				if (line[pos + max_len - 3] == ' ')
+++					line[pos + max_len - 3] = '.';
+++			}
++ 
++ 			n = max_len;
++ 		}
+diff -Nru bluez-5.72/debian/patches/series bluez-5.72/debian/patches/series
+--- bluez-5.72/debian/patches/series	2026-10-13 10:26:09.000000000 +0000
++++ bluez-5.72/debian/patches/series	2026-10-28 04:41:58.000000000 +0000
+@@ -37,3 +37,5 @@
+ CVE-2026-80186.patch
+ CVE-2026-85218.patch
+ regression-a2dp-sep-cache.patch
++monitor-Fix-crash-due-to-negative-max_len.patch
++monitor-clamp-max_len-in-print_packet.patch

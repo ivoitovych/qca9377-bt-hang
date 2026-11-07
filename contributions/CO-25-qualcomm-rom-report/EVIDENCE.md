@@ -1,0 +1,62 @@
+# QCA9377 13d3:3503 on ROM firmware: evidence for the report
+
+Each exhibit gives the claim, the exact command that extracted it, and that command's
+output. The exhibits were captured on the laptop as each event happened; the journals and
+captures they were cut from are not all retained.
+
+## The failure on the ROM firmware (stock btusb, no entry for 13d3:3503)
+
+| exhibit | what it shows |
+|---|---|
+| [EX-053](../../evidence/exhibits/053-alt1-death-12-third-headset-shure-aonic-50.md) | The instance quoted in the report: `0x0428` answered, link up on alt 1 (`bAlternateSetting 1`, `wMaxPacketSize 0009`, read live), 7.3 s of 27-byte mSBC as three 9-byte packets, then `0x0406 Disconnect` never answered |
+| [EX-054](../../evidence/exhibits/054-alt1-death-12-untreated-12h-usb-silent.md) | The same failure left alone for 12 h 34 min: still enumerated, nothing from the USB layer, every later command timed out |
+| [EX-052](../../evidence/exhibits/052-alt1-death-11-first-on-kernel-7-0-0-34.md) | Two USB `GET_DESCRIPTOR` control transfers timing out (`-110`) after the HCI timeout |
+| [EX-043](../../evidence/exhibits/043-first-command-into-alt1-stream-dies.md) | The stream running 9.65 s with no command in flight; the first command then issued dies |
+| [EX-051](../../evidence/exhibits/051-alt1-death-10-write-scan-enable-into-alt1-stream.md) | The command that dies need not be Disconnect: `0x0c1a Write Scan Enable` |
+| [EX-024](../../evidence/exhibits/024-two-headsets-one-signature.md) | The same signature with two other headset models |
+| [EX-028](../../evidence/exhibits/028-poweroff-recovers-what-reboot-could-not.md) | A power-off recovered the controller where a reboot had not |
+
+The twelve failures, with kernel, first command and timings, are tabulated in
+[BRIEF.md, section 2](../../BRIEF.md#2-the-signature--n--12-four-kernels-three-peripherals-both-configurations).
+
+## With the QCA setup path
+
+| exhibit | what it shows |
+|---|---|
+| [EX-055](../../evidence/exhibits/055-e1-qca-setup-loads-rampatch-over-rom-firmware.md) | Before setup: ROM `0x302`, build `0x111`, status `0x20`; both files load (return 0); afterwards patch `0x3e8`, status `0xe0` |
+| [EX-058](../../evidence/exhibits/058-e1-setup-only-58-links-three-boots.md) | 58 SCO links (43 mSBC, 15 CVSD), three boots, two headset models, on the diagnostic build: `BTUSB_QCA_ROME` only, no `BTUSB_WIDEBAND_SPEECH`, no reset callback ([patch](../../patches/diag/btusb-e1-qca-rome-setup-no-reset.patch)); 0 command timeouts |
+| [EX-057](../../evidence/exhibits/057-e3-upstream-entry-16-links-two-headsets.md) | 16 SCO links (7 mSBC, 9 CVSD) with the exact `dc16388d45ec` entry, including the headset of EX-053; 0 command timeouts |
+
+## The other ROME IDs named in the mail
+
+| ID | source |
+|---|---|
+| `0b05:1868` | mainline `d54601f21faf` (Quentin Strydom, 2026-09-28): no `BTUSB_QCA_ROME`, no rampatch/NVM, `0x2005` BLE-scan errors |
+| `0b05:1825` | mainline `cfa67a1dbfd9` (Konstantin Nazarov, 2026-10-01): the same |
+| `0b05:1825`, earlier | Edgard Lopes, 2026-07-21, "[PATCH] Bluetooth: btusb: Add ID 0b05:1825 for ASUS QCA ROME adapter", not merged (the list's bot answered that it no longer applied): the device on "its bare ROM firmware", "SCO/eSCO audio is broken", "corrupted SCO packet", the HFP/HSP microphone never works. Thread: <https://ratatoskr.run/linux-bluetooth/2026/07/17287224/t> |
+
+## The firmware files
+
+Both runs loaded `qca/rampatch_usb_00000302.bin` and `qca/nvm_usb_00000302.bin` from Ubuntu's
+`linux-firmware 20240318.git3b128b60-0ubuntu2.29` (E1 on 2026-09-26; E3's boot started
+2026-10-01 00:13). That day at 13:50 Ubuntu split the package, and the files now come from
+`linux-firmware-qualcomm-wireless 20240318.git3b128b60-0ubuntu3.1`, the same upstream snapshot;
+the boots since then report the same patch build `0x3e8`. SHA-256 of the files installed now
+(read 2026-10-29):
+
+| file | `.zst` as installed | decompressed |
+|---|---|---|
+| `rampatch_usb_00000302.bin` | `d768b822e74b3454f21ceeb22e3fbe587f6268957fec8a21d5695088afacc682` | `f0d15f6d7c4ce17270c951287222699c0909bea9028ecb84d2e8be6fa364691e` |
+| `nvm_usb_00000302.bin` | `19510791fa65ca7604c7a7160e656861ef0864fa07f608199adb28cd474a5e1c` | `9ee2cff5bd51523b65c941b72ecf05a8b5e7b9e280c79fa08c70ade7205088a5` |
+
+The `0ubuntu2.29` package is no longer on the machine, so these were not compared byte for byte
+with the files the runs loaded.
+
+## Reading the older exhibits
+
+The exhibit index also holds early interpretations that later evidence corrected, for example
+EX-006's title ("SCO setup is the wedging command": `0x0428` is answered in every later
+instance). The corrected statements and the retracted ones are in
+[BRIEF.md, sections 3 to 5](../../BRIEF.md#3-settled). In provenance tables written before
+2026-10-02, `capture boot id` is the boot the exhibit was captured in, which can differ from the
+boot its evidence comes from (`evidence boot ids`).

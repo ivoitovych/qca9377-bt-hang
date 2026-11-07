@@ -1,0 +1,65 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: stable@vger.kernel.org
+Cc: Pauli Virtanen <pav@iki.fi>,
+ Marcel Holtmann <marcel@holtmann.org>,
+ Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+ linux-bluetooth@vger.kernel.org
+Subject: Please backport 608e0b7a675b and 32d86e048d8e (Bluetooth: L2CAP) to 7.3.y and 7.2.y
+
+Hello,
+
+please apply these two mainline commits to 7.3.y and 7.2.y, in this
+order:
+
+  608e0b7a675b2affbbf38167cad0fa63d8e064f7
+  ("Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking
+  helpers")
+
+  32d86e048d8efedb7aa6cbbd3c36c3c435401c92
+  ("Bluetooth: L2CAP: hold conn->lock for
+  __l2cap_ecred_conn_rsp_defer")
+
+The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
+hci_chan_del"), which both lines have; it needs the first for
+l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(). Both are in
+mainline since the 7.4 merge window and carry no Cc: stable tag. They
+are patches 2 and 7 of the series "Bluetooth: L2CAP: fix and annotate
+l2cap_conn::chan_l locking"; the other patches are not needed for the
+problem below and were not tested here.
+
+Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+Accept 2 Close 1" (a deferred ECRED accept of two channels, the first
+accepted and closed before the second) never finishes on v7.3 and
+v7.2.13: the test stops after "Accept deferred setup". With
+CONFIG_DETECT_HUNG_TASK enabled on v7.3, the tester's task is reported
+blocked holding its socket's lock from l2cap_sock_recvmsg() while
+waiting for the same lock in l2cap_sock_teardown_cb() (taken nested,
+so lockdep stays silent). 32d86e048d8e releases the socket lock before
+__l2cap_ecred_conn_rsp_defer() is called.
+
+Both commits cherry-pick cleanly onto v7.3 and v7.2.13. Tested in
+QEMU/KVM (4 vCPUs) with BlueZ's doc/tester.config: with the two
+commits the case passes on both, and the whole l2cap-tester passes 111
+of 111; without them the case never finishes. No lockdep or KASAN
+report.
+
+On v7.3 the whole l2cap-tester stalls earlier, in "L2CAP LE Client -
+SCI Fast Mode", with or without the two commits ("Invalid response
+length for 0x20a3"): 7.3.y has 2f8784cfe8a9 ("Bluetooth: Add support
+for Shorter Connection Interval (SCI) feature") but not its fix
+5874f8d03268 ("Bluetooth: Fix the LE Read Connection Interval response
+layout"). With 5874f8d03268 applied as well, the SCI cases pass; the
+111 of 111 on v7.3 are with it.
+
+6.18.y, 6.12.y and 6.6.y hang on the same case and need small
+adjustments; backports for them follow as separate series.
+
+6.1.y, 5.15.y and 5.10.y do not have ab4eedb790ca, and ECRED is off
+there unless the bluetooth module parameter enable_ecred is set. With
+it set, the case never finishes on v6.1.190, v5.15.223 and v5.10.272
+either, and on v6.1.190 the hung-task detector shows the same two
+socket locks. The two commits do not apply to those lines, so this
+request does not cover them.
+
+Thanks,
+Iaroslav

@@ -1,0 +1,138 @@
+# repo-scan-public-addresses — mail addresses and Message-IDs that upstream has
+# already published, which devtools/repo-scan therefore lets through (BRIEF §7,
+# "What upstream has already published is public"; operator, 2026-10-13).
+#
+#   @host      every address at exactly that host. ONLY for mailing-list hosts,
+#              where every address is a public list. Never an organisation's
+#              or a mail provider's domain: that would also pass addresses
+#              nobody published.
+#   token      one address or one whole Message-ID, matched exactly.
+#
+# Add an entry when a public upstream record (a lore or patchwork mail, a commit
+# trailer, a stable review) carries it, with a comment saying which. Never add a
+# private correspondent. The project author's own address is allowed by
+# repo-scan already (and so are the list hosts vger.kernel.org and
+# lists.linux.dev; kernel.org people are listed below, one by one).
+
+# Mailing-list hosts
+@lists.linaro.org
+
+# The stable review "[PATCH 6.6 0000/1651] 6.6.160-rc2 review" (2026-10-20):
+# its sender, its public To/Cc, and its Message-ID
+gregkh@linuxfoundation.org
+torvalds@linux-foundation.org
+akpm@linux-foundation.org
+patches@kernelci.org
+linux@roeck-us.net
+pavel@nabladev.com
+jonathanh@nvidia.com
+f.fainelli@gmail.com
+sudipm.mukherjee@gmail.com
+rwarsow@gmx.de
+hargar@microsoft.com
+achill@achill.org
+sr@sladewatkins.com
+20261020075535.084584701@linuxfoundation.org
+# Greg's separate rc2 announcement adds these on its Cc
+pschneider1968@googlemail.com
+
+# Authors of the upstream patches this project tests or cites (their own
+# patchwork and lore records), and the Message-IDs of those patches
+enghitalo@gmail.com
+20261008222616.2780570-2-enghitalo@gmail.com
+20261008222616.2780570-7-enghitalo@gmail.com
+igorpetindev@gmail.com
+20261014160504.42527-1-igorpetindev@gmail.com
+benquike@gmail.com
+20260919115436.3998954-1-benquike@gmail.com
+yaojiale02@163.com
+20261003081205.433725-1-yaojiale02@163.com
+# Cen Zhang's patchwork 14880941 is filed under this Message-ID
+pm-bluetooth-objects-candidate-0156-v8-fac4256cb2701c21549a@gmail.com
+# (Made-up addresses that outside reviews quote are not listed here: they are
+# nobody's published address. devtools/repo-scan-quoted-examples allows each
+# only in the file that quotes it.)
+
+# kernel.org people, listed one by one since 2026-10-21 (before, the scan let
+# every kernel.org address through). On the rc2 review's public Cc:
+shuah@kernel.org
+conor@kernel.org
+broonie@kernel.org
+# The patchwork bot's public notifications, cited in STATUS and reviews
+patchwork-bot@kernel.org
+# The stable team's reply to the QCA9377 backport request, as STATUS cites it
+2026-10-02-1-daily-reply-0005-re-btusb-qca9377-imc-backport@kernel.org
+
+# Trailers of the commits in 6.6.160-rc2 that CO-10 cites
+luiz.von.dentz@intel.com
+liujiajia@kylinos.cn
+pav@iki.fi
+pmenzel@molgen.mpg.de
+
+# CO-02's recipients, in its tracked send script (2026-10-26), each as upstream published it:
+# the Bluetooth maintainers in MAINTAINERS (BLUETOOTH SUBSYSTEM, l.4752-4753 of 7.3-rc6)
+marcel@holtmann.org
+luiz.dentz@gmail.com
+# the authors of 8a5b0135d4a5 and 816fb1590a4c, which the series cites
+zzzccc427@gmail.com
+qwe.aldo@gmail.com
+# CO-25: the Qualcomm Bluetooth driver maintainer (MAINTAINERS) and two Qualcomm authors of
+# btqca/btusb commits in mainline (589b80b654588, bdea21b3be435), named as possible recipients
+brgl@kernel.org
+zijun.hu@oss.qualcomm.com
+xiuzhuo.shang@oss.qualcomm.com
+# CO-25 v3 recipients: a Qualcomm author of btusb/hci_qca commits in mainline (82855073c108,
+# fa21e86caba23), and the author of dc16388d45ec, the 13d3:3503 entry the report is about
+shuai.zhang@oss.qualcomm.com
+silurust@gmail.com
+# CO-11: the author of BlueZ dca0f10fd, quoted in the debdiff's patch header
+chad@allthenticate.com
+# CO-35: Message-IDs of two public lore mails its send package cites: a "[PATCH 6.6.y 0/2]"
+# backport series on the stable list (2026-10-16, an example of current practice), and the cover
+# of Pauli Virtanen's "[PATCH 00/16] Bluetooth: L2CAP: fix and annotate l2cap_conn::chan_l
+# locking" on linux-bluetooth (2026-08-29)
+20261016021047.16461-1-artem@trailofbits.com
+cover.1788013041.git.pav@iki.fi
+# CO-28: Message-IDs of the public stable review announcements it answers (stable list,
+# 2026-10-28/29): 5.10.273-rc1, 5.15.224-rc1, 6.1.191-rc2
+20261028170003.522232767@linuxfoundation.org
+20261028170008.009143722@linuxfoundation.org
+20261029073135.159947193@linuxfoundation.org
+# CO-25: the Message-ID of Zijun Hu's public reply on linux-bluetooth (2026-10-29), which our
+# draft answer threads under
+bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com
+# CO-04 / CO-05 (2026-10-29): the author of b338d91703fa (its commit's author line; named by
+# get_maintainer.pl as blamed_fixes); syzbot's Reported-by address for the mesh_send_sync bug
+# (its public bug page) and its report's Message-ID (lore); the Message-IDs of Baul Lee's
+# patchwork 14736727 and Hui Peng's withdrawn 14831256 (lore and patchwork)
+brian.gix@intel.com
+syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com
+6ac5b02e.fe639fcc.32b100.000f.GAE@google.com
+20260807101529.17348-3-baul.lee@xbow.com
+20260919112517.3871992-1-benquike@gmail.com
+# CO-03 (2026-10-31): the authors of BlueZ commits 3d9900eb754d and 47da1efdc584 (their
+# commits' author lines); the signer of Ubuntu's bluez 5.72-0ubuntu5.8 source package (its
+# public .dsc signature, shown by dget); and a systemd unit name that has an address's shape
+arkadiusz.bokowy@gmail.com
+iulia.tanasescu@nxp.com
+allen.huang@canonical.com
+getty@tty1.service
+
+# CO-23 / CO-37 (2026-11-01): Bastien Nocera's two addresses, as BlueZ commit 62dd1cc85200
+# (patchwork 14568134, his author line) and Fedora's public bluez.spec changelog (src.fedoraproject.org,
+# ab04c8e31d7a) carry them; Fedora Release Engineering's address in the same changelog; the
+# linux-distros list named in BlueZ's SECURITY.md (79918b87d); and a pytest decorator in a diff
+# ("+@pytest.mark.parametrize"), which has an address's shape
+hadess@hadess.net
+bnocera@redhat.com
+releng@fedoraproject.org
+linux-distros@vs.openwall.org
++@pytest.mark.parametrize
+
+# CO-22 (2026-11-02): the authors of the mainline commits the stable request and the 6.6.y
+# btmtk report name, as their commits' author lines carry them: d54601f21faf (ASUS 0b05:1868),
+# cfa67a1dbfd9 (ASUS 0b05:1825), 23e88450bb04 ("Bluetooth: btmtk: Mark all stub functions as
+# inline")
+qstrydom0@gmail.com
+qwertyuiopyyy@gmail.com
+nathan@kernel.org

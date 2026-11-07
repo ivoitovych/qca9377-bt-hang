@@ -1,0 +1,73 @@
+From 3d71b97faa981143b9dce44242ab567399c2186d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 22 Oct 2026 13:49:56 +0200
+Subject: [PATCH 3/3] Bluetooth: hci_conn: synchronize with SCO disconnect work
+ before reuse
+
+hci_conn_hold() cancels a pending disconnect with cancel_delayed_work(),
+which does not wait for hci_conn_timeout() if it is already running.
+hci_conn_timeout() reads refcnt without hdev->lock and, if it saw no
+holder, calls hci_abort_conn(), which sets abort_reason.
+
+A connect() that finds the SCO connection after the work saw no holder,
+but before abort_reason is set, passes the abort_reason check in
+hci_connect_sco(), takes its hold, and gets a connection that is
+aborted right after: connect() reports success at once and the socket
+is closed with ECONNABORTED when the Disconnection Complete arrives.
+This applies both to a connection whose link exists and to one the
+remote device set up, which gets its link from hci_conn_link() here.
+
+After taking the hold, wait for a running hci_conn_timeout() and check
+abort_reason again. For a SCO connection hci_conn_timeout() does not
+take hdev->lock: hci_proto_disconn_ind() returns a constant and
+hci_abort_conn() only queues the Disconnect. hci_conn_del() already
+waits for disc_work with hdev->lock held. For a new connection the work
+has never been queued and nothing is waited for. Once the wait returns,
+the work has finished and cannot be queued again while the caller's
+hold is taken, so the second check does not race with it. If the
+connection had no link before, the link hci_conn_link() just made stays
+with the aborting connection and is released with its ACL hold by
+hci_conn_del(), as for any linked SCO connection.
+
+A connect() that comes before the work has started at all still cancels
+it with its hold and keeps the live link, as it does without this
+patch; that case is not changed here.
+
+Reproduced by delaying hci_conn_timeout() after it has seen no holder
+(a debug-only change, not part of this patch), for a link set up by the
+host and for one set up by the remote device: without this patch
+connect() returns 0 and the socket is then closed with ECONNABORTED;
+with it, connect() fails with -ECONNABORTED.
+
+Fixes: e6720779ae61 ("Bluetooth: SCO: Use kref to track lifetime of sco_conn")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_conn.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 6b92fd0177857..c1c8d2b29e3c0 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1935,6 +1935,17 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		}
+ 	}
+ 
++	/* Taking the hold cannot stop a hci_conn_timeout() that is already
++	 * running: it may have seen no holder and be about to abort the
++	 * connection. It does not take hdev->lock, so wait for it and check
++	 * abort_reason again.
++	 */
++	cancel_delayed_work_sync(&sco->disc_work);
++	if (sco->abort_reason) {
++		hci_conn_drop(sco);
++		return ERR_PTR(-ECONNABORTED);
++	}
++
+ 	sco->setting = setting;
+ 	sco->codec = *codec;
+ 
+-- 
+2.43.0
+

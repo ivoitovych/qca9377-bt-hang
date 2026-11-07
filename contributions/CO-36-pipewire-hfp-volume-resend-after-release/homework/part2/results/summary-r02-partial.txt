@@ -1,0 +1,108 @@
+
+== t212_long_lc3swb (1 records)
+  [r02-all-once-results.jsonl rep=0] long:resend-while-up codec=3 down=5903.9 next_up=None imm=[VGS@0.1 VGM@0.4] active=[VGS@1501.8 VGM@1502.0] after_down=[] {}
+  counts: {"long:resend-while-up": 1}
+
+== t214_hangup_near_deadline (1 records)
+  [r02-all-once-results.jsonl rep=0] long:resend-while-up codec=2 down=1585.6 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.0 VGM@1502.2] after_down=[] {"sleep_s": 1.2}
+  counts: {"long:resend-while-up": 1}
+
+== t215_node_suspend (1 records)
+  [r02-all-once-results.jsonl rep=0] long:resend-while-up codec=2 down=3881.4 next_up=None imm=[VGS@0.1 VGM@4.0] active=[VGS@1504.3 VGM@1504.5] after_down=[] {}
+  counts: {"long:resend-while-up": 1}
+
+== t216_profile_off (1 records)
+  [r02-all-once-results.jsonl rep=0] long:resend-while-up codec=2 down=1605.5 next_up=None imm=[VGS@0.2 VGM@0.9] active=[VGS@1503.3 VGM@1503.4] after_down=[] {}
+  counts: {"long:resend-while-up": 1}
+
+== t219_bluetoothd_restart (1 records)
+  [r02-all-once-results.jsonl rep=0] short:clean codec=2 down=369.3 next_up=None imm=[VGS@0.0 VGM@0.7] active=[] after_down=[] {"restart_requested_ms": 281.3, "pipewire_running": true, "write_errors": []}
+      frames_from_up: VGS@0.0:6 VGM@0.7:15
+  counts: {"short:clean": 1}
+
+== t221_codec_switch_after_short (1 records)
+  [r02-all-once-results.jsonl rep=0] short:clean codec=2 down=754.7 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {"bcs_ms": 1414.1}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15
+  counts: {"short:clean": 1}
+
+== t225r_route_volume (1 records)
+  [r02-all-once-results.jsonl rep=0] keys=['routes', 'no_link_speaker', 'no_link_mic', 'during_link_speaker', 'link_ended_before_change', 'hf_volume_changed', 'hf_sent_ag_frames', 'hf_received']
+      no_link_speaker: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10 rc=0
+      no_link_mic: want={'frame': 'VGM', 'value': 10} first_ms=0.0 first_value=10 rc=0
+      during_link_speaker: want={'frame': 'VGS', 'value': 13} first_ms=0.3 first_value=13 rc=0
+      hf_volume_changed: [10, 10, 10, 10, 10, 10, 13]
+  counts: {}
+
+== t227r_route_volume_after_short_link (1 records)
+  [r02-all-once-results.jsonl rep=0] short:LEAK codec=2 down=617.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1308.9 VGS@1501.5 VGM@1502.1] {"change_from_up_ms": 1308.9, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1308.9:10 VGS@1501.5:10 VGM@1502.1:15
+  counts: {"short:LEAK": 1}
+
+== t228r_hf_volume_change (1 records)
+  [r02-all-once-results.jsonl rep=0] long:resend-while-up codec=2 down=2070.5 next_up=None imm=[VGS@0.0 VGM@0.7] active=[VGS@1505.1 VGM@1505.4] after_down=[] {"ag_received_ms": 3387.9}
+      frames_from_up: VGS@0.0:6 VGM@0.7:15 VGS@1505.1:6 VGM@1505.4:15
+  counts: {"long:resend-while-up": 1}
+
+== t230_hsp_long (1 records)
+  [r02-all-once-results.jsonl rep=0] keys=['blocked', 'devices', 'ag_lines']
+      blocked: True
+  counts: {}
+
+== t232p_hw_volume_profiles (1 records)
+  [r02-all-once-results.jsonl rep=0] first: short:clean codec=2 down=789.2 next_up=3972.0 imm=[] active=[] after_down=[]
+  [r02-all-once-results.jsonl rep=0] second: long:other() codec=2 down=4852.0 next_up=None imm=[] active=[] after_down=[]
+  counts: {"first:short:clean": 1, "second:long:other()": 1}
+
+== t238_no_mic_hw_volume (1 records)
+  [r02-all-once-results.jsonl rep=0] first: short:clean codec=2 down=646.7 next_up=3690.6 imm=[VGS@0.0] active=[] after_down=[VGS@1502.3]
+  [r02-all-once-results.jsonl rep=0] second: long:other() codec=2 down=4386.5 next_up=None imm=[VGS@0.0] active=[VGS@1503.8] after_down=[]
+  counts: {"first:short:clean": 1, "second:long:other()": 1}
+
+== t239_enable_hw_volume_false (1 records)
+  [r02-all-once-results.jsonl rep=0] first: short:clean codec=2 down=475.9 next_up=3542.8 imm=[] active=[] after_down=[]
+  [r02-all-once-results.jsonl rep=0] second: long:other() codec=2 down=4361.7 next_up=None imm=[] active=[] after_down=[]
+  counts: {"first:short:clean": 1, "second:long:other()": 1}
+
+== t306_policy_call (1 records)
+  [r02-all-once-results.jsonl rep=0] links=1 long:resend-while-up
+      codec=3 down=6092.0 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1503.4 VGM@1503.5] after_down=[]
+  counts: {"long:resend-while-up": 1}
+
+== t306z_policy_call_restore_zero (1 records)
+  [r02-all-once-results.jsonl rep=0] links=1 long:resend-while-up
+      codec=3 down=2088.9 next_up=None imm=[VGS@0.0 VGM@0.3] active=[VGS@1502.8 VGM@1502.8] after_down=[]
+  counts: {"long:resend-while-up": 1}
+
+== t307_policy_probes (1 records)
+  [r02-all-once-results.jsonl rep=0] links=1 long:resend-while-up
+      codec=3 down=12382.9 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1501.3 VGM@1502.3] after_down=[]
+  counts: {"long:resend-while-up": 1}
+
+== t307z_policy_probes_restore_zero (1 records)
+  [r02-all-once-results.jsonl rep=0] links=4 short:LEAK, short:LEAK, short:LEAK, short:LEAK
+      codec=3 down=79.0 next_up=4147.7 imm=[VGS@0.0 VGM@0.2] active=[] after_down=[VGS@1500.9 VGM@1501.0]
+      codec=3 down=378.1 next_up=4457.5 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1501.1 VGM@1501.3]
+      codec=3 down=678.7 next_up=4763.2 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.7 VGM@1503.9]
+      codec=3 down=1166.6 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1500.5 VGM@1500.6]
+  counts: {"short:LEAK": 4}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [r02-all-once-results.jsonl] test_co36_t225r_route_volume[0-hosts29-vm2-784M] hf1: sent=8 got=8
+  same [r02-all-once-results.jsonl] test_co36_t227r_route_volume_after_short_link[0-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r02-all-once-results.jsonl] test_co36_t228r_hf_volume_change[0-hosts31-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t212_long_link_lc3swb[0-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t214_hangup_near_deadline[0-hosts33-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t215_node_suspend[0-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t216_profile_off[0-hosts35-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t219_bluetoothd_restart[0-hosts36-vm2-784M] hf1: sent=3 got=3
+  same [r02-all-once-results.jsonl] test_co36_t221_codec_switch_after_short_link[0-hosts37-vm2-784M] hf1: sent=3 got=3
+  same [r02-all-once-results.jsonl] test_co36_t230_hsp_long_link[0-hosts38-vm2-784M] hf1: sent=0 got=0
+  same [r02-all-once-results.jsonl] test_co36_t232p_hw_volume_profiles[0-hosts39-vm2-784M] hf1: sent=0 got=0
+  same [r02-all-once-results.jsonl] test_co36_t239_enable_hw_volume_false[0-hosts40-vm2-784M] hf1: sent=0 got=0
+  same [r02-all-once-results.jsonl] test_co36_t238_no_mic_hw_volume[0-hosts41-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t306_policy_call[0-hosts43-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t306z_policy_call_restore_zero[0-hosts44-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t307_policy_probes[0-hosts45-vm2-784M] hf1: sent=5 got=5
+  same [r02-all-once-results.jsonl] test_co36_t307z_policy_probes_restore_zero[0-hosts46-vm2-784M] hf1: sent=17 got=17
+  ledgers=17 mismatches=0

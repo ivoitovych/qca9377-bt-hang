@@ -1,0 +1,124 @@
+From f5c66fc520d51dc6f813ee042b70ab295fafcb4d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 6 Nov 2026 22:29:54 +0100
+Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
+
+With a 13-track disc in a USB drive, `gio cat` of Track 99.wav kept
+the drive busy for more than five minutes until it was stopped, and
+Track 257.wav returned track 1.
+
+do_open_for_read() passes whatever number sscanf() finds in the file
+name to libcdio without checking it. For a track that is not on the
+disc, libcdio returns a negative error code where a sector number is
+expected, and the first read that needs disc data sends paranoia
+there. libcdio's track number is 8 bits wide, so 257 becomes 1.
+Track 4294967297.wav, which sscanf("%d") cannot represent, also opened
+track 1 on the tested build. Track 0 opens too, and so would the data
+tracks of a mixed-mode disc.
+
+Parse the number with g_ascii_string_to_unsigned(), which rejects
+signs, trailing characters and numbers above 99. Leading zeros still
+work: Track 01.wav is track 1. query_info uses the same parser, so a
+name such as Track 1junk.wav, which it treated as track 1, is now
+refused there too.
+
+Open only audio tracks between the disc's first and last track
+numbers, as libcdio's own lookups do; the first need not be 1. If
+libcdio still reports a bad sector range, fail with the existing
+"paranoia" error instead of reading.
+
+This also fixes two leaks: the failure path allocated a GError it
+never freed, and the parser did not free its copy of the name when the
+name did not match.
+
+With this change, Track 0, 14, 99, 257 and 1junk fail at once with
+"No such file", and Track 1 to 13 still read.
+---
+ daemon/gvfsbackendcdda.c | 43 ++++++++++++++++++++++++++++++----------
+ 1 file changed, 32 insertions(+), 11 deletions(-)
+
+diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
+index ce01630..29d1876 100644
+--- a/daemon/gvfsbackendcdda.c
++++ b/daemon/gvfsbackendcdda.c
+@@ -446,18 +446,23 @@ do_unmount (GVfsBackend *backend,
+ static int
+ get_track_num_from_name (const char *filename)
+ {
+-  int n;
++  guint64 n;
+   char *basename;
++  int track_num = -1;
+ 
+   basename = g_path_get_basename (filename);
+-  if (sscanf (basename, "Track %d.wav", &n) == 1 &&
++  if (g_str_has_prefix (basename, "Track ") &&
+       g_str_has_suffix (basename, ".wav"))
+     {
+-      g_free (basename);
+-      return n;
++      /* Parse only the number between "Track " and ".wav" */
++      basename[strlen (basename) - strlen (".wav")] = '\0';
++      if (g_ascii_string_to_unsigned (basename + strlen ("Track "), 10,
++                                      1, CDIO_CD_MAX_TRACKS, &n, NULL))
++        track_num = n;
+     }
+ 
+-  return -1;
++  g_free (basename);
++  return track_num;
+ }
+ 
+ typedef struct {
+@@ -608,7 +613,7 @@ do_open_for_read (GVfsBackend *backend,
+                   const char *filename)
+ {
+   int track_num;
+-  GError *error;
++  track_t first_track, last_track;
+   ReadHandle *read_handle;
+   GVfsBackendCdda *cdda_backend = G_VFS_BACKEND_CDDA (backend);
+ 
+@@ -617,18 +622,34 @@ do_open_for_read (GVfsBackend *backend,
+   read_handle = g_new0 (ReadHandle, 1);
+ 
+   track_num = get_track_num_from_name (job->filename);
+-  if (track_num == -1)
++  first_track = cdio_get_first_track_num (cdda_backend->drive->p_cdio);
++  last_track = cdio_get_last_track_num (cdda_backend->drive->p_cdio);
++
++  /* Only audio tracks on the disc can be opened */
++  if (track_num == -1 || last_track == CDIO_INVALID_TRACK ||
++      track_num < first_track || track_num > last_track ||
++      !cdio_cddap_track_audiop (cdda_backend->drive, track_num))
+     {
+-      error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, 
+-                           _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
+-      g_vfs_job_failed_from_error (G_VFS_JOB (job), error);
++      g_vfs_job_failed (G_VFS_JOB (job), G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
++                        _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
+       free_read_handle (read_handle);
+       return;
+     }
+ 
+-
+   read_handle->first_sector = cdio_cddap_track_firstsector (cdda_backend->drive, track_num);
+   read_handle->last_sector = cdio_cddap_track_lastsector (cdda_backend->drive, track_num);
++
++  /* libcdio returns negative error codes on failure */
++  if (read_handle->first_sector < 0 ||
++      read_handle->last_sector < read_handle->first_sector)
++    {
++      g_vfs_job_failed (G_VFS_JOB (job), G_IO_ERROR, G_IO_ERROR_FAILED,
++                        /* Translators: paranoia is the name of the cd audio reading library */
++                        _("Error from “paranoia” on drive %s"), cdda_backend->device_path);
++      free_read_handle (read_handle);
++      return;
++    }
++
+   read_handle->sector_cursor = -1;
+ 
+   read_handle->cursor = 0;
+-- 
+2.43.0
+

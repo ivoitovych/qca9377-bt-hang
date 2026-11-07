@@ -1,0 +1,12 @@
+PROPOSAL, local experiment: media: release a deferred A2DP endpoint from idle
+
+Not part of the series. A removal of an A2DP endpoint deferred while
+another client's transport locked the stream completes in
+a2dp_sep_unlock(), called from the code of a transport of that endpoint
+(the suspend completion of a Release, or media_transport_free() while
+release_endpoint() clears the transports). Releasing the endpoint there
+destroys that transport, or frees the endpoint, under its callers.
+
+Release such an endpoint from an idle callback instead, cancelled if
+the endpoint is freed first; a SEP unregistered directly by
+media_endpoint_remove() is released at once, as before.

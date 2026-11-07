@@ -393,6 +393,16 @@ export BT_SYSFS_USB="$SUITE_MACHINE/usb" BT_SYSFS_MODULE="$SUITE_MACHINE/module"
        BT_SYSFS_BT="$SUITE_MACHINE/class-bluetooth" BT_SHARE_DIR="$SUITE_MACHINE/share" \
        BT_UNIT_DIR="$SUITE_MACHINE/units" BT_HEALTH_DIR="$SUITE_MACHINE/health" \
        BT_METRICS="$SUITE_MACHINE/health/metrics.tsv" BT_ARCHIVE_DIR="$SUITE_MACHINE/journal-archive"
+# The journal tools of 2026-10-23: bt-journal-files' source and copy directories
+# (empty here; a test that needs files builds them), and the directory
+# lib/journal.sh's fast kernel path reads, which must NOT exist: the fast path
+# checks only that it exists and then asks journalctl --list-boots, so on a host
+# with a real /var/log/journal/<machine-id> (the CI runner) it added unbounded
+# reads to every -k read and bt-window's bounded-read test failed. Undeclared
+# until 2026-10-28, which kept CI red from 2026-10-23.
+mkdir -p "$SUITE_MACHINE"/{journal-src,journal-files}
+export BT_JOURNAL_SRC="$SUITE_MACHINE/journal-src" BT_JOURNAL_FILES_DIR="$SUITE_MACHINE/journal-files" \
+       BT_JOURNAL_DIR="$SUITE_MACHINE/journal-dir-absent"
 # The usbfs device nodes too, and this one is an ACTUATOR: the watchdog opens
 # <node>/<bus>/<dev> and issues USBDEVFS_RESET. Its fixture carries bus 3, device
 # 99, and until 2026-09-29 every scenario that reached recovery ran the real
@@ -9158,7 +9168,7 @@ rm -f "$TL/dead"
 # AUTOSTOP IS PASSIVE (2026-09-19; BL-08, R2-65, DR-07). It classifies from the
 # kernel journal — a command timeout since the trial opened → hang — and sends
 # NOTHING to the controller. Until then it ran hci_alive() at every shutdown of
-# the family laptop, an HCI Read Local Name into the state under study, and the
+# the laptop, an HCI Read Local Name into the state under study, and the
 # two tests that stood here pinned that as the design ("on a responding
 # controller", "on a dead controller"): a test that asserts the defect is what
 # makes the defect survive its own review. The spy in the hciconfig stub above
@@ -10398,6 +10408,154 @@ tools/bt-backup-journal --archive-everything >/dev/null 2>&1
 (( $? == 2 )) \
     && ok "bt-backup-journal rejects an unknown option instead of archiving" \
     || bad "an unknown option was ignored and the run proceeded"
+
+# ── bt-journal-files: the copy of every closed journal file ──────────────
+#
+# Shipped on 2026-10-23 with no test at all; devtools/test-comprehension scored
+# it 0% from then on, which kept CI red (found 2026-11-01). Like
+# bt-backup-journal it runs unattended (the 3-hourly, boot and shutdown units),
+# so its verification and its refusals are the only things between "the
+# history is kept" and a gap nobody sees. Driven against a fixture journal
+# directory: two closed files, one closed uncleanly (`.journal~`) and the
+# active one, which must never be copied. journalctl and zstd are stubbed only
+# where a branch needs them; the real journal is never touched.
+JF=$(mktemp -d); JFM=4f1c0de0aa55
+# The at-sign of journald's file names is spliced in at run time: written
+# literally, such a name reads as a mail address to the publishing scan.
+JFAT='@'
+mkdir -p "$JF/src/$JFM" "$JF/bin" "$JF/empty/$JFM"
+head -c 70000 /dev/urandom > "$JF/src/$JFM/system${JFAT}0a1b-0000000000000001-0006000000000001.journal"
+head -c 50000 /dev/urandom > "$JF/src/$JFM/user-1000${JFAT}0c2d-0000000000000002-0006000000000002.journal"
+head -c 30000 /dev/urandom > "$JF/src/$JFM/system${JFAT}0006000000000003-0000000000000003.journal~"
+head -c 20000 /dev/urandom > "$JF/src/$JFM/system.journal"
+JF_FREE=0; JF_BUDGET=1000
+jf_run() {      # <source root> <dest> [args...]
+    local src="$1" dest="$2"; shift 2
+    BT_JOURNAL_SRC="$src" BT_JOURNAL_FILES_DIR="$dest" \
+        BT_JOURNAL_FILES_FREE_MIN_GB="$JF_FREE" BT_JOURNAL_FILES_BUDGET_GB="$JF_BUDGET" \
+        tools/bt-journal-files "$@" 2>&1
+}
+jf_zst() { find "$1" -name '*.zst' | wc -l; }
+
+if ! command -v zstd >/dev/null 2>&1; then
+    # A runner without zstd can still drive the first refusal, and must.
+    JFZ=$(jf_run "$JF/src" "$JF/dst"); jfzrc=$?
+    (( jfzrc == 2 )) && [[ "$JFZ" == *"REFUSING"*"zstd not found"* ]] \
+        && ok "bt-journal-files refuses without zstd (zstd absent here: the copy cases did not run)" \
+        || bad "no zstd gave rc=$jfzrc rather than a refusal: $JFZ"
+else
+    JFREAL=$(command -v zstd)
+
+    # EVERY CLOSED FILE, BYTE-EXACT, AND NEVER THE ACTIVE ONE. The copies are
+    # read back here with the real zstd, independently of the tool's own check.
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    jfsame=1
+    for f in "$JF/src/$JFM"/*@*.journal "$JF/src/$JFM"/*.journal~; do
+        [[ "$(zstd -dc < "$JF/dst/$JFM/${f##*/}.zst" 2>/dev/null | sha256sum)" == "$(sha256sum < "$f")" ]] || jfsame=0
+    done
+    (( jfrc == 0 && jfsame )) && [[ "$(jf_zst "$JF/dst")" == 3 ]] \
+       && [[ ! -e "$JF/dst/$JFM/system.journal.zst" ]] \
+       && [[ "$(grep -c . "$JF/dst/MANIFEST.tsv")" == 4 ]] \
+       && [[ "$JFOUT" == *"3 copied now, 0 already, 0 failed, 0 vanished"* ]] \
+        && ok "bt-journal-files copies every closed file (clean and unclean) byte-exact, and not the active one" \
+        || bad "the copy run gave rc=$jfrc, $(jf_zst "$JF/dst") copies, read-back equal=$jfsame: $JFOUT"
+
+    # A SECOND RUN COPIES NOTHING AGAIN. It runs every three hours; a copy
+    # repeated each time would grow the archive and the manifest without end.
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"0 copied now, 3 already"* ]] \
+       && [[ "$(grep -c . "$JF/dst/MANIFEST.tsv")" == 4 ]] \
+        && ok "a second run copies nothing again and adds no manifest row" \
+        || bad "the second run gave rc=$jfrc: $JFOUT"
+
+    # --status NAMES WHAT IS LEFT AND WRITES NOTHING.
+    JFNEW="system${JFAT}0a1b-0000000000000009-0006000000000009.journal"
+    head -c 1000 /dev/urandom > "$JF/src/$JFM/$JFNEW"
+    JFOUT=$(jf_run "$JF/src" "$JF/dst" --status); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"not copied: $JFM/$JFNEW"* && "$JFOUT" == *"3 closed file(s) copied, 1 not yet"* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFNEW.zst" ]] \
+        && ok "--status names the file not copied yet and writes nothing" \
+        || bad "--status gave rc=$jfrc or wrote a copy: $JFOUT"
+
+    # --rotate CLOSES THE ACTIVE FILES FIRST, through journalctl (a stub here),
+    # and a failed rotate is reported, not fatal: the copy still runs.
+    printf '#!/bin/sh\necho "rotated: $*"\n' > "$JF/bin/journalctl"; chmod +x "$JF/bin/journalctl"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst" --rotate); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"rotate: rotated: --rotate"* && "$JFOUT" == *"1 copied now, 3 already"* ]] \
+        && ok "--rotate closes the active files through journalctl, then copies what is closed" \
+        || bad "--rotate gave rc=$jfrc: $JFOUT"
+    printf '#!/bin/sh\nexit 1\n' > "$JF/bin/journalctl"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst" --rotate); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"rotate: failed; copying what is closed"* ]] \
+        && ok "a failed rotate is reported and the copy still runs" \
+        || bad "a failed rotate gave rc=$jfrc: $JFOUT"
+    rm -f "$JF/bin/journalctl"
+
+    # A COPY THAT DOES NOT READ BACK IS NOT FILED. The stub zstd compresses with
+    # the real one and returns garbage on decompression, which is exactly what
+    # the tool's own read-back must catch: no copy, no partial left, rc 1.
+    JFBAD="system${JFAT}0a1b-000000000000000a-000600000000000a.journal"
+    head -c 1000 /dev/urandom > "$JF/src/$JFM/$JFBAD"
+    { echo '#!/bin/sh'
+      echo 'case "$*" in *-dc*) echo garbage; exit 0 ;; esac'
+      echo 'exec "'"$JFREAL"'" "$@"'; } > "$JF/bin/zstd"; chmod +x "$JF/bin/zstd"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 1 )) && [[ "$JFOUT" == *"FAILED verification (copy differs from source): $JFM/$JFBAD"* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst" && ! -e "$JF/dst/$JFM/$JFBAD.zst.partial" ]] \
+        && ok "a copy that does not read back identical is not filed, and the run fails" \
+        || bad "a bad read-back gave rc=$jfrc or left a copy: $JFOUT"
+
+    # A COMPRESSION THAT FAILS, WITH THE SOURCE STILL PRESENT, IS A FAILURE,
+    # not a vanished file.
+    printf '#!/bin/sh\nexit 1\n' > "$JF/bin/zstd"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 1 )) && [[ "$JFOUT" == *"FAILED to copy: $JFM/$JFBAD"* && "$JFOUT" != *VANISHED* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst.partial" ]] \
+        && ok "a failed compression is a failure, not a vanished file, and leaves no partial" \
+        || bad "a failed compression gave rc=$jfrc: $JFOUT"
+    rm -f "$JF/bin/zstd"
+
+    # THE TWO GUARDS THAT PROTECT JOURNALD'S OWN HISTORY. Below the free-space
+    # floor journald deletes its oldest files, so the tool stops before
+    # copying; at the budget it stops and deletes nothing. Both before any copy.
+    JF_FREE=999999
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"GB free (< 999999)"* ]] && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst" ]] \
+        && ok "bt-journal-files refuses below its free-space floor, before copying" \
+        || bad "the free-space floor gave rc=$jfrc: $JFOUT"
+    JF_FREE=0; JF_BUDGET=0
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"reached its 0 GB budget; nothing is deleted"* ]] \
+       && [[ "$(jf_zst "$JF/dst")" == 4 ]] \
+        && ok "at its budget it refuses, and deletes nothing" \
+        || bad "the budget gave rc=$jfrc or changed the archive: $JFOUT"
+
+    # THE 80% WARNING, on a run with nothing left to copy: an archive of 1 GB
+    # (du rounds up) against a 1 GB budget.
+    JF_BUDGET=1
+    JFOUT=$(jf_run "$JF/empty" "$JF/dst2"); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"0 copied now"* && "$JFOUT" == *"above 80% of its budget"* ]] \
+        && ok "an archive above 80% of its budget is reported" \
+        || bad "the budget warning gave rc=$jfrc: $JFOUT"
+    JF_BUDGET=1000
+fi
+
+# The other refusal and the two entry points that do not copy.
+JFOUT=$(jf_run "$JF/no-such-dir" "$JF/dst"); jfrc=$?
+if command -v zstd >/dev/null 2>&1; then
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"no journal directory at $JF/no-such-dir"* ]] \
+        && ok "bt-journal-files refuses a missing journal directory" \
+        || bad "a missing journal directory gave rc=$jfrc: $JFOUT"
+fi
+tools/bt-journal-files --copy-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-journal-files rejects an unknown option instead of copying" \
+    || bad "an unknown option was ignored and the run proceeded"
+JFOUT=$(tools/bt-journal-files --help 2>&1); jfrc=$?
+(( jfrc == 0 )) && [[ "$JFOUT" == *"--rotate"* && "$JFOUT" == *"--status"* ]] \
+    && ok "bt-journal-files --help describes --rotate and --status" \
+    || bad "--help returned $jfrc or did not name its modes"
+rm -rf "$JF"
 
 # ── bt-snapshot: one coarse cut, and it runs DURING a live fault ─────────
 #
@@ -13460,7 +13618,131 @@ git -C "$RSM" add -A
 (( $? != 0 )) \
     && ok "a third party's address is still refused when the maintainer's is allowed" \
     || bad "the repository-derived allowlist let an unrelated address through"
+
+# THE MAINTAINER'S ADDRESS EXACTLY, NOT AS A SUBSTRING. It was a substring
+# match, which also passed "private-<maintainer's address>" (outside reviews of
+# 05f5aef, 2026-10-21). The maintainer's own git send-email Message-IDs
+# (<14-digit date>.<pid>-<n>-<address>) still pass: the tree cites 15.
+printf 'Reporter contact: %s\nIn-Reply-To: <20261002012542.473669-1-%s>\n' "$RSOWN" "$RSOWN" \
+    > "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan passes the maintainer's own git send-email Message-ID" \
+    || bad "repo-scan refused the maintainer's own Message-ID"
+printf 'cc: private-%s\n' "$RSOWN" >> "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "an address that only contains the maintainer's is refused" \
+    || bad "repo-scan let private-<maintainer's address> through as the maintainer's"
 rm -rf "$RSM"
+
+# PUBLISHED UPSTREAM ADDRESSES PASS; UNPUBLISHED ONES STILL DO NOT (BRIEF §7,
+# operator 2026-10-13, written into the tools 2026-10-21). The scanned
+# repository's devtools/repo-scan-public-addresses lists what upstream has
+# already published: "@host" lines accept a mailing-list host, every other
+# line one token exactly (a person's address, or a whole Message-ID). Before
+# this, the scan refused such addresses and the maintainer removed a
+# Message-ID, patchwork links and a public recipient list to get past it.
+#
+# The first version also accepted organisation domains and any address ENDING
+# in a listed one. Three outside reviews of ccb46dc showed that this passed
+# unpublished addresses, and that the test missed it: its only negative case
+# sat on an unlisted domain. So the negatives below sit on the listed
+# person's own domain, and one ends in a listed address. Two entries of each
+# kind, too: an earlier version joined every entry into one string, which a
+# one-entry list could not show. Fragments, so no literal address lands in
+# this tracked file.
+RSP=$(mktemp -d); git -C "$RSP" init -q; mkdir -p "$RSP/devtools"
+RSLIST="pub${RSAT}${RSDOM}"; RSHOST="lists.${RSDOM}"
+RSLIST2="second${RSAT}${RSDOM}"; RSHOST2="other-lists.${RSDOM}"
+RSMID="20261008.1-1-${RSLIST2}"
+printf '# test list\n@%s\n@%s\n%s\n%s\n%s\n' "$RSHOST" "$RSHOST2" "$RSLIST" "$RSLIST2" "$RSMID" \
+    > "$RSP/devtools/repo-scan-public-addresses"
+printf 'Cc: %s, %s\nTo: any%s%s, any%s%s\nIn-Reply-To: <%s>\n' \
+    "$RSLIST" "$RSLIST2" "$RSAT" "$RSHOST" "$RSAT" "$RSHOST2" "$RSMID" > "$RSP/README.md"
+git -C "$RSP" add -A
+git -C "$RSP" -c user.name=t -c user.email="owner${RSAT}${RSDOM}" commit -q -m list
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan lets listed public tokens through: exact addresses, list hosts, a whole Message-ID" \
+    || bad "repo-scan refused a token its public list names"
+cp "$RSP/README.md" "$RSP/README.base"
+# The last two: a subdomain of a listed list host, and a host that only ends
+# with its name. Already refused (the pattern keeps the "@"); pinned because an
+# outside review of 05f5aef read the filter as unanchored.
+for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}" \
+        "private${RSAT}evil.${RSHOST}" "private${RSAT}not${RSHOST}"; do
+    cp "$RSP/README.base" "$RSP/README.md"
+    printf 'From: %s\n' "$rsneg" >> "$RSP/README.md"
+    git -C "$RSP" add README.md
+    ( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+    (( $? != 0 )) \
+        && ok "an unpublished token is refused beside the public list: ${rsneg%%${RSAT}*}@…" \
+        || bad "the public-address list let an unpublished token through: ${rsneg%%${RSAT}*}@…"
+done
+
+# A LISTED <uuid>@<host> MESSAGE-ID PASSES THE UUID CHECK TOO; OTHER UUIDS DO NOT
+# (2026-10-29: a reply's Thunderbird Message-ID is a UUID at the sender's host). Built
+# from fragments so no literal UUID lands in this tracked file.
+RSU1="1a2b3c4d-5e6f"; RSU1="${RSU1}-4a7b-8c9d-0e1f2a3b4c5d"
+RSU2="9f8e7d6c-5b4a"; RSU2="${RSU2}-4c3d-9e8f-7a6b5c4d3e2f"
+cp "$RSP/devtools/repo-scan-public-addresses" "$RSP/list.base"
+printf '%s%s%s\n' "$RSU1" "$RSAT" "$RSDOM" >> "$RSP/devtools/repo-scan-public-addresses"
+cp "$RSP/README.base" "$RSP/README.md"
+printf 'In-Reply-To: <%s%s%s>\n' "$RSU1" "$RSAT" "$RSDOM" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan lets a listed <uuid>@<host> Message-ID through (UUID and address checks)" \
+    || bad "repo-scan refused a listed <uuid>@<host> Message-ID"
+printf 'In-Reply-To: <%s%s%s>\n' "$RSU2" "$RSAT" "$RSDOM" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "an unlisted <uuid>@<host> Message-ID is still refused beside a listed one" \
+    || bad "an unlisted UUID Message-ID passed because another one is listed"
+cp "$RSP/README.base" "$RSP/README.md"
+printf 'machine id: %s\n' "$RSU2" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a bare unlisted UUID is still refused when the public list names a UUID Message-ID" \
+    || bad "a bare unlisted UUID passed"
+cp "$RSP/list.base" "$RSP/devtools/repo-scan-public-addresses"; rm -f "$RSP/list.base"
+cp "$RSP/README.base" "$RSP/README.md"; git -C "$RSP" add -A
+
+# QUOTED EXAMPLES PASS ONLY WHERE THEY ARE QUOTED. Outside reviews quote made-up
+# addresses; listed as public they passed in every file (outside reviews of
+# 05f5aef, 2026-10-21). devtools/repo-scan-quoted-examples pairs each with the
+# file that quotes it.
+RSQ="made-up${RSAT}${RSDOM}"
+cp "$RSP/README.base" "$RSP/README.md"
+mkdir -p "$RSP/reviews"
+printf 'A reviewer: "%s" would pass.\n' "$RSQ" > "$RSP/reviews/r.md"
+printf 'reviews/r.md %s\n' "$RSQ" > "$RSP/devtools/repo-scan-quoted-examples"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "a quoted example passes in the file the quoted-examples list names" \
+    || bad "repo-scan refused a quoted example in its own file"
+printf 'cc: %s\n' "$RSQ" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a quoted example is refused once another file carries it" \
+    || bad "a quoted example passed outside the file that quotes it"
+# --all reads the working tree, so the location check must too: an UNSTAGED
+# copy in another tracked file once passed (outside review of 1eda14a).
+cp "$RSP/README.base" "$RSP/README.md"
+git -C "$RSP" add -A
+printf 'cc: %s\n' "$RSQ" >> "$RSP/README.md"
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "--all refuses a quoted example copied, unstaged, into another tracked file" \
+    || bad "--all missed an unstaged copy of a quoted example"
+rm -rf "$RSP"
 
 # ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────
 #
@@ -13511,7 +13793,7 @@ dmhrc=$(dmh_rc "$DMHW")
     && ok "doc-main-hashes: naming the branch that holds a commit does not put it on main" \
     || bad "doc-main-hashes accepted the original of a cherry-pick as main's: rc=$dmhrc (want 1)"
 
-# The private repository's main is not the public main: no reference, no verdict.
+# Another repository's main is not this repository's main: no reference, no verdict.
 # The clones with an identity, as dmh_git: a clone writes reflogs, and without
 # one git guesses an address from the host's name, reading /etc/mailname,
 # /etc/hosts and /etc/resolv.conf (the access audit, 2026-10-17).
@@ -14344,32 +14626,32 @@ rm -rf "$CIS"
 
 # ── repo-save, the gate that actually commits ────────────────────────────
 #
-# It stages, validates, scans, scans the MESSAGE, commits, and verifies the
+# It stages, validates, scans, checks the identity, commits, and verifies the
 # remote. Everything below runs with --no-push against a scratch repo, so
 # nothing here can reach a remote — the assertion after the group checks that.
 #
-# Its message scan exists because repo-scan reads files and diffs, and a
-# commit-message trailer lives in neither: the single most likely vector for
-# the thing being screened for sat outside the screen entirely.
+# Its identity check exists because repo-scan reads files and diffs, and the
+# author and committer of a commit live in neither; the committer is not even
+# shown by a plain `git log`.
 mkdir -p "$SCRATCH/save"; scratch_repo "$SCRATCH/save"
 printf 'placeholder 11:11:11:22:33:44\n' > "$SCRATCH/save/notes.log"
 
 save() { devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
 
-# THE RULE THIS REPOSITORY IS HELD TO, asserted rather than assumed. Assembled
-# from fragments for the same reason repo-scan and repo-save assemble theirs:
-# so this file stays clean under the scan it is testing.
-_ai='cla'; _ai+='ude'
-SVAI=$(save "fix the thing
-
-Co-Authored-By: $_ai <noreply@example.com>"); svairc=$?
-(( svairc != 0 )) && [[ "$SVAI" == *"tool attribution"* ]] \
-    && ok "repo-save refuses a commit message carrying an attribution trailer" \
-    || bad "an attribution trailer was committed (rc=$svairc)"
+# THE RULE THIS REPOSITORY IS HELD TO, asserted rather than assumed: every
+# commit is authored AND committed by the checkout's configured identity. A
+# foreign author and a foreign committer are each refused before the commit
+# exists; the scratch repository's own identity passes (the commits below).
+SVAI=$(GIT_AUTHOR_NAME="Someone Else" GIT_AUTHOR_EMAIL="else@example.com" save "fix the thing"); svairc=$?
+SVCI=$(GIT_COMMITTER_NAME="Someone Else" GIT_COMMITTER_EMAIL="else@example.com" save "fix the thing"); svcirc=$?
+(( svairc != 0 && svcirc != 0 )) && [[ "$SVAI" == *"author is not this checkout's identity"* \
+                                  && "$SVCI" == *"committer is not this checkout's identity"* ]] \
+    && ok "repo-save refuses a foreign author, and a foreign committer, before the commit exists" \
+    || bad "a foreign identity was accepted (author rc=$svairc, committer rc=$svcirc)"
 
 svn=$(git -C "$SCRATCH/save" rev-list --count HEAD 2>/dev/null || echo 0)
 (( ${svn:-0} == 0 )) \
-    && ok "the refused message left no commit behind" \
+    && ok "the refused identities left no commit behind" \
     || bad "repo-save reported a refusal and committed anyway"
 
 # A real address in a message would once have taken the "clean" branch: the
@@ -14422,26 +14704,25 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-save refuses a directory that is not a git repo" \
               || bad "repo-save accepted a non-repository"
 
-# THE FIELDS GIT WRITES, NOT ONLY THE TEXT IT IS GIVEN. The message scan above
+# THE FIELDS GIT WRITES, NOT ONLY THE TEXT IT IS GIVEN. The data scan above
 # cannot see the author and committer: those come from git config or the
 # GIT_*_NAME/EMAIL environment, and a reinitialised container resets them to
-# the tool's own identity. On 2026-09-18 that put a tool-authored commit on a
+# its own identity. On 2026-09-18 that put a tool-authored commit on a
 # collaborator's branch with repo-scan passing it — caught one commit in, by
 # eye. The gate must refuse BEFORE the commit exists, and for the committer
 # field as much as the author's.
 printf 'identity probe\n' > "$SCRATCH/save/ident.log"
 svbefore=$(git -C "$SCRATCH/save" rev-parse HEAD)
-_ae='noreply@anthro'; _ae+='pic.com'
-SVID=$(GIT_AUTHOR_NAME="$_ai" GIT_AUTHOR_EMAIL="$_ae" save "identity probe"); svidrc=$?
+SVID=$(GIT_AUTHOR_NAME="Another Person" GIT_AUTHOR_EMAIL="another@example.com" save "identity probe"); svidrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
-(( svidrc != 0 )) && [[ "$SVID" == *"tool identity"* && "$svbefore" == "$svafter" ]] \
-    && ok "repo-save refuses a tool author identity before any commit exists" \
-    || bad "a tool author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
-SVIDC=$(GIT_COMMITTER_NAME="$_ai" GIT_COMMITTER_EMAIL="$_ae" save "identity probe"); svidcrc=$?
+(( svidrc != 0 )) && [[ "$SVID" == *"author is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
+    && ok "repo-save refuses an author that is not the checkout's identity before any commit exists" \
+    || bad "a foreign author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
+SVIDC=$(GIT_COMMITTER_NAME="Another Person" GIT_COMMITTER_EMAIL="another@example.com" save "identity probe"); svidcrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
-(( svidcrc != 0 )) && [[ "$SVIDC" == *"committer identity"* && "$svbefore" == "$svafter" ]] \
+(( svidcrc != 0 )) && [[ "$SVIDC" == *"committer is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save checks the committer field as well as the author" \
-    || bad "a tool committer identity got through (rc=$svidcrc)"
+    || bad "a foreign committer identity got through (rc=$svidcrc)"
 # And a legitimate identity still commits — a gate that refuses everything is
 # not a gate. scratch_repo sets a plain test identity in the repo config.
 SVOK=$(save "identity probe"); svokrc=$?

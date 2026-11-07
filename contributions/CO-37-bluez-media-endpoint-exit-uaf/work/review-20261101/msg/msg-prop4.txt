@@ -1,0 +1,14 @@
+PROPOSAL, local experiment: a2dp: unregister a removed SEP from idle on unlock
+
+Not part of the series. A SEP removed while one of its streams was
+locked is unregistered by a2dp_sep_unlock(), which the transport code
+calls while it still uses the stream, its setup and the transport: the
+suspend completion of a Release, or media_transport_free() while the
+endpoint's transports are cleared. Unregistering calls the endpoint's
+destroy callback, which releases the endpoint and destroys those
+transports, or frees the endpoint, under the callers.
+
+Unregister such a SEP from a timeout instead, cancelled if the SEP is
+unregistered first; if a stream was locked again meanwhile, the next
+unlock unregisters it. SEPs still waiting when the server goes are
+dropped.

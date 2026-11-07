@@ -1,0 +1,25 @@
+--- /root/exp/agent-work/co35-ready-20261102/draft-orig/request-sci-7.3.y.eml	2026-11-02 14:36:44.058903603 +0100
++++ /root/exp/agent-work/co35-ready-20261102/final/request-sci-7.3.y.eml	2026-11-02 14:41:53.691455957 +0100
+@@ -3,7 +3,7 @@
+ Cc: Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+  Marcel Holtmann <marcel@holtmann.org>,
+  linux-bluetooth@vger.kernel.org
+-Subject: Please backport 5874f8d03268 (Bluetooth: Fix the LE Read Connection Interval response layout) to 7.3.y
++Subject: Please backport 5874f8d03268 (Bluetooth: SCI response fix) to 7.3.y
+ 
+ Hello,
+ 
+@@ -13,10 +13,10 @@
+   ("Bluetooth: Fix the LE Read Connection Interval response layout")
+ 
+ It fixes 2f8784cfe8a9 ("Bluetooth: Add support for Shorter Connection
+-Interval (SCI) feature"), which v7.3.1 has and v7.2.14 does not, so
++Interval (SCI) feature"), which v7.3.1 has and v6.18.60 does not, so
+ 7.3.y is the only stable line concerned. The commit is in mainline
+-since the 7.4 merge window, carries a Fixes: tag, and is not in
+-queue-7.3 of the stable-queue tree (checked 2026-11-01 09:45 UTC).
++since the 7.4 merge window (v7.4-rc1), carries a Fixes: tag, and is not
++in queue-7.3 of the stable-queue tree (checked 2026-11-02 13:39 UTC).
+ 
+ Without it, on v7.3.1 BlueZ's l2cap-tester stalls in the case "L2CAP LE
+ Client - SCI Fast Mode", which times out with "Invalid response length

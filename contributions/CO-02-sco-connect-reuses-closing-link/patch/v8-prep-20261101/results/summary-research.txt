@@ -1,0 +1,897 @@
+run-rs3b-v7-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 16, Passed: 10 (62.5%), Failed: 6, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rs3-v7-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 0, Passed: 0 (0.0%), Failed: 0, Not Run: 0
+   reports: none
+run-rsrep-base-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01698-g47d4d9f67e92; CPUs ?; Total: 16, Passed: 0 (0.0%), Failed: 16, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Failed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Failed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Failed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Failed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Failed
+   RESEARCH Refused Same Control - Retry Enhanced = Failed
+   RESEARCH Refused Same Control - Retry Legacy = Failed
+   RESEARCH Close Reopen Transparent - Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket NOT connected, setups 1 (second's 1, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-base-sco-tester-research3-2.log
+   kernel 7.3.0-rc6-01698-g47d4d9f67e92; CPUs ?; Total: 16, Passed: 0 (0.0%), Failed: 16, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Failed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Failed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Failed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Failed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Failed
+   RESEARCH Refused Same Control - Retry Enhanced = Failed
+   RESEARCH Refused Same Control - Retry Legacy = Failed
+   RESEARCH Close Reopen Transparent - Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket NOT connected, setups 1 (second's 1, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-base-sco-tester-research3-3.log
+   kernel 7.3.0-rc6-01698-g47d4d9f67e92; CPUs ?; Total: 16, Passed: 0 (0.0%), Failed: 16, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Failed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Failed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Failed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Failed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Failed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Failed
+   RESEARCH Refused Same Control - Retry Enhanced = Failed
+   RESEARCH Refused Same Control - Retry Legacy = Failed
+   RESEARCH Close Reopen Transparent - Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket NOT connected, setups 1 (second's 1, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-fold-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01700-gdba72ec56ac9; CPUs ?; Total: 16, Passed: 11 (68.8%), Failed: 5, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Passed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 1, other 0), successful completes 1, Disconnect 0
+   | RS VERDICT: OK: the second socket's parameters were used
+   reports: none
+run-rsrep-fold-sco-tester-research3-2.log
+   kernel 7.3.0-rc6-01700-gdba72ec56ac9; CPUs ?; Total: 16, Passed: 10 (62.5%), Failed: 6, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 1, other 0), successful completes 1, Disconnect 0
+   | RS VERDICT: OK: the second socket's parameters were used
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-fold-sco-tester-research3-3.log
+   kernel 7.3.0-rc6-01700-gdba72ec56ac9; CPUs ?; Total: 16, Passed: 10 (62.5%), Failed: 6, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-v7-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 16, Passed: 10 (62.5%), Failed: 6, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-v7-sco-tester-research3-2.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 16, Passed: 11 (68.8%), Failed: 5, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Passed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 1, other 0), successful completes 1, Disconnect 0
+   | RS VERDICT: OK: the second socket's parameters were used
+   reports: none
+run-rsrep-v7-sco-tester-research3-3.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 16, Passed: 10 (62.5%), Failed: 6, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varb-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01702-g0a4ef64c88d1; CPUs ?; Total: 16, Passed: 15 (93.8%), Failed: 1, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 0, other 2), successful completes 1, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varb-sco-tester-research3-2.log
+   kernel 7.3.0-rc6-01702-g0a4ef64c88d1; CPUs ?; Total: 16, Passed: 14 (87.5%), Failed: 2, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 0, other 2), successful completes 1, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varb-sco-tester-research3-3.log
+   kernel 7.3.0-rc6-01702-g0a4ef64c88d1; CPUs ?; Total: 16, Passed: 15 (93.8%), Failed: 1, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 2), successful completes 1, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varc-sco-tester-research3-1.log
+   kernel 7.3.0-rc6-01702-g69b4fbb3c1de; CPUs ?; Total: 16, Passed: 15 (93.8%), Failed: 1, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varc-sco-tester-research3-2.log
+   kernel 7.3.0-rc6-01702-g69b4fbb3c1de; CPUs ?; Total: 16, Passed: 15 (93.8%), Failed: 1, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 1 (second's 0, other 1), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none
+run-rsrep-varc-sco-tester-research3-3.log
+   kernel 7.3.0-rc6-01702-g69b4fbb3c1de; CPUs ?; Total: 16, Passed: 16 (100.0%), Failed: 0, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Passed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Passed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Passed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Passed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Passed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Enhanced = Passed
+   RESEARCH Refused Same Control - ACL Pending Legacy = Passed
+   RESEARCH Refused Same Control - Retry Enhanced = Passed
+   RESEARCH Refused Same Control - Retry Legacy = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Passed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second same (control): connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 1, other 0), successful completes 1, Disconnect 0
+   | RS VERDICT: OK: the second socket's parameters were used
+   reports: none
+run-rs-v7-sco-tester-research2-1.log
+   kernel 7.3.0-rc6-01701-g748559b2d64a; CPUs ?; Total: 12, Passed: 7 (58.3%), Failed: 5, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Passed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Passed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Passed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Passed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Enhanced = Passed
+   RESEARCH Close Reopen Transparent - Legacy = Passed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 2 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 2, second socket's parameters seen 4 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: no effect observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Software caused connection abort), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: REFUSED (the disconnect worker ran first)
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket connected, setups 1 (second's 1, other 0), successful completes 1, Disconnect 0
+   | RS VERDICT: OK: the second socket's parameters were used
+   reports: none
+run-rs-base-sco-tester-research2-1.log
+   kernel 7.3.0-rc6-01698-g47d4d9f67e92; CPUs ?; Total: 12, Passed: 0 (0.0%), Failed: 12, Not Run: 0
+   RESEARCH Refused Transparent - Live Enhanced = Failed
+   RESEARCH Refused Transparent - ACL Pending Enhanced = Failed
+   RESEARCH Refused Transparent - Queued Enhanced = Failed
+   RESEARCH Refused Transparent - Retry Enhanced = Failed
+   RESEARCH Refused Transparent - Live Legacy = Failed
+   RESEARCH Refused Transparent - ACL Pending Legacy = Failed
+   RESEARCH Refused Transparent - Queued Legacy = Failed
+   RESEARCH Refused Transparent - Retry Legacy = Failed
+   RESEARCH Refused Offload Codec - ACL Pending Enhanced = Failed
+   RESEARCH Refused Offload Codec - Live Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Enhanced = Failed
+   RESEARCH Close Reopen Transparent - Legacy = Failed
+   | RS RESULT mode live path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path enhanced second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 2), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode queued path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode retry path legacy second BT_VOICE 0x0003: connect() -1 (Device or resource busy), first socket NOT connected, setups 2 (expected 2), successful completes 1 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 1 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode acl-pending path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 0 (expected 1), successful completes 0 (expected 1), Disconnect 0, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode live path enhanced second BT_CODEC mSBC/dp1: connect() -1 (Device or resource busy), first socket NOT connected, setups 1 (expected 1), successful completes 1 (expected 1), Disconnect 1, Configure Data Path 0, second socket's parameters seen 0 times
+   | RS VERDICT: EFFECT observed
+   | RS RESULT mode reopen path enhanced: second connect() -1 (Operation now in progress), second socket NOT connected, setups 0 (second's 0, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   | RS RESULT mode reopen path legacy: second connect() -1 (Operation now in progress), second socket NOT connected, setups 1 (second's 1, other 0), successful completes 0, Disconnect 0
+   | RS VERDICT: EFFECT: not the second socket's parameters
+   reports: none

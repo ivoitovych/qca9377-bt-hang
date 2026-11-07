@@ -1,6 +1,6 @@
 # Diagnostic btusb builds — not for upstream
 
-Kept on a private branch until 2026-10-09. Each build changes **one** variable against the
+Kept separately until 2026-10-09. Each build changes **one** variable against the
 failing baseline (stock `btusb`, `13d3:3503` matched as a generic device, legacy `0x0428`,
 wideband, alt 1).
 
@@ -82,7 +82,12 @@ the srcversion does. This is the build a stable backport request vouches for.
 Pass: 0 timeouts, 0 `0x2005`; the reset callback only fires on a timeout, so a clean boot never
 exercises it — the request must say so.
 
-### E3 for 7.0.0-38 (built and installed 2026-10-10, on the operator's word; not yet booted)
+### E3 for 7.0.0-38 (built and installed 2026-10-10, on the operator's word; booted 2026-10-11 16:26)
+
+**Since then** (added 2026-10-28; the section below is kept as written before the boot): `-38`
+has run with this E3 since 2026-10-11 16:26 (`docs/STATUS.md`, the machine's section; the boot log
+shows `QCA: patch rome 0x302 build 0x3e8`). The next kernel, `7.0.0-42`, needs the same recipe
+before its first boot (`contributions/CO-09-ubuntu-kernel-qca9377-entry/log.md`, 2026-10-28).
 
 `7.0.0-38.38~24.04.4` is installed (image and headers, `grub.cfg` regenerated 2026-10-09
 06:02) and `GRUB_DEFAULT=0` boots the newest kernel, so the next reboot starts -38. Its stock
@@ -109,6 +114,44 @@ E3 stay as they are):
 The -38 initramfs has no btusb, so `updates/` + `depmod` is enough. **Read after the first -38
 boot:** `modinfo -F srcversion btusb` → `D1DEA96A0C95BFAB05CEE01`; the QCA rampatch/NVM lines
 in `journalctl -k -b 0`. Until then, picking -34 under GRUB's "Advanced options" keeps E3.
+
+### E3 for 7.0.0-42 (built and installed 2026-10-28, on the operator's word; not yet booted)
+
+**Installed** 2026-10-28 with the command below plus `--trial-open-ok` (trial E3 #3 is open on
+`-38`; nothing it uses changed). Checked after: `modinfo -k 7.0.0-42-generic -F filename btusb` →
+`/lib/modules/7.0.0-42-generic/updates/btusb.ko`; `scripts/btusb-has-device.py` on it → `FOUND
+13d3:3503 x1`; sha256 `7463a56b…750f4b` as built; `-38`'s `updates/` unchanged (`D1DEA96A…`,
+`0D084A05…`). The section below is kept as written before the install.
+
+`7.0.0-42.42~24.04.1` was installed by the desktop's software updater on 2026-10-28 at 04:46
+(`/var/log/apt/history.log`: `aptdaemon role='role-commit-packages'`, image, modules and
+headers), and `GRUB_DEFAULT=0` boots the newest kernel, so **the next reboot starts -42**. Its
+stock btusb lacks the entry: `scripts/btusb-has-device.py
+/lib/modules/7.0.0-42-generic/kernel/drivers/bluetooth/btusb.ko.zst` → `ABSENT 13d3:3503 x0`
+(control `0cf3 e300` → `FOUND 0cf3:e300 x1`). `/lib/modules/7.0.0-42-generic/updates` does not
+exist yet.
+
+| built 2026-10-28 | |
+|---|---|
+| source | `cache/ubuntu-7.0.0-42` (`scripts/prepare-ubuntu-ksrc.sh`, as for -38) |
+| script | `scripts/build-btusb-module.sh --ksrc cache/ubuntu-7.0.0-42 --krel 7.0.0-42-generic tmp/runtime-e3/0001-Bluetooth-btusb-Add-IMC-Networks-QCA9377-to-quirks-t.patch` (hunk at offset 12) |
+| patch | the same file as for -34 and -38 |
+| version / srcversion | `0.8` / `DDB92562D1890FC3D262993` |
+| vermagic | `7.0.0-42-generic SMP preempt mod_unload modversions` ✓ |
+| entry | `scripts/btusb-has-device.py tmp/runtime-e3-7.0.0-42/btusb.ko` → `FOUND 13d3:3503 x1` |
+| CRCs | `scripts/check-modversions.sh /lib/modules/7.0.0-42-generic/build/Module.symvers <ko>`: 139 used, 0 mismatched |
+| install check | `scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb check <ko>` → `ready to install` (writes nothing) |
+| sha256 | `7463a56bb9216bed4a70073bd155eba8b7d6d2ee5cfea511d0c8198893750f4b` |
+| kept at | `tmp/runtime-e3-7.0.0-42/btusb.ko` (build tree `tmp/btusb-build-e3-7.0.0-42/`) |
+
+**Install** (on the operator's word only; takes effect when -42 is first booted; nothing on the
+running -38 changes):
+
+    scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb install tmp/runtime-e3-7.0.0-42/btusb.ko
+
+The CO-02 `bluetooth.ko` exists for -38 only; a -42 boot runs -42's stock `bluetooth.ko`.
+**Read after the first -42 boot:** `modinfo -F srcversion btusb` → `DDB92562D1890FC3D262993`;
+`QCA: patch rome 0x302 build 0x3e8` in `journalctl -k -b 0`.
 
 **What decides it** (reviewer's table, `reviews/2026-09-26-source-review-report.md` on the
 review branch): same alt 1, same `27 → 9+9+9`, sustained stream, and commands keep completing

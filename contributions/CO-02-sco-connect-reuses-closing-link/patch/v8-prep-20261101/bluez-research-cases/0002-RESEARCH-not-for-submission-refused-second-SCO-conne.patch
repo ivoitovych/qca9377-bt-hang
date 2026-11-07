@@ -1,0 +1,732 @@
+From ff29f43973d0e9b5e3722946e32cf363d310d4aa Mon Sep 17 00:00:00 2001
+From: scratch <scratch>
+Date: Sun, 1 Nov 2026 10:12:37 +0100
+Subject: [PATCH 2/2] RESEARCH (not for submission): refused second SCO connect
+ with other parameters
+
+Research cases for the CO-02 follow-up: a second connect() that is
+refused while the first socket's connection exists, made with
+BT_VOICE_TRANSPARENT (or BT_CODEC mSBC on data path 1), and the
+parameters of every setup command and completion of the first link.
+Legacy path by hiding Enhanced Setup Synchronous Connection from the
+emulated controller.
+---
+ tools/sco-tester.c | 653 ++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 652 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 823a9b004..27a666b91 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -38,6 +38,8 @@
+ 
+ #include "tester.h"
+ 
++#define RS_MAX	8
++
+ struct test_data {
+ 	const void *test_data;
+ 	struct mgmt *mgmt;
+@@ -68,6 +70,34 @@ struct test_data {
+ 	unsigned int sync_complete;
+ 	unsigned int setup_cmds;
+ 	unsigned int disc_cmds;
++
++	/* RESEARCH state (not for submission) */
++	int rs_phase;
++	unsigned int rs_nsetup;
++	uint16_t rs_setup_op[RS_MAX];
++	uint16_t rs_setup_voice[RS_MAX];
++	uint8_t rs_setup_coding[RS_MAX];
++	unsigned int rs_ncomplete;
++	uint8_t rs_cc_status[RS_MAX];
++	uint16_t rs_cc_handle[RS_MAX];
++	uint8_t rs_cc_air[RS_MAX];
++	unsigned int rs_ndisc;
++	unsigned int rs_ndatapath;
++	int rs_ret2;
++	int rs_err2;
++	bool rs_tried2;
++	bool rs_dropped;
++	struct bt_hci_evt_sync_conn_complete rs_cc;
++};
++
++/* RESEARCH (not for submission) */
++enum research_mode {
++	RS_NONE,
++	RS_LIVE,	/* second connect while the first link is up */
++	RS_ACL,		/* ... while the first's ACL link is being set up */
++	RS_QUEUED,	/* ... right after the first connect, ACL link up */
++	RS_RETRY,	/* ... while the first setup is answered with 0x1f */
++	RS_REOPEN,	/* first closed at once, ACL pending, then second */
+ };
+ 
+ enum reconnect_mode {
+@@ -106,6 +136,12 @@ struct sco_client_data {
+ 
+ 	/* A second socket connects to the same peer, see the modes above */
+ 	enum reconnect_mode reconnect;
++
++	/* RESEARCH (not for submission) */
++	enum research_mode research;
++	bool legacy_setup;	/* hide Enhanced Setup Synchronous Connection */
++	bool rs_codec;		/* second socket: BT_CODEC mSBC, data path 1 */
++	bool rs_same;		/* control: second socket keeps the defaults */
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -255,6 +291,18 @@ static void read_index_list_callback(uint8_t status, uint16_t length,
+ 		if (commands)
+ 			commands[10] &= ~(BIT(3) | BIT(4));
+ 	}
++
++	if (data->test_data) {
++		const struct sco_client_data *scodata = data->test_data;
++		uint8_t *commands;
++
++		if (scodata->legacy_setup) {
++			tester_print("RESEARCH: hiding Enhanced Setup Sync Conn");
++			commands = hciemu_get_commands(data->hciemu);
++			if (commands)
++				commands[29] &= ~0x08;
++		}
++	}
+ }
+ 
+ static void test_pre_setup(const void *test_data)
+@@ -284,7 +332,8 @@ static void test_post_teardown(const void *test_data)
+ 	 * The reconnect tests own their first socket (its watch does not
+ 	 * close it), so a test that timed out may have left it open.
+ 	 */
+-	if (scodata && scodata->reconnect && data->sk >= 0) {
++	if (scodata && (scodata->reconnect || scodata->research) &&
++							data->sk >= 0) {
+ 		if (data->io_id) {
+ 			tester_remove_source(data->io_id);
+ 			data->io_id = 0;
+@@ -400,6 +449,35 @@ static const struct sco_client_data connect_twice = {
+ 	.reconnect = CONNECT_TWICE,
+ };
+ 
++/* RESEARCH (not for submission) */
++static const struct sco_client_data rs_live_enh = { .research = RS_LIVE };
++static const struct sco_client_data rs_acl_enh = { .research = RS_ACL };
++static const struct sco_client_data rs_queued_enh = { .research = RS_QUEUED };
++static const struct sco_client_data rs_retry_enh = { .research = RS_RETRY };
++static const struct sco_client_data rs_live_leg = {
++	.research = RS_LIVE, .legacy_setup = true };
++static const struct sco_client_data rs_acl_leg = {
++	.research = RS_ACL, .legacy_setup = true };
++static const struct sco_client_data rs_queued_leg = {
++	.research = RS_QUEUED, .legacy_setup = true };
++static const struct sco_client_data rs_retry_leg = {
++	.research = RS_RETRY, .legacy_setup = true };
++static const struct sco_client_data rs_acl_codec = {
++	.research = RS_ACL, .rs_codec = true };
++static const struct sco_client_data rs_live_codec = {
++	.research = RS_LIVE, .rs_codec = true };
++static const struct sco_client_data rs_acl_same_enh = {
++	.research = RS_ACL, .rs_same = true };
++static const struct sco_client_data rs_acl_same_leg = {
++	.research = RS_ACL, .rs_same = true, .legacy_setup = true };
++static const struct sco_client_data rs_retry_same_enh = {
++	.research = RS_RETRY, .rs_same = true };
++static const struct sco_client_data rs_retry_same_leg = {
++	.research = RS_RETRY, .rs_same = true, .legacy_setup = true };
++static const struct sco_client_data rs_reopen_enh = { .research = RS_REOPEN };
++static const struct sco_client_data rs_reopen_leg = {
++	.research = RS_REOPEN, .legacy_setup = true };
++
+ const uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+ 
+ static const struct sco_client_data connect_recv_success = {
+@@ -1870,6 +1948,529 @@ static void test_reconnect(const void *test_data)
+ 	tester_print("Connect in progress");
+ }
+ 
++/*
++ * RESEARCH (not for submission): a second connect() refused while the first
++ * socket's connection exists, made with other parameters than the first
++ * (BT_VOICE_TRANSPARENT, or with rs_codec BT_CODEC mSBC on data path 1; the
++ * first socket keeps the defaults, CVSD). Every setup command and completion
++ * of the first socket's link is recorded, and the result line says whether
++ * the second socket's parameters reached the first link.
++ */
++static const char *rs_mode_name(const struct sco_client_data *s)
++{
++	switch (s->research) {
++	case RS_LIVE:
++		return "live";
++	case RS_ACL:
++		return "acl-pending";
++	case RS_QUEUED:
++		return "queued";
++	case RS_RETRY:
++		return "retry";
++	case RS_REOPEN:
++		return "reopen";
++	case RS_NONE:
++		break;
++	}
++
++	return "none";
++}
++
++static void rs_cmd(uint16_t opcode, const void *buf, uint8_t len,
++							void *user_data)
++{
++	struct test_data *data = user_data;
++	unsigned int n = data->rs_nsetup;
++
++	if (!data->rs_phase)
++		return;
++
++	if (opcode == BT_HCI_CMD_DISCONNECT) {
++		const struct bt_hci_cmd_disconnect *cmd = buf;
++
++		if (len < sizeof(*cmd))
++			return;
++
++		data->rs_ndisc++;
++		tester_print("RS Disconnect handle %u reason 0x%02x",
++				le16_to_cpu(cmd->handle), cmd->reason);
++		return;
++	}
++
++	if (opcode == BT_HCI_CMD_CONFIG_DATA_PATH) {
++		data->rs_ndatapath++;
++		tester_print("RS Configure Data Path #%u",
++						data->rs_ndatapath);
++		return;
++	}
++
++	if (n >= RS_MAX)
++		return;
++
++	if (opcode == BT_HCI_CMD_SETUP_SYNC_CONN) {
++		const struct bt_hci_cmd_setup_sync_conn *cmd = buf;
++
++		if (len < sizeof(*cmd))
++			return;
++
++		data->rs_setup_voice[n] = le16_to_cpu(cmd->voice_setting);
++		data->rs_setup_coding[n] = 0xff;
++	} else if (opcode == BT_HCI_CMD_ENHANCED_SETUP_SYNC_CONN) {
++		const struct bt_hci_cmd_enhanced_setup_sync_conn *cmd = buf;
++
++		if (len < sizeof(*cmd))
++			return;
++
++		data->rs_setup_voice[n] = 0xffff;
++		data->rs_setup_coding[n] = cmd->tx_coding_format[0];
++	} else {
++		return;
++	}
++
++	data->rs_setup_op[n] = opcode;
++	data->rs_nsetup++;
++
++	tester_print("RS setup #%u: opcode 0x%04x voice_setting 0x%04x "
++			"tx_coding_format 0x%02x", n + 1, opcode,
++			data->rs_setup_voice[n], data->rs_setup_coding[n]);
++}
++
++static bool rs_connect2(void *user_data);
++
++static bool rs_sync(const void *buf, uint16_t len, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	const struct bt_hci_evt_sync_conn_complete *evt = buf;
++	unsigned int n = data->rs_ncomplete;
++
++	if (len < sizeof(*evt) || !data->rs_phase)
++		return true;
++
++	if (scodata->research == RS_RETRY && !data->rs_dropped &&
++							!evt->status) {
++		/* Answered with a retry once the second connect() is done */
++		data->rs_cc = *evt;
++		data->rs_dropped = true;
++		tester_print("RS holding back Synchronous Connection Complete "
++				"handle %u air_mode 0x%02x",
++				le16_to_cpu(evt->handle), evt->air_mode);
++		reconnect_arm(data, 0, rs_connect2);
++		return false;
++	}
++
++	if (n < RS_MAX) {
++		data->rs_cc_status[n] = evt->status;
++		data->rs_cc_handle[n] = le16_to_cpu(evt->handle);
++		data->rs_cc_air[n] = evt->air_mode;
++	}
++
++	data->rs_ncomplete++;
++
++	tester_print("RS complete #%u: status 0x%02x handle %u "
++			"air_mode 0x%02x", n + 1, evt->status,
++			le16_to_cpu(evt->handle), evt->air_mode);
++
++	return true;
++}
++
++static bool rs_evaluate(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	bool legacy = scodata->legacy_setup;
++	unsigned int i, foreign = 0, ok_cc = 0, exp_setup;
++	bool refused, first_ok;
++
++	data->timer_id = 0;
++
++	if (data->done)
++		return false;
++
++	refused = data->rs_tried2 && data->rs_ret2 < 0 &&
++			(data->rs_err2 == EBUSY || data->rs_err2 == ECONNABORTED);
++	first_ok = data->sk >= 0 && sock_connected(data->sk, "first");
++
++	for (i = 0; i < data->rs_nsetup && i < RS_MAX; i++) {
++		if (data->rs_setup_op[i] == BT_HCI_CMD_SETUP_SYNC_CONN) {
++			if (data->rs_setup_voice[i] != BT_VOICE_CVSD_16BIT)
++				foreign++;
++		} else if (data->rs_setup_coding[i] != 0x02) {
++			foreign++;
++		}
++	}
++
++	for (i = 0; i < data->rs_ncomplete && i < RS_MAX; i++) {
++		if (data->rs_cc_status[i])
++			continue;
++
++		ok_cc++;
++		if (data->rs_cc_air[i] != 0x02)
++			foreign++;
++	}
++
++	foreign += data->rs_ndatapath;
++	exp_setup = scodata->research == RS_RETRY ? 2 : 1;
++
++	tester_print("RS RESULT mode %s path %s second %s: connect() %d "
++			"(%s), first socket %s, setups %u (expected %u), "
++			"successful completes %u (expected 1), Disconnect %u, "
++			"Configure Data Path %u, second socket's parameters "
++			"seen %u times",
++			rs_mode_name(scodata), legacy ? "legacy" : "enhanced",
++			scodata->rs_same ? "same (control)" :
++			scodata->rs_codec ? "BT_CODEC mSBC/dp1" :
++						"BT_VOICE 0x0003",
++			data->rs_ret2, strerror(data->rs_err2),
++			first_ok ? "connected" : "NOT connected",
++			data->rs_nsetup, exp_setup, ok_cc, data->rs_ndisc,
++			data->rs_ndatapath, foreign);
++
++	if (refused && first_ok && !foreign && data->rs_nsetup == exp_setup &&
++					ok_cc == 1 && !data->rs_ndisc)
++		tester_print("RS VERDICT: no effect observed");
++	else
++		tester_print("RS VERDICT: EFFECT observed");
++
++	reconnect_end(data, refused && first_ok && !foreign &&
++				data->rs_nsetup == exp_setup && ok_cc == 1 &&
++				!data->rs_ndisc);
++
++	return false;
++}
++
++/*
++ * RS_REOPEN: the first socket is closed before its link exists, and the
++ * second socket connects at once with other parameters. If the closed
++ * socket's connection is reused, its setup shall carry the second
++ * socket's parameters (TRANSPARENT: voice 0x0003, coding/air mode 0x03).
++ */
++static bool rs_reopen_evaluate(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	unsigned int i, own = 0, old = 0, ok_cc = 0;
++	bool connected;
++	const char *verdict;
++
++	data->timer_id = 0;
++
++	if (data->done)
++		return false;
++
++	connected = data->sk2 >= 0 && data->rs_ret2 < 0 &&
++			data->rs_err2 == EINPROGRESS &&
++			sock_connected(data->sk2, "second");
++
++	for (i = 0; i < data->rs_nsetup && i < RS_MAX; i++) {
++		if (data->rs_setup_op[i] == BT_HCI_CMD_SETUP_SYNC_CONN) {
++			if (data->rs_setup_voice[i] == BT_VOICE_TRANSPARENT)
++				own++;
++			else
++				old++;
++		} else if (data->rs_setup_coding[i] == 0x03) {
++			own++;
++		} else {
++			old++;
++		}
++	}
++
++	for (i = 0; i < data->rs_ncomplete && i < RS_MAX; i++) {
++		if (data->rs_cc_status[i])
++			continue;
++
++		ok_cc++;
++		if (data->rs_cc_air[i] != 0x03)
++			old++;
++	}
++
++	if (data->rs_ret2 < 0 && data->rs_err2 == ECONNABORTED &&
++						!data->rs_nsetup)
++		verdict = "REFUSED (the disconnect worker ran first)";
++	else if (connected && own >= 1 && !old && ok_cc == 1)
++		verdict = "OK: the second socket's parameters were used";
++	else
++		verdict = "EFFECT: not the second socket's parameters";
++
++	tester_print("RS RESULT mode %s path %s: second connect() %d (%s), "
++			"second socket %s, setups %u (second's %u, other %u), "
++			"successful completes %u, Disconnect %u",
++			rs_mode_name(scodata),
++			scodata->legacy_setup ? "legacy" : "enhanced",
++			data->rs_ret2, strerror(data->rs_err2),
++			connected ? "connected" : "NOT connected",
++			data->rs_nsetup, own, old, ok_cc, data->rs_ndisc);
++	tester_print("RS VERDICT: %s", verdict);
++
++	reconnect_end(data, verdict[0] != 'E');
++	return false;
++}
++
++static bool rs_reopen_connected(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->io2_id = 0;
++	tester_print("RS second socket watch: condition 0x%x", cond);
++	reconnect_arm(data, RECONNECT_QUIET_MS, rs_reopen_evaluate);
++	return false;
++}
++
++static bool rs_connect2(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	const uint8_t *client_bdaddr;
++	struct sockaddr_sco addr;
++	int ret;
++
++	data->timer_id = 0;
++
++	if (data->done || data->rs_tried2)
++		return false;
++
++	data->rs_tried2 = true;
++
++	client_bdaddr = hciemu_get_client_bdaddr(data->hciemu);
++	data->sk2 = create_sco_sock(data);
++	if (!client_bdaddr || data->sk2 < 0) {
++		reconnect_end(data, false);
++		return false;
++	}
++
++	if (scodata->rs_same) {
++		ret = 0;
++	} else if (scodata->rs_codec) {
++		char buffer[255];
++		struct bt_codecs *codecs = (void *) buffer;
++
++		memset(buffer, 0, sizeof(buffer));
++		codecs->num_codecs = 1;
++		codecs->codecs[0].id = 0x05;
++		codecs->codecs[0].data_path_id = 1;
++		codecs->codecs[0].num_caps = 0x00;
++
++		ret = setsockopt(data->sk2, SOL_BLUETOOTH, BT_CODEC, codecs,
++							sizeof(buffer));
++	} else {
++		struct bt_voice voice;
++
++		memset(&voice, 0, sizeof(voice));
++		voice.setting = BT_VOICE_TRANSPARENT;
++		ret = setsockopt(data->sk2, SOL_BLUETOOTH, BT_VOICE, &voice,
++							sizeof(voice));
++	}
++
++	if (ret < 0) {
++		tester_warn("RS setsockopt on the second socket: %s (%d)",
++						strerror(errno), errno);
++		reconnect_end(data, false);
++		return false;
++	}
++
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family = AF_BLUETOOTH;
++	bacpy(&addr.sco_bdaddr, (void *) client_bdaddr);
++
++	ret = connect(data->sk2, (struct sockaddr *) &addr, sizeof(addr));
++	data->rs_ret2 = ret;
++	data->rs_err2 = ret < 0 ? errno : 0;
++
++	tester_print("RS second connect() returned %d (%s)", ret,
++						strerror(data->rs_err2));
++
++	if (scodata->research == RS_RETRY) {
++		struct btdev *btdev;
++		struct bt_hci_evt_sync_conn_complete cc = data->rs_cc;
++
++		btdev = vhci_get_btdev(hciemu_get_vhci(data->hciemu));
++		cc.status = 0x1f;
++		tester_print("RS answering the first setup with status 0x1f");
++		btdev_send_event(btdev, BT_HCI_EVT_SYNC_CONN_COMPLETE, &cc,
++								sizeof(cc));
++	}
++
++	if (scodata->research == RS_REOPEN) {
++		struct tester_io *io;
++
++		if (ret < 0 && data->rs_err2 == EINPROGRESS) {
++			io = tester_io_new(data->sk2);
++			tester_io_set_close_on_unref(io, false);
++			data->io2_id = tester_io_add_watch(io,
++				TESTER_IO_OUT | TESTER_IO_ERR | TESTER_IO_HUP,
++				rs_reopen_connected, NULL);
++			tester_io_unref(io);
++		}
++
++		reconnect_arm(data, ret < 0 && data->rs_err2 == EINPROGRESS ?
++				RECONNECT_LINK_MS : RECONNECT_QUIET_MS,
++				rs_reopen_evaluate);
++		return false;
++	}
++
++	reconnect_arm(data, scodata->research == RS_LIVE ?
++				RECONNECT_QUIET_MS : RECONNECT_LINK_MS,
++				rs_evaluate);
++
++	return false;
++}
++
++static bool rs_first_connected(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	bool ok;
++
++	data->io_id = 0;
++
++	ok = io_connected(cond, data->sk, "first");
++	tester_print("RS first socket %s", ok ? "connected" : "failed");
++
++	if (scodata->research == RS_LIVE && ok) {
++		rs_connect2(NULL);
++		return false;
++	}
++
++	reconnect_arm(data, RECONNECT_QUIET_MS, rs_evaluate);
++	return false;
++}
++
++static void rs_watch_first(struct test_data *data, tester_io_func_t func)
++{
++	struct tester_io *io;
++
++	io = tester_io_new(data->sk);
++	tester_io_set_close_on_unref(io, false);
++	data->io_id = tester_io_add_watch(io,
++				TESTER_IO_OUT | TESTER_IO_ERR | TESTER_IO_HUP,
++				func, NULL);
++	tester_io_unref(io);
++}
++
++static bool rs_queued_start(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	int sk;
++
++	data->timer_id = 0;
++
++	sk = create_sco_sock(data);
++	if (sk < 0) {
++		reconnect_end(data, false);
++		return false;
++	}
++
++	data->rs_phase = 1;
++
++	if (connect_sco_sock(data, sk) < 0) {
++		close(sk);
++		reconnect_end(data, false);
++		return false;
++	}
++
++	data->sk = sk;
++	tester_print("RS first connect() done with the ACL link up");
++
++	rs_connect2(NULL);
++	rs_watch_first(data, rs_first_connected);
++
++	return false;
++}
++
++static bool rs_pre_connected(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->io_id = 0;
++
++	if (!io_connected(cond, data->sk, "pre-link")) {
++		reconnect_end(data, false);
++		return false;
++	}
++
++	tester_print("RS pre-link up, closing it");
++	close(data->sk);
++	data->sk = -1;
++
++	reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
++	return false;
++}
++
++static bool rs_disc(const void *buf, uint16_t len, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	const struct bt_hci_evt_disconnect_complete *evt = buf;
++
++	if (len < sizeof(*evt) || data->done)
++		return true;
++
++	tester_print("RS Disconnection Complete handle %u reason 0x%02x",
++				le16_to_cpu(evt->handle), evt->reason);
++
++	if (scodata->research == RS_QUEUED && !data->rs_phase &&
++			le16_to_cpu(evt->handle) != data->acl_handle)
++		reconnect_arm(data, RECONNECT_DELAY_MS, rs_queued_start);
++
++	return true;
++}
++
++static void test_research(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	int sk;
++
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
++					BT_HCI_EVT_CONN_COMPLETE,
++					hook_reconnect_acl, NULL);
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
++					BT_HCI_EVT_SYNC_CONN_COMPLETE,
++					rs_sync, NULL);
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
++					BT_HCI_EVT_DISCONNECT_COMPLETE,
++					rs_disc, NULL);
++	hciemu_add_central_post_command_hook(data->hciemu, rs_cmd, data);
++
++	if (scodata->research != RS_QUEUED)
++		data->rs_phase = 1;
++
++	sk = create_sco_sock(data);
++	if (sk < 0) {
++		tester_test_failed();
++		return;
++	}
++
++	if (connect_sco_sock(data, sk) < 0) {
++		close(sk);
++		tester_test_failed();
++		return;
++	}
++
++	data->sk = sk;
++
++	if (scodata->research == RS_QUEUED) {
++		rs_watch_first(data, rs_pre_connected);
++		return;
++	}
++
++	if (scodata->research == RS_REOPEN) {
++		tester_print("RS closing the first socket at once");
++		close(data->sk);
++		data->sk = -1;
++		rs_connect2(NULL);
++		return;
++	}
++
++	if (scodata->research == RS_ACL)
++		rs_connect2(NULL);
++
++	rs_watch_first(data, rs_first_connected);
++}
++
+ static void test_sco_ethtool_get_ts_info(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -2099,6 +2700,56 @@ int main(int argc, char *argv[])
+ 					&connect_twice, setup_powered,
+ 					test_reconnect, false, false, false, 8);
+ 
++	/* RESEARCH (not for submission) */
++	test_sco_full("RESEARCH Refused Transparent - Live Enhanced",
++			&rs_live_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - ACL Pending Enhanced",
++			&rs_acl_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - Queued Enhanced",
++			&rs_queued_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - Retry Enhanced",
++			&rs_retry_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - Live Legacy",
++			&rs_live_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - ACL Pending Legacy",
++			&rs_acl_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - Queued Legacy",
++			&rs_queued_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Transparent - Retry Legacy",
++			&rs_retry_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Offload Codec - ACL Pending Enhanced",
++			&rs_acl_codec, setup_powered, test_research,
++			false, true, false, 8);
++	test_sco_full("RESEARCH Refused Offload Codec - Live Enhanced",
++			&rs_live_codec, setup_powered, test_research,
++			false, true, false, 8);
++	test_sco_full("RESEARCH Refused Same Control - ACL Pending Enhanced",
++			&rs_acl_same_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Same Control - ACL Pending Legacy",
++			&rs_acl_same_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Same Control - Retry Enhanced",
++			&rs_retry_same_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Refused Same Control - Retry Legacy",
++			&rs_retry_same_leg, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Close Reopen Transparent - Enhanced",
++			&rs_reopen_enh, setup_powered, test_research,
++			false, false, false, 8);
++	test_sco_full("RESEARCH Close Reopen Transparent - Legacy",
++			&rs_reopen_leg, setup_powered, test_research,
++			false, false, false, 8);
++
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+ 
+-- 
+2.43.0
+

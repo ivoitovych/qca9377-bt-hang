@@ -1,0 +1,141 @@
+== totals co23-before co23 final (test | report | runs)
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | 0: heap-use-after-free profiles/audio/a2dp.c:2173 in a2dp_reconfig | 10 of 10
+== totals co23-after co23 final final2 control pause orig (test | report | runs)
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | no report, call FAILED | 2 of 20
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | no report, call PASSED | 18 of 20
+  test_local_no_stopped_bluetoothd[hosts2-vm2] | no report, call PASSED | 2 of 2
+  test_local_original_fails_while_stopped[hosts2-vm2] | no report, call FAILED | 1 of 1
+  test_local_original_reconfigure_during_close[hosts0-vm2] | no report, call FAILED | 2 of 5
+  test_local_original_reconfigure_during_close[hosts0-vm2] | no report, call PASSED | 3 of 5
+  test_local_pause_fails_while_stopped[hosts2-vm2] | no report, call FAILED | 1 of 1
+== totals stk-base pair a2dpfile fpair fa2dp (test | report | runs)
+  test_a2dp_app_exit_with_acquired_transport[hosts2-vm2] | 0: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 10 of 10
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-accept] | no report, call PASSED | 4 of 4
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-reject] | no report, call PASSED | 4 of 4
+  test_a2dp_exit_with_acquired_transport[hosts2-vm2] | 0: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 10 of 10
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | 0: heap-use-after-free profiles/audio/a2dp.c:2173 in a2dp_reconfig | 10 of 10
+  test_a2dp_transport_acquire[hosts0-vm2] | no report, call PASSED | 4 of 4
+  test_a2dp_transport_created[hosts0-vm2] | no report, call PASSED | 4 of 4
+== totals stk-fix12 pair a2dpfile fpair fa2dp (test | report | runs)
+  test_a2dp_app_exit_with_acquired_transport[hosts2-vm2] | no report, call PASSED | 10 of 10
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-accept] | no report, call PASSED | 4 of 4
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-reject] | no report, call PASSED | 4 of 4
+  test_a2dp_exit_with_acquired_transport[hosts2-vm2] | no report, call PASSED | 10 of 10
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | no report, call PASSED | 10 of 10
+  test_a2dp_transport_acquire[hosts0-vm2] | no report, call PASSED | 4 of 4
+  test_a2dp_transport_created[hosts0-vm2] | no report, call PASSED | 4 of 4
+== totals stk-base adj (test | report | runs)
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-bus] | 6: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-bus] | 0: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-sigterm] | no report, call PASSED | 10 of 10
+== totals stk-fix1 adj (test | report | runs)
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | 8: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 1 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | no report, call PASSED | 9 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-bus] | 6: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-adapter] | 2: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 1 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-adapter] | no report, call PASSED | 9 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-bus] | 0: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-sigterm] | no report, call PASSED | 10 of 10
+== totals stk-fix12 adj (test | report | runs)
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | 8: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 1 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | no report, call PASSED | 9 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-bus] | 6: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-app-unregister-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-bus] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-sigterm] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-adapter] | no report, call PASSED | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-bus] | 0: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint | 10 of 10
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-sigterm] | no report, call PASSED | 10 of 10
+== totals stk-base adj2 (test | report | runs)
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_exit] | 7: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_release] | 6: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_exit] | 5: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | 4: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_release] | 2: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | 0: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+== totals stk-fix1 adj2 (test | report | runs)
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_release] | 6: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | 4: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_release] | 2: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_exit] | no report, call PASSED | 6 of 6
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | 0: SEGV profiles/audio/a2dp.c:3566 in a2dp_sep_unlock | 6 of 6
+== totals stk-fix12 adj2 adj2probe (test | report | runs)
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_exit] | no report, call PASSED | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_release] | 6: SEGV profiles/audio/a2dp.c:3596 in a2dp_sep_unlock | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_exit] | no report, call PASSED | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | 4: SEGV profiles/audio/a2dp.c:3596 in a2dp_sep_unlock | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_exit] | no report, call PASSED | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_release] | 2: SEGV profiles/audio/a2dp.c:3596 in a2dp_sep_unlock | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_exit] | no report, call PASSED | 7 of 7
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | 0: SEGV profiles/audio/a2dp.c:3596 in a2dp_sep_unlock | 7 of 7
+== totals rfc co37 (test | report | runs)
+  test_a2dp_app_exit_with_acquired_transport[hosts1-vm2] | 0: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 10 of 10
+  test_a2dp_exit_with_acquired_transport[hosts1-vm2] | 0: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove | 10 of 10
+== totals rfc-co37 co37 (test | report | runs)
+  test_a2dp_app_exit_with_acquired_transport[hosts1-vm2] | no report, call PASSED | 10 of 10
+  test_a2dp_exit_with_acquired_transport[hosts1-vm2] | no report, call PASSED | 10 of 10
+== totals ext-v572 adj2probe rel (test | report | runs)
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | 1: SEGV profiles/audio/a2dp.c:3254 in a2dp_sep_unlock | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | 0: SEGV profiles/audio/a2dp.c:3254 in a2dp_sep_unlock | 5 of 5
+== totals prop3 adj2 (test | report | runs)
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_exit] | no report, call PASSED | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_release] | 6: heap-use-after-free profiles/audio/a2dp.c:350 in setup_cb_free | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_exit] | no report, call PASSED | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | 4: heap-use-after-free profiles/audio/a2dp.c:350 in setup_cb_free | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_exit] | no report, call PASSED | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_release] | 2: heap-use-after-free profiles/audio/a2dp.c:350 in setup_cb_free | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_exit] | no report, call PASSED | 4 of 4
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | 0: heap-use-after-free profiles/audio/a2dp.c:350 in setup_cb_free | 4 of 4
+== totals prop4 adj2 adj fa2dp (test | report | runs)
+  test_a2dp_app_exit_with_acquired_transport[hosts2-vm2] | no report, call PASSED | 2 of 2
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-accept] | no report, call PASSED | 2 of 2
+  test_a2dp_disconnect_during_setconf[hosts0-vm2-reject] | no report, call PASSED | 2 of 2
+  test_a2dp_exit_with_acquired_transport[hosts2-vm2] | no report, call PASSED | 2 of 2
+  test_a2dp_reconfigure_during_close[hosts1-vm2] | no report, call PASSED | 2 of 2
+  test_a2dp_transport_acquire[hosts0-vm2] | no report, call PASSED | 2 of 2
+  test_a2dp_transport_created[hosts0-vm2] | no report, call PASSED | 2 of 2
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_exit] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-app-client_exit-other_release] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_exit] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-app-unregister-other_release] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_exit] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-client_exit-other_release] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_exit] | no report, call PASSED | 5 of 5
+  test_local_removed_then_given_up[hosts4-vm2-endpoint-unregister-other_release] | no report, call PASSED | 5 of 5
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-adapter] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-bus] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-app-client_exit-sigterm] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-app-unregister-adapter] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-app-unregister-bus] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-app-unregister-sigterm] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-adapter] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-bus] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-client_exit-sigterm] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-adapter] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-bus] | no report, call PASSED | 3 of 3
+  test_local_removed_while_held[hosts3-vm2-endpoint-unregister-sigterm] | no report, call PASSED | 3 of 3

@@ -1,0 +1,105 @@
+From ad36b0e73dafcc5594b87e2a1a84f42fcec5540a Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 11:01:46 +0100
+Subject: [RFC PATCH BlueZ] PROPOSAL, local experiment: media: release a
+ deferred A2DP endpoint from idle
+
+Not part of the series. A removal of an A2DP endpoint deferred while
+another client's transport locked the stream completes in
+a2dp_sep_unlock(), called from the code of a transport of that endpoint
+(the suspend completion of a Release, or media_transport_free() while
+release_endpoint() clears the transports). Releasing the endpoint there
+destroys that transport, or frees the endpoint, under its callers.
+
+Release such an endpoint from an idle callback instead, cancelled if
+the endpoint is freed first; a SEP unregistered directly by
+media_endpoint_remove() is released at once, as before.
+---
+ profiles/audio/media.c | 37 ++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index cc357d98d..8442c5c88 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -143,6 +143,7 @@ struct media_endpoint {
+ 	struct media_app	*app;
+ 	GSList			*transports;
+ 	struct endpoint_features	features;
++	guint			release_id;
+ };
+ 
+ struct local_player {
+@@ -227,6 +228,9 @@ static void media_endpoint_destroy(struct media_endpoint *endpoint)
+ {
+ 	DBG("sender=%s path=%s", endpoint->sender, endpoint->path);
+ 
++	if (endpoint->release_id)
++		g_source_remove(endpoint->release_id);
++
+ 	media_endpoint_cancel_all(endpoint);
+ 
+ 	g_slist_free_full(endpoint->transports,
+@@ -305,6 +309,11 @@ static void update_features(struct media_adapter *adapter)
+ 	bt_gmap_set_features(gmap, all.gmap_features);
+ }
+ 
++#ifdef HAVE_A2DP
++/* The endpoint whose SEP media_endpoint_remove() is removing */
++static struct media_endpoint *removing_endpoint;
++#endif
++
+ static void media_endpoint_remove(void *data)
+ {
+ 	struct media_endpoint *endpoint = data;
+@@ -317,7 +326,11 @@ static void media_endpoint_remove(void *data)
+ 
+ #ifdef HAVE_A2DP
+ 	if (endpoint->sep) {
++		struct media_endpoint *prev = removing_endpoint;
++
++		removing_endpoint = endpoint;
+ 		a2dp_remove_sep(endpoint->sep);
++		removing_endpoint = prev;
+ 		return;
+ 	}
+ #endif
+@@ -798,12 +811,34 @@ static struct a2dp_endpoint a2dp_endpoint = {
+ 	.set_delay = set_delay
+ };
+ 
++static gboolean release_endpoint_idle(void *user_data)
++{
++	struct media_endpoint *endpoint = user_data;
++
++	endpoint->release_id = 0;
++	release_endpoint(endpoint);
++
++	return FALSE;
++}
++
+ static void a2dp_destroy_endpoint(void *user_data)
+ {
+ 	struct media_endpoint *endpoint = user_data;
+ 
+ 	endpoint->sep = NULL;
+-	release_endpoint(endpoint);
++
++	if (endpoint == removing_endpoint) {
++		release_endpoint(endpoint);
++		return;
++	}
++
++	/* A removal deferred while a transport locked the stream completes
++	 * when the stream is unlocked, from within the code of a transport
++	 * of this endpoint: release the endpoint once that has returned.
++	 */
++	if (!endpoint->release_id)
++		endpoint->release_id = g_idle_add(release_endpoint_idle,
++								endpoint);
+ }
+ 
+ static bool endpoint_init_a2dp_source(struct media_endpoint *endpoint, int *err)
+-- 
+2.43.0
+

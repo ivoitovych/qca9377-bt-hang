@@ -1,0 +1,11 @@
+media: Unlink endpoints from their application on removal
+
+Backport for 5.72 of the endpoint part of upstream commit 7482aceece70
+("profiles/audio: fix UAF on external media service teardown"), with
+the unlinking done before the A2DP SEP is removed, as in "media: Fix
+use-after-free of app when removing a locked A2DP endpoint".
+
+Needed by "media: Fix use-after-free releasing endpoints on adapter
+removal": once path_free() releases the endpoints before freeing the
+applications, app_free() must not find the released endpoints in its
+queue.

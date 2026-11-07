@@ -1,0 +1,1198 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x000000000497f2c4
+input_len: 0x0000000000fb16ad
+output: 0x0000000001000000
+output_len: 0x000000000355e5e0
+kernel_total_size: 0x0000000004973000
+needed_size: 0x0000000004a00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002e161f0).
+Linux version 7.3.0-rc6-01714-g42b8c2d72926-dirty (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT_DYNAMIC Sun Nov  1 01:14:19 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/research-mesh/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -p AdvDur'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -p AdvDur
+Changing into directory /root/exp
+New process 56 created
+
+[1;39mAdvDur - Duration 1 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 100 (1000 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: Advertising Removed after 1006 ms[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;31mtest failed[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 1 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 1 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 100 (1000 ms) at 2 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: Advertising Removed after 1006 ms[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;31mtest failed[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 1 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 65 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 6500 (65000 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 65 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 65 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 6500 (65000 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 65 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 66 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 6600 (66000 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 66 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 66 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 6600 (66000 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 66 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 120 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 12000 (120000 ms) at 1 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 120 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 120 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 12000 (120000 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 120 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 655 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65500 (655000 ms) at 1 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 655 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 655 s[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65500 (655000 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 655 s[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 656 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 656 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 1000 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 1000 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 3600 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 3600 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 6357 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 6357 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 2 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 8192 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 8192 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 11[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Duration 65535 s (clamp)[0m - [0;30mdone[0m
+
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;34msetup complete[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Add Advertising (0x003e)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mADV-DUR: enable handle 1 Duration 65535 (655350 ms) at 1 ms[0m
+  [0;37mAdd Advertising (0x003e): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mADV-DUR: no Advertising Removed within 3000 ms[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;32mtest passed[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;35mteardown complete[0m
+[1;39mAdvDur - Removal 65535 s (clamp)[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+AdvDur - Duration 1 s                                [0;31mFailed    [0m   1.064 seconds
+AdvDur - Removal 1 s                                 [0;31mFailed    [0m   1.051 seconds
+AdvDur - Duration 65 s                               [0;32mPassed    [0m   0.940 seconds
+AdvDur - Removal 65 s                                [0;32mPassed    [0m   1.054 seconds
+AdvDur - Duration 66 s                               [0;32mPassed    [0m   1.050 seconds
+AdvDur - Removal 66 s                                [0;32mPassed    [0m   0.938 seconds
+AdvDur - Duration 120 s                              [0;32mPassed    [0m   1.051 seconds
+AdvDur - Removal 120 s                               [0;32mPassed    [0m   1.067 seconds
+AdvDur - Duration 655 s                              [0;32mPassed    [0m   0.928 seconds
+AdvDur - Removal 655 s                               [0;32mPassed    [0m   1.052 seconds
+AdvDur - Duration 656 s (clamp)                      [0;32mPassed    [0m   1.064 seconds
+AdvDur - Removal 656 s (clamp)                       [0;32mPassed    [0m   0.932 seconds
+AdvDur - Duration 1000 s (clamp)                     [0;32mPassed    [0m   1.050 seconds
+AdvDur - Removal 1000 s (clamp)                      [0;32mPassed    [0m   1.063 seconds
+AdvDur - Duration 3600 s (clamp)                     [0;32mPassed    [0m   0.938 seconds
+AdvDur - Removal 3600 s (clamp)                      [0;32mPassed    [0m   1.047 seconds
+AdvDur - Duration 6357 s (clamp)                     [0;32mPassed    [0m   1.064 seconds
+AdvDur - Removal 6357 s (clamp)                      [0;32mPassed    [0m   0.932 seconds
+AdvDur - Duration 8192 s (clamp)                     [0;32mPassed    [0m   1.047 seconds
+AdvDur - Removal 8192 s (clamp)                      [0;32mPassed    [0m   1.064 seconds
+AdvDur - Duration 65535 s (clamp)                    [0;32mPassed    [0m   0.931 seconds
+AdvDur - Removal 65535 s (clamp)                     [0;32mPassed    [0m   1.048 seconds
+Total: 22, [0;32mPassed: 20 (90.9%)[0m, [0;31mFailed: 2[0m, [0;33mNot Run: 0[0m
+Overall execution time: 22.4 seconds
+Process 56 exited with status 1

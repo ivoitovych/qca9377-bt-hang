@@ -1,0 +1,12 @@
+The row "E3 #4 ... failed ... responds_after no" (closed 2026-11-06 15:47:16) is NOT a hang of
+the kind this project studies. Checked 2026-11-07 from the journal and the HCI capture:
+
+- the installed closer probed with `hciconfig hci0 name` after bluetoothd had powered the adapter
+  off at shutdown (15:46:57), so its "controller does NOT respond" proves nothing;
+- but this boot (7323fc85, 2026-11-05 19:33 to 11-06 15:47) never had a usable adapter: at boot
+  the controller reported its patch already loaded (no rampatch download), failed LE commands
+  0x2007 and 0x202f, dropped off USB once, and bluetoothd's controller list was empty
+  ("Controllers: 0"). Registered as BT-16 in docs/issues.md.
+
+No SCO link in this trial. Detail and commands:
+evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md

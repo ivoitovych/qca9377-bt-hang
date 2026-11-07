@@ -1,0 +1,123 @@
+From 31d183f0c258beacd114370e6dfc5e15d23a6b91 Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 10:53:32 +0100
+Subject: [PATCH 3/3] local: the other client gives the transport up while
+ running
+
+Local only, not for submission.
+---
+ test/functional/test_local_adjacent2.py | 102 ++++++++++++++++++++++++
+ 1 file changed, 102 insertions(+)
+ create mode 100644 test/functional/test_local_adjacent2.py
+
+diff --git a/test/functional/test_local_adjacent2.py b/test/functional/test_local_adjacent2.py
+new file mode 100644
+index 000000000..9f168f657
+--- /dev/null
++++ b/test/functional/test_local_adjacent2.py
+@@ -0,0 +1,102 @@
++# -*- coding: utf-8; mode: python; eval: (blacken-mode); -*-
++# SPDX-License-Identifier: GPL-2.0-or-later
++"""
++Local only, not for submission: as test_local_adjacent.py, but the
++other client gives the transport up while bluetoothd runs, with
++Release ("other_release") or by leaving the bus ("other_exit"); then
++bluetoothd is stopped with SIGTERM.
++"""
++
++import dbus
++import pytest
++
++from pytest_bluezenv import (
++    Bluetoothd,
++    Pexpect,
++    find_exe,
++    host_config,
++    mainloop_wrap,
++    wait_until,
++)
++
++from .test_a2dp import pair, start_bluetoothctl
++from .test_local_adjacent import MEDIA_TRANSPORT_INTERFACE, EndpointClient
++
++pytestmark = [pytest.mark.vm]
++
++
++class EndpointClient2(EndpointClient):
++    def _released(self, *a):
++        self.log.info("Other client released the transport")
++        self.result = True
++
++    @mainloop_wrap
++    def _release_other(self, transport):
++        dbus.Interface(
++            self.other_bus.get_object("org.bluez", transport),
++            MEDIA_TRANSPORT_INTERFACE,
++        ).Release(reply_handler=self._released, error_handler=self._error)
++
++    def release_other(self, transport):
++        self._release_other(transport)
++        return self._wait_result()
++
++    @mainloop_wrap
++    def exit_other(self):
++        self.log.info("Other client leaves the bus")
++        self.other_bus.close()
++
++
++adjacent2_host_config = host_config(
++    [Bluetoothd(), Pexpect(), EndpointClient2()],
++    [Bluetoothd(), Pexpect()],
++)
++
++
++@pytest.mark.parametrize("giveup", ["other_release", "other_exit"])
++@pytest.mark.parametrize("removal", ["unregister", "client_exit"])
++@pytest.mark.parametrize("registration", ["endpoint", "app"])
++@adjacent2_host_config
++def test_local_removed_then_given_up(hosts_once, registration, removal, giveup):
++    host0, host1 = hosts_once
++    client = host0.endpoint_client
++
++    assert client.register(registration) is True
++
++    source = host0.pexpect.spawn([find_exe("client", "bluetoothctl")])
++    source.send("power on\n")
++    source.expect("Changing power on succeeded")
++
++    sink = start_bluetoothctl(host1, "a2dp-sink-sbc.bt")
++
++    pair(host0, source, host1, sink)
++
++    source.send(f"connect {host1.bdaddr}\n")
++    source.expect("Connection successful")
++
++    wait_until(lambda: client.get_transport() is not None)
++    transport = client.get_transport()
++    source.expect(rf"Transport {transport}")
++
++    assert client.acquire_other(transport) is True
++
++    if removal == "unregister":
++        assert client.unregister(registration) is True
++    else:
++        client.exit()
++
++    assert client.bluetoothd_status() is None
++    assert transport in client.objects()
++
++    if giveup == "other_release":
++        assert client.release_other(transport) is True
++    else:
++        client.exit_other()
++
++    # The deferred removal completes: the transport goes
++    wait_until(
++        lambda: client.bluetoothd_status() is not None
++        or transport not in client.objects()
++    )
++    assert client.bluetoothd_status() is None
++    assert client.stop("sigterm") == 0
+-- 
+2.43.0
+

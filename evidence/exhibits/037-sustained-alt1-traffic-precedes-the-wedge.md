@@ -153,7 +153,8 @@ one is not.
 | kernel | `7.0.0-30-generic` |
 | bluez | `5.72-0ubuntu5.5` + 31 Ubuntu patches + `patches/bluez/0001`, `0002` |
 | device | `13d3:3503` QCA9377 (ROME); peer `MOMENTUM 4` |
-| boot id | `afd71c7b` |
+| capture boot id | `afd71c7b` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | exit status | `0` |
 | redacted | `no` |
 | session | `evidence/sessions/20260902-002955-alt1-sustained-traffic-then-wedge` |

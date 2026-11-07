@@ -9,7 +9,7 @@ directory touches Bluetooth.
 | Script | Purpose |
 |---|---|
 | `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + the journal contract + install state (`--quick` skips the install state); with a trial open it validates without the suite, and says so |
-| `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, tool attribution, binary captures |
+| `repo-scan <dir> [--all \| --range <base> <head>]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, binary captures |
 | `repo-validate <dir> [--no-suite]` | over every tracked or staged file: `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, a Python parse (`ast.parse`, not `py_compile`, which writes `.pyc` files), an awk parse; then `tests/run-tests` (`--no-suite` skips it and says so), the documentation-drift alarm and `doc-main-hashes`. A checker that is not installed is shown as skipped |
 | `doc-main-hashes [dir] [file...]` | a commit id BRIEF/STATUS/tooling-index place on `main` must be on the PUBLIC main (the remote whose URL is the public repository), or stand beside its cherry-pick there (same patch-id). An id only on this branch is PENDING (exit 4) while the branch can fast-forward, a failure once it cannot. A shallow clone or no public main reference is "inconclusive" (exit 3), never clean |
 | `repo-save <dir> "<msg>"` | stage everything (`git add -A`) → validate → scan → check the identity → commit → push → **verify the remote hash actually matches**; with a trial open it validates without the suite, and says so |
@@ -20,6 +20,21 @@ directory touches Bluetooth.
 | `access-audit [--self-test] [-- cmd]` | run the suite under **strace** and list every file access, made or attempted, that reached the machine outside `tests/access-allowlist` |
 | `mutate <file> [--lines A-B] \| --self-test` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
 | `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |
+| `save <message-file> [--no-push]` | index the exhibits, then validate, scan, commit and push: one command, one argument, no shell syntax (the usual way to commit) |
+| `status` | is everything updated, rebuilt, logged, collected, committed and pushed? (git, the install state, `bt-mode`, the open trial) |
+| `ci [<sha>] [--wait] [--recent N] [--failed]` | the CI verdict for a commit, read on the machine |
+| `branch-status [--unique] [--files] [--fetch]` | how every branch stands against `main`, and whether any holds work `main` lacks |
+| `held status \| sync \| commit <msgfile> \| edit` | the held `kernel/*` branch without hand-typed git chains; pushes only to `private` |
+| `review-open [--all] [--counts]` | every action-register row in `reviews/README.md` whose status is not closed |
+| `awk-coverage [--uncovered] [--min N]` | statement coverage for the awk programs |
+| `py-coverage [--uncovered] [--min N]` | line coverage for the Python the repository ships |
+| `test-comprehension [<unit>] [--min N]` | per-unit comprehensiveness (modes, refusals, seams, branches), which line coverage is not |
+| `access-classify <strace-log> --root … --scratch …` | every file access in an strace log, sorted by where it landed (used by `access-audit`) |
+| `coverage-exclude` | not a script: the lines `coverage` must not count, each with its reason |
+| `repo-scan-public-addresses`, `repo-scan-quoted-examples` | not scripts: addresses upstream already published, which the scan lets through; made-up addresses that outside reviews quote, each allowed in its own file only |
+| `hooks/` | `pre-push` (the publish scan on every push), `install-hooks.sh`, `test-pre-push.sh` |
+| `journal-speed/` | the benchmarks behind the fast kernel-journal path (`bench*.sh`) |
+| `test-bt-journal-files.sh`, `test-journal-fast.sh` | tests for `tools/bt-journal-files` (on a fake journal) and for the fast journal path (equal to plain journalctl, on the real journal, read-only) |
 
 ```bash
 ./devtools/check
@@ -228,9 +243,11 @@ Deliberate allowlists, so the gate stays usable rather than being routinely bypa
   that *removed* a leaked secret still matched it on the `-` lines — so the tool blocked
   the one commit it exists to enable.
 
-`repo-save` also scans the **commit message**, which `repo-scan` cannot see. A
-`Co-Authored-By` trailer lives in neither a file nor a diff, so the likeliest vector for
-the thing being screened for previously sat outside the screen entirely.
+`repo-save` also scans the **commit message** for addresses, which `repo-scan` cannot
+see, and checks the **identity**: every commit of this repository is authored and
+committed by the project author, the identity configured in the checkout. Both fields
+are checked before the commit exists, on the recorded commit, and on every commit about
+to be pushed; CI checks the same on every push.
 
 `repo-save` refuses to commit if validation or the scan fails, then confirms the remote
 hash equals the local one. That last step is the one most often skipped by hand, and it

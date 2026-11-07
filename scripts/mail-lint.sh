@@ -1,9 +1,13 @@
 #!/bin/bash
 # mail-lint.sh — the mechanical checks on a plain-text mail before it is sent:
-# every body line within 72 columns, 7-bit ASCII only, the four headers present,
-# no trailing whitespace. The hanging line of 2026-10-02 (draft v3 of the
-# stable request) is why this exists: the rest of the mail was wrapped by hand
-# and one line was not, and nothing caught it.
+# every body line within 72 columns, 7-bit ASCII only, the From, To and Subject
+# headers present, no trailing whitespace. The hanging line of 2026-10-02 (draft
+# v3 of the stable request) is why this exists: the rest of the mail was wrapped
+# by hand and one line was not, and nothing caught it. (This comment said "the
+# four headers" until 2026-10-21, while the loop checks three; an outside review
+# of CO-10 noticed.) A reply's threading and recipients (In-Reply-To,
+# References, Subject, reply-all To/Cc) are checked against the original by
+# scripts/reply-headers-check.py.
 #
 #   scripts/mail-lint.sh <mail.eml>      exit 0 when clean; every finding printed
 set -uo pipefail

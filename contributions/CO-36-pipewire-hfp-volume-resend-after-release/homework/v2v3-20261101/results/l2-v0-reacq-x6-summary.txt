@@ -1,0 +1,22 @@
+
+== reacquire (5 records)
+  [l2-v0-reacq-x6-results.jsonl rep=1] first: re-armed codec=1 down=756.5 next_up=1264.5 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=1] second: short:clean codec=1 down=198.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=2] first: re-armed codec=1 down=812.0 next_up=1229.5 imm=[VGS@0.0 VGM@0.1] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=2] second: short:clean codec=1 down=366.7 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=3] first: re-armed codec=1 down=417.4 next_up=1195.2 imm=[VGS@0.1 VGM@0.2] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=3] second: long:resend-while-up codec=1 down=4773.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1500.7 VGM@1500.8] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=4] first: re-armed codec=1 down=458.0 next_up=1318.5 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=4] second: long:resend-while-up codec=1 down=4595.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1500.8 VGM@1500.9] after_down=[]
+  [l2-v0-reacq-x6-results.jsonl rep=5] first: short:LEAK codec=1 down=857.8 next_up=1702.5 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1528.0 VGM@1528.1]
+  [l2-v0-reacq-x6-results.jsonl rep=5] second: long:resend-while-up codec=1 down=4690.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1500.3 VGM@1500.6] after_down=[]
+  counts: {"first:re-armed": 4, "second:short:clean": 2, "second:long:resend-while-up": 3, "first:short:LEAK": 1}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[0-hosts10-vm2-784M] hf1: sent=5 got=5
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[1-hosts10-vm2-784M] hf1: sent=5 got=5
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[2-hosts10-vm2-784M] hf1: sent=5 got=5
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[3-hosts10-vm2-784M] hf1: sent=7 got=7
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[4-hosts10-vm2-784M] hf1: sent=7 got=7
+  same [l2-v0-reacq-x6-results.jsonl] test_co36_reacquire[5-hosts10-vm2-784M] hf1: sent=9 got=9
+  ledgers=6 mismatches=0
