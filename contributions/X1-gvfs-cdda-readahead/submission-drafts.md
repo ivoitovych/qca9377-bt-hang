@@ -28,15 +28,15 @@ patch 2 `patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
 
 ---
 
-Playing an audio CD track in Totem stops for about 3 seconds every 16 seconds. Totem reads
-the track through gvfsd-fuse (`/run/user/1000/gvfs/cdda:host=sr0/Track 1.wav` here). PipeWire
+Playing an audio CD track in Totem stops for about 3 seconds every 16 seconds. PipeWire
 logs an underflow of the player's stream at each stop.
 
 Steps to reproduce:
 
 1. Insert an audio CD into a USB optical drive.
-2. Open one of its tracks in Totem: `totem 'cdda://sr0/Track%201.wav'`, or `Track 1.wav`
-   from the CD's folder in Files (the device name may differ).
+2. Open a track in Totem: `totem 'cdda://sr0/Track%201.wav'` (the device name may differ).
+   Totem opens it through gvfsd-fuse, as `/run/user/1000/gvfs/cdda:host=sr0/Track 1.wav`
+   here, so gvfsd-cdda serves the reads.
 3. Listen. Each stop also shows as an underflow line in `journalctl --user -f`.
 
 `do_read()` in `daemon/gvfsbackendcdda.c` takes one sector at a time from
@@ -126,8 +126,8 @@ SDRW-08D2S-U USB drive, `gio cat 'cdda://sr0/Track%20<n>.wav'`:
 - `gio info` refuses `Track 1junk.wav`; `gio list` is unchanged.
 
 The bounds are the disc's first and last track numbers rather than the track count, because
-a disc may number its tracks from above 1, and master reads such tracks. The test program
-below checks this. It compiles the backend's own code, from `get_track_num_from_name()` to
+a disc may number its tracks from above 1, and master reads such tracks. The attached test
+program checks this. It compiles the backend's own code, from `get_track_num_from_name()` to
 `do_seek_on_read()`, against a fake libcdio driver, opens one track of a simulated
 three-track disc and reads it to the end. With libcdio 2.2.0 and libcdio-paranoia
 10.2+2.0.2:
@@ -147,12 +147,21 @@ three-track disc and reads it to the end. With libcdio 2.2.0 and libcdio-paranoi
 On master the patch builds without warnings. It also applies cleanly to gnome-46, -47, -49
 and -50.
 
-<details>
-<summary>Test program</summary>
+Test program: [gvfs-cdda-track-test.py](UPLOAD). Run it from a gvfs checkout, with an
+unpacked libcdio source tree of the installed version, for example
+`python3 gvfs-cdda-track-test.py daemon/gvfsbackendcdda.c ../libcdio-2.2.0 2 4` (tracks 2 to
+4, open Track 4.wav); `--data 3` makes track 3 a data track.
 
-Run from a gvfs checkout, with an unpacked libcdio source tree of the installed version,
-for example `python3 gvfs-cdda-track-test.py daemon/gvfsbackendcdda.c ../libcdio-2.2.0 2 4`
-(tracks 2 to 4, open Track 4.wav); `--data 3` makes track 3 a data track.
+Independent of !M1 (#A): either can be merged alone, and they apply in either order.
+
+---
+
+## Attachment to MR 2: gvfs-cdda-track-test.py
+
+Uploaded as a file into MR 2's description, where GitLab replaces `(UPLOAD)` with its
+`/uploads/…` link. Not pasted into the description: GitLab mails the description to
+subscribers, and email does not collapse a long block. Shown here so that the package
+reviews as one document.
 
 ```python
 #!/usr/bin/env python3
@@ -337,9 +346,3 @@ def main():
 if __name__ == "__main__":
     raise SystemExit(main())
 ```
-
-</details>
-
-Independent of !M1 (#A): either can be merged alone, and they apply in either order.
-
----
