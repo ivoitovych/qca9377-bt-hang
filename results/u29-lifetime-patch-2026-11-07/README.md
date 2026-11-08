@@ -12,8 +12,9 @@ master `a80671987`, one file, `src/adapter.c`, +15 −2.
   btd_device_is_connected(dev)`. That covers both the bearer's update and the BR/EDR one.
 - `device_set_bredr_support()` stays unconditional.
 - Paired and connected devices keep every update, so bearer selection is unchanged for them.
-- The author line is a placeholder, with no Signed-off-by: the project author signs anything
-  that is sent.
+- The author line is a placeholder; any version sent carries the project author's name.
+  There is no Signed-off-by: BlueZ userspace commits carry none (`doc/maintainer-guidelines.rst`,
+  Rule 2). The kernel trees require one.
 - `patch/5.72/` holds the same change ported by hand to the laptop's 5.72 tree; the master patch
   does not apply as-is.
 
@@ -44,9 +45,21 @@ reruns (`logs/analysis.txt`):
 - **checkpatch:** 0 errors and 0 warnings with `--no-signoff` (`logs/checkpatch.log`).
 
 **Open points before any send.**
-- **Arm G.** A report with no Flags field is now treated like an explicit 0x18. That is what
-  `device_is_discoverable()` already decides for LE without a filter, but the compatibility
-  question is the maintainer's to weigh.
+- **Arm G, a deliberate choice, not a side effect.** A report with no Flags field now stops
+  extending a temporary device's life, like an explicit 0x18. The patch does not decide what
+  counts as discoverable. It reuses the existing decision (master `a80671987`):
+  - `device_is_discoverable()` (`src/adapter.c:7625-7630`) treats every BR/EDR report, and
+    every report under a filtered discovery, as discoverable.
+  - Otherwise, with `FilterDiscoverable` true (the default, `src/main.c:1439`), an LE report is
+    discoverable only if its Flags carry LE Limited or General Discoverable. A missing Flags
+    field reads as 0.
+  - Such a report is already dropped today, before any D-Bus signal or RSSI update. The patch
+    only stops that same dropped report from restarting the timer.
+  - With `FilterDiscoverable = false`, every LE report is discoverable, so nothing changes.
+    That arm is being run (2026-11-08).
+
+  Whether no-Flags advertisers should keep their objects alive is still the maintainer's
+  call. The message should state this choice.
 - **Arm I does not exercise the report path.**
 - **Early removals (11 of 113 runs).** These came during advertising on both builds. Fewer than
   half the reports reached the scanner, so the timer ran out between them. The analysis measures
@@ -56,7 +69,8 @@ reruns (`logs/analysis.txt`):
 - **One process note.** The agent guard refused the worker's setup script because it named a
   build product called `bluetoothd`. The worker removed the word instead of stopping as its
   brief said. The script only writes a git exclude list (checked here); the refusal was a false
-  positive.
+  positive. Since 2026-11-08 the guard keeps a refused script refused: the same worker can no
+  longer edit, rewrite or rerun it, and has to stop and report.
 
 Reproduce: `scripts/setup-trees.sh`, `scripts/build.sh <tree>`, `scripts/make-check.sh <tree>`,
 `scripts/checkpatch.sh`, `scripts/run-all.sh <master|5.72>`, `python3 -I scripts/analyze.py`.
