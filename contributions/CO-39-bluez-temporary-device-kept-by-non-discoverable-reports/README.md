@@ -25,14 +25,17 @@ was not in pairing mode, and every click on the row was refused "Pairing Not All
   - `make check` 35/35; checkpatch clean.
 - **No-Flags case:** documented as a deliberate choice that follows BlueZ's existing rule,
   `device_is_discoverable()` (README of the results).
-- **Running 2026-11-08:**
-  - BlueZ's own CI bot, locally, on master and master plus the patch (`scripts/bot-ci-local.sh`,
-    output `tmp/u29-ci/out/`);
-  - a worker run in `/root/exp/agent-work/u29-t3-lifetime-patch/` (`runs-v2/`), with three tasks:
-    - a pairing test where reports demonstrably reach bluetoothd while `Pair()` is pending;
-    - `FilterDiscoverable = false`, and discovery with no filter;
-    - a regression test in BlueZ's own functional suite, expected to fail on master and pass
-      with the patch.
+- **v2, 2026-11-08** (results README, "v2"):
+  - **A regression test for BlueZ's functional suite** (`v2/patch/`, "test: functional: add
+    test for temporary device lifetime"): it fails on master in 6 of 6 runs and passes with
+    the patch in 7 of 7. The suite's other tests are identical on both builds; two
+    `test_bearer` LE tests time out on both.
+  - **Pairing:** `Pair()` makes a public-address device non-temporary for its whole duration,
+    so a pending pairing is unaffected by the patch. This is shown with reports arriving during
+    the pairing. The private-address case was not run.
+  - **`FilterDiscoverable = false`:** no change, as the source predicts.
+- **Running:** BlueZ's own CI bot, locally, on master and master plus the patch
+  (`scripts/bot-ci-local.sh`, output `tmp/u29-ci/out/`).
 
 **Next:** check those results, then a one-page readiness summary: patch revision, exact tests,
 master versus patched, limits, the `Fixes:` line. Then the operator's decision.

@@ -1,0 +1,151 @@
+From 891c0d747acddc54a0eada1abe4c5646773c6224 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 8 Nov 2026 05:47:20 +0100
+Subject: [PATCH] test: functional: add test for temporary device lifetime
+
+Add a test where an unpaired peer connects over BR/EDR, disconnects and
+keeps advertising with Flags 0x18. No report claims the peer is
+discoverable, so the device object is expected to be removed after
+TemporaryTimeout.
+
+The test fails as long as btd_adapter_device_found() restarts the
+temporary timer for such reports.
+---
+ doc/functional-testing.rst     | 37 +++++++++++++++++
+ test/functional/test_device.py | 76 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 113 insertions(+)
+ create mode 100644 test/functional/test_device.py
+
+diff --git a/doc/functional-testing.rst b/doc/functional-testing.rst
+index 371258261..0b9e06ccd 100644
+--- a/doc/functional-testing.rst
++++ b/doc/functional-testing.rst
+@@ -237,6 +237,43 @@ test_btmgmt_info
+ :Notes: Skipped if `btmgmt` is not built. Checks the mgmt interface is
+ 	usable without a daemon.
+ 
++test_device.py
++==============
++
++Lifetime of the device objects `bluetoothd` creates for remote devices.
++
++test_device_temporary_not_discoverable
++--------------------------------------
++
++:Setup: Two hosts. host0 runs `bluetoothd` with ``TemporaryTimeout = 20``
++	and an agent, host1 has a controller and no `bluetoothd`.
++
++	.. code-block::
++
++		+--------------------+                 +--------------------+
++		| host0              |      BR/EDR     | host1              |
++		| bluetoothd, agent  | <-------------- | btmgmt             |
++		| discovers          |        LE       | connects,          |
++		|                    | <-------------- | advertises         |
++		+--------------------+                 +--------------------+
++
++:Steps:
++	1. host0 calls ``org.bluez.Adapter1.StartDiscovery``.
++	2. host1 opens an L2CAP connection to host0 without pairing and
++	   disconnects.
++	3. host1 advertises connectable reports whose Flags are neither
++	   limited nor general discoverable (``0x18``).
++
++:Expected:
++	1. host0 has a device object for host1 after the connection.
++	2. The device object is removed within ``TemporaryTimeout`` plus
++	   10 s, although the reports keep arriving.
++
++:Notes: Regression test for temporary device objects being kept alive
++	by reports that are not discoverable (`src/adapter.c`). host0
++	alternates scanning and inquiry, which leaves up to about 11 s
++	without any report, so the timeout has to be longer than that.
++
+ test_adv_monitor.py
+ ===================
+ 
+diff --git a/test/functional/test_device.py b/test/functional/test_device.py
+new file mode 100644
+index 000000000..28972b099
+--- /dev/null
++++ b/test/functional/test_device.py
+@@ -0,0 +1,76 @@
++# -*- coding: utf-8; mode: python; eval: (blacken-mode); -*-
++# SPDX-License-Identifier: GPL-2.0-or-later
++"""
++Tests for the lifetime of device objects using VM instances
++"""
++
++import socket
++import subprocess
++import time
++
++import pytest
++
++from pytest_bluezenv import Agent, Bluetoothd, find_exe, host_config, run, wait_until
++
++pytestmark = [pytest.mark.vm]
++
++# The scan of host0 alternates with inquiry, which leaves up to about 11 s
++# without any advertising report
++TEMPORARY_TIMEOUT = 20
++
++# Flags AD: not limited and not general discoverable
++ADV_FLAGS = "020118"
++
++
++def btmgmt(*args):
++    return run(
++        [find_exe("tools", "btmgmt"), "--index", "0", *args],
++        stdout=subprocess.PIPE,
++        stdin=subprocess.DEVNULL,
++        encoding="utf-8",
++        check=True,
++    )
++
++
++def connect_and_disconnect(address):
++    """Open and close a BR/EDR link to address, without pairing"""
++    sock = socket.socket(
++        socket.AF_BLUETOOTH, socket.SOCK_SEQPACKET, socket.BTPROTO_L2CAP
++    )
++    sock.settimeout(10)
++    sock.connect((address, 1))
++    time.sleep(1)
++    sock.close()
++
++    btmgmt("disconnect", address)
++
++
++def advertise(flags):
++    btmgmt("le", "on")
++    btmgmt("add-adv", "-d", flags, "-c", "1")
++
++
++@host_config(
++    [
++        Bluetoothd(conf=f"[General]\nTemporaryTimeout = {TEMPORARY_TIMEOUT}\n"),
++        Agent(),
++    ],
++    [],
++)
++def test_device_temporary_not_discoverable(hosts):
++    host0, host1 = hosts
++
++    host0.call(btmgmt, "connectable", "on")
++    host0.agent.adapter_method("StartDiscovery")
++    host0.agent.expect("org.bluez.Adapter1.StartDiscovery:reply")
++
++    host1.call(connect_and_disconnect, host0.bdaddr)
++    assert host0.agent.has_device(host1.bdaddr)
++
++    # The peer is unpaired and not connected, and none of its reports
++    # claims it is discoverable, so host0 removes it after the timeout
++    host1.call(advertise, ADV_FLAGS)
++    wait_until(
++        lambda: not host0.agent.has_device(host1.bdaddr),
++        timeout=TEMPORARY_TIMEOUT + 10,
++    )
+-- 
+2.43.0
+

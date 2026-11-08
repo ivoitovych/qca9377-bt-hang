@@ -1,0 +1,9 @@
+test: functional: add test for temporary device lifetime
+
+Add a test where an unpaired peer connects over BR/EDR, disconnects and
+keeps advertising with Flags 0x18. No report claims the peer is
+discoverable, so the device object is expected to be removed after
+TemporaryTimeout.
+
+The test fails as long as btd_adapter_device_found() restarts the
+temporary timer for such reports.

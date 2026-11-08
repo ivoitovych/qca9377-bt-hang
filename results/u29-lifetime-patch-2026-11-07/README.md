@@ -30,7 +30,7 @@ reruns (`logs/analysis.txt`):
 | E | B with `{Transport: le}` (filtered: everything counts as discoverable) | kept | kept |
 | G | advertising with **no Flags field** | kept while reports arrive | **removed about 30 s after the disconnect** |
 | H | paired and trusted peer, 0x18 advertising, then `Connect()` | never removed; Connect succeeds over BR/EDR | identical |
-| I | `Pair()` held 40 s | not removed during pairing | same (no reports reached bluetoothd in this arm, so it does not tell the builds apart) |
+| I | `Pair()` held 40 s | not removed during pairing | same; a pending `Pair()` cannot tell the builds apart (see v2 below) |
 | J | ACL held over 60 s | not removed while connected; about 30 s after the disconnect | same |
 
 **[checked]**
@@ -56,21 +56,79 @@ reruns (`logs/analysis.txt`):
   - Such a report is already dropped today, before any D-Bus signal or RSSI update. The patch
     only stops that same dropped report from restarting the timer.
   - With `FilterDiscoverable = false`, every LE report is discoverable, so nothing changes.
-    That arm is being run (2026-11-08).
+    Confirmed in v2 (arms BNF, GNF).
 
   Whether no-Flags advertisers should keep their objects alive is still the maintainer's
   call. The message should state this choice.
-- **Arm I does not exercise the report path.**
+- **Arm I: settled in v2.** A pending `Pair()` cannot exercise the patch on a public address,
+  because the device is not temporary while it lasts (below).
 - **Early removals (11 of 113 runs).** These came during advertising on both builds. Fewer than
   half the reports reached the scanner, so the timer ran out between them. The analysis measures
   from the last report received.
-- **BlueZ's own CI.** Its checks were not run yet ("run upstream CI locally" before any send).
+- **BlueZ's own CI.** Its bot's checks run locally on master and on master plus the patch
+  (2026-11-08, `scripts/bot-ci-local.sh`); the result is in CO-39's dossier.
 - **`Fixes:` tag.** None in the message (`def01de02` is the candidate).
 - **One process note.** The agent guard refused the worker's setup script because it named a
   build product called `bluetoothd`. The worker removed the word instead of stopping as its
   brief said. The script only writes a git exclude list (checked here); the refusal was a false
   positive. Since 2026-11-08 the guard keeps a refused script refused: the same worker can no
   longer edit, rewrite or rerun it, and has to stop and report.
+
+## v2, 2026-11-08: pairing, filters, and a test for BlueZ's own suite
+
+Run by a separate worker in QEMU, as above. The raw runs are in `runs-v2/` of the same work
+area (47 runs, checksums in `v2/logs/SHA256SUMS`), and the analysis is in
+`v2/logs/analysis-v2.txt`.
+
+**Pairing (arm I's open point).**
+- **[source, checked here]** `pair_device()` makes the device non-temporary at its first line
+  (`src/device.c:3424`). A private address is the exception: `btd_device_set_temporary()`
+  returns early for it (l.7132).
+- **[source]** The device returns to temporary only if the pairing fails. `Pair()` also suspends
+  bluetoothd's discovery, which is why arm I saw no reports.
+- **Arm P1** (link up, the agent holding its confirmation for 40 s; a second mgmt client keeps
+  LE scanning going): 14 reports with flags 0x18 reached bluetoothd's device-found path inside
+  the window, in every run. Pair replied after 40.2 s, and the object stayed, on both builds,
+  3 runs each.
+- **Arm P2** (connecting to a peer that is not connectable): no report reached bluetoothd while
+  Create Connection was pending. Pair failed with Page Timeout after 5.2 s, and the object was
+  removed at once, on both builds.
+- **So** a public-address pairing cannot tell the builds apart. That is the intended behaviour,
+  not a gap. The private-address LE pairing path was not run.
+
+**Filters** (3 runs per build; removal after the disconnect, in seconds):
+
+| arm | config | unchanged | patched |
+|---|---|---|---|
+| BNF, flags 0x18 | `FilterDiscoverable = false` | 122.4 / 123.4 / 123.8 | 124.1 / 123.8 / 43.5 (sparse reports) |
+| GNF, no Flags | `FilterDiscoverable = false` | 123.8 / 123.7 / 92.3 (sparse) | 124.0 / 122.7 / 123.7 |
+| GDL, no Flags | default, `StartDiscovery` without a filter | 123.7 / 42.0 (sparse) / 123.2 | 30.6 / 30.0 / 30.5 |
+
+"Sparse" runs had only one or two reports delivered. They ended about 30 s after the last one,
+on either build.
+
+**A test for BlueZ's own functional suite.**
+- **The patch:** `v2/patch/0001-test-functional-add-test-for-temporary-device-lifeti.patch`
+  ("test: functional: add test for temporary device lifetime"; new
+  `test/functional/test_device.py`, 76 lines, plus its entry in `doc/functional-testing.rst`).
+- **What it does:** host1 opens and drops an unpaired L2CAP link to host0, then advertises with
+  flags 0x18. host0 runs `TemporaryTimeout = 20`. The device must be gone within 30 s.
+- **Results [checked here against every run's log]:**
+  - It **fails on master in 6 of 6 runs** (`TimeoutError`) and **passes with the patch in 7 of
+    7**.
+  - With the patch, the worker measured removal 20.0 to 20.5 s after the disconnect (not
+    rechecked here).
+- **The suite's other tests, both builds, 3 runs each** (`test_agent`, `test_bearer`,
+  `test_bluetoothctl`, `test_btmgmt`, `test_adv_monitor`):
+  - The results are identical on both builds.
+  - `test_bearer_le_conn_params` and `test_bearer_le_conn_update` time out on both, every run.
+    That is unrelated to the patch [inferred], and the cause was not looked at.
+  - One setup error in one base run.
+- **Form:** the author line is the project author's, with no Signed-off-by. The code was
+  formatted by hand to 88 columns (no formatter was available in the container).
+
+Reproduce v2: `v2/scripts/run-batch-v2.sh`, `v2/scripts/run-c-batch-v2.sh`, `python3 -I
+v2/scripts/analyze-v2.py`, with the trees from `scripts/setup-trees.sh`.
 
 Reproduce: `scripts/setup-trees.sh`, `scripts/build.sh <tree>`, `scripts/make-check.sh <tree>`,
 `scripts/checkpatch.sh`, `scripts/run-all.sh <master|5.72>`, `python3 -I scripts/analyze.py`.
