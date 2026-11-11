@@ -1,0 +1,24 @@
+sources: btusb=/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21s/drivers/bluetooth/btusb.c helper=/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21s/include/net/bluetooth/hci_core.h guard=0
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c: In function ‘hci_conn_sco_up_num’:
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c:150:24: error: ‘struct hci_conn’ has no member named ‘sid’; did you mean ‘id’?
+  150 |                     c->sid == air_mode)
+      |                        ^~~
+      |                        id
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c: In function ‘btusb_work’:
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c:221:51: warning: passing argument 1 of ‘btusb_find_altsetting’ from incompatible pointer type [-Wincompatible-pointer-types]
+  221 |                         if (btusb_find_altsetting(data, 6))
+      |                                                   ^~~~
+      |                                                   |
+      |                                                   struct btusb_data *
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c:116:58: note: expected ‘struct usb_interface *’ but argument is of type ‘struct btusb_data *’
+  116 | static void *btusb_find_altsetting(struct usb_interface *intf, int alt)
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~^~~~
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c:223:56: warning: passing argument 1 of ‘btusb_find_altsetting’ from incompatible pointer type [-Wincompatible-pointer-types]
+  223 |                         else if (btusb_find_altsetting(data, 3) &&
+      |                                                        ^~~~
+      |                                                        |
+      |                                                        struct btusb_data *
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21s/model.c:116:58: note: expected ‘struct usb_interface *’ but argument is of type ‘struct btusb_data *’
+  116 | static void *btusb_find_altsetting(struct usb_interface *intf, int alt)
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~^~~~
+gcc failed (1)

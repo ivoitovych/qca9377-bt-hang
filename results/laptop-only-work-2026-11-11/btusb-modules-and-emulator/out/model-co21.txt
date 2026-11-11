@@ -1,0 +1,168 @@
+sources: btusb=/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/drivers/bluetooth/btusb.c helper=/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/include/net/bluetooth/hci_core.h guard=0
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21/model.c: In function ‘btusb_work’:
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21/model.c:221:51: warning: passing argument 1 of ‘btusb_find_altsetting’ from incompatible pointer type [-Wincompatible-pointer-types]
+  221 |                         if (btusb_find_altsetting(data, 6))
+      |                                                   ^~~~
+      |                                                   |
+      |                                                   struct btusb_data *
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21/model.c:116:58: note: expected ‘struct usb_interface *’ but argument is of type ‘struct btusb_data *’
+  116 | static void *btusb_find_altsetting(struct usb_interface *intf, int alt)
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~^~~~
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21/model.c:223:56: warning: passing argument 1 of ‘btusb_find_altsetting’ from incompatible pointer type [-Wincompatible-pointer-types]
+  223 |                         else if (btusb_find_altsetting(data, 3) &&
+      |                                                        ^~~~
+      |                                                        |
+      |                                                        struct btusb_data *
+/root/exp/agent-work/laptop-btusb-modules-20261111/out/model-build-co21/model.c:116:58: note: expected ‘struct usb_interface *’ but argument is of type ‘struct btusb_data *’
+  116 | static void *btusb_find_altsetting(struct usb_interface *intf, int alt)
+      |                                    ~~~~~~~~~~~~~~~~~~~~~~^~~~
+GUARD=0
+S1 one mSBC link
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S1 one mSBC link|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S2 one mSBC link; ACL/LE deleted while its setup is pending
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  ACL/LE connection deleted                                      links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S2 one mSBC link; ACL/LE deleted while its setup is pending|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S3 one CVSD link; ACL/LE added while its setup is pending
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  ACL/LE connection added                                        links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S3 one CVSD link; ACL/LE added while its setup is pending|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S4 two CVSD links; first down, then second
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting CVSD                                    links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 2 up, air mode CVSD                                       links-up 2 core-sco 2  alt 4 run 1  expect 4  ok
+  link 1 down                                                    links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S4 two CVSD links; first down, then second|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S5 two mSBC links; first down, then second
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 up, air mode transparent                                links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S5 two mSBC links; first down, then second|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S6 mSBC up; second mSBC setup fails (air transparent)
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 1 run 1  expect 1  ok
+  setup 2 failed (0x0d, air transparent), deleted                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S6 mSBC up; second mSBC setup fails (air transparent)|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S7 CVSD up; mSBC setup pending when CVSD goes down; then up
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 2 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S7 CVSD up; mSBC setup pending when CVSD goes down; then up|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S8 CVSD up; transparent second setup fails (air 0x03); cleanup
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  setup 2 failed (0x0d, air transparent), deleted                links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S8 CVSD up; transparent second setup fails (air 0x03); cleanup|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S9 CVSD + transparent up; CVSD removed first
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 2 up, air mode transparent                                links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S9 CVSD + transparent up; CVSD removed first|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S10 CVSD + transparent up; transparent removed first
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 2 up, air mode transparent                                links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S10 CVSD + transparent up; transparent removed first|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S11 setup started, cancelled, started again at once
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  setup 1 cancelled, connection deleted                          links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 2 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S11 setup started, cancelled, started again at once|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S11b CVSD setup cancelled, transparent setup at once; the abandoned CVSD setup completes on it
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  setup 1 cancelled, connection deleted                          links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 2 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S11b CVSD setup cancelled, transparent setup at once; the abandoned CVSD setup completes on it|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S12 two CVSD links come up before the worker runs
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  setup pending, setting CVSD                                    links-up 0 core-sco 2  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 2  alt 0 run 0  expect 2  (worker pending)
+  link 2 up, air mode CVSD                                       links-up 2 core-sco 2  alt 0 run 0  expect 4  (worker pending)
+  worker runs (once: coalesced)                                  links-up 2 core-sco 2  alt 4 run 1  expect 4  ok
+  link 1 down                                                    links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S12 two CVSD links come up before the worker runs|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S12b CVSD and transparent links come up before the worker runs
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  setup pending, setting transparent                             links-up 0 core-sco 2  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 2  alt 0 run 0  expect 2  (worker pending)
+  link 2 up, air mode transparent                                links-up 2 core-sco 2  alt 0 run 0  expect 1  (worker pending)
+  worker runs (once: coalesced)                                  links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S12b CVSD and transparent links come up before the worker runs|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S13 CVSD down then transparent up before the worker runs
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 1  alt 2 run 1  expect 0  (worker pending)
+  link 2 up, air mode transparent                                links-up 1 core-sco 1  alt 2 run 1  expect 1  (worker pending)
+  worker runs (once: coalesced)                                  links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S13 CVSD down then transparent up before the worker runs|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S14 mSBC link ends while a second setup is pending; that setup fails
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  setup 2 failed (0x0d, air transparent), deleted                links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S14 mSBC link ends while a second setup is pending; that setup fails|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S15a two CVSD links; hang up the second, then the first
+  setup pending, setting CVSD                                    links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode CVSD                                       links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  setup pending, setting CVSD                                    links-up 1 core-sco 2  alt 2 run 1  expect 2  ok
+  link 2 up, air mode CVSD                                       links-up 2 core-sco 2  alt 4 run 1  expect 4  ok
+  link 2 down                                                    links-up 1 core-sco 1  alt 2 run 1  expect 2  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S15a two CVSD links; hang up the second, then the first|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S15b two mSBC links; hang up the second, then the first
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  setup pending, setting transparent                             links-up 1 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 up, air mode transparent                                links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S15b two mSBC links; hang up the second, then the first|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S16 incoming mSBC link (deferred accept, conn->setting left 0)
+  incoming setup, accepted transparent (conn->setting 0)         links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S16 incoming mSBC link (deferred accept, conn->setting left 0)|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0
+S17 mSBC up; a 2nd connect overwrites its conn->setting; 2nd headset CVSD
+  setup pending, setting transparent                             links-up 0 core-sco 1  alt 0 run 0  expect 0  ok
+  link 1 up, air mode transparent                                links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  2nd connect to link 1's device: setting -> CVSD, -EBUSY        links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  setup pending, setting CVSD                                    links-up 1 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 up, air mode CVSD                                       links-up 2 core-sco 2  alt 1 run 1  expect 1  ok
+  link 2 down                                                    links-up 1 core-sco 1  alt 1 run 1  expect 1  ok
+  link 1 down                                                    links-up 0 core-sco 0  alt 0 run 0  expect 0  ok
+RESULT S17 mSBC up; a 2nd connect overwrites its conn->setting; 2nd headset CVSD|final_alt=0|final_run=0|final_expect=0|wrong_steps=0|idle_steps=0

@@ -1,0 +1,8 @@
+  1.105 SET_INTERFACE interface 1 alt 1
+  1.507 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  1.987 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.391 STATE link 1 hung up, the other stays                alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.417 SET_INTERFACE interface 1 alt 0
+  2.795 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  8.676 SET_INTERFACE sequence: [1, 0]
+  8.676 RESULT watch-test PASS

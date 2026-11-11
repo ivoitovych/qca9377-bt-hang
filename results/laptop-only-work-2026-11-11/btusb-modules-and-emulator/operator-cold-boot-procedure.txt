@@ -1,0 +1,136 @@
+CO-21 / CO-20 laptop run on 7.0.0-42-generic: the operator's procedure
+======================================================================
+Written 2026-11-11. Nothing here was run on the laptop. Every command below is for the operator to type.
+No step loads, unloads or swaps a module on the running system (EX-046): the files go into updates/, depmod
+runs, and the modules load at the next COLD boot. Run from /root/exp/qca9377-bt-hang as root.
+
+What is installed now (read 2026-11-11, sha256 of the file and of the kept copy are equal):
+  /lib/modules/7.0.0-42-generic/updates/btusb.ko   = E3, sha256 7463a56bb9216bed4a70073bd155eba8b7d6d2ee5cfea511d0c8198893750f4b,
+                                                     srcversion DDB92562D1890FC3D262993
+  bluetooth.ko                                     = stock (srcversion 12120DE84945B5EB6D372FD), no updates/ copy
+Files to install (built 2026-11-11 from cache/ubuntu-7.0.0-42, vermagic 7.0.0-42-generic):
+  W=/root/exp/agent-work/laptop-btusb-modules-20261111/modules
+  pair-A: $W/pair-A/{bluetooth.ko,btusb.ko}  CO-21 only (E3 entry + CO-21)
+  pair-B: $W/pair-B/{bluetooth.ko,btusb.ko}  CO-21 + CO-20 btusb part (E3 entry + CO-21 + CO-20)
+  bluetooth.ko is byte-identical in both pairs (sha256 3a8cc857...d88f, srcversion FD8499CD70E95ED232382C7);
+  btusb.ko differs: A srcversion B5429902B72BE93C6DFA4CB (sha256 57ae76f2...808d),
+                    B srcversion 77C6DA8755DAE33C432E1AD (sha256 dd35170a...fccd).
+Recommendation (reasons in the report): pair-B for the single cold boot; pair-A if you want CO-21 alone.
+
+0. BEFORE ANYTHING. Keep the way back and read the state
+------------------------------------------------------
+  sha256sum /lib/modules/7.0.0-42-generic/updates/btusb.ko tmp/runtime-e3-7.0.0-42/btusb.ko
+      -> both lines must show 7463a56bb9216bed4a70073bd155eba8b7d6d2ee5cfea511d0c8198893750f4b
+  cp -p /lib/modules/7.0.0-42-generic/updates/btusb.ko /root/btusb-e3-7.0.0-42.ko.keep
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth status
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb status
+      -> bluetooth: "updates/ module: none"; btusb: srcversion DDB92562D1890FC3D262993; initramfs lines "no ... .ko"
+         (checked 2026-11-11: lsinitramfs of /boot/initrd.img-7.0.0-42-generic has no bluetooth or btusb entry)
+  ls /run/bt-trial/current
+      -> if it exists a trial is open: install needs --trial-open-ok (below); the boot unit will then open a new
+         trial that carries the new modules, so its row is NOT plain E3 (keep it apart, as trial-03 was).
+
+1. CHECK (writes nothing). Pick a pair, here pair-B; for pair-A replace the directory
+--------------------------------------------------------------------------------------
+  P=/root/exp/agent-work/laptop-btusb-modules-20261111/modules/pair-B
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth check $P/bluetooth.ko
+      -> must end "ready to install" after "OK - every dependant accepts the new build"
+         (it compares the 94 exported CRCs with about 34 installed dependants: rfcomm, bnep, hidp, bluetooth_6lowpan,
+          hci_*, btintel..., and updates/btusb.ko; my re-run of the same logic found 0 mismatches)
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb check $P/btusb.ko
+      -> "ready to install"
+  python3 -I scripts/btusb-has-device.py $P/btusb.ko        -> FOUND 13d3:3503 x1
+  python3 -I scripts/btusb-has-device.py $P/btusb.ko 0cf3 e300   -> FOUND 0cf3:e300 x1 (the control)
+  If any check says NOT ready: stop, do not install, send me the output.
+
+2. INSTALL (takes effect at the next cold boot only)
+----------------------------------------------------
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth install $P/bluetooth.ko --trial-open-ok
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb install $P/btusb.ko --trial-open-ok
+      (leave --trial-open-ok off if no trial is open)
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth status
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb status
+      -> "next boot resolves: /lib/modules/7.0.0-42-generic/updates/bluetooth.ko" and ".../updates/btusb.ko",
+         srcversions FD8499CD70E95ED232382C7 and (B) 77C6DA8755DAE33C432E1AD / (A) B5429902B72BE93C6DFA4CB.
+  The two modules are a matched pair for the symbol CRCs only; the struct hci_conn layout is unchanged (the air mode
+  is kept in the byte "sid", see the report), so rfcomm, bnep, hidp and the other dependants stay the stock ones and
+  still load. Install BOTH or neither: btusb.ko of either pair reads the byte that only the new bluetooth.ko
+  writes (the stock one leaves it at 0xff), so with the stock bluetooth.ko it would see no SCO link up and keep
+  alternate setting 0 (inferred from the code, not run). The reverse, new bluetooth.ko with E3's btusb, is harmless.
+
+3. COLD BOOT
+------------
+  Shut down completely (not a restart), wait 10 s, power on. Nothing else to do first.
+
+4. VERIFY THE LOAD (read-only)
+------------------------------
+  uname -r                                              -> 7.0.0-42-generic
+  cat /sys/module/bluetooth/srcversion                  -> FD8499CD70E95ED232382C7
+  cat /sys/module/btusb/srcversion                      -> 77C6DA8755DAE33C432E1AD (B)  or  B5429902B72BE93C6DFA4CB (A)
+  modinfo -n bluetooth ; modinfo -n btusb               -> both under /lib/modules/7.0.0-42-generic/updates/
+  journalctl -k -b 0 --grep 'QCA: patch rome 0x302 build 0x3e8'    -> one line (E3 entry active)
+  journalctl -k -b 0 --grep 'hci0' -p err               -> nothing new
+  If srcversion differs, or the QCA line is missing, or bluetooth.ko failed to load ("disagrees about version of symbol"
+  in `journalctl -k -b 0`): go to ROLLBACK.
+
+5. THE TEST (mark each step's clock time; times as HH:MM:SS)
+-----------------------------------------------------------
+  Terminal A (read-only watcher, one line each time interface 1's alternate setting changes):
+    /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/alt-watch.sh 13d3 3503 3000 | tee /root/co21-alt-watch.txt
+  Terminal B (kernel lines):
+    journalctl -k -f --grep 'set USB alt|corrupted SCO|unknown handle|closed handle|unknown connection handle'
+  Reading the alternate setting: 0 = no isochronous bandwidth. One transparent (mSBC) link: 1. One CVSD link: 2;
+  two CVSD links: 4. (Two mSBC links: still 1.) The watcher samples once a second.
+
+  T1 the main case (CO-21's two-link defect): connect both headsets in the hands-free profile; start a stream that
+     makes each one open its call link (for example a recording per headset:
+     `wpctl status` for the headset input node ids, then `pw-record --target <id> /tmp/hsA.wav` and
+     `pw-record --target <id> /tmp/hsB.wav` in two shells; how WirePlumber opens the links is inferred, not
+     measured here). Watch terminal A: first link -> 1 (mSBC) or 2 (CVSD); second link -> 1 or 4.
+     Then hang up ONE headset (stop its recording or disconnect it). Wait 5 s.
+        PASS: terminal A shows no 0 while the other link is up (back to 1 for mSBC, 2 for CVSD), and the other
+              recording's file keeps growing with sound.
+        FAIL: terminal A shows "bAlternateSetting 0" while the other call is still up, and that recording goes silent
+              or stops growing. (This is exactly what the stock module does; reproduced in a guest, see the report.)
+     Repeat, hanging up the other headset first, 3 times in all.
+  T2 the single-link race: with headset A idle, start A's call link and, within about a second, connect or disconnect
+     headset B (or any other Bluetooth device). 10 tries.
+        PASS: after each link is up, terminal A shows 1 (mSBC) or 2 (CVSD), never 0, within about 2 s.
+        FAIL: "bAlternateSetting 0" while a call link is up and silent.
+        (Hard to hit on purpose: the stock records say "281 pending setups over 68 boots, no link ever ran on alt 0",
+         so a PASS here is weak evidence; a FAIL is decisive.)
+  T3 (pair-B only, CO-20): several normal hang-ups. Expect: "corrupted SCO packet" no longer at each hang-up;
+     new lines, if anything, are "SCO packet for unknown handle N dropped" (rate-limited, error level). The
+     debug-level line for data of the link just closed ("SCO packet for closed handle N dropped") is hidden unless
+     enabled. That switch is a dynamic-debug flag, not a module change; your call whether to use it:
+       echo 'format "SCO packet for closed handle" +p' > /sys/kernel/debug/dynamic_debug/control
+     Any "no memory for SCO packet" line is a real allocation failure.
+     A pair-A boot keeps the old "corrupted SCO packet" lines: they are the baseline of CO-20.
+
+6. WHAT TO READ AFTERWARDS (read-only; note the boot's start time as "YYYY-MM-DD HH:MM:SS")
+------------------------------------------------------------------------------------------
+  journalctl -k -b 0 --grep 'set USB alt|corrupted SCO|unknown handle|closed handle|unknown connection handle'
+     PASS: no "set USB alt:(N) failed!" line. (CO-21 itself writes no log line: the evidence is terminal A.)
+     CO-20 on pair-B: compare the count of "corrupted SCO packet" with the number of hang-ups.
+  scripts/sco-ledger.sh 0
+     PASS: one row per link; every row "hangup-ok"; totals "timeouts 0". For the link that stayed up while the other
+           hung up: "alt-1 27-byte buffers" keeps growing after the other's hang-up (mSBC), seconds streamed run
+           to its own hang-up. FAIL: any TIMEOUT 0x0406, or a stayed-up mSBC link whose buffers stop at the other's
+           hang-up (that is the defect as the ledger sees it).
+  python3 -I scripts/sco-link-closure.py --from "YYYY-MM-DD HH:MM:SS" /var/log/bt-health/capture
+     PASS: every link closed, Disconnection Complete status 0x00, no failed setups you did not cause, nothing open at the end.
+  cp /root/co21-alt-watch.txt (keep it with the ledger output)
+
+7. ROLLBACK, COMPLETE (restores the state of section 0)
+-------------------------------------------------------
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth remove
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb install /root/btusb-e3-7.0.0-42.ko.keep --trial-open-ok
+     (the same file as tmp/runtime-e3-7.0.0-42/btusb.ko; check: sha256sum on both ends in ...7463a56b...0f4b)
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module bluetooth status   -> "updates/ module: none"
+  scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb status      -> srcversion DDB92562D1890FC3D262993
+  Cold boot. Verify: cat /sys/module/bluetooth/srcversion -> 12120DE84945B5EB6D372FD (stock);
+                     cat /sys/module/btusb/srcversion     -> DDB92562D1890FC3D262993 (E3).
+  If the new modules leave the controller unusable before you can type these: at the GRUB menu pick
+  "Advanced options" and an older kernel (-38: E3 and the CO-02 bluetooth.ko in its own updates/, untouched by
+  this procedure), cold boot into it, then run the commands above from there with --krel 7.0.0-42-generic.
+  Never run modprobe, rmmod, insmod or a driver re-bind to "try" a module live: it kills even a healthy controller (EX-046).

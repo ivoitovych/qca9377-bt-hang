@@ -1,0 +1,43 @@
+== co21s msbc-two-links-first #1
+  1.006 SET_INTERFACE interface 1 alt 1
+  1.410 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  1.888 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.292 STATE link 1 hung up, the other stays                alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.315 SET_INTERFACE interface 1 alt 0
+  2.696 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.696 SET_INTERFACE sequence: [1, 0]
+  2.696 RESULT msbc-two-links-first PASS
+== co21s msbc-two-links-second #1
+  1.004 SET_INTERFACE interface 1 alt 1
+  1.407 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  1.885 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.289 STATE link 2 hung up, the other stays                alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.318 SET_INTERFACE interface 1 alt 0
+  2.693 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.693 SET_INTERFACE sequence: [1, 0]
+  2.694 RESULT msbc-two-links-second PASS
+== co21s cvsd-two-links-first #1
+  1.015 SET_INTERFACE interface 1 alt 2
+  1.418 STATE link 1 up                                      alt(sysfs)=2 alt(emu)=2 expect=2  ok
+  1.497 SET_INTERFACE interface 1 alt 4
+  1.897 STATE link 2 up                                      alt(sysfs)=4 alt(emu)=4 expect=4  ok
+  1.925 SET_INTERFACE interface 1 alt 2
+  2.301 STATE link 1 hung up, the other stays                alt(sysfs)=2 alt(emu)=2 expect=2  ok
+  2.328 SET_INTERFACE interface 1 alt 0
+  2.705 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.706 SET_INTERFACE sequence: [2, 4, 2, 0]
+  2.706 RESULT cvsd-two-links-first PASS
+== co21s msbc-single-race #1
+  1.957 SET_INTERFACE interface 1 alt 1
+  2.363 STATE single link up after the add/delete race       alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.391 SET_INTERFACE interface 1 alt 0
+  2.765 STATE link hung up                                   alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.766 SET_INTERFACE sequence: [1, 0]
+  2.766 RESULT msbc-single-race PASS
+== co21s cvsd-single-race #1
+  1.952 SET_INTERFACE interface 1 alt 2
+  2.357 STATE single link up after the add/delete race       alt(sysfs)=2 alt(emu)=2 expect=2  ok
+  2.383 SET_INTERFACE interface 1 alt 0
+  2.760 STATE link hung up                                   alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.760 SET_INTERFACE sequence: [2, 0]
+  2.760 RESULT cvsd-single-race PASS

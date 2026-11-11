@@ -1,0 +1,31 @@
+== base msbc-two-links-first #1
+exists: /root/exp/agent-work/laptop-btusb-modules-20261111/logs/guest-base-msbc-two-links-first-1.log
+== base msbc-two-links-second #1
+  1.392 SET_INTERFACE interface 1 alt 1
+  1.796 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.288 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.332 SET_INTERFACE interface 1 alt 0
+  2.690 STATE link 2 hung up, the other stays                alt(sysfs)=0 alt(emu)=0 expect=1  WRONG
+  3.098 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  3.100 SET_INTERFACE sequence: [1, 0]
+  3.102 RESULT msbc-two-links-second FAIL
+== base cvsd-two-links-first #1
+  1.092 SET_INTERFACE interface 1 alt 2
+  1.501 STATE link 1 up                                      alt(sysfs)=2 alt(emu)=2 expect=2  ok
+  1.611 SET_INTERFACE interface 1 alt 4
+  2.008 STATE link 2 up                                      alt(sysfs)=4 alt(emu)=4 expect=4  ok
+  2.044 SET_INTERFACE interface 1 alt 0
+  2.412 STATE link 1 hung up, the other stays                alt(sysfs)=0 alt(emu)=0 expect=2  WRONG
+  2.820 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.820 SET_INTERFACE sequence: [2, 4, 0]
+  2.821 RESULT cvsd-two-links-first FAIL
+== base msbc-single-race #1
+  2.495 STATE single link up after the add/delete race       alt(sysfs)=0 alt(emu)=0 expect=1  WRONG
+  2.903 STATE link hung up                                   alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.904 SET_INTERFACE sequence: []
+  2.906 RESULT msbc-single-race FAIL
+== base cvsd-single-race #1
+  2.515 STATE single link up after the add/delete race       alt(sysfs)=0 alt(emu)=0 expect=2  WRONG
+  2.922 STATE link hung up                                   alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  2.931 SET_INTERFACE sequence: []
+  2.934 RESULT cvsd-single-race FAIL

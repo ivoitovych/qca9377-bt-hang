@@ -1,0 +1,87 @@
+start 2026-11-11 01:32:49 kernel base scenario msbc-two-links-first run 3 cpus 4
+4b510d9c1aa8b8508ac7419987c73f2be6d1b1fb8b0b64be98f7a2b3844f0706  /root/exp/agent-work/laptop-btusb-modules-20261111/img/bzImage-base
+0af5015a935e78f7587e9537963c2588a4ed41286efe818f56b2fec285f4831a  /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba52c4
+input_len: 0x0000000001015831
+output: 0x0000000001000000
+output_len: 0x000000000380a12c
+kernel_total_size: 0x0000000004bfd000
+needed_size: 0x0000000004c00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x000000000308f2d0).
+Linux version 7.3.0-gdef8a484b888 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Wed Nov 11 01:31:52 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first
+Changing into directory /root/exp
+New process 57 created
+random: crng init done
+  0.003 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.369 SET_CONFIGURATION 1
+  0.376 HCI command 0x0c45 (01): generic Command Complete
+  0.379 HCI command 0x0c16 (007d): generic Command Complete
+  0.380 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.420 hci0 present; btusb bound
+  0.421 hci0 already up
+Traceback (most recent call last):
+  File "/root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py", line 489, in <module>
+    main()
+  File "/root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py", line 471, in main
+    res = scenario_two_links(emu, MSBC, 1)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py", line 416, in scenario_two_links
+    s1 = sco_open(a1, voice)
+         ^^^^^^^^^^^^^^^^^^^
+  File "/root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py", line 397, in sco_open
+    s.connect(addr.encode())
+ConnectionRefusedError: [Errno 111] Connection refused
+Process 57 exited with status 1
+exit=0 end 2026-11-11 01:32:56

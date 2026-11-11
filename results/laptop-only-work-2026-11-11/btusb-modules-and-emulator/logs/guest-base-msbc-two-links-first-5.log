@@ -1,0 +1,151 @@
+start 2026-11-11 01:33:48 kernel base scenario msbc-two-links-first run 5 cpus 4
+4b510d9c1aa8b8508ac7419987c73f2be6d1b1fb8b0b64be98f7a2b3844f0706  /root/exp/agent-work/laptop-btusb-modules-20261111/img/bzImage-base
+9f5e94b0ae0cb35a5fa9304b24d7096c9aa295571b22e93c8b4aed32d547620a  /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba52c4
+input_len: 0x0000000001015831
+output: 0x0000000001000000
+output_len: 0x000000000380a12c
+kernel_total_size: 0x0000000004bfd000
+needed_size: 0x0000000004c00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x000000000308f2d0).
+Linux version 7.3.0-gdef8a484b888 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Wed Nov 11 01:31:52 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first --debug'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first --debug
+Changing into directory /root/exp
+New process 56 created
+random: crng init done
+  0.003 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.365 SET_CONFIGURATION 1
+  0.370 HCI cmd 0x0c03 
+  0.371 HCI cmd 0x1003 
+  0.372 HCI cmd 0x1001 
+  0.372 HCI cmd 0x1009 
+  0.373 HCI cmd 0x1002 
+  0.374 HCI cmd 0x0c45 01
+  0.374 HCI command 0x0c45 (01): generic Command Complete
+  0.374 HCI cmd 0x1005 
+  0.375 HCI cmd 0x0c23 
+  0.375 HCI cmd 0x0c14 
+  0.378 HCI cmd 0x0c38 
+  0.378 HCI cmd 0x0c39 
+  0.379 HCI cmd 0x0c16 007d
+  0.379 HCI command 0x0c16 (007d): generic Command Complete
+  0.379 HCI cmd 0x0c01 fffffbff03180000
+  0.380 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.424 hci0 present; btusb bound
+  0.426 hci0 already up
+  0.938 scenario raised ConnectionRefusedError(111, 'Connection refused')
+  0.938 HCI cmd 0x0405 01443322110018cc0200000001
+  0.939 HCI cmd 0x0408 014433221100
+[    1.384183]     TESTAUTO=0
+[    1.384186]     TESTAUDIO=''
+[    1.384190]     TESTARGS='python3
+[    2.645012] random: crng init done
+[    3.439197] vhci_hcd vhci_hcd.0: pdev(0) rhport(0) sockfd(3)
+[    3.439215] vhci_hcd vhci_hcd.0: devid(65538) speed(2) speed_str(full-speed)
+[    3.439364] vhci_hcd vhci_hcd.0: Device attached
+[    3.607148] vhci_hcd vhci_hcd.0: vhci_device speed not set
+[    3.663120] usb 1-1: new full-speed USB device number 2 using vhci_hcd
+[    3.727123] vhci_hcd vhci_hcd.0: vhci_device speed not set
+[    3.783109] usb 1-1: SetAddress Request (2) to port 0
+[    3.800093] usb 1-1: New USB device found: idVendor=1234, idProduct=5678, bcdDevice=1.00
+[    3.800566] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    4.370858] sock ffff8880014a3f80
+[    4.370915] sk ffff888002ce4000
+[    4.370958] sk ffff888002ce4000
+[    4.371000] 00:00:00:00:00:00 -> 00:00:00:00:00:00
+[    4.373766] sk ffff888002ce4000
+[    4.373777] 00:00:00:00:00:00 -> 00:11:22:33:44:01
+[    4.373781] 00:00:00:00:00:00 -> 00:11:22:33:44:01
+[    4.373788] hci0: dst 00:11:22:33:44:01
+[    4.373837] hci0: dst 00:11:22:33:44:01 handle 0x0f00
+[    4.373883] hci0 evt 1
+[    4.374041] hci0: dst 00:11:22:33:44:01
+[    4.374142] cache ffff888002d80fc8, 00:11:22:33:44:01
+[    4.374147] hcon ffff888002c20000 state BT_CONNECT
+[    4.374203] hci0: handle 0xf00 reason 0x13
+[    4.374343] hci0 cmd_cnt 1 cmd queued 1
+[    4.374355] hci0: skb ffff888001ace3c0
+[    4.374375] hci0 type 1 len 16
+[    4.374380] hci0
+[    4.374451] hci0 cmd_cnt 1 cmd queued 1
+[    4.374455] hci0: skb ffff888002d05e00
+[    4.374462] hci0 type 1 len 9
+[    4.374466] hci0
+[    4.374640] hci0 urb ffff88800265c200 status 0 count 16
+[    4.375337] hci0 urb ffff888001815300 status 0 count 6
+[    4.375402] hci0
+[    4.375459] hci0 Event packet
+[    4.375497] hci0: event 0x0f
+[    4.375504] hci0: opcode 0x0405
+[    4.375511] hci0: status 0x00
+[    4.375519] hci0: bdaddr 00:11:22:33:44:01 hcon ffff888002c20000
+[    4.375841] hci0 urb ffff888001b30d00 status 0 count 9
+[    4.376243] hci0 urb ffff888001815300 status 0 count 12
+[    4.376281] hci0
+[    4.376290] hci0 Event packet
+[    4.376324] hci0: event 0x0e
+[    4.376330] hci0: opcode 0x0408
+[    4.376338] opcode 0x0408 status 0x00
+[    4.376390] hci0: status 0x13
+[    4.376472] hci0 hcon ffff888002c20000 handle 3840
+[    4.376481] hci0: hcon ffff888002c20000
+[    4.387127] hcon ffff888002c20000
+[    4.387150] hci0 evt 2
+[    4.399289] hci0 urb ffff888001815300 status 0 count 13
+[    4.399357] hci0
+[    4.399370] hci0 Event packet
+[    4.399405] hci0: event 0x03
+[    4.399412] hci0: status 0x00
+Process 56 exited with status 3
+exit=0 end 2026-11-11 01:33:53

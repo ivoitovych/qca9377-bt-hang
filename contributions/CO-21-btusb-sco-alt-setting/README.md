@@ -1,5 +1,11 @@
 # CO-21: btusb picks USB alternate setting 0 while a SCO link is up
 
+**2026-11-11:** real btusb runs in a QEMU guest against a userspace controller through usbip:
+base fails all 5 scenarios, the patch passes 5 of 5. Bot CI on current bluetooth-next: no new
+findings except GitLint, patch 2's title at 81 characters. The posted patch changes 20 of
+`bluetooth.ko`'s 94 CRCs, so a laptop run needs the test-only variant. Modules, procedure and
+logs: `../../results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/`.
+
 **State (2026-11-01):** confirmed in source and by a model test; a candidate fix compiles and
 passes the model; never loaded, not sent. **Outside review the same day: not ready.** The core
 sends the link-up notification also for a failed setup (`hci_event.c:5257-5278` at

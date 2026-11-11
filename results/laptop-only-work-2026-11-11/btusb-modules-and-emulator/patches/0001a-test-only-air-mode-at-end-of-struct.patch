@@ -1,0 +1,36 @@
+Test build only, never for submission. Applied after the core patch of the
+CO-21 redesign (patches-v0/0001): moves the new struct hci_conn field from the
+middle of the struct to its end and hides it from genksyms, so that the
+exported-symbol CRCs and the offsets of every existing field stay as in the
+distribution's bluetooth.ko. Without it every symbol whose type reaches
+struct hci_conn changes its CRC, and the distribution's rfcomm, bnep, hidp and
+bluetooth_6lowpan refuse to load next to the new bluetooth.ko. Nothing outside
+bluetooth.ko allocates or embeds a struct hci_conn (hci_conn_add() allocates it).
+The field itself, its writers and readers are unchanged.
+
+--- a/include/net/bluetooth/hci_core.h
++++ b/include/net/bluetooth/hci_core.h
+@@ -717,7 +717,6 @@
+ 	__u16		disc_timeout;
+ 	__u16		conn_timeout;
+ 	__u16		setting;
+-	__u8		air_mode;
+ 	__u16		auth_payload_timeout;
+ 	__u16		le_conn_min_interval;
+ 	__u16		le_conn_max_interval;
+@@ -787,7 +786,15 @@
+ 	void (*security_cfm_cb)	(struct hci_conn *conn, u8 status);
+ 	void (*disconn_cfm_cb)	(struct hci_conn *conn, u8 reason);
+
+ 	void (*cleanup)(struct hci_conn *conn);
++
++#ifndef __GENKSYMS__
++	/* Test build: kept last and out of the symbol CRCs so that the
++	 * distribution's other Bluetooth modules stay compatible. Written
++	 * by the core when a SCO link comes up, read by hci_conn_sco_up_num().
++	 */
++	__u8		air_mode;
++#endif
+ };
+
+ struct hci_link {

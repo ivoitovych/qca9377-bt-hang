@@ -1,0 +1,8 @@
+  1.384 SET_INTERFACE interface 1 alt 1
+  1.795 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.295 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.349 SET_INTERFACE interface 1 alt 0
+  2.703 STATE link 1 hung up, the other stays                alt(sysfs)=0 alt(emu)=0 expect=1  WRONG
+  3.107 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  3.112 SET_INTERFACE sequence: [1, 0]
+  3.119 RESULT msbc-two-links-first FAIL

@@ -1,0 +1,50 @@
+Test build only, never for submission. Applied after the core patch of the
+CO-21 redesign (patches-v0/0001). The redesign adds a field to struct hci_conn,
+which changes the CRC of every exported symbol whose type reaches that struct
+(20 of the 94 exports of bluetooth.ko in 7.0.0-42, measured with modcrc.py), so the
+distribution's rfcomm, bnep, hidp and bluetooth_6lowpan, which stay installed,
+would refuse to load beside the new bluetooth.ko. This delta keeps the struct as
+it is: the air mode of a SCO link is stored in the existing byte "sid", which
+hci_conn_add() sets to HCI_SID_INVALID for every connection and which the code
+reads only for LE and ISO connections (checked by grep in 7.0.0-42). Same
+writers, same reader, same logic; only the storage differs.
+
+--- a/include/net/bluetooth/hci_core.h
++++ b/include/net/bluetooth/hci_core.h
+@@ -717,7 +717,6 @@
+ 	__u16		disc_timeout;
+ 	__u16		conn_timeout;
+ 	__u16		setting;
+-	__u8		air_mode;
+ 	__u16		auth_payload_timeout;
+ 	__u16		le_conn_min_interval;
+ 	__u16		le_conn_max_interval;
+@@ -1120,7 +1119,7 @@
+ 	list_for_each_entry_rcu(c, &h->list, list) {
+ 		if ((c->type == SCO_LINK || c->type == ESCO_LINK) &&
+ 		    c->state == BT_CONNECTED && !c->codec.data_path &&
+-		    c->air_mode == air_mode)
++		    c->sid == air_mode)
+ 			num++;
+ 	}
+
+--- a/net/bluetooth/hci_event.c
++++ b/net/bluetooth/hci_event.c
+@@ -3256,7 +3256,7 @@
+ 	} else if (ev->link_type == SCO_LINK) {
+ 		switch (conn->setting & SCO_AIRMODE_MASK) {
+ 		case SCO_AIRMODE_CVSD:
+-			conn->air_mode = HCI_AIR_MODE_CVSD;
++			conn->sid = HCI_AIR_MODE_CVSD;
+ 			if (hdev->notify)
+ 				hdev->notify(hdev, HCI_NOTIFY_ENABLE_SCO_CVSD);
+ 			break;
+@@ -5065,7 +5065,7 @@
+
+ 		conn->state  = BT_CONNECTED;
+ 		conn->type   = ev->link_type;
+-		conn->air_mode = ev->air_mode;
++		conn->sid    = ev->air_mode;
+
+ 		hci_debugfs_create_conn(conn);
+ 		hci_conn_add_sysfs(conn);

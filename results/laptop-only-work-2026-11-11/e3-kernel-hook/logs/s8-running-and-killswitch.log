@@ -1,0 +1,44 @@
+
+=== (a) 42 is the running kernel (BTUSB_E3_RUNNING); hook for 42 (01:01:06)
+btusb-e3: hook postinst.d for 7.0.0-42-generic starts
+btusb-e3: 7.0.0-42-generic: is the running kernel: its modules are not touched (entry via stock-lacks-entry: NO)
+btusb-e3: pin unchanged: default boot entry 7.0.0-38-generic (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+btusb-e3: btusb-e3 status 2026-11-11 01:01:06
+  running kernel: 7.0.0-42-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+exit code 0
+ls: cannot access '/lib/modules/7.0.0-42-generic/updates': No such file or directory
+{
+ "attempts": 3,
+ "reason": "source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source",
+ "status": "failed",
+ "time": "2026-11-11 01:00:54"
+}
+=== (b) kill switch (01:01:06)
+btusb-e3: hook postinst.d for 7.0.0-42-generic starts
+btusb-e3: 7.0.0-42-generic: /etc/btusb-e3.disabled exists: hook disabled, nothing done
+btusb-e3: pin unchanged: default boot entry 7.0.0-38-generic (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+btusb-e3: btusb-e3 status 2026-11-11 01:01:06
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+exit code 0
+ls: cannot access '/lib/modules/7.0.0-42-generic/updates': No such file or directory
+
+=== (c) a hook that crashes internally still exits 0 and the package stays configured (BTUSB_E3_STATE points at a file, not a directory) (01:01:06)
+btusb-e3: hook error swallowed: FileExistsError: [Errno 17] File exists: '/tmp/not-a-dir'
+exit code 0
+
+=== (d) missing build tools: gcc hidden (network not needed: fails before any download) (01:01:06)
+btusb-e3: hook postinst.d for 7.0.0-42-generic starts
+btusb-e3: 7.0.0-42-generic: FAILED (failed): build tools missing: gcc
+btusb-e3: pin unchanged: default boot entry 7.0.0-38-generic (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+btusb-e3: btusb-e3 status 2026-11-11 01:01:06
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (build tools missing: gcc)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+exit code 0

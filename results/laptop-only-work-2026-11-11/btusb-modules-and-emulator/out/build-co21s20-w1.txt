@@ -1,0 +1,35 @@
+== patch -p1 /root/exp/agent-work/laptop-btusb-modules-20261111/patches/0003-co20-btusb-report-sco-rx-failures-by-cause.patch
+patching file drivers/bluetooth/btusb.c
+Hunk #1 succeeded at 1418 (offset -125 lines).
+Hunk #2 succeeded at 1459 (offset -125 lines).
+Hunk #3 succeeded at 1707 (offset -125 lines).
+Hunk #4 succeeded at 1726 (offset -125 lines).
+== patch -p1 /root/exp/agent-work/laptop-btusb-modules-20261111/patches/0004-co20-btusb-log-closed-link-data-at-debug-level.patch
+patching file drivers/bluetooth/btusb.c
+Hunk #1 succeeded at 996 with fuzz 2 (offset -59 lines).
+Hunk #2 succeeded at 1240 with fuzz 2 (offset -61 lines).
+Hunk #3 succeeded at 1424 (offset -125 lines).
+Hunk #4 succeeded at 1476 (offset -125 lines).
+Hunk #5 succeeded at 1749 (offset -125 lines).
+Hunk #6 succeeded at 2425 (offset -167 lines).
+Hunk #7 succeeded at 2520 (offset -168 lines).
+make: Entering directory '/usr/src/linux-headers-7.0.0-42-generic'
+make[1]: Entering directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21s20w1/drivers/bluetooth'
+warning: the compiler differs from the one used to build the kernel
+  The kernel was built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  You are using:           gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+warning: pahole version differs from the one used to build the kernel
+  The kernel was built with: 125
+  You are using:             0
+  CC [M]  btusb.o
+  MODPOST Module.symvers
+  CC [M]  btusb.mod.o
+  CC [M]  .module-common.o
+  LD [M]  btusb.ko
+  BTF [M] btusb.ko
+Skipping BTF generation for btusb.ko due to unavailability of vmlinux
+make[1]: Leaving directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21s20w1/drivers/bluetooth'
+make: Leaving directory '/usr/src/linux-headers-7.0.0-42-generic'
+make rc=0
+1
+-rw-r--r-- 1 root root 1451232 Nov 11 01:26 /root/exp/agent-work/laptop-btusb-modules-20261111/build/co21s20w1/drivers/bluetooth/btusb.ko

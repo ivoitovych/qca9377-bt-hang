@@ -1,0 +1,11 @@
+Command (run 2026-11-11 about 01:50 to 01:51 local time): curl -s https://patchwork.kernel.org/api/patches/14875454/
+The raw JSON was removed again because it carries mail headers with addresses; these fields were read from it first:
+  "name":"[v3,6/6] Bluetooth: hci_event: Notify the driver only of SCO links that came up"
+  "date":"2026-10-08T22:26:16"
+  "state":"new"
+  "check":"fail"
+  "commit_ref":null
+The series is patchwork series 1181908 ("Bluetooth: Fix SCO setup failures after an abandoned setup", version 3).
+In bluetooth-next def8a484b (2026-11-10) hci_sync_conn_complete_evt() still has the line
+  if (conn->codec.data_path == 0 && hdev->notify) {
+without the "!status" of that patch (the CO-21 patch 1 applied there with offsets only).

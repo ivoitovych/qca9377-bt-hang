@@ -1,0 +1,124 @@
+# Hardware fact sheet, laptop controller 13d3:3503 (sysfs, procfs and files only)
+# NO Bluetooth device address and NO serial number in this file: none was read.
+# Method per line: [measured] = read from the path shown at the time of the run.
+
+## USB device attributes  (path /sys/devices/pci0000:00/0000:00:08.1/0000:03:00.4/usb3/3-3)
+[measured] idVendor = 13d3
+[measured] idProduct = 3503
+[measured] bcdDevice = 0001
+[measured] bDeviceClass = e0
+[measured] bDeviceSubClass = 01
+[measured] bDeviceProtocol = 01
+[measured] bMaxPacketSize0 = 64
+[measured] bNumConfigurations = 1
+[measured] bConfigurationValue = 1
+[measured] bNumInterfaces = 2
+[measured] bmAttributes = e0
+[measured] bMaxPower = 100mA
+[measured] speed = 12
+[measured] version = 1.10
+[measured] busnum = 3
+[measured] devnum = 2
+[measured] devpath = 3
+[measured] removable = fixed
+[measured] quirks = 0x0
+[measured] avoid_reset_quirk = 0
+[measured] authorized = 1
+[measured] maxchild = 0
+
+## Interfaces as currently bound (sysfs shows only the active alt setting's endpoints)
+[measured] 3-3:1.0: class e0 sub 01 proto 01 alt 0 nep 03 driver btusb
+[measured]   ep_02: type Bulk dir out wMaxPacketSize 0x0040 bInterval 01 interval 0ms
+[measured]   ep_81: type Interrupt dir in wMaxPacketSize 0x0010 bInterval 01 interval 1ms
+[measured]   ep_82: type Bulk dir in wMaxPacketSize 0x0040 bInterval 01 interval 0ms
+[measured] 3-3:1.1: class e0 sub 01 proto 01 alt 0 nep 02 driver btusb
+[measured]   ep_03: type Isoc dir out wMaxPacketSize 0x0000 bInterval 01 interval 1ms
+[measured]   ep_83: type Isoc dir in wMaxPacketSize 0x0000 bInterval 01 interval 1ms
+
+## All alt settings, parsed from the kernel's cached copy /sys/bus/usb/devices/3-3/descriptors (a sysfs file; the device is not asked)
+[measured] cached descriptor bytes: 195
+[measured] device descriptor: bcdUSB 0110 class e0/01/01 maxpkt0 64 idVendor 13d3 idProduct 3503 bcdDevice 0001 iManufacturer 0 iProduct 0 iSerialNumber 0 nconf 1
+[measured] configuration: wTotalLength 177 nInterfaces 2 value 1 bmAttributes 0xe0 bMaxPower 100 mA
+[measured] interface 0 alt 0: 3 endpoints, class e0/01/01
+[measured]     endpoint 0x81 IN Interrupt wMaxPacketSize 16 bInterval 1
+[measured]     endpoint 0x82 IN Bulk wMaxPacketSize 64 bInterval 1
+[measured]     endpoint 0x02 OUT Bulk wMaxPacketSize 64 bInterval 1
+[measured] interface 1 alt 0: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 0 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 0 bInterval 1
+[measured] interface 1 alt 1: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 9 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 9 bInterval 1
+[measured] interface 1 alt 2: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 17 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 17 bInterval 1
+[measured] interface 1 alt 3: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 25 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 25 bInterval 1
+[measured] interface 1 alt 4: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 33 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 33 bInterval 1
+[measured] interface 1 alt 5: 2 endpoints, class e0/01/01
+[measured]     endpoint 0x83 IN Isoc wMaxPacketSize 49 bInterval 1
+[measured]     endpoint 0x03 OUT Isoc wMaxPacketSize 49 bInterval 1
+
+## Power chain, leaf to root (control / runtime_status / wakeup / d3cold where the file exists)
+[measured] /sys/devices/pci0000:00/0000:00:08.1/0000:03:00.4/usb3/3-3: driver usb; power/control=auto; power/runtime_status=suspended; power/wakeup=disabled; power/autosuspend_delay_ms=2000; power/runtime_active_time=11417; power/runtime_suspended_time=2393778; power/connected_duration=2405437; power/active_duration=11566
+[measured] /sys/devices/pci0000:00/0000:00:08.1/0000:03:00.4/usb3: driver usb; power/control=auto; power/runtime_status=active; power/wakeup=disabled; power/autosuspend_delay_ms=0; power/runtime_active_time=2405563; power/runtime_suspended_time=0; power/connected_duration=2405564; power/active_duration=2405564
+[measured] /sys/devices/pci0000:00/0000:00:08.1/0000:03:00.4: driver xhci_hcd; power/control=on; power/runtime_status=active; power/wakeup=enabled; power/autosuspend_delay_ms=<unreadable: Input/output error>; d3cold_allowed=1; vendor=0x1022; device=0x1639; power/runtime_active_time=2405753; power/runtime_suspended_time=0
+[measured] /sys/devices/pci0000:00/0000:00:08.1: driver pcieport; power/control=auto; power/runtime_status=active; power/wakeup=enabled; power/autosuspend_delay_ms=100; d3cold_allowed=1; vendor=0x1022; device=0x1635; power/runtime_active_time=2405755; power/runtime_suspended_time=0
+[measured] /sys/devices/pci0000:00: driver -; power/control=auto; power/runtime_status=unsupported; power/autosuspend_delay_ms=<unreadable: Input/output error>; power/runtime_active_time=0; power/runtime_suspended_time=0
+
+## /proc/acpi/wakeup
+[measured] Device	S-state	  Status   Sysfs node
+[measured] GPP0	  S4	*disabled
+[measured] GPP1	  S4	*disabled
+[measured] GPP2	  S4	*disabled
+[measured] GPP3	  S4	*enabled   pci:0000:00:02.1
+[measured] GPP4	  S4	*disabled
+[measured] GPP5	  S4	*enabled   pci:0000:00:02.3
+[measured] GP17	  S4	*enabled   pci:0000:00:08.1
+[measured] XHC0	  S3	*enabled   pci:0000:03:00.3
+[measured] XHC1	  S3	*enabled   pci:0000:03:00.4
+[measured] GP18	  S4	*disabled
+[measured] GP19	  S4	*disabled
+[measured] LID0	  S3	*enabled   platform:PNP0C0D:00
+
+## DMI identification (no serial, no UUID)
+[measured] sys_vendor = Default string
+[measured] product_name = Default string
+[measured] product_version = Version 1.0
+[measured] product_family = Default string
+[measured] board_vendor = Default string
+[measured] board_name = Default string
+[measured] board_version = Version 1.0
+[measured] bios_vendor = American Megatrends International, LLC.
+[measured] bios_version = 1.16
+[measured] bios_date = 10/19/2024
+[measured] chassis_type = 10
+
+## Firmware files named by the kernel log (sha256 of the file as installed, and of its decompressed content)
+[measured] /lib/firmware/qca/rampatch_usb_00000302.bin.zst: 48328 bytes sha256 d768b822e74b3454f21ceeb22e3fbe587f6268957fec8a21d5695088afacc682; decompressed 68644 bytes sha256 f0d15f6d7c4ce17270c951287222699c0909bea9028ecb84d2e8be6fa364691e
+[measured] /lib/firmware/qca/nvm_usb_00000302.bin.zst: 1147 bytes sha256 19510791fa65ca7604c7a7160e656861ef0864fa07f608199adb28cd474a5e1c; decompressed 1998 bytes sha256 9ee2cff5bd51523b65c941b72ecf05a8b5e7b9e280c79fa08c70ade7205088a5
+[measured] /lib/firmware/qca/nvm_usb_00000302_eu.bin.zst (present, NOT named by any boot log; listed for completeness): 1143 bytes sha256 02cab03ffd85bbcd8aa69e9e47bd862ca49404d6aaf38fda340e6da8eab78f60; decompressed 1998 bytes sha256 a3f530ac97dffa187747780a84eaba7171edc66c6a7ccb5957cc2f456c1175ba
+
+## Controller version strings, quoted from the kernel log of the current boot (journalctl -b 0 -k, 2026-11-11 00:32:45 to 00:32:46)
+[quoted] usb 3-3: new full-speed USB device number 2 using xhci_hcd
+[quoted] usb 3-3: New USB device found, idVendor=13d3, idProduct=3503, bcdDevice= 0.01
+[quoted] usb 3-3: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[quoted] Bluetooth: hci0: using rampatch file: qca/rampatch_usb_00000302.bin
+[quoted] Bluetooth: hci0: QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302 build 0x111
+[quoted] Bluetooth: hci0: using NVM file: qca/nvm_usb_00000302.bin
+[quoted] Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+[quoted] ath10k_pci 0000:02:00.0: firmware ver WLAN.TF.2.1-00021-QCARMSWP-1 api 6 features wowlan,ignore-otp crc32 42e41877
+[quoted, boot 2026-11-10 00:37:20] ath10k_pci 0000:02:00.0: qca9377 hw1.1 target 0x05020001 chip_id 0x003821ff sub 1a3b:2b51
+[inferred] reading of the line: rampatch file build 0x3e8 (patch), controller's own build before patching 0x111, ROM 0x302 (QCA9377 / Rome 3.2 in btusb's table). The controller reports no string descriptors (Mfr=0, Product=0, SerialNumber=0), so there is no serial to record.
+[inferred] The boot-0 btusb is the out-of-tree build (E3): the log says "btusb: loading out-of-tree module taints kernel" and "module verification failed" at 2026-11-11 00:32:45.
+
+## The Wi-Fi function of the same module (PCI, sysfs)
+[measured] /sys/devices/pci0000:00/0000:00:02.3/0000:02:00.0: vendor 0x168c device 0x0042 subsystem 0x1a3b:0x2b51, driver ath10k_pci, power/control on, power/wakeup disabled, d3cold_allowed 1, link 2.5 GT/s
+[inferred] The USB Bluetooth function (13d3:3503 behind the AMD USB controller 1022:1639 at 03:00.4) and the PCIe Wi-Fi function (QCA9377 hw1.1) are two interfaces of one module; the journal shows the BT USB device disconnecting around ath10k's start-up (B and A sections of the report).
+
+## Power supply state at the time of the run
+[measured] /sys/class/power_supply/ADP1 type Mains online 1; BAT0 present 1, Li-ion, capacity 100, status Full
+[measured] /sys/power/state: freeze mem disk; /sys/power/mem_sleep: s2idle [deep]; /sys/power/disk: [platform] shutdown reboot suspend test_resume

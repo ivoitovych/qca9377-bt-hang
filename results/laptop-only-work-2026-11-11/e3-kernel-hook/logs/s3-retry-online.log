@@ -1,0 +1,118 @@
+
+=== before (01:01:08)
+btusb-e3 status 2026-11-11 01:01:08
+running kernel: 7.0.0-30-generic
+7.0.0-38-generic               entry YES via updates            record: ok-built
+7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+
+=== run /etc/cron.daily/btusb-e3 (01:01:08)
+btusb-e3: retry: 7.0.0-42-generic
+btusb-e3: 7.0.0-42-generic: package 7.0.0-42.42~24.04.1, source linux-hwe-7.0 7.0.0-42.42~24.04.1
+btusb-e3: linux-hwe-7.0_7.0.0-42.42~24.04.1.diff.gz: downloading (6129873 bytes) from https://archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0
+btusb-e3: linux-hwe-7.0_7.0.0.orig.tar.gz: downloading (254937830 bytes) from https://archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0
+btusb-e3: source tree for linux-hwe-7.0 7.0.0-42.42~24.04.1: 32 diff sections applied; diff sha256 ab5b2722d3d4bd00, orig sha256 c6343795c8c7e4fe
+btusb-e3: 7.0.0-42-generic: patch: patching file drivers/bluetooth/btusb.c | Hunk #1 succeeded at 309 (offset 12 lines).
+btusb-e3: 7.0.0-42-generic: INSTALLED /lib/modules/7.0.0-42-generic/updates/btusb.ko  srcversion DDB92562D1890FC3D262993  sha256 c55c98e46c197755ce5f4bddb958cfc79d361042921d24c4954b81feba0ec824  CRCs 139 used, 0 mismatched; depmod -a 7.0.0-42-generic done; initrd contained btusb.ko: update-initramfs -u -k 7.0.0-42-generic rc 0
+btusb-e3: pin removed: newest installed kernel 7.0.0-42-generic has the entry (updates)
+btusb-e3: update-grub rc 0
+btusb-e3: btusb-e3 status 2026-11-11 01:02:55
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-42-generic has the entry (updates)]
+cron script exit code: 0
+--- state of 7.0.0-42-generic
+-rw-r--r-- 1 root root 1439000 Nov 11 01:02 btusb.ko
+modinfo -k 7.0.0-42-generic -n btusb: /lib/modules/7.0.0-42-generic/updates/btusb.ko
+stock   ABSENT 13d3:3503 x0  /lib/modules/7.0.0-42-generic/kernel/drivers/bluetooth/btusb.ko.zst
+control FOUND 0cf3:e300 x1  /lib/modules/7.0.0-42-generic/kernel/drivers/bluetooth/btusb.ko.zst
+updates FOUND 13d3:3503 x1  /lib/modules/7.0.0-42-generic/updates/btusb.ko
+vermagic:   7.0.0-42-generic SMP preempt mod_unload modversions 
+srcversion: DDB92562D1890FC3D262993
+version:    0.8
+sha256:     c55c98e46c197755ce5f4bddb958cfc79d361042921d24c4954b81feba0ec824
+stock srcversion: AA03DA027F82085CC6A1ED4
+--- grub
+dropin: cat: /etc/default/grub.d/90-btusb-e3-pin.cfg: No such file or directory
+24:   set default="${next_entry}"
+29:   set default="0"
+152:menuentry 'Ubuntu' --class ubuntu --class gnu-linux --class gnu --class os
+169:submenu 'Advanced options for Ubuntu'
+2
+--- /var/log/btusb-e3.log
+2026-11-11 00:59:38 hook header_postinst.d for 7.0.0-38-generic starts
+2026-11-11 00:59:38 7.0.0-38-generic: package 7.0.0-38.38~24.04.4, source linux-hwe-7.0 7.0.0-38.38~24.04.4
+2026-11-11 00:59:38 source tree for linux-hwe-7.0 7.0.0-38.38~24.04.4: cached (/var/cache/btusb-e3/tree/linux-hwe-7.0_7.0.0-38.38~24.04.4)
+2026-11-11 00:59:38 7.0.0-38-generic: patch: patching file drivers/bluetooth/btusb.c | Hunk #1 succeeded at 298 (offset 1 line).
+2026-11-11 00:59:44 7.0.0-38-generic: INSTALLED /lib/modules/7.0.0-38-generic/updates/btusb.ko  srcversion D1DEA96A0C95BFAB05CEE01  sha256 206fdc735b105bae1395dcf804cd70272a983a1abba650ac96d17cb94115c01e  CRCs 134 used, 0 mismatched; depmod -a 7.0.0-38-generic done; no initrd yet or no lsinitramfs: nothing to check
+2026-11-11 00:59:44 no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+2026-11-11 00:59:44 btusb-e3 status 2026-11-11 00:59:44
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+2026-11-11 00:59:53 hook postinst.d for 7.0.0-38-generic starts
+2026-11-11 00:59:53 7.0.0-38-generic: already built by this tool for package 7.0.0-38.38~24.04.4: nothing to do
+2026-11-11 00:59:53 no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+2026-11-11 00:59:53 btusb-e3 status 2026-11-11 00:59:53
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+2026-11-11 01:00:29 hook header_postinst.d for 7.0.0-42-generic starts
+2026-11-11 01:00:29 7.0.0-42-generic: package 7.0.0-42.42~24.04.1, source linux-hwe-7.0 7.0.0-42.42~24.04.1
+2026-11-11 01:00:29 7.0.0-42-generic: FAILED (failed): source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source
+2026-11-11 01:00:29 PINNED default boot entry to 7.0.0-38-generic via /etc/default/grub.d/90-btusb-e3-pin.cfg (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+2026-11-11 01:00:30 update-grub rc 0
+2026-11-11 01:00:30 btusb-e3 status 2026-11-11 01:00:30
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+2026-11-11 01:00:39 hook postinst.d for 7.0.0-42-generic starts
+2026-11-11 01:00:40 7.0.0-42-generic: package 7.0.0-42.42~24.04.1, source linux-hwe-7.0 7.0.0-42.42~24.04.1
+2026-11-11 01:00:40 7.0.0-42-generic: FAILED (failed): source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source
+2026-11-11 01:00:40 pin unchanged: default boot entry 7.0.0-38-generic (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+2026-11-11 01:00:40 btusb-e3 status 2026-11-11 01:00:40
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+2026-11-11 01:00:54 retry: 7.0.0-42-generic
+2026-11-11 01:00:54 7.0.0-42-generic: package 7.0.0-42.42~24.04.1, source linux-hwe-7.0 7.0.0-42.42~24.04.1
+2026-11-11 01:00:54 7.0.0-42-generic: FAILED (failed): source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source
+2026-11-11 01:00:54 pin unchanged: default boot entry 7.0.0-38-generic (newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry))
+2026-11-11 01:00:54 btusb-e3 status 2026-11-11 01:00:54
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry NO  via stock-lacks-entry  record: failed (source package linux-hwe-7.0 7.0.0-42.42~24.04.1 not found: 8 of 8 archive index fetches failed (last: download of https://security.ubuntu.com/ubuntu/dists/noble-proposed/InRelease failed: <urlopen error [Errno -3] Temporary failure in name re); if none failed, the archive no longer lists this source)
+  default boot pin: -> 7.0.0-38-generic   [newest installed kernel 7.0.0-42-generic lacks the entry (stock-lacks-entry)]
+2026-11-11 01:01:08 retry: 7.0.0-42-generic
+2026-11-11 01:01:08 7.0.0-42-generic: package 7.0.0-42.42~24.04.1, source linux-hwe-7.0 7.0.0-42.42~24.04.1
+2026-11-11 01:01:10 linux-hwe-7.0_7.0.0-42.42~24.04.1.diff.gz: downloading (6129873 bytes) from https://archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0
+2026-11-11 01:01:12 linux-hwe-7.0_7.0.0.orig.tar.gz: downloading (254937830 bytes) from https://archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0
+2026-11-11 01:02:33 source tree for linux-hwe-7.0 7.0.0-42.42~24.04.1: 32 diff sections applied; diff sha256 ab5b2722d3d4bd00, orig sha256 c6343795c8c7e4fe
+2026-11-11 01:02:33 7.0.0-42-generic: patch: patching file drivers/bluetooth/btusb.c | Hunk #1 succeeded at 309 (offset 12 lines).
+2026-11-11 01:02:55 7.0.0-42-generic: INSTALLED /lib/modules/7.0.0-42-generic/updates/btusb.ko  srcversion DDB92562D1890FC3D262993  sha256 c55c98e46c197755ce5f4bddb958cfc79d361042921d24c4954b81feba0ec824  CRCs 139 used, 0 mismatched; depmod -a 7.0.0-42-generic done; initrd contained btusb.ko: update-initramfs -u -k 7.0.0-42-generic rc 0
+2026-11-11 01:02:55 pin removed: newest installed kernel 7.0.0-42-generic has the entry (updates)
+2026-11-11 01:02:55 update-grub rc 0
+2026-11-11 01:02:55 btusb-e3 status 2026-11-11 01:02:55
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  7.0.0-42-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-42-generic has the entry (updates)]
+--- STATUS
+btusb-e3 status 2026-11-11 01:02:55
+running kernel: 7.0.0-30-generic
+7.0.0-38-generic               entry YES via updates            record: ok-built
+7.0.0-42-generic               entry YES via updates            record: ok-built
+default boot pin: none   [newest installed kernel 7.0.0-42-generic has the entry (updates)]
+
+=== compare with the E3 module built by hand on the laptop (project tmp/runtime-e3-7.0.0-42) (01:02:55)
+-rw-r--r-- 1 root root 1439008 Oct 28 05:51 /proj/tmp/runtime-e3-7.0.0-42/btusb.ko
+laptop-built srcversion: DDB92562D1890FC3D262993
+laptop-built vermagic:   7.0.0-42-generic SMP preempt mod_unload modversions 
+laptop-built sha256:     7463a56bb9216bed4a70073bd155eba8b7d6d2ee5cfea511d0c8198893750f4b
+expected srcversion from the task: DDB92562D1890FC3D262993
+FOUND 13d3:3503 x1  /proj/tmp/runtime-e3-7.0.0-42/btusb.ko
+/lib/modules/7.0.0-42-generic/updates/btusb.ko /proj/tmp/runtime-e3-7.0.0-42/btusb.ko differ: char 41, line 1
+bytes differ from the laptop build (expected per the tooling index)

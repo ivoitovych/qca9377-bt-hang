@@ -1,7 +1,9 @@
 # CO-09 — The QCA9377 entry in Ubuntu's kernel
 
 **State:** waiting. It will probably arrive with Ubuntu's stable updates; a request would only
-make it sooner.
+make it sooner. **2026-11-11:** `7.0.0-43.43~24.04.1`, in noble-proposed since 11-05, carries it
+(its stock btusb: `FOUND 13d3:3503`); not yet in updates or security. A kernel post-install hook
+is ready, not installed: `../../results/laptop-only-work-2026-11-11/e3-kernel-hook/`.
 
 **Target:** Ubuntu's `linux-hwe-7.0` (24.04 HWE kernel).
 

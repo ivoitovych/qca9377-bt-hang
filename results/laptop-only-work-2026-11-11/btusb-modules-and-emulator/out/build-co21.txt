@@ -1,0 +1,111 @@
+== patch -p1 /root/exp/agent-work/co21-redesign-20261101/patches-v0/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch
+patching file include/net/bluetooth/hci.h
+Hunk #1 succeeded at 2705 (offset -57 lines).
+patching file include/net/bluetooth/hci_core.h
+Hunk #1 succeeded at 717 (offset -45 lines).
+Hunk #2 succeeded at 1098 (offset -35 lines).
+patching file net/bluetooth/hci_event.c
+Hunk #1 succeeded at 3256 (offset -110 lines).
+Hunk #2 succeeded at 5065 (offset -168 lines).
+== patch -p1 /root/exp/agent-work/co21-redesign-20261101/patches-ubuntu-check/0002-btusb-ubuntu-7.0.0-42.diff
+patching file drivers/bluetooth/btusb.c
+== patch -p1 /root/exp/qca9377-bt-hang/tmp/runtime-e3/0001-Bluetooth-btusb-Add-IMC-Networks-QCA9377-to-quirks-t.patch
+patching file drivers/bluetooth/btusb.c
+Hunk #1 succeeded at 309 (offset 12 lines).
+== bluetooth.ko (net/bluetooth), headers: /lib/modules/7.0.0-42-generic/build, tree headers first
+make: Entering directory '/usr/src/linux-headers-7.0.0-42-generic'
+make[1]: Entering directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/net/bluetooth'
+warning: the compiler differs from the one used to build the kernel
+  The kernel was built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  You are using:           gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+warning: pahole version differs from the one used to build the kernel
+  The kernel was built with: 125
+  You are using:             0
+  CC [M]  rfcomm/core.o
+  CC [M]  rfcomm/sock.o
+  CC [M]  rfcomm/tty.o
+  LD [M]  rfcomm/rfcomm.o
+  CC [M]  bnep/core.o
+  CC [M]  bnep/sock.o
+  CC [M]  bnep/netdev.o
+  LD [M]  bnep/bnep.o
+  CC [M]  hidp/core.o
+  CC [M]  hidp/sock.o
+  LD [M]  hidp/hidp.o
+  CC [M]  af_bluetooth.o
+  CC [M]  hci_core.o
+  CC [M]  hci_conn.o
+  CC [M]  hci_event.o
+  CC [M]  mgmt.o
+  CC [M]  hci_sock.o
+  CC [M]  hci_sysfs.o
+  CC [M]  l2cap_core.o
+  CC [M]  l2cap_sock.o
+  CC [M]  smp.o
+  CC [M]  lib.o
+  CC [M]  ecdh_helper.o
+  CC [M]  mgmt_util.o
+  CC [M]  mgmt_config.o
+  CC [M]  hci_codec.o
+  CC [M]  eir.o
+  CC [M]  hci_sync.o
+  CC [M]  hci_drv.o
+  CC [M]  coredump.o
+  CC [M]  sco.o
+  CC [M]  iso.o
+  CC [M]  leds.o
+  CC [M]  msft.o
+  CC [M]  aosp.o
+  CC [M]  hci_debugfs.o
+  LD [M]  bluetooth.o
+  CC [M]  6lowpan.o
+  LD [M]  bluetooth_6lowpan.o
+  MODPOST Module.symvers
+  CC [M]  bluetooth.mod.o
+  CC [M]  .module-common.o
+  LD [M]  bluetooth.ko
+  BTF [M] bluetooth.ko
+Skipping BTF generation for bluetooth.ko due to unavailability of vmlinux
+  CC [M]  rfcomm/rfcomm.mod.o
+  LD [M]  rfcomm/rfcomm.ko
+  BTF [M] rfcomm/rfcomm.ko
+Skipping BTF generation for rfcomm/rfcomm.ko due to unavailability of vmlinux
+  CC [M]  bnep/bnep.mod.o
+  LD [M]  bnep/bnep.ko
+  BTF [M] bnep/bnep.ko
+Skipping BTF generation for bnep/bnep.ko due to unavailability of vmlinux
+  CC [M]  hidp/hidp.mod.o
+  LD [M]  hidp/hidp.ko
+  BTF [M] hidp/hidp.ko
+Skipping BTF generation for hidp/hidp.ko due to unavailability of vmlinux
+  CC [M]  bluetooth_6lowpan.mod.o
+  LD [M]  bluetooth_6lowpan.ko
+  BTF [M] bluetooth_6lowpan.ko
+Skipping BTF generation for bluetooth_6lowpan.ko due to unavailability of vmlinux
+make[1]: Leaving directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/net/bluetooth'
+make: Leaving directory '/usr/src/linux-headers-7.0.0-42-generic'
+make rc=0
+== btusb.ko
+make: Entering directory '/usr/src/linux-headers-7.0.0-42-generic'
+make[1]: Entering directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/drivers/bluetooth'
+warning: the compiler differs from the one used to build the kernel
+  The kernel was built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  You are using:           gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+warning: pahole version differs from the one used to build the kernel
+  The kernel was built with: 125
+  You are using:             0
+  CC [M]  btusb.o
+  MODPOST Module.symvers
+  CC [M]  btusb.mod.o
+  CC [M]  .module-common.o
+  LD [M]  btusb.ko
+  BTF [M] btusb.ko
+Skipping BTF generation for btusb.ko due to unavailability of vmlinux
+make[1]: Leaving directory '/root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/drivers/bluetooth'
+make: Leaving directory '/usr/src/linux-headers-7.0.0-42-generic'
+make rc=0
+== include order check (the -I of the tree must be in the compile command)
+1
+1
+-rw-r--r-- 1 root root  1444128 Nov 11 01:18 /root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/drivers/bluetooth/btusb.ko
+-rw-r--r-- 1 root root 24285656 Nov 11 01:18 /root/exp/agent-work/laptop-btusb-modules-20261111/build/co21/net/bluetooth/bluetooth.ko

@@ -1,0 +1,162 @@
+
+=== seed the source cache for 38 (the archive no longer lists 38's source; files verified against the .dsc) (00:59:20)
+verified against the .dsc: linux-hwe-7.0_7.0.0-38.38~24.04.4.diff.gz cd0996991ef58d83f4a7c64984b93d881eb10d450032348b482c9fbf4e7130ff
+verified against the .dsc: linux-hwe-7.0_7.0.0.orig.tar.gz c6343795c8c7e4feff55f5b309365c8e0eaf49cd6abcb412e32315313f149536
+seeded /var/cache/btusb-e3/tree/linux-hwe-7.0_7.0.0-38.38~24.04.4 sections 21
+
+=== run-parts order of the three hook dirs (what runs before/after 50-btusb-e3) (00:59:28)
+-- /etc/kernel/postinst.d
+/etc/kernel/postinst.d/50-btusb-e3
+/etc/kernel/postinst.d/initramfs-tools
+/etc/kernel/postinst.d/xx-update-initrd-links
+/etc/kernel/postinst.d/zz-update-grub
+-- /etc/kernel/header_postinst.d
+/etc/kernel/header_postinst.d/50-btusb-e3
+-- /etc/kernel/postrm.d
+/etc/kernel/postrm.d/50-btusb-e3
+/etc/kernel/postrm.d/initramfs-tools
+/etc/kernel/postrm.d/zz-update-grub
+
+=== install linux-image + linux-headers 7.0.0-38 (BTUSB_E3_RUNNING=7.0.0-30-generic) (00:59:28)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  libdw1t64 libelf1t64 linux-hwe-7.0-headers-7.0.0-38
+  linux-main-modules-v4l2loopback-7.0.0-38-generic
+  linux-main-modules-zfs-7.0.0-38-generic linux-modules-7.0.0-38-generic
+  wireless-regdb
+Suggested packages:
+  linux-hwe-7.0-tools
+Recommended packages:
+  grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub | lilo
+The following NEW packages will be installed:
+  libdw1t64 libelf1t64 linux-headers-7.0.0-38-generic
+  linux-hwe-7.0-headers-7.0.0-38 linux-image-7.0.0-38-generic
+  linux-main-modules-v4l2loopback-7.0.0-38-generic
+  linux-main-modules-zfs-7.0.0-38-generic linux-modules-7.0.0-38-generic
+  wireless-regdb
+debconf: delaying package configuration, since apt-utils is not installed
+0 upgraded, 9 newly installed, 0 to remove and 4 not upgraded.
+Need to get 0 B/205 MB of archives.
+After this operation, 312 MB of additional disk space will be used.
+Selecting previously unselected package libelf1t64:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14466 files and directories currently installed.)
+Preparing to unpack .../0-libelf1t64_0.190-1.1ubuntu0.1_amd64.deb ...
+Unpacking libelf1t64:amd64 (0.190-1.1ubuntu0.1) ...
+Selecting previously unselected package libdw1t64:amd64.
+Preparing to unpack .../1-libdw1t64_0.190-1.1ubuntu0.1_amd64.deb ...
+Unpacking libdw1t64:amd64 (0.190-1.1ubuntu0.1) ...
+Selecting previously unselected package linux-hwe-7.0-headers-7.0.0-38.
+Preparing to unpack .../2-linux-hwe-7.0-headers-7.0.0-38_7.0.0-38.38~24.04.4_all.deb ...
+Unpacking linux-hwe-7.0-headers-7.0.0-38 (7.0.0-38.38~24.04.4) ...
+Selecting previously unselected package linux-headers-7.0.0-38-generic.
+Preparing to unpack .../3-linux-headers-7.0.0-38-generic_7.0.0-38.38~24.04.4_amd64.deb ...
+Unpacking linux-headers-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Selecting previously unselected package linux-main-modules-zfs-7.0.0-38-generic.
+Preparing to unpack .../4-linux-main-modules-zfs-7.0.0-38-generic_7.0.0-38.38~24.04.4_amd64.deb ...
+Unpacking linux-main-modules-zfs-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Selecting previously unselected package linux-main-modules-v4l2loopback-7.0.0-38-generic.
+Preparing to unpack .../5-linux-main-modules-v4l2loopback-7.0.0-38-generic_7.0.0-38.38~24.04.4_amd64.deb ...
+Unpacking linux-main-modules-v4l2loopback-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Selecting previously unselected package wireless-regdb.
+Preparing to unpack .../6-wireless-regdb_2026.05.30-0ubuntu1~24.04.1_all.deb ...
+Unpacking wireless-regdb (2026.05.30-0ubuntu1~24.04.1) ...
+Selecting previously unselected package linux-modules-7.0.0-38-generic.
+Preparing to unpack .../7-linux-modules-7.0.0-38-generic_7.0.0-38.38~24.04.4_amd64.deb ...
+Unpacking linux-modules-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Selecting previously unselected package linux-image-7.0.0-38-generic.
+Preparing to unpack .../8-linux-image-7.0.0-38-generic_7.0.0-38.38~24.04.4_amd64.deb ...
+Unpacking linux-image-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Setting up wireless-regdb (2026.05.30-0ubuntu1~24.04.1) ...
+Setting up libelf1t64:amd64 (0.190-1.1ubuntu0.1) ...
+Setting up libdw1t64:amd64 (0.190-1.1ubuntu0.1) ...
+Setting up linux-hwe-7.0-headers-7.0.0-38 (7.0.0-38.38~24.04.4) ...
+Setting up linux-headers-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+/etc/kernel/header_postinst.d/50-btusb-e3:
+btusb-e3: hook header_postinst.d for 7.0.0-38-generic starts
+btusb-e3: 7.0.0-38-generic: package 7.0.0-38.38~24.04.4, source linux-hwe-7.0 7.0.0-38.38~24.04.4
+btusb-e3: source tree for linux-hwe-7.0 7.0.0-38.38~24.04.4: cached (/var/cache/btusb-e3/tree/linux-hwe-7.0_7.0.0-38.38~24.04.4)
+btusb-e3: 7.0.0-38-generic: patch: patching file drivers/bluetooth/btusb.c | Hunk #1 succeeded at 298 (offset 1 line).
+btusb-e3: 7.0.0-38-generic: INSTALLED /lib/modules/7.0.0-38-generic/updates/btusb.ko  srcversion D1DEA96A0C95BFAB05CEE01  sha256 206fdc735b105bae1395dcf804cd70272a983a1abba650ac96d17cb94115c01e  CRCs 134 used, 0 mismatched; depmod -a 7.0.0-38-generic done; no initrd yet or no lsinitramfs: nothing to check
+btusb-e3: no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+btusb-e3: btusb-e3 status 2026-11-11 00:59:44
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+Setting up linux-image-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+I: /boot/vmlinuz.old is now a symlink to vmlinuz-7.0.0-38-generic
+I: /boot/initrd.img.old is now a symlink to initrd.img-7.0.0-38-generic
+I: /boot/vmlinuz is now a symlink to vmlinuz-7.0.0-38-generic
+I: /boot/initrd.img is now a symlink to initrd.img-7.0.0-38-generic
+Setting up linux-main-modules-v4l2loopback-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Setting up linux-main-modules-zfs-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Setting up linux-modules-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Processing triggers for linux-image-7.0.0-38-generic (7.0.0-38.38~24.04.4) ...
+/etc/kernel/postinst.d/50-btusb-e3:
+btusb-e3: hook postinst.d for 7.0.0-38-generic starts
+btusb-e3: 7.0.0-38-generic: already built by this tool for package 7.0.0-38.38~24.04.4: nothing to do
+btusb-e3: no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+btusb-e3: btusb-e3 status 2026-11-11 00:59:53
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+/etc/kernel/postinst.d/initramfs-tools:
+update-initramfs: Generating /boot/initrd.img-7.0.0-38-generic
+/etc/kernel/postinst.d/zz-update-grub:
+Sourcing file `/etc/default/grub'
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-7.0.0-38-generic
+Found initrd image: /boot/initrd.img-7.0.0-38-generic
+Adding boot menu entry for UEFI Firmware Settings ...
+done
+apt-get install exit code: 0
+--- state of 7.0.0-38-generic
+-rw-r--r-- 1 root root 1426344 Nov 11 00:59 btusb.ko
+modinfo -k 7.0.0-38-generic -n btusb: /lib/modules/7.0.0-38-generic/updates/btusb.ko
+stock   ABSENT 13d3:3503 x0  /lib/modules/7.0.0-38-generic/kernel/drivers/bluetooth/btusb.ko.zst
+control FOUND 0cf3:e300 x1  /lib/modules/7.0.0-38-generic/kernel/drivers/bluetooth/btusb.ko.zst
+updates FOUND 13d3:3503 x1  /lib/modules/7.0.0-38-generic/updates/btusb.ko
+vermagic:   7.0.0-38-generic SMP preempt mod_unload modversions 
+srcversion: D1DEA96A0C95BFAB05CEE01
+version:    0.8
+sha256:     206fdc735b105bae1395dcf804cd70272a983a1abba650ac96d17cb94115c01e
+stock srcversion: 2AD01BD272C7C1422018B14
+--- grub
+dropin: cat: /etc/default/grub.d/90-btusb-e3-pin.cfg: No such file or directory
+24:   set default="${next_entry}"
+29:   set default="0"
+152:menuentry 'Ubuntu' --class ubuntu --class gnu-linux --class gnu --class os
+169:submenu 'Advanced options for Ubuntu'
+1
+--- initrd of 7.0.0-38-generic
+-rw-r--r-- 1 root root 40992546 Nov 11 00:59 /boot/initrd.img-7.0.0-38-generic
+initrd btusb: /tmp/ird-7.0.0-38-generic/main/usr/lib/modules/7.0.0-38-generic/updates/btusb.ko
+-rw-r--r-- 1 root root 1426344 Nov 11 01:00 /tmp/ird-7.0.0-38-generic/cmp-btusb.ko
+initrd btusb srcversion: D1DEA96A0C95BFAB05CEE01  sha256 206fdc735b105bae
+updates btusb sha256 prefix: 206fdc735b105bae
+initrd   FOUND 13d3:3503 x1  /tmp/ird-7.0.0-38-generic/cmp-btusb.ko
+--- /var/log/btusb-e3.log
+2026-11-11 00:59:38 hook header_postinst.d for 7.0.0-38-generic starts
+2026-11-11 00:59:38 7.0.0-38-generic: package 7.0.0-38.38~24.04.4, source linux-hwe-7.0 7.0.0-38.38~24.04.4
+2026-11-11 00:59:38 source tree for linux-hwe-7.0 7.0.0-38.38~24.04.4: cached (/var/cache/btusb-e3/tree/linux-hwe-7.0_7.0.0-38.38~24.04.4)
+2026-11-11 00:59:38 7.0.0-38-generic: patch: patching file drivers/bluetooth/btusb.c | Hunk #1 succeeded at 298 (offset 1 line).
+2026-11-11 00:59:44 7.0.0-38-generic: INSTALLED /lib/modules/7.0.0-38-generic/updates/btusb.ko  srcversion D1DEA96A0C95BFAB05CEE01  sha256 206fdc735b105bae1395dcf804cd70272a983a1abba650ac96d17cb94115c01e  CRCs 134 used, 0 mismatched; depmod -a 7.0.0-38-generic done; no initrd yet or no lsinitramfs: nothing to check
+2026-11-11 00:59:44 no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+2026-11-11 00:59:44 btusb-e3 status 2026-11-11 00:59:44
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+2026-11-11 00:59:53 hook postinst.d for 7.0.0-38-generic starts
+2026-11-11 00:59:53 7.0.0-38-generic: already built by this tool for package 7.0.0-38.38~24.04.4: nothing to do
+2026-11-11 00:59:53 no pin needed: newest installed kernel 7.0.0-38-generic has the entry (updates)
+2026-11-11 00:59:53 btusb-e3 status 2026-11-11 00:59:53
+  running kernel: 7.0.0-30-generic
+  7.0.0-38-generic               entry YES via updates            record: ok-built
+  default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]
+--- STATUS
+btusb-e3 status 2026-11-11 00:59:53
+running kernel: 7.0.0-30-generic
+7.0.0-38-generic               entry YES via updates            record: ok-built
+default boot pin: none   [newest installed kernel 7.0.0-38-generic has the entry (updates)]

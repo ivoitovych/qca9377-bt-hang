@@ -1,0 +1,6 @@
+#!/bin/sh
+# Retry a failed or half-finished btusb E3 build (a kernel that is installed, lacks the 13d3:3503
+# entry and could not be built when it was installed). Does nothing when there is nothing to retry or
+# while dpkg is busy. Builds a file under /lib/modules/<krel>/updates and runs depmod for that kernel
+# only; loads and restarts nothing.
+exec /usr/local/sbin/btusb-e3 retry

@@ -1,0 +1,846 @@
+#!/usr/bin/python3 -I
+"""btusb-e3 - keep the QCA9377 (13d3:3503) Bluetooth entry in btusb for every installed kernel.
+
+Installed once as /usr/local/sbin/btusb-e3 and linked into the kernel hook directories as
+50-btusb-e3:  /etc/kernel/postinst.d  /etc/kernel/header_postinst.d  /etc/kernel/postrm.d
+(run-parts runs "50-" before "initramfs-tools" and "zz-update-grub").
+
+For a kernel <krel> (hook argument 1):
+  1. stock btusb of <krel> already has the entry (same byte test as scripts/btusb-has-device.py)
+     -> nothing is built; a module this tool placed earlier for <krel> is removed (the hook
+        retires itself).
+  2. otherwise: fetch the exact Ubuntu source of that kernel's package (signature chain: Release
+     file checked with the archive keyring, then SHA-256 of Sources, then of the files), take
+     btusb.c, apply the upstream entry dc16388d45ec (patch --fuzz=0), build against
+     /lib/modules/<krel>/build, verify vermagic, entry, CRCs and aliases, install into
+     /lib/modules/<krel>/updates/btusb.ko and run "depmod -a <krel>".
+  3. whatever happened: reconcile().  If the newest installed kernel has no working entry,
+     the default boot entry is pinned (a GRUB_DEFAULT drop-in) to the newest installed kernel
+     that has one.  The pin disappears by itself as soon as the newest kernel has the entry.
+
+Never loads, unloads, rebinds or restarts anything; never touches the running kernel's modules;
+as a hook it ALWAYS exits 0 (a non-zero exit would leave the kernel package half-configured and
+stop the initramfs and grub steps after it).
+
+  btusb-e3 status | check <krel> | run <krel> | retry | reconcile | unpin
+"""
+import contextlib
+import datetime
+import fcntl
+import gzip
+import hashlib
+import json
+import lzma
+import os
+import re
+import shutil
+import signal
+import struct
+import subprocess
+import sys
+import tarfile
+import traceback
+import urllib.request
+
+VID, PID = 0x13D3, 0x3503
+ENTRY_RE = re.compile(rb"USB_DEVICE\(0x13d3,\s*0x3503\)")
+
+# Paths; the environment overrides exist for the container tests only.
+STATE = os.environ.get("BTUSB_E3_STATE", "/var/lib/btusb-e3")
+CACHE = os.environ.get("BTUSB_E3_CACHE", "/var/cache/btusb-e3")
+LOGFILE = os.environ.get("BTUSB_E3_LOG", "/var/log/btusb-e3.log")
+PATCH = os.environ.get("BTUSB_E3_PATCH", "/usr/local/lib/btusb-e3/entry-dc16388d45ec.patch")
+DROPIN = "/etc/default/grub.d/90-btusb-e3-pin.cfg"
+DISABLED = "/etc/btusb-e3.disabled"
+MIRRORS = os.environ.get("BTUSB_E3_MIRRORS",
+                         "https://archive.ubuntu.com/ubuntu https://security.ubuntu.com/ubuntu").split()
+KEYRING = "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
+DEADLINE_S = int(os.environ.get("BTUSB_E3_DEADLINE", "1500"))
+
+
+class Fail(Exception):
+    """A step failed in a way worth recording; .kind is the state written."""
+
+    def __init__(self, msg, kind="failed"):
+        super().__init__(msg)
+        self.kind = kind
+
+
+# ---------------------------------------------------------------- logging
+
+def log(msg):
+    line = f"btusb-e3: {msg}"
+    print(line, flush=True)
+    with contextlib.suppress(Exception):
+        os.makedirs(os.path.dirname(LOGFILE), exist_ok=True)
+        with open(LOGFILE, "a") as f:
+            f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S ") + msg + "\n")
+    with contextlib.suppress(Exception):
+        if shutil.which("logger"):
+            subprocess.run(["logger", "-t", "btusb-e3", msg], timeout=10, check=False)
+
+
+def run(cmd, **kw):
+    kw.setdefault("capture_output", True)
+    kw.setdefault("text", True)
+    kw.setdefault("timeout", 900)
+    return subprocess.run(cmd, check=False, **kw)
+
+
+# ---------------------------------------------------------------- module facts
+
+def read_module_bytes(path):
+    if path.endswith(".zst"):
+        r = subprocess.run(["zstd", "-dc", path], capture_output=True, timeout=120)
+        if r.returncode:
+            raise Fail(f"zstd -dc {path} failed (is zstd installed?)")
+        return r.stdout
+    if path.endswith(".xz"):
+        with lzma.open(path) as f:
+            return f.read()
+    if path.endswith(".gz"):
+        with gzip.open(path) as f:
+            return f.read()
+    with open(path, "rb") as f:
+        return f.read()
+
+
+def has_entry(path, vid=VID, pid=PID):
+    """Same test as scripts/btusb-has-device.py: the usb_device_id prefix of a USB_DEVICE()
+    entry on little-endian: match_flags 0x0003, idVendor, idProduct."""
+    return read_module_bytes(path).count(struct.pack("<HHH", 0x0003, vid, pid))
+
+
+def modinfo(path, field):
+    r = run(["modinfo", "-F", field, path])
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def modinfo_all(path, field):
+    r = run(["modinfo", "-F", field, path])
+    return sorted(r.stdout.split("\n")) if r.returncode == 0 else None
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for blk in iter(lambda: f.read(1 << 20), b""):
+            h.update(blk)
+    return h.hexdigest()
+
+
+def stock_module(krel):
+    base = f"/lib/modules/{krel}/kernel/drivers/bluetooth/btusb.ko"
+    for ext in (".zst", ".xz", ".gz", ""):
+        if os.path.exists(base + ext):
+            return base + ext
+    return None
+
+
+def updates_module(krel):
+    p = f"/lib/modules/{krel}/updates/btusb.ko"
+    return p if os.path.exists(p) else None
+
+
+def crc_mismatches(ko, symvers):
+    """CRCs the module expects (modprobe --dump-modversions) against Module.symvers."""
+    new = {}
+    with open(symvers) as f:
+        for line in f:
+            p = line.rstrip("\n").split("\t")
+            if len(p) >= 2:
+                new[p[1]] = int(p[0], 16)
+    r = run(["modprobe", "--dump-modversions", ko])
+    if r.returncode:
+        raise Fail(f"cannot read versions of {ko}: {r.stderr.strip()}")
+    used = bad = 0
+    for line in r.stdout.splitlines():
+        p = line.split("\t")
+        if len(p) < 2 or p[1] not in new:
+            continue
+        used += 1
+        if int(p[0], 16) != new[p[1]]:
+            bad += 1
+    return used, bad
+
+
+def e3_state(krel):
+    """(ok, how) for the module a boot of <krel> would load; filesystem facts only."""
+    upd = updates_module(krel)
+    if upd:
+        try:
+            vm = modinfo(upd, "vermagic") or ""
+            if vm.startswith(krel + " ") and has_entry(upd):
+                return True, "updates"
+        except Fail:
+            pass
+        # a broken or foreign updates/ module shadows stock: stock is not what loads
+        return False, "updates-bad"
+    stock = stock_module(krel)
+    if stock is None:
+        return True, "no-btusb"
+    try:
+        return (True, "stock") if has_entry(stock) else (False, "stock-lacks-entry")
+    except Fail as e:
+        return False, f"unreadable-stock ({e})"
+
+
+# ---------------------------------------------------------------- state files
+
+def state_path(krel):
+    return os.path.join(STATE, "kernels", krel + ".json")
+
+
+def load_state(krel):
+    try:
+        with open(state_path(krel)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(krel, **kv):
+    st = load_state(krel)
+    st.update(kv)
+    st["time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    os.makedirs(os.path.dirname(state_path(krel)), exist_ok=True)
+    tmp = state_path(krel) + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(st, f, indent=1, sort_keys=True)
+    os.replace(tmp, state_path(krel))
+    return st
+
+
+def vkey(s):
+    return [(0, int(t)) if t.isdigit() else (1, t) for t in re.findall(r"\d+|[^\d]+", s)]
+
+
+def installed_kernels():
+    out = []
+    with contextlib.suppress(OSError):
+        for n in os.listdir("/boot"):
+            if n.startswith("vmlinuz-") and os.path.isdir("/lib/modules/" + n[8:]):
+                out.append(n[8:])
+    return sorted(out, key=vkey)
+
+
+def running_kernel():
+    return os.environ.get("BTUSB_E3_RUNNING") or os.uname().release
+
+
+# ---------------------------------------------------------------- source fetch
+
+class Deadline:
+    def __init__(self, seconds):
+        self.end = datetime.datetime.now().timestamp() + seconds
+
+    def left(self):
+        t = self.end - datetime.datetime.now().timestamp()
+        if t <= 0:
+            raise Fail("fetch deadline exceeded")
+        return t
+
+
+def http_get(url, dest, dl, expect_sha=None, expect_size=None):
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    part = dest + ".part"
+    h = hashlib.sha256()
+    n = 0
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "btusb-e3"})
+        with urllib.request.urlopen(req, timeout=min(60, dl.left())) as r, open(part, "wb") as f:
+            while True:
+                blk = r.read(1 << 20)
+                if not blk:
+                    break
+                dl.left()
+                h.update(blk)
+                n += len(blk)
+                f.write(blk)
+    except Fail:
+        raise
+    except Exception as e:  # urllib raises many kinds
+        with contextlib.suppress(OSError):
+            os.unlink(part)
+        raise Fail(f"download of {url} failed: {e}")
+    if expect_size is not None and n != expect_size:
+        os.unlink(part)
+        raise Fail(f"{url}: size {n}, expected {expect_size}")
+    if expect_sha is not None and h.hexdigest() != expect_sha:
+        os.unlink(part)
+        raise Fail(f"{url}: sha256 {h.hexdigest()}, expected {expect_sha}")
+    os.replace(part, dest)
+    return h.hexdigest()
+
+
+def release_codename():
+    with open("/etc/os-release") as f:
+        for line in f:
+            if line.startswith("VERSION_CODENAME="):
+                return line.split("=", 1)[1].strip().strip('"')
+    raise Fail("no VERSION_CODENAME in /etc/os-release")
+
+
+def find_source_files(pkg, version, dl, workdir):
+    """Signature chain: InRelease (gpgv, archive keyring) -> Sources.xz sha256 -> stanza of
+    pkg/version -> sha256 of its files.  Returns (mirror, directory, {name: (sha256, size)})."""
+    code = release_codename()
+    suites = [f"{code}-security", f"{code}-updates", code, f"{code}-proposed"]
+    errors = []
+    for mirror in MIRRORS:
+        for suite in suites:
+            base = f"{mirror}/dists/{suite}"
+            rel = os.path.join(workdir, f"InRelease-{suite}")
+            try:
+                http_get(f"{base}/InRelease", rel, dl)
+            except Fail as e:
+                errors.append(str(e))
+                continue
+            plain = rel + ".plain"
+            g = run(["gpgv", "--keyring", KEYRING, "--output", plain, rel])
+            if g.returncode:
+                errors.append(f"{base}/InRelease: signature check failed: {g.stderr.strip()[-200:]}")
+                continue
+            sha = size = None
+            in_sha = False
+            with open(plain) as f:
+                for line in f:
+                    if line.startswith("SHA256:"):
+                        in_sha = True
+                        continue
+                    if in_sha and line.startswith(" "):
+                        h, s, name = line.split()
+                        if name == "main/source/Sources.xz":
+                            sha, size = h, int(s)
+                            break
+                    elif in_sha:
+                        in_sha = False
+            if not sha:
+                errors.append(f"{base}: no main/source/Sources.xz in the Release file")
+                continue
+            src = os.path.join(workdir, f"Sources-{suite}.xz")
+            try:
+                http_get(f"{base}/main/source/Sources.xz", src, dl, sha, size)
+            except Fail as e:
+                errors.append(str(e))
+                continue
+            got = parse_sources(src, pkg, version)
+            if got:
+                return mirror, got[0], got[1]
+    raise Fail(f"source package {pkg} {version} not found: {len(errors)} of {len(MIRRORS) * len(suites)} "
+               f"archive index fetches failed" + (f" (last: {errors[-1][:140]})" if errors else "")
+               + "; if none failed, the archive no longer lists this source")
+
+
+def parse_sources(path, pkg, version):
+    stanza = []
+
+    def check(st):
+        d = {}
+        key = None
+        files = {}
+        for ln in st:
+            if ln[:1] in (" ", "\t"):
+                if key == "Checksums-Sha256":
+                    h, s, n = ln.split()
+                    files[n] = (h, int(s))
+            else:
+                key, _, val = ln.partition(":")
+                d[key] = val.strip()
+        if d.get("Package") == pkg and d.get("Version") == version and files:
+            return d["Directory"], files
+        return None
+
+    with lzma.open(path, "rt", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if line == "":
+                if stanza:
+                    r = check(stanza)
+                    if r:
+                        return r
+                stanza = []
+            else:
+                stanza.append(line)
+    return check(stanza) if stanza else None
+
+
+def extract_orig(orig, tree):
+    """Only drivers/bluetooth and include/net/bluetooth, first path component stripped."""
+    keep = ("drivers/bluetooth/", "include/net/bluetooth/")
+    with tarfile.open(orig, "r|gz") as tf:
+        for m in tf:
+            if not m.isreg():
+                continue
+            rel = m.name.split("/", 1)[1] if "/" in m.name else ""
+            if not rel.startswith(keep) or ".." in rel.split("/"):
+                continue
+            dst = os.path.join(tree, rel)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            with open(dst, "wb") as out:
+                shutil.copyfileobj(tf.extractfile(m), out)
+
+
+def filter_diff(diff_gz, out_path):
+    """Keep only the file sections of the Ubuntu diff that touch the two Bluetooth paths.
+    A section starts at a '--- ' line directly followed by '+++ ' and '@@'."""
+    keep = ("drivers/bluetooth/", "include/net/bluetooth/")
+    with gzip.open(diff_gz, "rb") as f:
+        lines = f.read().split(b"\n")
+    sections = []
+    cur = None
+    i = 0
+    n = len(lines)
+    while i < n:
+        if (lines[i].startswith(b"--- ") and i + 2 < n and lines[i + 1].startswith(b"+++ ")
+                and (lines[i + 2].startswith(b"@@") or lines[i + 2].startswith(b"Binary"))):
+            cur = [lines[i]]
+            sections.append((lines[i + 1], cur))
+        if cur is not None:
+            if cur[0] is not lines[i]:
+                cur.append(lines[i])
+        i += 1
+    kept = 0
+    with open(out_path, "wb") as out:
+        for plus, body in sections:
+            name = plus[4:].split(b"\t")[0].decode("utf-8", "replace")
+            rel = name.split("/", 1)[1] if "/" in name else name
+            if rel.startswith(keep):
+                out.write(b"\n".join(body).rstrip(b"\n") + b"\n")
+                kept += 1
+    return kept
+
+
+def prepare_tree(pkg, version, dl, workdir):
+    """Exact Bluetooth source of one Ubuntu kernel package; cached under CACHE/tree/."""
+    tree = os.path.join(CACHE, "tree", f"{pkg}_{version}")
+    if os.path.exists(os.path.join(tree, ".complete")):
+        log(f"source tree for {pkg} {version}: cached ({tree})")
+        return tree
+    mirror, directory, files = find_source_files(pkg, version, dl, workdir)
+    diff = [n for n in files if n.endswith(".diff.gz")]
+    orig = [n for n in files if ".orig.tar." in n]
+    if len(diff) != 1 or len(orig) != 1 or not orig[0].endswith(".gz"):
+        raise Fail(f"unexpected source layout (diff {diff}, orig {orig}): not a 1.0 diff.gz package")
+    got = {}
+    for n in (diff[0], orig[0]):
+        sha, size = files[n]
+        dest = os.path.join(CACHE, "dl", n)
+        if os.path.exists(dest) and sha256_file(dest) == sha:
+            log(f"{n}: cached, sha256 verified")
+        else:
+            log(f"{n}: downloading ({size} bytes) from {mirror}/{directory}")
+            http_get(f"{mirror}/{directory}/{n}", dest, dl, sha, size)
+        got[n] = (dest, sha)
+    if os.path.exists(tree):
+        shutil.rmtree(tree)
+    os.makedirs(tree)
+    extract_orig(got[orig[0]][0], tree)
+    filt = os.path.join(workdir, "bluetooth-only.diff")
+    kept = filter_diff(got[diff[0]][0], filt)
+    p = run(["patch", "-p1", "--fuzz=0", "--no-backup-if-mismatch", "-s", "-d", tree, "-i", filt])
+    if p.returncode:
+        shutil.rmtree(tree, ignore_errors=True)
+        raise Fail(f"the Ubuntu diff did not apply to the pristine source: {(p.stdout + p.stderr)[-400:]}")
+    with open(os.path.join(tree, ".complete"), "w") as f:
+        json.dump({"package": pkg, "version": version, "diff_sha256": got[diff[0]][1],
+                   "orig_sha256": got[orig[0]][1], "diff_sections_kept": kept,
+                   "verified_by": "signed InRelease -> Sources.xz -> file sha256"}, f)
+    log(f"source tree for {pkg} {version}: {kept} diff sections applied; "
+        f"diff sha256 {got[diff[0]][1][:16]}, orig sha256 {got[orig[0]][1][:16]}")
+    return tree
+
+
+# ---------------------------------------------------------------- build
+
+def source_of(krel):
+    for pkg in (f"linux-modules-{krel}", f"linux-image-unsigned-{krel}", f"linux-image-{krel}"):
+        r = run(["dpkg-query", "-W", "-f", "${source:Package}\t${source:Version}\t${Version}\n", pkg])
+        if r.returncode == 0 and r.stdout.strip():
+            s, v, b = r.stdout.strip().split("\t")
+            return s, v, b
+    raise Fail(f"no installed package linux-modules-{krel} to take the source version from")
+
+
+def build(krel):
+    kbuild = f"/lib/modules/{krel}/build"
+    if not (os.path.isfile(os.path.join(kbuild, "Makefile")) and
+            os.path.isfile(os.path.join(kbuild, "Module.symvers"))):
+        raise Fail(f"no kernel headers for {krel} ({kbuild} lacks Makefile/Module.symvers)", "pending-headers")
+    missing = [t for t in ("make", "gcc", "patch", "gpgv", "modinfo", "modprobe", "depmod") if not shutil.which(t)]
+    if missing:
+        raise Fail("build tools missing: " + " ".join(missing))
+    if not os.path.isfile(PATCH):
+        raise Fail(f"entry patch {PATCH} missing")
+    pkg, ver, binver = source_of(krel)
+    log(f"{krel}: package {binver}, source {pkg} {ver}")
+    dl = Deadline(DEADLINE_S)
+    work = os.path.join(STATE, "build", krel)
+    shutil.rmtree(work, ignore_errors=True)
+    os.makedirs(work)
+    tree = prepare_tree(pkg, ver, dl, work)
+
+    src = os.path.join(tree, "drivers/bluetooth/btusb.c")
+    if not os.path.isfile(src):
+        raise Fail("btusb.c not in the prepared tree")
+    bdir = os.path.join(work, "drivers/bluetooth")
+    os.makedirs(bdir)
+    shutil.copy(src, bdir)
+    with open(src, "rb") as f:
+        for inc in sorted(set(re.findall(rb'^#include\s+"([^"]+)"', f.read(), re.M))):
+            p = os.path.join(tree, "drivers/bluetooth", inc.decode())
+            if os.path.isfile(p):
+                shutil.copy(p, bdir)
+    with open(os.path.join(bdir, "btusb.c"), "rb") as f:
+        if ENTRY_RE.search(f.read()):
+            raise Fail("the source of this kernel already has the 13d3:3503 entry although its stock module "
+                       "lacks it: refusing to guess (inspect by hand)")
+    p = run(["patch", "-p1", "--fuzz=0", "--forward", "--no-backup-if-mismatch", "-d", work, "-i", PATCH])
+    log(f"{krel}: patch: " + " | ".join(x for x in (p.stdout + p.stderr).splitlines() if x.strip()))
+    if p.returncode:
+        raise Fail("the entry patch does not apply to this kernel's btusb.c (patch --fuzz=0 refused it)")
+    with open(os.path.join(bdir, "btusb.c"), "rb") as f:
+        if len(ENTRY_RE.findall(f.read())) != 1:
+            raise Fail("after patching, the 13d3:3503 entry is not present exactly once in btusb.c")
+    with open(os.path.join(bdir, "Makefile"), "w") as f:
+        f.write("obj-m := btusb.o\n")
+    mk = run(["make", "-C", kbuild, f"M={bdir}", f"KCFLAGS=-I{tree}/include", "modules"], timeout=1200)
+    with open(os.path.join(work, "make.log"), "w") as f:
+        f.write(mk.stdout + mk.stderr)
+    if mk.returncode:
+        tail = "\n".join((mk.stdout + mk.stderr).splitlines()[-6:])
+        raise Fail(f"make failed (rc {mk.returncode}); full log {work}/make.log; tail: {tail}")
+    ko = os.path.join(bdir, "btusb.ko")
+    if not os.path.isfile(ko):
+        raise Fail("make reported success but produced no btusb.ko")
+    return ko, ver, binver, kbuild
+
+
+def verify(ko, krel, kbuild):
+    vm = modinfo(ko, "vermagic") or ""
+    if not vm.startswith(krel + " "):
+        raise Fail(f"vermagic '{vm}' does not start with '{krel} '")
+    if modinfo(ko, "name") != "btusb":
+        raise Fail("built module is not named btusb")
+    if has_entry(ko) != 1:
+        raise Fail("built module does not carry the 13d3:3503 entry exactly once")
+    used, bad = crc_mismatches(ko, os.path.join(kbuild, "Module.symvers"))
+    if bad:
+        raise Fail(f"{bad} of {used} symbol CRCs differ from the kernel's Module.symvers")
+    stock = stock_module(krel)
+    if stock:
+        # Same dependencies and same modules.alias lines as stock: the entry sits in the quirks
+        # table, which is not exported to aliases; anything else differing is a red flag.
+        tmp = ko + ".stock.ko"
+        with open(tmp, "wb") as f:
+            f.write(read_module_bytes(stock))
+        try:
+            for fld in ("depends", "alias"):
+                a, b = modinfo_all(ko, fld), modinfo_all(tmp, fld)
+                if a != b:
+                    raise Fail(f"module '{fld}' differs from the stock module")
+        finally:
+            os.unlink(tmp)
+    return modinfo(ko, "srcversion"), used
+
+
+def install(ko, krel):
+    upd_dir = f"/lib/modules/{krel}/updates"
+    dst = os.path.join(upd_dir, "btusb.ko")
+    os.makedirs(upd_dir, exist_ok=True)
+    tmp = os.path.join(upd_dir, ".btusb.ko.new")
+    shutil.copyfile(ko, tmp)
+    os.chmod(tmp, 0o644)
+    had = os.path.exists(dst)
+    backup = dst + ".prev-e3" if had else None
+    if had:
+        shutil.copyfile(dst, backup)
+    os.replace(tmp, dst)
+    d = run(["depmod", "-a", krel])
+    r = run(["modinfo", "-k", krel, "-n", "btusb"])
+    if d.returncode or r.stdout.strip() != dst:
+        # roll back: previous updates module or none, depmod again
+        if backup:
+            os.replace(backup, dst)
+        else:
+            os.unlink(dst)
+        run(["depmod", "-a", krel])
+        raise Fail(f"depmod -a {krel} rc {d.returncode}; modinfo -k resolves btusb to "
+                   f"'{r.stdout.strip()}', not {dst}: rolled back")
+    if backup:
+        os.unlink(backup)
+    return dst
+
+
+def initramfs_note(krel, from_header_hook):
+    """The initramfs-tools hook runs AFTER 50-btusb-e3 in postinst.d, so an initrd built there sees
+    updates/.  If btusb is nevertheless already inside an existing initrd (header hook runs late),
+    rebuild that one initrd for this kernel only."""
+    initrd = f"/boot/initrd.img-{krel}"
+    if not os.path.exists(initrd) or not shutil.which("lsinitramfs"):
+        return "no initrd yet or no lsinitramfs: nothing to check"
+    r = run(["lsinitramfs", initrd])
+    if "btusb.ko" not in r.stdout:
+        return "initrd has no btusb.ko: updates/ + depmod is enough"
+    if not from_header_hook:
+        return "initrd already contains btusb.ko; initramfs-tools runs after this hook and will pick updates/"
+    u = run(["update-initramfs", "-u", "-k", krel], timeout=600)
+    return f"initrd contained btusb.ko: update-initramfs -u -k {krel} rc {u.returncode}"
+
+
+# ---------------------------------------------------------------- per-kernel step
+
+def process(krel, mode):
+    """Make sure <krel> will boot with the entry; records and returns True/False."""
+    if os.path.exists(DISABLED):
+        log(f"{krel}: {DISABLED} exists: hook disabled, nothing done")
+        return True
+    if krel == running_kernel():
+        ok, how = e3_state(krel)
+        log(f"{krel}: is the running kernel: its modules are not touched (entry via {how}: {'yes' if ok else 'NO'})")
+        return ok
+    st = load_state(krel)
+    stock = stock_module(krel)
+    try:
+        stock_has = bool(stock and has_entry(stock))
+    except Fail:
+        stock_has = False  # cannot tell: fall through to build, which is harmless
+    upd = updates_module(krel)
+    ours = bool(upd and st.get("sha256") and sha256_file(upd) == st["sha256"])
+    _, _, binver = (None, None, None)
+    with contextlib.suppress(Fail):
+        _, _, binver = source_of(krel)
+    if stock_has:
+        if ours:
+            os.unlink(upd)
+            with contextlib.suppress(OSError):
+                os.rmdir(os.path.dirname(upd))
+            run(["depmod", "-a", krel])
+            log(f"{krel}: stock btusb now has the entry; removed the module this tool placed, depmod -a {krel}")
+        elif upd and not e3_state(krel)[0]:
+            log(f"{krel}: WARNING stock btusb has the entry, but {upd} (not placed by this tool, left alone) "
+                f"shadows it and is not usable (vermagic or entry check fails); remove it by hand")
+        else:
+            log(f"{krel}: stock btusb has the entry: nothing to do")
+        save_state(krel, status="ok-stock", reason="stock btusb has 13d3:3503", sha256=None)
+        return True
+    if upd and not ours:
+        ok, how = e3_state(krel)
+        if ok:
+            log(f"{krel}: updates/btusb.ko is present, carries the entry, vermagic matches "
+                f"(not placed by this tool, left alone)")
+            save_state(krel, status="ok-manual", reason="updates/btusb.ko present with entry")
+            return True
+        log(f"{krel}: updates/btusb.ko exists but is not usable ({how}); building a new one")
+    if ours and st.get("package_version") == binver and e3_state(krel)[0]:
+        log(f"{krel}: already built by this tool for package {binver}: nothing to do")
+        save_state(krel, status="ok-built", reason="already built")
+        return True
+    # ---- build
+    attempts = int(st.get("attempts", 0)) + 1
+    try:
+        ko, srcver, binver, kbuild = build(krel)
+        srcversion, used = verify(ko, krel, kbuild)
+        dst = install(ko, krel)
+        # only the postinst.d run is followed by the initramfs-tools hook; header hook and retry are not
+        note = initramfs_note(krel, mode != "postinst.d")
+        sha = sha256_file(dst)
+        log(f"{krel}: INSTALLED {dst}  srcversion {srcversion}  sha256 {sha}  CRCs {used} used, 0 mismatched; "
+            f"depmod -a {krel} done; {note}")
+        save_state(krel, status="ok-built", reason="built from source", sha256=sha, srcversion=srcversion,
+                   package_version=binver, source_version=srcver, attempts=attempts)
+        return True
+    except Fail as e:
+        log(f"{krel}: FAILED ({e.kind}): {e}")
+        save_state(krel, status=e.kind, reason=str(e)[:500], attempts=attempts)
+        return False
+    except Exception as e:
+        log(f"{krel}: FAILED (unexpected {type(e).__name__}): {e}\n{traceback.format_exc()}")
+        save_state(krel, status="failed", reason=f"unexpected {type(e).__name__}: {e}"[:500], attempts=attempts)
+        return False
+
+
+# ---------------------------------------------------------------- default boot entry
+
+def grub_ids(krel):
+    """(submenu id or None, entry id) of the 'advanced' menu entry of <krel>, from grub.cfg."""
+    try:
+        with open("/boot/grub/grub.cfg", errors="replace") as f:
+            cfg = f.read()
+    except OSError:
+        return None
+    m = re.search(r"menuentry_id_option\s+'(gnulinux-%s-advanced-[^']+)'" % re.escape(krel), cfg)
+    if not m:
+        return None
+    sub = re.search(r"^submenu .*menuentry_id_option\s+'(gnulinux-advanced-[^']+)'", cfg, re.M)
+    return (sub.group(1) if sub else None), m.group(1)
+
+
+def want_pin():
+    ks = installed_kernels()
+    if not ks:
+        return None, "no installed kernels found"
+    states = {k: e3_state(k) for k in ks}
+    newest = ks[-1]
+    if states[newest][0]:
+        return None, f"newest installed kernel {newest} has the entry ({states[newest][1]})"
+    good = [k for k in ks if states[k][0] and states[k][1] != "no-btusb"]
+    if not good:
+        return None, f"newest installed kernel {newest} lacks the entry and no installed kernel has it: cannot pin"
+    return good[-1], f"newest installed kernel {newest} lacks the entry ({states[newest][1]})"
+
+
+def reconcile():
+    """Set or remove the GRUB_DEFAULT drop-in.  Returns True when it changed."""
+    target, why = want_pin()
+    cur = None
+    with contextlib.suppress(OSError):
+        with open(DROPIN) as f:
+            cur = f.read()
+    if target is None:
+        if cur is not None:
+            os.unlink(DROPIN)
+            log(f"pin removed: {why}")
+            return True
+        log(f"no pin needed: {why}")
+        return False
+    ids = grub_ids(target)
+    if not ids:
+        log(f"CANNOT PIN to {target}: no 'gnulinux-{target}-advanced-*' menu entry in /boot/grub/grub.cfg")
+        return False
+    path = f"{ids[0]}>{ids[1]}" if ids[0] else ids[1]
+    new = ("# Written by btusb-e3. The newest installed kernel has no working 13d3:3503 entry, so the default\n"
+           "# boot entry stays on the newest kernel that has one. Removed automatically once the newest\n"
+           "# kernel has it (btusb-e3 status; manual removal: btusb-e3 unpin).\n"
+           f'GRUB_DEFAULT="{path}"\n')
+    if cur == new:
+        log(f"pin unchanged: default boot entry {target} ({why})")
+        return False
+    os.makedirs(os.path.dirname(DROPIN), exist_ok=True)
+    with open(DROPIN + ".tmp", "w") as f:
+        f.write(new)
+    os.replace(DROPIN + ".tmp", DROPIN)
+    log(f"PINNED default boot entry to {target} via {DROPIN} ({why})")
+    return True
+
+
+def regenerate_grub():
+    if shutil.which("update-grub"):
+        r = run(["update-grub"], timeout=300)
+        log(f"update-grub rc {r.returncode}")
+    else:
+        log("no update-grub: grub.cfg not regenerated")
+
+
+def write_status():
+    lines = [f"btusb-e3 status {datetime.datetime.now():%Y-%m-%d %H:%M:%S}", f"running kernel: {running_kernel()}"]
+    for k in installed_kernels():
+        ok, how = e3_state(k)
+        st = load_state(k)
+        lines.append(f"{k:30s} entry {'YES' if ok else 'NO ':3s} via {how:18s} record: {st.get('status', '-')}"
+                     + (f" ({st.get('reason')})" if st.get("status", "").startswith(("fail", "pending")) else ""))
+    target, why = want_pin()
+    lines.append(f"default boot pin: {'-> ' + target if os.path.exists(DROPIN) else 'none'}   [{why}]")
+    text = "\n".join(lines) + "\n"
+    with contextlib.suppress(OSError):
+        os.makedirs(STATE, exist_ok=True)
+        with open(os.path.join(STATE, "STATUS"), "w") as f:
+            f.write(text)
+    return text
+
+
+# ---------------------------------------------------------------- entry points
+
+class Timeout(Exception):
+    pass
+
+
+def _alarm(*_):
+    raise Timeout()
+
+
+def main(argv):
+    prog = os.path.basename(argv[0])
+    hookdir = os.path.basename(os.path.dirname(argv[0]))
+    os.makedirs(STATE, exist_ok=True)
+    lock = open(os.path.join(STATE, "lock"), "w")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    signal.signal(signal.SIGALRM, _alarm)
+
+    if hookdir in ("postinst.d", "header_postinst.d", "postrm.d"):
+        krel = argv[1] if len(argv) > 1 else ""
+        rc_hint = 0
+        signal.alarm(DEADLINE_S + 900)
+        try:
+            log(f"hook {hookdir} for {krel or '?'} starts")
+            if hookdir != "postrm.d" and krel:
+                process(krel, hookdir)
+            changed = reconcile()
+            if changed and hookdir == "header_postinst.d":
+                regenerate_grub()  # no zz-update-grub follows the header hooks
+            log(write_status().rstrip().replace("\n", "\n  "))
+        except BaseException as e:  # a hook must never fail the package
+            log(f"hook error swallowed: {type(e).__name__}: {e}")
+        finally:
+            signal.alarm(0)
+        return rc_hint
+
+    cmd = argv[1] if len(argv) > 1 else "status"
+    if cmd == "status":
+        print(write_status(), end="")
+        return 0
+    if cmd == "check":  # read-only
+        k = argv[2]
+        ok, how = e3_state(k)
+        print(f"{k}: entry {'YES' if ok else 'NO'} via {how}")
+        return 0 if ok else 1
+    if cmd == "run":
+        ok = process(argv[2], "cli")
+        if reconcile():
+            regenerate_grub()
+        print(write_status(), end="")
+        return 0 if ok else 1
+    if cmd == "retry":
+        # cron.daily: retry kernels whose last attempt failed; skip while dpkg/apt hold their lock
+        try:
+            lf = open("/var/lib/dpkg/lock-frontend", "a")
+            fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print("dpkg is busy: retry skipped")
+            return 0
+        done = False
+        for k in installed_kernels():
+            if load_state(k).get("status") in ("failed", "pending-headers"):
+                log(f"retry: {k}")
+                process(k, "cli")
+                done = True
+        if reconcile():
+            regenerate_grub()
+        if done:
+            log(write_status().rstrip().replace("\n", "\n  "))
+        return 0
+    if cmd == "reconcile":
+        if reconcile():
+            regenerate_grub()
+        print(write_status(), end="")
+        return 0
+    if cmd == "unpin":
+        if os.path.exists(DROPIN):
+            os.unlink(DROPIN)
+            log("pin removed by hand")
+            regenerate_grub()
+        else:
+            print("no pin present")
+        return 0
+    print(__doc__)
+    return 2
+
+
+if __name__ == "__main__":
+    if os.path.basename(os.path.dirname(sys.argv[0])) in ("postinst.d", "header_postinst.d", "postrm.d"):
+        try:
+            main(sys.argv)
+        except BaseException as exc:  # includes SystemExit and a failure to create the state directory
+            print(f"btusb-e3: hook error swallowed: {type(exc).__name__}: {exc}")
+        sys.exit(0)  # a hook never fails the kernel package
+    sys.exit(main(sys.argv))

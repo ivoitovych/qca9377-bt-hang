@@ -1,0 +1,150 @@
+start 2026-11-11 01:34:13 kernel base scenario msbc-two-links-first run 6 cpus 4
+4b510d9c1aa8b8508ac7419987c73f2be6d1b1fb8b0b64be98f7a2b3844f0706  /root/exp/agent-work/laptop-btusb-modules-20261111/img/bzImage-base
+4e57ae2e96869f5dbff5b7c40e6ef47befc0e608226525f55d90449e497dde95  /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba52c4
+input_len: 0x0000000001015831
+output: 0x0000000001000000
+output_len: 0x000000000380a12c
+kernel_total_size: 0x0000000004bfd000
+needed_size: 0x0000000004c00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x000000000308f2d0).
+Linux version 7.3.0-gdef8a484b888 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Wed Nov 11 01:31:52 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/laptop-btusb-modules-20261111/scripts/usbip-bt-emu.py msbc-two-links-first
+Changing into directory /root/exp
+New process 59 created
+random: crng init done
+  0.004 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.367 SET_CONFIGURATION 1
+  0.372 HCI cmd 0x0c03 
+  0.373 HCI cmd 0x1003 
+  0.374 HCI cmd 0x1001 
+  0.374 HCI cmd 0x1009 
+  0.375 HCI cmd 0x1002 
+  0.376 HCI cmd 0x0c45 01
+  0.376 HCI command 0x0c45 (01): generic Command Complete
+  0.377 HCI cmd 0x1005 
+  0.377 HCI cmd 0x0c23 
+  0.378 HCI cmd 0x0c14 
+  0.380 HCI cmd 0x0c38 
+  0.381 HCI cmd 0x0c39 
+  0.381 HCI cmd 0x0c16 007d
+  0.381 HCI command 0x0c16 (007d): generic Command Complete
+  0.382 HCI cmd 0x0c01 fffffbff03180000
+  0.382 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.424 hci0 present; btusb bound
+  0.426 hci0 already up
+  0.936 scenario raised ConnectionRefusedError(111, 'Connection refused')
+  0.936 HCI cmd 0x0405 01443322110018cc0200000001
+[    1.034510] Bluetooth: HCI UART protocol Marvell registered
+[    1.034615] Bluetooth: HCI UART protocol AML registered
+[    1.034711] usbcore: registered new interface driver bcm203x
+[    1.034851] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+[    1.034922] usbcore: registered new interface driver bpa10x
+[    1.035028] usbcore: registered new interface driver bfusb
+[    1.035134] usbcore: registered new interface driver btusb
+[    1.035336] usbcore: registered new interface driver ath3k
+[    1.040172] hid: raw HID events driver (C) Jiri Kosina
+[    1.041028] usbcore: registered new interface driver usbhid
+[    1.041037] usbhid: USB HID core driver
+[    1.041337] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    1.043060] NET: Registered PF_PACKET protocol family
+[    1.043244] Bluetooth: RFCOMM socket layer initialized
+[    1.043278] Bluetooth: RFCOMM ver 1.11
+[    1.043296] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    1.043356] Bluetooth: BNEP socket layer initialized
+[    1.043360] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    1.043370] Bluetooth: HIDP socket layer initialized
+[    1.043459] 9pnet: Installing 9P2000 support
+[    1.047564] IPI shorthand broadcast: enabled
+[    1.076433] sched_clock: Marking stable (1073222772, 1341464)->(1071477394, 3086842)
+[    1.456970] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[    1.457399] 9p: Bad value for 'source'
+[    1.460564] VFS: Mounted root (9p filesystem) readonly on device 0:18.
+[    1.460757] VFS: Pivoted into new rootfs
+[    1.462242] Freeing unused kernel image (initmem) memory: 4096K
+[    1.462248] Write protecting the kernel read-only data: 38912k
+[    1.463689] Freeing unused kernel image (text/rodata gap) memory: 1548K
+[    1.464292] Freeing unused kernel image (rodata/data gap) memory: 1348K
+[    1.526901] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.526938] Run /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+[    1.526942]   with arguments:
+[    1.526946]     /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+[    1.526950]     -I
+[    1.526953]     msbc-two-links-first'
+[    1.526956]   with environment:
+[    1.526958]     HOME=/
+[    1.526961]     TERM=linux
+[    1.526964]     TESTHOME=/root/exp
+[    1.526967]     TESTDBUS=0
+[    1.526970]     TESTDAEMON=0
+[    1.526972]     TESTDBUSSESSION=0
+[    1.526975]     XDG_RUNTIME_DIR=/run/user/0
+[    1.526978]     TESTMONITOR=0
+[    1.526980]     TESTEMULATOR=0
+[    1.526983]     TESTDEVS=0
+[    1.526985]     TESTAUTO=0
+[    1.526988]     TESTAUDIO=''
+[    1.526991]     TESTARGS='python3
+[    2.878802] random: crng init done
+[    3.682294] vhci_hcd vhci_hcd.0: pdev(0) rhport(0) sockfd(3)
+[    3.682316] vhci_hcd vhci_hcd.0: devid(65538) speed(2) speed_str(full-speed)
+[    3.682450] vhci_hcd vhci_hcd.0: Device attached
+[    3.851744] vhci_hcd vhci_hcd.0: vhci_device speed not set
+[    3.907676] usb 1-1: new full-speed USB device number 2 using vhci_hcd
+[    3.971907] vhci_hcd vhci_hcd.0: vhci_device speed not set
+[    4.027712] usb 1-1: SetAddress Request (2) to port 0
+[    4.044752] usb 1-1: New USB device found: idVendor=1234, idProduct=5678, bcdDevice=1.00
+[    4.045199] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Process 59 exited with status 3
+exit=0 end 2026-11-11 01:34:19
