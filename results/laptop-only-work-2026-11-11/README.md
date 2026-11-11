@@ -39,6 +39,14 @@ built modules and kernel trees stay outside the repository, in
 - The hook's fallback was checked up to the generated GRUB configuration, not a real boot.
 - The recordings have gaps: no raw capture for 10-31; USB traffic only from 11-04.
 
+## BT-16 log-line module
+
+`tmp/bt16-diag/e3-plus-setup-line.patch` (git-ignored directory; not installed): E3 plus one
+`bt_dev_info` line with the ROM version, patch version and status byte, built against
+`7.0.0-42-generic` with `scripts/build-btusb-module.sh`. srcversion `1297C8AE1A07379B64DFEC6`,
+SHA-256 `6204f47e30c99ad7d3bc0230136638f282278d824a27ea16dfa04d670418f5e5`,
+`btusb-has-device.py`: `FOUND 13d3:3503`.
+
 ## Left out of this copy
 
 The publishing scan refuses text shaped like an address, so these stay only in `/root/exp/agent-work/laptop-*-20261111/`: `lsinitramfs-42.txt`, `make-ci-mails.py`, the hook tests' `lib.sh` and four of its logs (`s2`, `s4`, `s5`, `s9`). `patterns_final.tsv` here omits the apport hook's own lines, so it differs from the hash in `SHA256SUMS`.
