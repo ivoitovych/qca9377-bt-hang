@@ -167,6 +167,11 @@ hours (`R2-13`).
 > follow-up list is the work queue.
 >
 > - **11-08 to 11-12, newest first:**
+>   - **11-12 18:03, BT-17 (new):**
+>     - Patch loaded, 162 s idle, no link. The first command at login (`0x0c24`) got no reply, the USB resets failed, and the controller left the bus.
+>     - The 18:07 reboot left it off; the boot since 18:08 has no controller. Recovery: power-off.
+>     - `7.0.0-43` was installed by the updater at 21:48. Its stock btusb carries the entry (`FOUND`, control `FOUND`), so E3 is not needed there.
+>     - Evidence: `results/incident-2026-11-12-1803/`.
 >   - **11-12, the registers reconciled** against each other and against upstream (read live):
 >     `reviews/2026-11-12T1508Z-upstream-contributions-status.md`. Accepted: 1 kernel fix, 11 BlueZ
 >     commits (all in BlueZ 5.88), 2 stable requests (every line released). Waiting: CO-02 (no

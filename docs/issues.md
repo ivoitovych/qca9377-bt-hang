@@ -937,6 +937,45 @@ list, on a recurrence, read-only). **Reportable:** not yet; two occurrences (11-
 
 ---
 
+## BT-17 — With the patch loaded, an idle controller ignored its next command, was reset off the USB bus, and stayed off until a power-off
+
+**Status 2026-11-12: observed once (boot `08956069`, 2026-11-12 18:03); cause not established.**
+Evidence, with every command and its output: [`results/incident-2026-11-12-1803/`](../results/incident-2026-11-12-1803/README.md).
+
+- **What:** boot `08956069`, `7.0.0-42` with E3, the first boot after a 7.5 min power-off.
+  - Start-up was normal (`QCA: patch rome 0x302 build 0x3e8`, no start-up disconnect), so this is **not BT-16**.
+  - The controller then sat idle for 161.98 s, with no ACL or SCO link.
+  - At the operator's login (18:03:08) bluetoothd removed the greeter's profile UUIDs. The kernel's `Write Class of Device` (`0x0c24`) got **no event of any kind** (capture: last event #120 at 18:00:26.845).
+  - `command 0x0c24 tx timeout` at 18:03:10.87.
+  - USB resets from 18:03:14.12 failed with `-71`, and the device disconnected at 18:03:16.18. Re-enumeration failed, ending in `unable to enumerate USB device` (18:03:19).
+  - The 18:07 **reboot** did not bring it back: in boot `b314ca88` the device is not on the bus (`error -71` at enumeration), while the card's Wi-Fi works.
+- **Like BT-1 in shape, unlike it in conditions.** As in BT-1, the first command after a change got no reply, the controller left the bus after a reset, and only a power-off recovers it (BRIEF §0). Unlike BT-1:
+  - the patch was loaded (BT-1's cause was the ROM firmware, fixed by `dc16388d45ec`);
+  - no SCO stream existed;
+  - the change was 162 s of idle.
+
+  It is the first timeout in nine E3 trials and 74 E1/E3 links (`evidence/trials/results.tsv`, E3 #9). So the device-table fix does not cover it, and it gets its own row.
+- **The reset path (source, Ubuntu `7.0.0-42`):**
+  - `hci_cmd_timeout()` calls `hdev->reset` on the **first** timeout (`net/bluetooth/hci_core.c:1477`).
+  - `BTUSB_QCA_ROME` sets `hdev->reset = btusb_qca_reset` (`drivers/bluetooth/btusb.c:4406`).
+  - Without a reset GPIO that becomes `btusb_reset()`: `usb_queue_reset_device()` (`btusb.c:1034-1051`).
+  - `Failed usb_autopm_get_interface: -16` at 18:03:16.18 shows the path was entered.
+  - **Not established:** what issued the first USB reset at 18:03:14.12. `Resetting usb device.` is not in the journal.
+  - If it was the kernel's own reset, the same entry that fixed BT-1 also makes the kernel apply, automatically, the action that drove a wedged controller here off the bus in two controlled tests (`EX-023`, the 2026-08-15 boot). That is an inference to test, not a finding.
+- **Candidates (not traced, not rows):**
+  1. Whether runtime autosuspend was involved. `CONFIG_BT_HCIBTUSB_AUTOSUSPEND=y` and no override is installed (`/etc/modprobe.d/btusb-qca9377.conf.disabled`). The 162 s idle and the first command after it fit a failed resume, but btusb debug output was off, so no record shows whether the device was suspended. The earlier "autosuspend mitigation" claim for BT-1 is retracted (BRIEF §5); that retraction is about ROM firmware and does not decide this case.
+  2. The reset-on-first-timeout policy for ROME controllers without a reset GPIO.
+  3. The kernel's mgmt status `0x05` "Authentication Failed" for a command that timed out (`-ETIMEDOUT` mapping; check in source).
+  4. *This project's trial tool:* `usb_lost` counts every USB disconnect on the machine (E3 #6: 82, all on ports `3-2`/`4-2`, none on `3-3`).
+- **Falsifiers / next:**
+  - Recurrence on `7.0.0-43` (its stock btusb carries the entry; E3 is not used there).
+  - Whether a recurrence follows an idle period again.
+  - Whether `power/runtime_status` of the controller's USB device reads `suspended` during idle (a sysfs read, safe).
+  - Whether the first reset carries `Resetting usb device.` with btusb debug on.
+- **Recovery:** full power-off. **Reportable:** not yet; one occurrence.
+
+---
+
 ## U1–U31 — userspace problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
