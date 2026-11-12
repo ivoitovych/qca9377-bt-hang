@@ -973,6 +973,11 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - Whether `power/runtime_status` of the controller's USB device reads `suspended` during idle (a sysfs read, safe).
   - Whether the first reset carries `Resetting usb device.` with btusb debug on.
 - **Recovery:** full power-off. **Reportable:** not yet; one occurrence.
+- **2026-11-12 22:57, after the power-off** (boot `46cc4812`, `7.0.0-43`, stock btusb, off ~8.4 min since 22:46:44):
+  - The controller is back: `QCA: patch rome 0x302 build 0x3e8`, `hci0`, bluetoothd `Number of controllers: 1`.
+  - The loaded btusb srcversion is `4B2BD2C14BA4918C28E7208`, equal to `modinfo -F srcversion` of `-43`'s stock `btusb.ko.zst`, and there is no out-of-tree taint line.
+  - **The idle controller is runtime-suspended.** `/sys/bus/usb/devices/3-3/power/`: `control auto`, `autosuspend_delay_ms 2000`, `runtime_status suspended`, `runtime_suspended_time 145431` of ~158,500 ms.
+  - So every idle period suspends it, and the first command after one resumes it. That fits candidate 1 and is not proof: the same was presumably true on every earlier E3 boot (same Kconfig, no override). Next: whether a recurrence again follows a suspend, which needs btusb debug or a runtime-PM trace.
 
 ---
 
