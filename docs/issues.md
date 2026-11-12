@@ -940,7 +940,7 @@ list, on a recurrence, read-only). **Reportable:** not yet; two occurrences (11-
 ## BT-17 — With the patch loaded, an idle controller ignored its next command, was reset off the USB bus, and stayed off until a power-off
 
 **Status 2026-11-12: observed once (boot `08956069`, 2026-11-12 18:03); cause not established.**
-Evidence, with every command and its output: [`results/incident-2026-11-12-1803/`](../results/incident-2026-11-12-1803/README.md).
+Evidence, with every command and its output: [`results/incident-2026-11-12-1803/`](../results/incident-2026-11-12-1803/README.md). That directory has eight focused log excerpts (kernel, userspace, HCI capture decode; addresses replaced). The full journals of the three boots (text and export format) and every capture are kept locally in the git-ignored `archive/incidents/20261112-bt17-controller-off-bus/` (with `SHA256SUMS`).
 
 - **What:** boot `08956069`, `7.0.0-42` with E3, the first boot after a 7.5 min power-off.
   - Start-up was normal (`QCA: patch rome 0x302 build 0x3e8`, no start-up disconnect), so this is **not BT-16**.

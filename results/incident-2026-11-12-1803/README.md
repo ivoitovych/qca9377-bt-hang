@@ -117,6 +117,30 @@ A warm reboot does not remove power from the controller. On this machine only a 
 - **Trial tool `usb_lost` counts every USB disconnect, not the controller's.** E3 #6 (boot `e68d6d90`, 11-11) has `usb_lost 82`. `journalctl -b -4 _TRANSPORT=kernel -g "usb 3-3|USB disconnect"` shows only ports `3-2` and `4-2` (another device plugged and unplugged), and none on `3-3`.
 - **The raw-capture archive timer is not running.** `systemctl list-timers --all bt-trace-archive.timer` gives `0 timers listed`. The four capture files of boots `08956069` and `b314ca88` were therefore copied by hand (with `cp -p`) to `tmp/incident-20261112-1803/captures/`. That location is local only: the captures carry addresses.
 
+## Committed excerpts (this directory)
+
+Each file starts with the exact command that produced it. Addresses are replaced by `<addr>` and dynamic-debug noise is dropped. The files were written by `tools/excerpts.py`.
+
+| File | What |
+|---|---|
+| `excerpt-boot-1-kernel-controller.txt` | Failing boot, whole kernel log for the controller, USB port 3-3, xhci, rfkill |
+| `excerpt-boot-1-kernel-last-good-window.txt` | 18:00:26.84–.85, the last answered commands |
+| `excerpt-boot-1-kernel-failure-window.txt` | 18:03:08.8–18:03:20, the timeout, resets and disconnect, with debug lines |
+| `excerpt-boot-1-userspace-trigger.txt` | The login, bluetoothd's mgmt commands and failures, the adapter's removal |
+| `excerpt-boot-1-hci-capture-decode.txt` | `btmon` decode from frame #119 to `Delete Index` |
+| `excerpt-boot-2-end.txt`, `excerpt-boot-1-end.txt` | How the two earlier boots ended (power-off 17:52, reboot 18:07) |
+| `excerpt-boot0-kernel-no-controller.txt` | Current boot: port 3-3 does not enumerate; Wi-Fi up |
+
+## Full logs (local, git-ignored)
+
+Path: `archive/incidents/20261112-bt17-controller-off-bus/`, about 8 MB, written by `tools/collect.sh` (2026-11-12 22:44), with `SHA256SUMS`. It holds:
+
+- `journal/`: for boots `7e87eae0` (before), `08956069` (failing) and `b314ca88` (current), the whole journal, the kernel-only log and the bluetooth unit log (`short-precise`), plus `-o export` (`.zst`, every field, for later filtering).
+- `captures/`: every HCI capture of both capture paths since 11-12 15:48 (`.zst`).
+- `machine/`: lsusb, the sysfs state of USB port 3 and of rfkill, kernels and packages, `apt-history.log`, the disabled btusb/udev configs, the unit file, timers, the btusb Kconfig and `results.tsv`.
+
+It is not committed: it carries addresses and full session logs.
+
 ## Not done (needs the operator)
 
 - Recovery by a full power-off.

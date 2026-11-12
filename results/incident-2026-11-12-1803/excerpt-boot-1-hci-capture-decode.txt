@@ -1,0 +1,174 @@
+# command: btmon -T --columns=200 -r /root/exp/qca9377-bt-hang/tmp/incident-20261112-1803/captures/hci-20261112-180017.btsnoop
+# filter: frames #119 to Delete Index
+# Bluetooth addresses replaced by <addr>
+< HCI Command: Write Extended Inquiry Response (0x03|0x0052) plen 241                                                                                            #119 [hci0] 2026-11-12 18:00:26.842657
+        FEC: Not required (0x00)
+        Name (complete): n
+        TX power: 6 dBm
+        Device ID: USB Implementer's Forum assigned (0x0002)
+          Vendor: Linux Foundation (0x1d6b)
+          Product: 0x0246
+          Version: 5.4.8 (0x0548)
+        16-bit Service UUIDs (complete): 9 entries
+          Generic Access Profile (0x1800)
+          Generic Attribute Profile (0x1801)
+          Device Information (0x180a)
+          A/V Remote Control (0x110e)
+          A/V Remote Control Target (0x110c)
+          Handsfree Audio Gateway (0x111f)
+          Handsfree (0x111e)
+          Audio Source (0x110a)
+          Audio Sink (0x110b)
+> HCI Event: Command Complete (0x0e) plen 4                                                                                                                      #120 [hci0] 2026-11-12 18:00:26.845565
+      Write Extended Inquiry Response (0x03|0x0052) ncmd 1
+        Status: Success (0x00)
+@ MGMT Event: Command Complete (0x0001) plen 6                                                                                                               {0x0001} [hci0] 2026-11-12 18:00:26.845592
+      Add UUID (0x0010) plen 3
+        Status: Success (0x00)
+        Class: 0x6c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+          Telephony (Cordless telephony, Modem, Headset)
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/ldac                                                                                        2026-11-12 18:03:08.819688
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/aptx_hd                                                                                       2026-11-12 18:03:08.820180
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx_hd                                                                                     2026-11-12 18:03:08.820536
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/aptx                                                                                          2026-11-12 18:03:08.820842
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx                                                                                        2026-11-12 18:03:08.821157
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/sbc                                                                                           2026-11-12 18:03:08.821471
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/sbc                                                                                         2026-11-12 18:03:08.821772
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/sbc_xq                                                                                        2026-11-12 18:03:08.822154
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/sbc_xq                                                                                      2026-11-12 18:03:08.822655
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx_ll_1                                                                                   2026-11-12 18:03:08.822927
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx_ll_0                                                                                   2026-11-12 18:03:08.823167
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1                                                                            2026-11-12 18:03:08.823432
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0                                                                            2026-11-12 18:03:08.823705
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/faststream                                                                                  2026-11-12 18:03:08.824160
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/faststream_duplex                                                                           2026-11-12 18:03:08.824509
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/opus_05                                                                                       2026-11-12 18:03:08.824787
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/opus_05                                                                                     2026-11-12 18:03:08.825028
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSink/opus_05_duplex                                                                                2026-11-12 18:03:08.825571
+= bluetoothd: Endpoint unregistered: sender=:1.38 path=/MediaEndpoint/A2DPSource/opus_05_duplex                                                                              2026-11-12 18:03:08.826166
+@ MGMT Command: Remove UUID (0x0011) plen 16                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:08.826934
+        UUID: Handsfree Audio Gateway
+< HCI Command: Write Class of Device (0x03|0x0024) plen 3                                                                                                        #121 [hci0] 2026-11-12 18:03:08.827012
+        Class: 0x2c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/ldac                                                                                          2026-11-12 18:03:08.924538
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/aptx_hd                                                                                         2026-11-12 18:03:08.924741
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx_hd                                                                                       2026-11-12 18:03:08.924874
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/aptx                                                                                            2026-11-12 18:03:08.925010
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx                                                                                          2026-11-12 18:03:08.925141
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/sbc                                                                                             2026-11-12 18:03:08.925264
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/sbc                                                                                           2026-11-12 18:03:08.925389
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/sbc_xq                                                                                          2026-11-12 18:03:08.925518
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/sbc_xq                                                                                        2026-11-12 18:03:08.925610
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx_ll_1                                                                                     2026-11-12 18:03:08.925710
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx_ll_0                                                                                     2026-11-12 18:03:08.925804
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1                                                                              2026-11-12 18:03:08.925883
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0                                                                              2026-11-12 18:03:08.925974
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/faststream                                                                                    2026-11-12 18:03:08.926062
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/faststream_duplex                                                                             2026-11-12 18:03:08.926159
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/opus_05                                                                                         2026-11-12 18:03:08.926243
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/opus_05                                                                                       2026-11-12 18:03:08.926388
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSink/opus_05_duplex                                                                                  2026-11-12 18:03:08.926508
+= bluetoothd: Endpoint registered: sender=:1.85 path=/MediaEndpoint/A2DPSource/opus_05_duplex                                                                                2026-11-12 18:03:08.926597
+@ MGMT Event: Command Complete (0x0001) plen 6                                                                                                               {0x0001} [hci0] 2026-11-12 18:03:10.868450
+      Remove UUID (0x0011) plen 3
+        Status: Authentication Failed (0x05)
+        Class: 0x6c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+          Telephony (Cordless telephony, Modem, Headset)
+= bluetoothd: Failed to remove UUID: Authentication Failed (0x05)                                                                                                     [hci0] 2026-11-12 18:03:10.868522
+@ MGMT Command: Remove UUID (0x0011) plen 16                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:10.868546
+        UUID: Handsfree
+@ MGMT Event: Command Complete (0x0001) plen 6                                                                                                               {0x0001} [hci0] 2026-11-12 18:03:12.916872
+      Remove UUID (0x0011) plen 3
+        Status: Authentication Failed (0x05)
+        Class: 0x6c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+          Telephony (Cordless telephony, Modem, Headset)
+= bluetoothd: Failed to remove UUID: Authentication Failed (0x05)                                                                                                     [hci0] 2026-11-12 18:03:12.916972
+@ MGMT Command: Remove UUID (0x0011) plen 16                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:12.917026
+        UUID: Audio Sink
+@ MGMT Event: Command Complete (0x0001) plen 6                                                                                                               {0x0001} [hci0] 2026-11-12 18:03:14.964424
+      Remove UUID (0x0011) plen 3
+        Status: Authentication Failed (0x05)
+        Class: 0x6c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+          Telephony (Cordless telephony, Modem, Headset)
+= bluetoothd: Failed to remove UUID: Authentication Failed (0x05)                                                                                                     [hci0] 2026-11-12 18:03:14.964474
+@ MGMT Command: Remove UUID (0x0011) plen 16                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:14.964495
+        UUID: Audio Source
+< HCI Command: Write Class of Device (0x03|0x0024) plen 3                                                                                                        #122 [hci0] 2026-11-12 18:03:16.180812
+        Class: 0x0c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+@ MGMT Event: Command Complete (0x0001) plen 6                                                                                                               {0x0001} [hci0] 2026-11-12 18:03:17.012480
+      Remove UUID (0x0011) plen 3
+        Status: Authentication Failed (0x05)
+        Class: 0x6c010c
+          Major class: Computer (desktop, notebook, PDA, organizers)
+          Minor class: Laptop
+          Rendering (Printing, Speaker)
+          Capturing (Scanner, Microphone)
+          Audio (Speaker, Microphone, Headset)
+          Telephony (Cordless telephony, Modem, Headset)
+@ MGMT Command: Add UUID (0x0010) plen 17                                                                                                                    {0x0001} [hci0] 2026-11-12 18:03:17.012608
+        UUID: Handsfree Audio Gateway
+        Service class: 0x40
+@ MGMT Event: Command Status (0x0002) plen 3                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:17.012622
+      Add UUID (0x0010)
+        Status: Invalid Index (0x11)
+@ MGMT Command: Add UUID (0x0010) plen 17                                                                                                                    {0x0001} [hci0] 2026-11-12 18:03:17.012688
+        UUID: Handsfree
+        Service class: 0x20
+@ MGMT Event: Command Status (0x0002) plen 3                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:17.012696
+      Add UUID (0x0010)
+        Status: Invalid Index (0x11)
+@ MGMT Command: Add UUID (0x0010) plen 17                                                                                                                    {0x0001} [hci0] 2026-11-12 18:03:17.012784
+        UUID: Audio Source
+        Service class: 0x08
+@ MGMT Event: Command Status (0x0002) plen 3                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:17.012790
+      Add UUID (0x0010)
+        Status: Invalid Index (0x11)
+@ MGMT Command: Add UUID (0x0010) plen 17                                                                                                                    {0x0001} [hci0] 2026-11-12 18:03:17.012886
+        UUID: Audio Sink
+        Service class: 0x04
+@ MGMT Event: Command Status (0x0002) plen 3                                                                                                                 {0x0001} [hci0] 2026-11-12 18:03:17.012893
+      Add UUID (0x0010)
+        Status: Invalid Index (0x11)
+@ MGMT Event: Class Of Device Changed (0x0007) plen 3                                                                                                        {0x0001} [hci0] 2026-11-12 18:03:17.021409
+        Class: 0x000000
+          Major class: Miscellaneous
+          Minor class: 0x00
+@ MGMT Event: New Settings (0x0006) plen 4                                                                                                                   {0x0001} [hci0] 2026-11-12 18:03:17.021434
+        Current settings: 0x00400ac0
+          Secure Simple Pairing
+          BR/EDR
+          Low Energy
+          Secure Connections
+          Unknown settings (0x00400000)
+= Close Index: <addr>                                                                                                                                      [hci0] 2026-11-12 18:03:17.021440
+@ MGMT Event: Index Removed (0x0005) plen 0                                                                                                                  {0x0001} [hci0] 2026-11-12 18:03:17.021445
+= Delete Index: <addr>                                                                                                                                     [hci0] 2026-11-12 18:03:17.021450

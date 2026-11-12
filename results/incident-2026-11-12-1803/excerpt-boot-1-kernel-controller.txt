@@ -1,0 +1,88 @@
+# command: journalctl -b -1 _TRANSPORT=kernel --no-pager -o short-precise
+# filter: lines matching 13d3|btusb|Bluetooth:|usb 3-3|usb3-port3|xhci_hcd|ath10k_pci .*firmware ver|rfkill, dynamic-debug noise dropped
+# Bluetooth addresses replaced by <addr>
+Nov 12 18:00:13.219177 n kernel: ACPI: Reserving SSDT table memory at [mem 0xcc138000-0xcc13d353]
+Nov 12 18:00:13.245702 n kernel: xhci_hcd 0000:03:00.3: xHCI Host Controller
+Nov 12 18:00:13.245826 n kernel: xhci_hcd 0000:03:00.3: new USB bus registered, assigned bus number 1
+Nov 12 18:00:13.245948 n kernel: xhci_hcd 0000:03:00.3: hcc params 0x0268ffe5 hci version 0x110 quirks 0x0000020000000010
+Nov 12 18:00:13.246070 n kernel: xhci_hcd 0000:03:00.3: xHCI Host Controller
+Nov 12 18:00:13.246183 n kernel: xhci_hcd 0000:03:00.3: new USB bus registered, assigned bus number 2
+Nov 12 18:00:13.246295 n kernel: xhci_hcd 0000:03:00.3: Host supports USB 3.1 Enhanced SuperSpeed
+Nov 12 18:00:13.248506 n kernel: xhci_hcd 0000:03:00.4: xHCI Host Controller
+Nov 12 18:00:13.248622 n kernel: xhci_hcd 0000:03:00.4: new USB bus registered, assigned bus number 3
+Nov 12 18:00:13.248731 n kernel: xhci_hcd 0000:03:00.4: hcc params 0x0268ffe5 hci version 0x110 quirks 0x0000020000000010
+Nov 12 18:00:13.248840 n kernel: xhci_hcd 0000:03:00.4: xHCI Host Controller
+Nov 12 18:00:13.248954 n kernel: xhci_hcd 0000:03:00.4: new USB bus registered, assigned bus number 4
+Nov 12 18:00:13.249065 n kernel: xhci_hcd 0000:03:00.4: Host supports USB 3.1 Enhanced SuperSpeed
+Nov 12 18:00:13.252930 n kernel: usb 1-1: new high-speed USB device number 2 using xhci_hcd
+Nov 12 18:00:13.253085 n kernel: usb 3-3: new full-speed USB device number 2 using xhci_hcd
+Nov 12 18:00:13.253995 n kernel: usb 3-3: New USB device found, idVendor=13d3, idProduct=3503, bcdDevice= 0.01
+Nov 12 18:00:13.254187 n kernel: usb 3-3: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Nov 12 18:00:13.254368 n kernel: usb 1-2: new full-speed USB device number 3 using xhci_hcd
+Nov 12 18:00:13.254551 n kernel: usb 3-4: new full-speed USB device number 3 using xhci_hcd
+Nov 12 18:00:13.256588 n kernel: usb 1-3: new high-speed USB device number 4 using xhci_hcd
+Nov 12 18:00:13.257430 n kernel: usb 1-4: new high-speed USB device number 5 using xhci_hcd
+Nov 12 18:00:13.626565 n kernel: Bluetooth: Core ver 2.22
+Nov 12 18:00:13.626705 n kernel: Bluetooth: HCI device and connection manager initialized
+Nov 12 18:00:13.626717 n kernel: Bluetooth: HCI socket layer initialized
+Nov 12 18:00:13.626729 n kernel: Bluetooth: L2CAP socket layer initialized
+Nov 12 18:00:13.626750 n kernel: Bluetooth: SCO socket layer initialized
+Nov 12 18:00:13.722559 n kernel: btusb: loading out-of-tree module taints kernel.
+Nov 12 18:00:13.722627 n kernel: btusb: module verification failed: signature and/or required key missing - tainting kernel
+Nov 12 18:00:13.726559 n kernel: usbcore: registered new interface driver btusb
+Nov 12 18:00:13.735075 n kernel: Bluetooth: hci0: using rampatch file: qca/rampatch_usb_00000302.bin
+Nov 12 18:00:13.735115 n kernel: Bluetooth: hci0: QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302 build 0x111
+Nov 12 18:00:13.950923 n kernel: ath10k_pci 0000:02:00.0: firmware ver WLAN.TF.2.1-00021-QCARMSWP-1 api 6 features wowlan,ignore-otp crc32 42e41877
+Nov 12 18:00:14.108557 n kernel: Bluetooth: hci0: using NVM file: qca/nvm_usb_00000302.bin
+Nov 12 18:00:14.136558 n kernel: Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+Nov 12 18:00:19.671631 n kernel: rfkill: input handler disabled
+Nov 12 18:00:26.450550 n kernel: Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+Nov 12 18:00:26.450592 n kernel: Bluetooth: BNEP filters: protocol multicast
+Nov 12 18:00:26.450608 n kernel: Bluetooth: BNEP socket layer initialized
+Nov 12 18:00:26.452580 n kernel: Bluetooth: MGMT ver 1.23
+Nov 12 18:00:26.479579 n kernel: Bluetooth: RFCOMM TTY layer initialized
+Nov 12 18:00:26.479593 n kernel: Bluetooth: RFCOMM socket layer initialized
+Nov 12 18:00:26.479602 n kernel: Bluetooth: RFCOMM ver 1.11
+Nov 12 18:03:08.818452 n kernel: rfkill: input handler enabled
+Nov 12 18:03:09.849362 n kernel: rfkill: input handler disabled
+Nov 12 18:03:10.869409 n kernel: Bluetooth: hci0: command 0x0c24 tx timeout
+Nov 12 18:03:10.869436 n kernel: Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Nov 12 18:03:12.917800 n kernel: Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Nov 12 18:03:14.120456 n kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+Nov 12 18:03:14.240422 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:14.461482 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:14.677408 n kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+Nov 12 18:03:14.797392 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:14.965410 n kernel: Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Nov 12 18:03:15.022363 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:15.239370 n kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+Nov 12 18:03:15.239698 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:15.445377 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:15.653410 n kernel: usb 3-3: device not accepting address 2, error -71
+Nov 12 18:03:15.653967 n kernel: usb 3-3: WARN: invalid context state for evaluate context command.
+Nov 12 18:03:15.765397 n kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+Nov 12 18:03:15.765808 n kernel: xhci_hcd 0000:03:00.4: ERROR: unexpected setup address command completion code 0x11.
+Nov 12 18:03:15.973397 n kernel: xhci_hcd 0000:03:00.4: ERROR: unexpected setup address command completion code 0x11.
+Nov 12 18:03:16.181035 n kernel: usb 3-3: device not accepting address 2, error -22
+Nov 12 18:03:16.181629 n kernel: usb 3-3: USB disconnect, device number 2
+Nov 12 18:03:16.181854 n kernel: Bluetooth: hci0: Failed usb_autopm_get_interface: -16
+Nov 12 18:03:17.013432 n kernel: Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Nov 12 18:03:17.134363 n kernel: usb 3-3: new full-speed USB device number 4 using xhci_hcd
+Nov 12 18:03:17.254365 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:17.476389 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:17.693377 n kernel: usb 3-3: new full-speed USB device number 5 using xhci_hcd
+Nov 12 18:03:17.812399 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:18.036390 n kernel: usb 3-3: device descriptor read/64, error -71
+Nov 12 18:03:18.141380 n kernel: usb usb3-port3: attempt power cycle
+Nov 12 18:03:18.520387 n kernel: usb 3-3: new full-speed USB device number 6 using xhci_hcd
+Nov 12 18:03:18.520494 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:18.725401 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:18.934454 n kernel: usb 3-3: device not accepting address 6, error -71
+Nov 12 18:03:18.934629 n kernel: usb 3-3: WARN: invalid context state for evaluate context command.
+Nov 12 18:03:19.046373 n kernel: usb 3-3: new full-speed USB device number 7 using xhci_hcd
+Nov 12 18:03:19.046461 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:19.253374 n kernel: usb 3-3: Device not responding to setup address.
+Nov 12 18:03:19.461415 n kernel: usb 3-3: device not accepting address 7, error -71
+Nov 12 18:03:19.461549 n kernel: usb 3-3: WARN: invalid context state for evaluate context command.
+Nov 12 18:03:19.461579 n kernel: usb usb3-port3: unable to enumerate USB device
+Nov 12 18:07:21.060364 n kernel: rfkill: input handler enabled
