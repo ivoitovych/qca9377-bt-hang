@@ -843,7 +843,7 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 
 ## BT-16 — At one boot the controller came up "already patched", failed LE commands, and Bluetooth was unavailable for the whole boot
 
-**Status 2026-11-07: observed once (1 of 7 boots since 2026-10-23); cause not established.**
+**Status 2026-11-12: observed twice (boots `7323fc85`, 11-05, and `5e459fa0`, 11-11); cause not established.**
 Found while checking two shutdown verdicts of "HANG"
 ([`evidence/trials/E3/hang-verdicts-check-2026-11-07/`](../evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md)).
 
@@ -870,6 +870,15 @@ Found while checking two shutdown verdicts of "HANG"
   shutdown; the current passive closer would not flag this boot at all (no timeout).
 
 **2026-11-11 (journal, sysfs and capture reads; `results/laptop-only-work-2026-11-11/bt16-and-trials/`):** none on the boots of 11-06, 11-10 and 11-11. 1 of 11 E3 boots, 1 of 14 boots loading the patch; two E3 boots have no logged start. The first enumeration ran the setup to its end and downloaded nothing, so both status bits were set. The 29 h 38 min off before it is the longest of any patch-loading boot, but 74 s, 4 min and 13 min off did not keep the patch, so plain retention in S5 is unlikely. The start-up `USB disconnect` also occurs on stock boots `54b5b306` and `e9399c8c`, between the Wi-Fi function's enabling and its firmware line, as here. The capture starts 3 s too late; the status byte and `patch_version` are in no record. E3 plus one log line that records them is built, not installed (`tmp/bt16-diag/`).
+
+**2026-11-12, second occurrence (journal, sysfs, debugfs listing and capture reads only; controller not touched):** boot `5e459fa0`, 2026-11-11 18:58:33, `7.0.0-42` with E3 (out-of-tree btusb loaded), the first boot after a clean power-off (boot `e68d6d90` ended 11-11 10:52:16; off about 8 h 06 min, so a long off-time is not required).
+- **Kernel** (`journalctl -b 0 -k`): `usb 3-3` 13d3:3503 enumerated as device 2 at 18:58:33; `usb 3-3: USB disconnect, device number 2` at 18:58:34, between ath10k's chip line and its firmware line, as on 11-05; re-enumerated as device 4; `using NVM file: qca/nvm_usb_00000302.bin`; **no `using rampatch file` and no `QCA: patch rome` line**; `unexpected cc 0x202f length: 1 < 9`, `Opcode 0x202f failed: -38` at 18:58:35. Difference from 11-05: no `0x2007` failure line this time.
+- **Userspace:** capture `hci-20261111-185837.btsnoop`: `New Index … hci0` 18:58:37, one `bluetoothctl` MGMT open/close 18:58:38–46, bluetoothd 18:58:46 `Read Controller Index List` → **`Controllers: 0`**, then nothing; 11,347 bytes after 20.5 h (11,636 after the operator's attempts). bluetoothd: `read_index_list_complete() Number of controllers: 0` 18:58:46.
+- **debugfs:** `/sys/kernel/debug/bluetooth/hci0/` holds only `dut_mode` and `force_poll_sync`; consistent with initialization stopping before the common debugfs entries are created (inference).
+- **rfkill:** `hci0` soft 0, hard 0 (not blocked).
+- **The operator's attempts (2026-11-12):** GNOME Settings' Bluetooth panel showed "Bluetooth Turned Off" with its switch off; the quick-settings tile stayed off. About 50 `name hci0 blocked 0` kernel lines 15:36:24–15:36:42 and one at 15:42:51, each with `gsd-rfkill`: `GTask cc_rfkill_glib_send_change_all_event … finalized without ever returning (using g_task_return_*())`. Nothing reached the controller. Screenshots kept locally (`tmp/bt16-diag/1.png`, `2.png`; the first shows a network name, so neither is published).
+- **Two userspace defects seen here, to register as U rows:** (a) GNOME Settings says "Bluetooth Turned Off" and offers a switch when an rfkill `hci0` exists but bluetoothd has no adapter; switching does nothing and nothing tells the user why; (b) gsd-rfkill's change-all task ends without a result on every click (the user gets no failure). Not traced in source yet.
+- **Not done (operator's call, deferred to a power-off):** the read-only unconfigured-index check; the log-line module. Recovery as on 11-05: full power-off.
 
 **Falsifiers / next:** whether it recurs (scan each new boot: rampatch line present, no
 `usb 3-3: USB disconnect` at start-up); whether the laptop powers USB in S5 (a controller keeping
