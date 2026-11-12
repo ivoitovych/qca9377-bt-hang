@@ -1,5 +1,13 @@
 # CO-25 - Report to Qualcomm on the QCA9377 ROM firmware
 
+> **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
+> record; the text below is this page's history and says "no replies yet" from before the
+> answer): **sent 2026-10-29 02:33 +0100 after ten review rounds** (`log.md` has rounds 9 and 10).
+> **Zijun Hu (Qualcomm) replied 2026-10-29 18:42 +0800** that QCA9377 is not ROME and that btusb
+> does not support it; the device, btusb's table and the files that load say otherwise
+> (`log.md`). Our clarifying reply v4 is ready (`drafts/reply-1-zijun-hu-v4.eml`, 2026-11-02), not
+> sent; no other reply on the thread as of 2026-11-12. The operator decides on the reply.
+
 **SENT 2026-10-29 02:33:50 +0100** on the operator's word: `send/report.eml` as reviewed at
 `cb645f5`, server 250, seven recipients as in the dry run, Message-ID
 `<20261029013350.360574-1-yaroslav.voytovych@gmail.com>` (`log.md`, the send); on lore the same

@@ -61,8 +61,9 @@ Recent detail may be shortened. Settled state is never dropped.
     reload kills even a *healthy* controller here (`EX-046`, 09-23), and recovery needs a
     power-off. Module tests go through `updates/` + `depmod` + a cold boot, on the operator's
     word (§9.9).
-  - Never `install.sh --apply`: its watchdog's USB reset drove a wedged controller off the bus
-    three times (`EX-023`, `EX-026`). After any `--tools-only` deploy run `bt-mode status`: it
+  - Never `install.sh --apply`: a USB reset drove a wedged controller off the bus in two
+    controlled tests (`EX-023`, the 2026-08-15 boot) and once more after a reset this project
+    did not issue (`EX-026`). After any `--tools-only` deploy run `bt-mode status`: it
     silently reverted the baseline on 08-19 and 09-01 (§7).
   - In an untreated window only sysfs reads are safe; `bt-mode` writes live, so check
     `bt-window` before any mode switch.
@@ -78,18 +79,20 @@ Recent detail may be shortened. Settled state is never dropped.
 **The state at a glance (2026-10-28; machine lines 2026-10-30; the submission rows of `docs/STATUS.md` win):**
 - **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11), 6.12.113 (10-15) and 6.6.160
   (10-21); in the 6.1, 5.15 and 5.10 release candidates of 10-17, still unreleased on 10-28
-  (`EX-061`; STATUS). Ubuntu's `7.0.0-38` stock btusb lacks it, and so do `-39` (noble-proposed
+  (`EX-061`; STATUS), **released in 6.1.191, 5.15.224 and 5.10.273 on 10-30**.
+  **2026-11-12:** Ubuntu's `7.0.0-43` carries the entry and is published in noble-updates and
+  noble-security, not installed (STATUS, the machine). Ubuntu's `7.0.0-38` stock btusb lacks it, and so do `-39` (noble-proposed
   since 10-01) and **`7.0.0-42`, pending in noble-updates since 10-27** (its base is v6.18.55 /
   v7.2.9; CO-09). **E3 was built for `-42` and installed 10-28, before it booted**; the laptop
   runs `-42` with it since 2026-10-30 04:31 (Machine, below).
 - **Accepted upstream, ours:**
-  - kernel `86ef0f58bdec` (BT-8): in v7.3 (released 10-18; first in v7.3-rc7); released in 7.2.11, 6.18.57 and 6.12.113 (10-15) and 6.6.160 (10-21); in 6.1.191-rc1 (10-17);
+  - kernel `86ef0f58bdec` (BT-8): in v7.3 (released 10-18; first in v7.3-rc7); released in 7.2.11, 6.18.57 and 6.12.113 (10-15), 6.6.160 (10-21) and 6.1.191 (10-30);
   - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
   - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
   - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`
     (the BT-9 test), applied 10-12, identical to what was sent (same patch-id and message, checked 10-17);
   - BlueZ `b79d4a887` (A1, the a2dp duplicate check) and `7bc9684dc` (A2, the emulator VLA), applied 10-19, identical to what was sent (same patch-id, checked 10-20);
-  - the BT-9 stable backports of `96d006ae6445`: released in 6.12.113 (10-15, `9a328ae01489`) and 6.6.160 (10-21, `80861f424fe5`); 6.1 in its 10-17 release candidate (5.15 and 5.10 rightly get the entry without it: the code it fixes is first in v6.1);
+  - the BT-9 stable backports of `96d006ae6445`: released in 6.12.113 (10-15, `9a328ae01489`), 6.6.160 (10-21, `80861f424fe5`) and 6.1.191 (10-30, `dafb564a498e`) (5.15 and 5.10 rightly get the entry without it: the code it fixes is first in v6.1);
   - the `Tested-by` on 6.6.160-rc2 (CO-10, sent 10-21).
 - **Submitted, under review:** CO-02, "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (`Cc: stable`) and its BlueZ sco-tester test, sent 2026-10-27 17:50 +0100 (patchwork 14919266–14919269). The list bot passed both (the BlueZ test with its expected smatch note); no human reply on 10-28. If Luiz Augusto von Dentz's pending tester series (patchwork series 1191414, sco-tester off GLib) lands first, the test needs a port. **2026-11-02:** still no human reply; the series went out unversioned, so the next posting is **v2** (the fold of 2 and 3, the BlueZ test port, possibly the mismatch patch); the tester series did land (`e37f17751`), so the port is owed.
 - **Waiting for replies (re-checked 2026-10-28):** CO-02 (above); the Tested-by on Hui Peng's
@@ -141,7 +144,9 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
+**Last updated: 2026-11-12** (the registers reconciled with each other and with upstream; the
+hand-off brought to 11-12; the reset count corrected to two controlled tests). Before that,
+**2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
 hand-off bullet moved to the end of `HISTORY.md` verbatim and replaced; BlueZ 5.88 carries all
 eleven applied commits; the machine re-read; two "HANG" trial verdicts examined (no hang; BT-16 found); the
 agents bullet ended). 2026-11-03: X1's final review rounds. 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
@@ -157,9 +162,30 @@ carried a running list of every update since 10-14, which grew to about 2,800 ch
 2026-10-31 in `3bd731a`, are U12's A2DP loss of 10-31). No tip hash: it rotted within
 hours (`R2-13`).
 
-> **HAND-OFF (2026-11-02, brought to 2026-11-07; read first; the 10-29/30 block and the long X1
+> **HAND-OFF (2026-11-02, brought to 2026-11-12; read first; the 10-29/30 block and the long X1
 > bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's
 > follow-up list is the work queue.
+>
+> - **11-08 to 11-12, newest first:**
+>   - **11-12, the registers reconciled** against each other and against upstream (read live):
+>     `reviews/2026-11-12T1508Z-upstream-contributions-status.md`. Accepted: 1 kernel fix, 11 BlueZ
+>     commits (all in BlueZ 5.88), 2 stable requests (every line released). Waiting: CO-02 (no
+>     human reply since 10-27; its CI mirror pull requests were closed by the CI's bot 11-11/12,
+>     not a review; v2 owed), CO-25 (our reply to Qualcomm unsent since 11-02), gvfs !368/!369 (no
+>     comments). No routine re-checks submissions: the last full check before 11-12 was 11-01.
+>   - **11-11 18:58, BT-16 again** (boot `5e459fa0`, the first after an 8 h power-off): no
+>     Bluetooth for the whole boot; the 11-12 power-off recovered it. Eight candidate defects
+>     listed in `docs/issues.md` BT-16, none traced yet.
+>   - **11-11, the laptop-only work** (`results/laptop-only-work-2026-11-11/`): `7.0.0-43` carries
+>     the entry (now in noble-updates/-security, 11-12); the MOMENTUM 4's microphone sends digital
+>     silence since 10-20 (U15); CO-21 runs real btusb in a guest (base 0/5, patch 5/5); one
+>     2-hour headset-session checklist; an E3 post-install hook and the BT-16 log-line module
+>     built, not installed. The operator's access to the laptop is being limited: laptop-locked
+>     work first.
+>   - **11-07/08, U29 and CO-39 to CO-42** (STATUS, `contributions/README.md`).
+>   - **Operator decisions added:** install the E3 hook or `-43` itself; the BT-16 log-line module
+>     (on `-42` only); the headset session (D1–D7 of its checklist); deploying the trial tools; the
+>     CO-02 v2; the CO-25 reply.
 >
 > - **11-07: the two "HANG" trial rows are not hangs; one hides a new issue, BT-16.** E3 #3
 >   (10-30) and E3 #4 (11-06) were classified by the installed, pre-09-19 closer, which probes
@@ -362,6 +388,8 @@ fault is not specific to Disconnect.
 | "`0x0428` means CVSD" | **FALSE** — air mode comes from the `btusb_notify()` value |
 | "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`. The split is chronological **because `--tools-only` reverted the baseline on 08-19** (`R2-58`): every `autosusp=Y` row is before that deploy, every `autosusp=N` row after. Not a treatment effect — a deployment accident |
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
+| "a reboot recovers a stage-1 controller and not a stage-2 one" (`EX-027`'s generalisation) | **WITHDRAWN** — `EX-034`: a hot reboot from stage 1 (after the recovery ladder) failed with the same `+86.9 s` signature, which is usbcore's retry schedule; `EX-028` (reboot vs power-off from the *same* stage-2 state) stands (`HISTORY.md`, Phase 29 addendum; registered here 2026-11-12) |
+| "the recovery ladder destroyed nothing" (`EX-033`'s window) | **FALSE** — the reboot after it failed to enumerate (`EX-034`); "no USB-layer line followed" is evidence about the moment, not the device (same addendum) |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
 | "the discovery stuck since 10-04 lasted until the reboot into `7.0.0-38` (10-11)" | **FALSE** — the operator's adapter power cycle ended it on 10-10: powered again 15:02:44.156, the next Start Discovery answered Success 24 ms later, and no `Status: Busy` in any capture from then to the 10-11 shutdown; the control, 05:10:31 the same day, is refused Busy (`docs/STATUS.md`, BT-9) |
 
@@ -424,8 +452,9 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **The laptop is in daily use.** A dead controller costs its users. Never request long windows on
   spec; capture what is already open.
 - **Never `install.sh --apply`** on the investigation machine — it arms `bt-hang-watchdog`,
-  whose USB reset has **3 controlled demonstrations of driving an already-wedged controller
-  off the USB bus until power is removed** (`EX-023`, `EX-026`; not permanent damage). Use
+  whose USB reset has **2 controlled demonstrations of driving an already-wedged controller
+  off the USB bus until power is removed** (`EX-023`, the 2026-08-15 boot; a third case,
+  `EX-026`, followed a reset this project did not issue; not permanent damage). Use
   `--tools-only` — and ⚠️ **run `bt-mode status` after any deploy.** Until 2026-09-16
   `--tools-only` reinstalled the two files `bt-mode experiment` moves aside, so the
   baseline was silently reverted on 08-19 and again on 09-01 while the stamp still read

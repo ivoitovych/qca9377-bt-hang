@@ -1,5 +1,11 @@
 # CO-07 — U6: GNOME input meter fix for Ubuntu
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): **merged with
+> CO-32** (2026-11-01, `../research-2026-11-01/`). GNOME Settings 46.7 does re-target the meter, and
+> Ubuntu's 2-second WirePlumber patch (`U19`) then destroys it, so on Ubuntu the GNOME 47 fix alone
+> would not help. CO-32 first; then the Handsfree → A2DP test with the panel open. Part of the
+> headset session (`results/laptop-only-work-2026-11-11/headset-session/`).
+
 **State:** idea. One reading is missing before a request.
 
 **Target:** Ubuntu 24.04's `gnome-control-center` (46.7), through a Launchpad bug asking for

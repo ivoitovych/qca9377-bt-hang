@@ -1,5 +1,12 @@
 # CO-19 - PipeWire U1: codec line in Hands-free mode (Ubuntu 24.04 stable update)
 
+> **⚠️ Current state, 2026-11-12** (the index `../README.md` is the current record): **do not
+> install the two packages of the test plan below.** The 2026-11-11 rehearsal showed that
+> installing them as planned would remove 10 audio packages. The tested route loads the rebuilt
+> plugin privately through a WirePlumber user drop-in
+> (`results/laptop-only-work-2026-11-11/headset-session/SESSION-CHECKLIST.md`). The laptop headset
+> test is still the gate, then the operator files.
+
 State: **prepared, not filed** (2026-10-28). Nothing filed, uploaded or sent.
 v2 (2026-10-28, after the outside reviews in `reviews-2026-10-28.md`): adds
 upstream f142c0a5b as a first patch (HSP transports get the CVSD codec; without

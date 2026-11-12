@@ -1,5 +1,12 @@
 # CO-35 — BT-10: the L2CAP ECRED deferred-accept hang on the stable lines
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record; the text below
+> is at its 2026-10-28 state): **nothing sent.** 7.2.y has ended (7.2.15), so the request is for
+> 7.3.y only; the final package is `send-20261102/`; the patch-id identity claim is dropped
+> (the backports equal upstream only where nothing was adapted); v7.4-rc1 is tagged. The hang's
+> path dates from v6.3 (`9aa9d9473f15`), not v5.7. Next: checkpatch and the local CI rerun, then
+> the operator's word.
+
 **State (2026-10-28, evening):** **send package ready for an outside review; nothing sent.**
 `send/` holds four mails (`send/README.md`): an option-2 request for 7.3.y and 7.2.y
 (`request-v2.eml`) and one option-3 series per older line (`[PATCH 6.18.y 0/2]`, `6.12.y`,

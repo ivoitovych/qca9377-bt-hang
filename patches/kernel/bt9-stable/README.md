@@ -11,8 +11,8 @@ exactly the files in `bluez-mgmt-tester/v2-leak-fix/` and `v2-test-series/`:
 [test series](https://lore.kernel.org/r/20261010031852.2842893-1-yaroslav.voytovych@gmail.com).
 
 **Since:** the three backports were queued 2026-10-11; 6.12's was released in 6.12.113
-(2026-10-15), and 6.6's and 6.1's are in 6.6.160-rc1 and 6.1.191-rc1 (2026-10-17). The BlueZ
-commits were applied 2026-10-12. The current state is the submission row in
+(2026-10-15), 6.6's in 6.6.160 (2026-10-21) and 6.1's in 6.1.191 (2026-10-30). The BlueZ
+commits were applied 2026-10-12 and released in BlueZ 5.88 (2026-11-05). Done. The current state is the submission row in
 [`docs/STATUS.md`](../../../docs/STATUS.md).
 
 ## What and why

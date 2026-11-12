@@ -1,5 +1,12 @@
 # CO-09 — The QCA9377 entry in Ubuntu's kernel
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): **solved by
+> Ubuntu's own cycle.** `7.0.0-43.43~24.04.1` carries `13d3:3503` in its stock btusb (checked on
+> the noble-proposed build, 2026-11-11, `results/laptop-only-work-2026-11-11/e3-kernel-hook/`) and is
+> published in noble-updates and noble-security (`apt-cache policy`, 2026-11-12), not installed.
+> The laptop runs `-42` with E3. When `-43` is installed: `scripts/btusb-has-device.py` on its stock
+> btusb, then E3 retires. The post-install hook is ready, not installed.
+
 **State:** waiting. It will probably arrive with Ubuntu's stable updates; a request would only
 make it sooner. **2026-11-11:** `7.0.0-43.43~24.04.1`, in noble-proposed since 11-05, carries it
 (its stock btusb: `FOUND 13d3:3503`); not yet in updates or security. A kernel post-install hook

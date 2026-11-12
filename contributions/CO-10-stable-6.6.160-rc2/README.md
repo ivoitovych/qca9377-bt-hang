@@ -1,5 +1,8 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
+> **Current state, 2026-11-12:** **done.** Sent 2026-10-21 03:05 UTC; 6.6.160 was released the
+> same day; a test report needs no answer, and nothing is owed. Any "Next" below predates that.
+
 **SENT 2026-10-21 03:05:42 UTC** (v6, server 250, 20 recipients; Message-ID
 `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>`; `log.md`). Next: watch the thread
 and the 6.6.160 release.

@@ -1,5 +1,10 @@
 # CO-20 — SCO error messages at call hang-up
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): **2026-11-11:**
+> 155 of 181 closed links have receive data after the Disconnection Complete (up to 33.6 ms); 25 of
+> 32 "corrupted SCO packet" lines fall within 0.5 s of one. The prototype clears them in a QEMU guest
+> (22 to 0) (`results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/`). Not sent.
+
 **State (2026-11-01):** the functional question is closed, the diagnostic one is open.
 - **Closed:** no link is left up and the controller does not keep sending. SCO data queued
   behind a Disconnection Complete, 0–20 ms after it, is dropped (captures read; details in

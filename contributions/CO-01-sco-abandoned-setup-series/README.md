@@ -1,5 +1,11 @@
 # CO-01 — Test the abandoned-setup SCO series
 
+> **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
+> record; this page below is its history): **stalled upstream.** The maintainer replied 2026-10-09
+> pointing to Sashiko's findings; no v4 since; the series no longer applies to bluetooth-next. The
+> QEMU matrix ran 2026-11-01 (`../research-2026-11-01/sco/`): it fixes its own tests and coexists
+> with CO-02. No laptop run. Next: wait; rerun the matrix if a v4 appears.
+
 **State:** idea; nothing run yet.
 
 **Target:** the Linux kernel. This is another author's series; ours would be a test report and

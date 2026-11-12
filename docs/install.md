@@ -3,8 +3,8 @@
 > Moved from the front page on 2026-09-18 (front-door review `FD-01`), unchanged apart
 > from this banner. The watchdog and the `BT_EARLY` mode described here are **experiments
 > inside the investigation, not its result**: on this controller the USB reset the watchdog
-> performs has three controlled demonstrations of driving an already-wedged device off the USB bus until power is removed (`EX-023`,
-> `EX-026`), and the precursors `BT_EARLY` acts on have been refuted as causal markers. The
+> performs has two controlled demonstrations of driving an already-wedged device off the USB bus until power is removed (`EX-023`,
+> the 2026-08-15 boot; the same followed a reset this project did not issue, `EX-026`), and the precursors `BT_EARLY` acts on have been refuted as causal markers. The
 > current state of the fault is `BRIEF.md`; the front page `README.md` summarises it.
 > The figures quoted below (34 boots, 287 timeouts, five late resets, the lead-time table)
 > are historical measurements from August 2026 and are kept as the record of how the
@@ -23,8 +23,9 @@ sudo ./install.sh --tools-only   # deploy the files, arm nothing (see below)
 ```
 
 **Optional, experimental — arms the watchdog.** Read the warning under `--tools-only`
-first: the USB reset the watchdog performs has three controlled demonstrations of driving
-an already-wedged controller off the USB bus until power is removed (`EX-023`, `EX-026`).
+first: the USB reset the watchdog performs has two controlled demonstrations of driving
+an already-wedged controller off the USB bus until power is removed (`EX-023`, the 2026-08-15
+boot; the same followed a reset this project did not issue, `EX-026`).
 
 ```bash
 sudo ./install.sh            # dry run — shows exactly what it would do
@@ -41,8 +42,9 @@ Installs every file, enables no service, reloads no driver, touches no device.
 
 **Use it on a machine you are measuring.** `--apply` runs
 `systemctl enable --now bt-hang-watchdog`, and that watchdog answers an HCI
-timeout with a USB reset — an operation with three controlled demonstrations of
-driving an already-wedged controller off the USB bus until power is removed (`EX-023`, `EX-026`). On the investigation machine
+timeout with a USB reset — an operation with two controlled demonstrations of
+driving an already-wedged controller off the USB bus until power is removed (`EX-023`, the
+2026-08-15 boot; the same followed a reset this project did not issue, `EX-026`). On the investigation machine
 that made the choice "stale instruments or an armed watchdog", and the
 instruments stayed 29 versions behind for days as a result. This is the third
 option.

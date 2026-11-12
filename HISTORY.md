@@ -9,7 +9,7 @@ BlueZ patches sent and applied, Phase 36 · the kernel MGMT fix sent (09-24) and
 mesh series through four phases — "The week the fixes left the machine" · the backport queued
 for seven stable lines, CI repaired, the front page rewritten, the mesh work split into separate
 contributions after a research review, the desktop instrumented — "The days the work learned to
-say 'not yet'" · the hand-off blocks BRIEF carried until 2026-10-03 and 2026-10-05, verbatim,
+say 'not yet'" · the hand-off blocks BRIEF carried from 2026-10-03 to 2026-11-07, verbatim,
 at the end · the eleven BlueZ commits released in BlueZ 5.88 (2026-11-05), and the first
 contribution outside Bluetooth, two gvfs merge requests for audio-CD playback (2026-11-07) — "A
 count is not a number, two merge requests, and a release nobody announced here".
@@ -1632,7 +1632,9 @@ observation is an anecdote and the tool to check the rest did not exist.
 **Fourteen boots reached stage 1. Zero progressed to stage 2 uncensored.**
 
 Nine were ended by one of our resets. Five by shutdown. The project has never once
-watched this controller leave the USB bus on its own.
+watched this controller leave the USB bus on its own. [Qualified later: "our reset" was
+inferred from the absence of a recognised preceding bus error, not from positive provenance, so
+the 9/5 split awaits re-capture; `docs/issues.md`, BT-1.]
 
 | first HCI timeout | window | ended by |
 |---|---:|---|
@@ -1769,7 +1771,8 @@ thing to touch the device.
 
 It does not prove causation. The reset at 21:03:35 carries no origin in the log, and
 `bt-stage2` classifies it `unknown-reset`, which is correct. What it does is retire the
-45–66 s figure completely: that number is now **24× smaller** than an untreated window
+45–66 s figure completely: that number is now **24× smaller** [corrected 2026-11-12: 1836 s
+against 45–66 s is 28× to 41×] than an untreated window
 that showed no progression whatever, and it was always our watchdog's reaction time
 wearing the fault's clothes.
 
@@ -2026,9 +2029,11 @@ Four defects this phase, all previously named:
 
 The four exhibits of this phase reached `docs/bug-report.md` only at the end of it, and
 the two figures that rested on `EX-018` — 287 timeouts across 34 boots, 13 of 34 boots
-hung — are withdrawn rather than restated, because the journal behind them is gone. The
+hung — are withdrawn rather than restated, because the journal behind them is gone [the
+withdrawal was itself wrong: `evidence/baseline/baseline.tsv` reproduces the 287; `BRIEF.md` §5]. The
 watchdog is still not installed, deliberately: enabling it means `install.sh --apply`, and
-its USB reset now has three demonstrations of destroying this controller. A tools-only
+its USB reset now has three demonstrations of destroying this controller [corrected
+2026-11-12: two controlled, `EX-023` and the 2026-08-15 boot; `EX-026`'s reset was not ours]. A tools-only
 deployment path that enables no services does not exist yet, and until it does the fixes
 in the tree cannot reach the machine that has the hardware.
 
@@ -2284,7 +2289,8 @@ data exactly as `0x043D` can.
 `HCI_NOTIFY_ENABLE_SCO_TRANSP`, from `BT_DBG("%s evt %d", …)` in `btusb_notify()`. This one
 *strengthened* the record: `EX-033`'s three captured lines are now the **complete alt-1
 chain observed on the machine** — `evt 5` selects the transparent branch, `:6` and `:3` are
-the probes, the silence is `new_alts = 1`. The alt-1 finding no longer rests on source
+the probes, the silence is `new_alts = 1` [corrected later: "alt probes, then silence" was an
+artefact of those exhibits' own grep, data was flowing; `BRIEF.md` §5]. The alt-1 finding no longer rests on source
 reading alone.
 
 It also killed the `0x0428`-versus-`0x043D` comparison proposed as `A3`'s replacement:
@@ -2562,7 +2568,8 @@ kernel (`-30`, not `-29`), three days apart. `EX-033` measured **2.076 s**; this
 **2.152 s**. Seventy-six milliseconds apart.
 
 Two claims that rested on a single observation are now `n = 2`: **the controller answers
-`0x0428`**, and **the command that dies is anonymous** — the bare spelling meaning
+`0x0428`**, and **the command that dies is anonymous** [overstated: anonymous to the printk,
+not to the log; `BRIEF.md` §5] — the bare spelling meaning
 `hdev->req_skb` was NULL, so it was not the command `hci_cmd_sync` was tracking.
 
 ⚠️ **And that reframes the trigger interval.** The spread this project kept measuring — 4.1,
@@ -4000,7 +4007,9 @@ down every defect met on the way as it was met, in
 by area, a ranked list of nine items, ten questions. The reading checked the tree against the
 outside record where it could (git.kernel.org and its mirror, kernel.org's ChangeLogs,
 patchwork, the BlueZ tree, Launchpad): every cited kernel and BlueZ commit exists with its stated
-subject, the five stable releases carry the named commits, A1 and A2 are still `new`. Headline
+subject, the five stable releases carry the named commits, A1 and A2 are still `new` [in
+patchwork: both had been applied that afternoon, 15:10 UTC, and patchwork marked them accepted on
+10-20; STATUS]. Headline
 findings: `v7.3` was released on 2026-10-18 and STATUS still says it was not; the entry documents
 disagree on the counts of BlueZ commits and stable backports; `uninstall.sh` has none of
 `install.sh`'s guards and reloads btusb in the wedged-controller case; `bin/bt-trace` deletes the
@@ -4221,8 +4230,9 @@ history is not rewritten.
 
 **The Qualcomm report went out (10-29)** after ten review rounds (CO-25). Qualcomm's engineer
 answered the same day that QCA9377 is not a ROME part and that btusb does not support it; the
-device, btusb's own table and the files that load say otherwise. The reply asks what the
-intended initialization is, and was itself reviewed for three days before anything was sent.
+device, btusb's own table and the files that load say otherwise. Our reply, which asks what the
+intended initialization is, was reviewed for three days (v4 ready 11-02); it had not been sent
+by 2026-11-12.
 
 **The laptop moved to `7.0.0-42` (10-30)** with E3 built for it before the boot; the CO-02 field
 test ended with the previous boot, its 63 links all answered.
@@ -4383,6 +4393,43 @@ case where the two differ. A reviewer's wording is a claim like any other, and i
 against the source before it is kept. And a project that waits for releases has to look for
 them: the 5.88 tag sat unnoticed for a day and a half. A verdict is only as current as the tool
 that wrote it, and a "HANG" is a reason to read the boot, not to count it.
+
+## A headset that forgot us, the laptop's last full day, and a second dead boot (2026-11-07 → 11-12)
+
+**U29 (11-07/08).** The MOMENTUM 4 stopped accepting the laptop's key between 11-04 and 11-06;
+Connect failed as "br-connection-unknown", and after a Forget the panel offered a "Not set up" row
+that every click failed on, saying nothing. Traced the same day: the kernel's `ECONNREFUSED`
+becomes `-EAGAIN` in BlueZ 5.72's A2DP (fixed upstream by `a6ac17f0e393`), gnome-bluetooth's
+error branch is a `//FIXME`, and the row was kept alive by the headset's own non-discoverable
+advertisements. Four candidates came out of it, CO-39 to CO-42; CO-39's BlueZ patch reached a
+v2 with a functional-suite test (fails 6/6 on master, passes 7/7 patched).
+
+**The laptop's access is limited (11-11).** The operator said access to the laptop would be
+restricted, so the work that needs this laptop went first, in one day, without touching the
+controller (`results/laptop-only-work-2026-11-11/`): Ubuntu's `7.0.0-43`, then in
+noble-proposed, carries the QCA9377 entry; the MOMENTUM 4's microphone has sent digital silence
+since 10-20 (U15); CO-21's btusb change runs against real btusb in a QEMU guest through usbip
+(base 0 of 5, patch 5 of 5); BT-16's deciding value is in no record, so a log-line module was
+built; one two-hour checklist covers every headset test, and its rehearsal caught CO-19's install
+plan removing the audio stack. Nothing was installed.
+
+**BT-16 again (11-11 18:58).** The first boot after an eight-hour power-off came up like 11-05:
+the controller dropped off USB and came back, no rampatch, `0x202f` answered with one byte,
+`Controllers: 0`. The operator found Bluetooth dead the next afternoon; GNOME Settings said
+"Bluetooth Turned Off" and its switch did nothing. Recorded from the journal, the capture and
+sysfs, with eight candidate defects, before the power-off that recovered it.
+
+**What we sent, checked again (11-12).** An e-mail said a CO-02 pull request was closed without
+a reaction. It was the CI's mirror, closed by the CI's bot in a sweep that also closed another
+author's pending patch; the patches are still `new` in patchwork, and the series still applies.
+The live check found no human reply on CO-02 in 16 days, our CO-25 reply to Qualcomm unsent since
+their answer of 10-29 (ready since 11-02), and no comments on the gvfs MRs; the last full check had been 11-01. The registers were
+then reconciled with each other: many state lines still described releases as candidates, sent
+items as unsent and answered questions as open
+(`reviews/2026-11-12T1508Z-upstream-contributions-status.md`). `7.0.0-43` reached noble-updates
+and noble-security the same day.
+
+---
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
@@ -5346,35 +5393,35 @@ that wrote it, and a "HANG" is a reason to read the boot, not to count it.
 >   `mr-description-draft.md`: one MR or two, and whether to file a gvfs issue. Reviewers 1 and 5
 >   brought no verified finding in any round. The operator is weighing retiring
 >   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
-  **2026-11-06, v5 of both (rework round of 11-04, `REVIEW-ACTIONS.md` H1–H12):** v4's
-  `"Track %3d.wav"` opened track 1 for `Track 0011.wav` (master: 11), so the parser is now
-  `g_ascii_string_to_unsigned()` bounded 1..99 (rejects `1junk`, `+1`, `1.wav.wav`; keeps leading
-  zeros; query_info shares it); patch 1's `has_function` names its header (`prefix:`), and its
-  message says the first read after open/seek waits. Reviewer 3's first/last track numbers not
-  taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
-  v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
-  favour two MRs with an issue each; R6 one MR: still the operator's choice.
-  **2026-11-06 late, v6 (final reviews R6/R7, `REVIEW-ACTIONS.md` H26–H38):** R7 found and we
-  reproduced a **regression in patch 2**: `drive->tracks` is a count, so v5.3 refused the last
-  tracks of a disc numbered from above 1 (Track 4 on 2–4, Track 99 on 97–99), which master opens
-  directly and reads correctly. v6 bounds open by `cdio_get_first_track_num()`/
-  `cdio_get_last_track_num()` (H4's "not taken" reversed; enumerate/query_info unchanged, a
-  separate issue). R6's `See:`→`Related:` rejected (the maintainer writes `See:`). Both messages
-  rewritten for reading (patch 1: refill-wait sentence deleted; patch 2: failures first, six short
-  paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
-  Laptop re-test of v6 passed (operator's word; installed `36175938…`, `.prev` = v5): every
-  invalid name refused at once, Track 1–13 and the aliases read, hashes as v5. The operator
-  chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
-  withdrew its hold). Their four wording points went into v6.1, which changes the messages only
-  (H39–H44). Next: the issue and MR drafts; the operator submits.
-  **2026-11-07, SUBMITTED (H45–H72):** messages v6.2 (patch 2 lost "as libcdio's own lookups
-  do", which overclaimed), drafts reviewed by R2/R3/R6/R7 to GO; MR 2 carries a parameterized
-  simulated-drive test program (`patch-track/track-test/`, 14/14 on master and patch 2). The
-  operator filed issues **#893** (stall) and **#894** (invalid tracks) and opened **!368**
-  (patch 1, `98dc71a`, closes #893) and **!369** (patch 2, `610794d`, closes #894), from the
-  fork `ivoitovych/gvfs` (branches `cdda-paranoia-readahead`, `cdda-refuse-invalid-tracks`, one
-  commit each on `2d30ce9b`). Each commit differs from the reviewed one only by its `Fixes:`
-  work-item URL. GNOME GitLab: new accounts are "external" (no forks) until an SSH key has been
-  on the account ~20 min; this machine's `root@n` key is now on the operator's GNOME account.
-  Next: watch the MRs for maintainer comments; follow-ups as separate issues (query_info GError
-  leaks, enumerate/query_info assuming 1..N, failed-seek handling).
+>   **2026-11-06, v5 of both (rework round of 11-04, `REVIEW-ACTIONS.md` H1–H12):** v4's
+>   `"Track %3d.wav"` opened track 1 for `Track 0011.wav` (master: 11), so the parser is now
+>   `g_ascii_string_to_unsigned()` bounded 1..99 (rejects `1junk`, `+1`, `1.wav.wav`; keeps leading
+>   zeros; query_info shares it); patch 1's `has_function` names its header (`prefix:`), and its
+>   message says the first read after open/seek waits. Reviewer 3's first/last track numbers not
+>   taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
+>   v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
+>   favour two MRs with an issue each; R6 one MR: still the operator's choice.
+>   **2026-11-06 late, v6 (final reviews R6/R7, `REVIEW-ACTIONS.md` H26–H38):** R7 found and we
+>   reproduced a **regression in patch 2**: `drive->tracks` is a count, so v5.3 refused the last
+>   tracks of a disc numbered from above 1 (Track 4 on 2–4, Track 99 on 97–99), which master opens
+>   directly and reads correctly. v6 bounds open by `cdio_get_first_track_num()`/
+>   `cdio_get_last_track_num()` (H4's "not taken" reversed; enumerate/query_info unchanged, a
+>   separate issue). R6's `See:`→`Related:` rejected (the maintainer writes `See:`). Both messages
+>   rewritten for reading (patch 1: refill-wait sentence deleted; patch 2: failures first, six short
+>   paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
+>   Laptop re-test of v6 passed (operator's word; installed `36175938…`, `.prev` = v5): every
+>   invalid name refused at once, Track 1–13 and the aliases read, hashes as v5. The operator
+>   chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
+>   withdrew its hold). Their four wording points went into v6.1, which changes the messages only
+>   (H39–H44). Next: the issue and MR drafts; the operator submits.
+>   **2026-11-07, SUBMITTED (H45–H72):** messages v6.2 (patch 2 lost "as libcdio's own lookups
+>   do", which overclaimed), drafts reviewed by R2/R3/R6/R7 to GO; MR 2 carries a parameterized
+>   simulated-drive test program (`patch-track/track-test/`, 14/14 on master and patch 2). The
+>   operator filed issues **#893** (stall) and **#894** (invalid tracks) and opened **!368**
+>   (patch 1, `98dc71a`, closes #893) and **!369** (patch 2, `610794d`, closes #894), from the
+>   fork `ivoitovych/gvfs` (branches `cdda-paranoia-readahead`, `cdda-refuse-invalid-tracks`, one
+>   commit each on `2d30ce9b`). Each commit differs from the reviewed one only by its `Fixes:`
+>   work-item URL. GNOME GitLab: new accounts are "external" (no forks) until an SSH key has been
+>   on the account ~20 min; this machine's `root@n` key is now on the operator's GNOME account.
+>   Next: watch the MRs for maintainer comments; follow-ups as separate issues (query_info GError
+>   leaks, enumerate/query_info assuming 1..N, failed-seek handling).

@@ -1,5 +1,11 @@
 # CO-08 — U10: PipeWire quirk for the Tronsmart T8
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): evidence re-read
+> 2026-11-01 (`../research-2026-11-01/`): the captures are in `archive/hci-capture`, and every SBC-XQ
+> test sound was single-channel, so "silent" cannot tell none from one-sided. The decisive test is
+> designed (`../research-2026-11-01/policy/notes/CO-08.md`) and is in the headset session. Under
+> PipeWire's rules the operator writes any entry or report.
+
 **State:** blocked on the operator's marked test.
 
 **Target:** PipeWire, as one line in `spa/plugins/bluez5/bluez-hardware.conf`, if the speaker

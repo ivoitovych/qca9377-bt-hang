@@ -1,5 +1,15 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
+> **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
+> record): **sent 2026-10-27, no human reply.** All four patches `new` in patchwork, not
+> archived. Sashiko (10-29) rated patch 2 `fail` alone; the next posting is **v2** (the series went
+> out unversioned), folding patches 2 and 3, with the air-mode mismatch check tested on 11-02
+> (`patch/mismatch-20261102/`). The BlueZ test needs a port (the tester series landed as
+> `e37f17751`, 10-29). The CI's mirror pull requests were closed by its bot on 11-11/12 in a sweep
+> that also closed another author's pending patch: not a review. The kernel series still applies
+> to bluetooth-next `c9644a9257d1` (`reviews/2026-11-12T1508Z-upstream-contributions-status.md`).
+> Decisions D1/D2 are the operator's.
+
 **State (2026-10-28): SENT 2026-10-27** on the operator's word, from `patch/v7-candidate/send/`:
 the kernel series (cover + 3 patches, `Cc: stable` on 1–3) at 17:50:06–09 +0100, cover
 Message-ID `<20261027165009.2401154-1-yaroslav.voytovych@gmail.com>`; the BlueZ test at 17:50:59

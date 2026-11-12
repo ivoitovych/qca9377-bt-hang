@@ -88,7 +88,7 @@ did not occur in the recorded trials:
 | build | what it tested | result | record |
 |---|---|---|---|
 | E1 — QCA setup only | the firmware-load half of the entry, no reset callback | 58 SCO links, three boots, two headset models, every hang-up answered, 0 command timeouts | `EX-055`, `EX-056`, `EX-058` |
-| E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` (and, since 2026-10-11, running on `7.0.0-38`) | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
+| E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` (and later rebuilt for `7.0.0-38`, 2026-10-11, and `7.0.0-42`, 2026-10-30) | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
 
 The entry is upstream commit `dc16388d45ec` ("Bluetooth: btusb: Add IMC Networks QCA9377
 to quirks table"), **authored by Tibor Harcsa** for a BLE scanning fault, in mainline since
@@ -98,8 +98,8 @@ commit cherry-picks onto the tip of every live stable line and `btusb` builds wi
 each (`EX-059`); the request was sent on 2026-10-02, and the stable team **queued it for all
 seven live lines — 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** — confirmed in the public stable
 queue on 2026-10-03 (`EX-061`). It was released in 7.2.10 and 6.18.56 on 2026-10-11, in
-6.12.113 on 2026-10-15 and in 6.6.160 on 2026-10-21, and is in the release candidates of 6.1, 5.15
-and 5.10, cut on 2026-10-17 ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
+6.12.113 on 2026-10-15, in 6.6.160 on 2026-10-21, and in 6.1.191, 5.15.224 and 5.10.273 on
+2026-10-30 ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
 internally is not established and is not claimed. The full argument, with the September
 text that first read the entry as a recovery issue rather than the cause, is
 [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md); the twelve-instance
@@ -137,29 +137,39 @@ fixture instead of a live machine. Specific to this part: the alternate-setting 
 `bt-usbstate` and `bt-fault-window`, the `13d3:3503` defaults, and the exhibits.
 
 **If you have a QCA9377 and the hang:** a kernel carrying `dc16388d45ec` is the fix — mainline
-from v7.3, stable 7.2.10, 6.18.56, 6.12.113 and 6.6.160, and the next stable release of 6.1, 5.15
-and 5.10 (6.1.191, 5.15.224, 5.10.273; in release candidate since 2026-10-17). Ubuntu 24.04's HWE
-kernels do not carry it yet (`7.0.0-38`, and `7.0.0-42` pending in noble-updates). Until
-your distribution ships one, the entry is a two-line addition to
+from v7.3, stable 7.2.10, 6.18.56, 6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273. Ubuntu
+24.04's HWE kernel carries it from `7.0.0-43` (its stock btusb lists `13d3:3503`, checked on the
+noble-proposed build on 2026-11-11; published in noble-updates and noble-security, seen
+2026-11-12); `7.0.0-42` and earlier do not. Until your distribution ships one, the entry is a
+two-line addition to
 `drivers/bluetooth/btusb.c`. Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-11-07
+## Current direction — 2026-11-12
 
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
   under review; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
-  to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-01).
+  to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-12; the
+  patches are still pending in patchwork, and the series still applies to bluetooth-next; the
+  CI's own mirror pull requests were closed by its bot on 2026-11-11/12, which is not a review:
+  [`reviews/2026-11-12T1508Z-upstream-contributions-status.md`](reviews/2026-11-12T1508Z-upstream-contributions-status.md)).
   On the laptop the series ran from 2026-10-23 to 10-29 with three headsets
   ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
 - **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,
-  6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273 (`EX-061`). Ubuntu's `7.0.0-42` lacks it; 7.0
-  is no longer maintained upstream, and Ubuntu's next stable base should bring it (an inference).
-  Until then the laptop runs the entry as a self-built `btusb`, rebuilt before any new kernel boots.
+  6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273 (`EX-061`). Ubuntu's `7.0.0-42` lacks it;
+  `7.0.0-43` carries it and is published in noble-updates and noble-security (seen 2026-11-12).
+  Until it is installed the laptop runs the entry as a self-built `btusb`, rebuilt before any new
+  kernel boots.
+- **A start-up failure on the fixed driver (`BT-16`).** Twice (boots of 2026-11-05 and 11-11) the
+  controller came up reporting its firmware patch as already loaded, failed two LE commands, and
+  Bluetooth was unavailable for the whole boot; a power-off recovered it. Cause not established
+  ([`docs/issues.md`](docs/issues.md)).
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
   backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
   are released in BlueZ 5.88 (tables above).
 - **A report to Qualcomm on the ROM firmware's hang** (`CO-25`), sent 2026-10-29 to the kernel's
-  Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted.
+  Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted, not
+  sent (2026-11-12).
 - **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
   with send packages ready and waiting for the author's decision: a stable request for an L2CAP
   hang that every released kernel has (`CO-35`); an independent fix for an open mesh
@@ -176,7 +186,7 @@ your distribution ships one, the entry is a two-line addition to
 - **Delivery of the accepted changes** into kernel and BlueZ releases and into Ubuntu:
   tracked. BlueZ 5.88 (2026-11-05) carries all eleven BlueZ commits; Ubuntu 24.04 ships 5.72.
 - **Desktop audio issues** seen while testing the fixed driver are recorded in
-  [`docs/issues.md`](docs/issues.md) (`U1` to `U28`) as leads with evidence. Upstream fixes are
+  [`docs/issues.md`](docs/issues.md) (`U1` to `U31`) as leads with evidence. Upstream fixes are
   checked before anything new is written; for PipeWire and WirePlumber the project gathers the
   evidence and the author writes the report.
 
@@ -275,9 +285,10 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
 
 - **Install:** [`docs/install.md`](docs/install.md). Passive diagnosis needs nothing
   installed. On a machine you are *measuring*, use `sudo ./install.sh --tools-only`.
-  `--apply` arms an experimental watchdog whose USB reset has three controlled
+  `--apply` arms an experimental watchdog whose USB reset has two controlled
   demonstrations of driving an already-wedged controller off the USB bus until power is
-  removed (`EX-023`, `EX-026`) — not permanent damage, but the one state a power-off is
+  removed (`EX-023` and the 2026-08-15 boot), and the same outcome followed a USB reset this
+  project did not issue (`EX-026`) — not permanent damage, but the one state a power-off is
   then the only way out of.
 - **Tools:** [`docs/tooling-index.md`](docs/tooling-index.md) — which tool answers which
   question. The standalone ones (`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`,

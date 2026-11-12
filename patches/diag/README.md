@@ -115,7 +115,7 @@ The -38 initramfs has no btusb, so `updates/` + `depmod` is enough. **Read after
 boot:** `modinfo -F srcversion btusb` → `D1DEA96A0C95BFAB05CEE01`; the QCA rampatch/NVM lines
 in `journalctl -k -b 0`. Until then, picking -34 under GRUB's "Advanced options" keeps E3.
 
-### E3 for 7.0.0-42 (built and installed 2026-10-28, on the operator's word; not yet booted)
+### E3 for 7.0.0-42 (built and installed 2026-10-28, on the operator's word; booted 2026-10-30 04:31 and running since)
 
 **Installed** 2026-10-28 with the command below plus `--trial-open-ok` (trial E3 #3 is open on
 `-38`; nothing it uses changed). Checked after: `modinfo -k 7.0.0-42-generic -F filename btusb` →

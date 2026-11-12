@@ -1,5 +1,9 @@
 # CO-34 — BT-12: ioctl-tester registers two cases under one name
 
+> **Current state, 2026-11-12: done.** Sent 2026-10-28 06:16 +0100, applied the same day as
+> `3e5b0da969c2` (identical, patch-id `78ae012404e3`), released in BlueZ 5.88 (2026-11-05). Any
+> "next" below predates that.
+
 **State: SENT 2026-10-28 06:16:20 +0100** on the operator's word, alone, to linux-bluetooth
 (server 250, Message-ID `<20261028051620.3167775-1-yaroslav.voytovych@gmail.com>`; `log.md`).
 Six outside reviews approved it unchanged. Next: the bot's checks and replies.

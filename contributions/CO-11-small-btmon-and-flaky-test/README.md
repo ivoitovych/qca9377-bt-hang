@@ -1,5 +1,12 @@
 # CO-11 — Small items: btmon for Ubuntu, the flaky BlueZ test
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): (a) **ready to
+> file, not filed.** The live-capture test of 2026-11-02 settles the content: the first upstream
+> fix alone still aborts at 60 columns live, both fixes give 0 aborts in 264 runs, so the stable
+> update carries both; the filing package is `ubuntu/ready-20261102/`; one upload together with
+> CO-03 is proposed. A further overflow with both fixes is `U28`. The operator files. (b) The
+> Tested-by for the flaky functional test still needs the harness run in a container.
+
 **State (2026-10-28, reopened by the operator):**
 - **(a) btmon for Ubuntu: ready to file.** The Launchpad report `ubuntu/lp-report.md` and the
   debdiff `ubuntu/bluez_5.72-0ubuntu5.8_5.72-0ubuntu5.9.debdiff`, approved by all six outside

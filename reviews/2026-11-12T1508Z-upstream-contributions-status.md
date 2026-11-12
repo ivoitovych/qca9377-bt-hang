@@ -2,7 +2,7 @@
 
 A snapshot, valid at the minute in its name. Upstream state can change within minutes; the
 current record stays `docs/STATUS.md` (its submission rows were last re-checked on 2026-11-01,
-the gvfs row on 2026-11-07). This file is not folded into STATUS yet.
+the gvfs row on 2026-11-07); since this check STATUS's header and the CO-02 row point here.
 
 **Checked live for this report (2026-11-12, 15:03–15:08 UTC):** patchwork states
 (`scripts/patchwork-state.py`, and the raw patchwork records in `tmp/contrib-status-20261112/`);
@@ -94,7 +94,63 @@ found was a one-time resume on 11-01). So the last full check before today was 1
 and CO-25's unsent reply has waited 14 days. A written plan for regular checks was not found in
 BRIEF, the tooling index, or the review plans of 10-19.
 
-## 6. Decisions for the operator
+## 6. The registers checked against each other, and what was fixed (added later on 2026-11-12)
+
+Every register was read: README.md, BRIEF.md (§0, the hand-off, §5, §7), docs/STATUS.md,
+docs/issues.md, contributions/README.md and every dossier front page, the patch registers
+(`patches/bluez/`, `patches/kernel/bt9-stable/`, `patches/diag/`), docs/sent-mails.tsv and all
+5380 lines of HISTORY.md (part by outside readers working from a written brief; each finding below
+was checked against its source before it was changed).
+
+**What agreed:** the upstream facts themselves. The same commits, releases and pending items
+appear everywhere; `docs/sent-mails.tsv` lists every mail any record names (27 rows) and nothing
+else.
+
+**What did not, and is now fixed** (each correction dated 2026-11-12 in place; older text kept
+where it is history):
+- **Released or applied, still written as pending:** the QCA9377 entry's 6.1/5.15/5.10 releases
+  (README.md ×2, STATUS BT-1, BRIEF), BT-8 and BT-9 in 6.1.191 (STATUS, BRIEF, issues.md,
+  `patches/kernel/bt9-stable/`), BT-7, M-3 and BT-12 in BlueZ 5.88 (STATUS, issues.md), CO-34 and
+  CO-10 done (dossiers, index), E3 for `-42` "not yet booted" (`patches/diag/`), the a2dp v2 "new"
+  (`patches/bluez/`).
+- **Sent, still written as unsent:** CO-25 (index row and dossier said "the operator's word for
+  the send" and "no replies yet"); X1 (issues.md table said "not reported anywhere").
+- **Ubuntu's kernel:** `7.0.0-43` carries the entry and is in noble-updates and noble-security;
+  README.md, STATUS, the CO-09 row and dossier still had "`-42` pending" or "in noble-proposed".
+- **BT-16:** STATUS said "once (1 of 7 boots)" and "no recurrence"; it recurred on 11-11.
+- **The 11-11 results never reached the defect register:** U8, U12, U14, U15 (the MOMENTUM 4's
+  microphone silent since 10-20), U19, U20, BT-4, BT-6 ("observed once" against 15 lines in
+  August).
+- **A safety count overstated:** README.md, BRIEF (twice) and install.md (three times) said the
+  watchdog's USB reset had "three controlled demonstrations (`EX-023`, `EX-026`)"; `EX-026`'s reset
+  was not issued by this project. Now: two controlled (`EX-023`, the 2026-08-15 boot), as
+  issues.md already said, and `EX-026` named separately.
+- **Retractions only in HISTORY:** `EX-027`'s "the stage decides" (withdrawn by `EX-034`) and "the
+  ladder destroyed nothing" are now in BRIEF §5; five HISTORY passages that later corrections
+  overturned carry inline markers (the 287 withdrawal, "anonymous by construction", the
+  alt-probe silence, the 9/5 reset split, the "24×" ratio, which is 28× to 41×).
+- **Evidence left out:** issues.md said no exhibit bears on "a warm reboot does not recover it";
+  `EX-028` and `EX-034` do. `EX-025`/`EX-029` were listed as untouched windows without their
+  shutdown-probe caveat.
+- **Out-of-date headers and pages:** issues.md's counts (thirteen BT, twenty U), its newest
+  current-state block (10-28), BT-1's "under investigation" header, the U1–U29 heading; BRIEF's
+  hand-off (11-07) and at-a-glance block; HISTORY's last chapter (11-07; a chapter for 11-07 to
+  11-12 added) and its X1 block's lost quote markers; 14 dossier front pages (CO-01, 02, 06, 07,
+  08, 09, 10, 11, 19, 20, 25, 34, 35, 37) now open with their current state, CO-19's with a warning
+  not to install its plan's two packages; the index rows CO-02, 09, 10, 21 (dossier link), 22,
+  23, 25, 35 ("since v5.7", corrected to v6.3), 38.
+
+**Not fixed, reported:**
+- No register has a row for the eight BT-16 candidates (issues.md lists them) or for U30/U31 as
+  contributions; M-1 and M-2 have STATUS rows but no section in issues.md; CO-20, CO-21, CO-22
+  and CO-38 have dossiers and no issue row. These need decisions about scope, not corrections.
+- STATUS's long mesh rows (M-1, CO-04/05/26) still describe the 10-29 state; their send packages
+  are ready and unsent; whether CO-05 1/2 still applies on top of another author's 14927631 was
+  not re-checked.
+- Sub-pages under each dossier's `patch/` and `send/`, and the dossiers' `log.md` files, were
+  not read.
+
+## 7. Decisions for the operator
 
 1. **CO-02:** prepare v2 (fold patches 2 and 3 into one, port the BlueZ test, re-run the bot's CI on base and
    base + v2), or send a short ping on the v1 thread first.

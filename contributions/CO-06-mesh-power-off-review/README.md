@@ -1,5 +1,11 @@
 # CO-06 — Review reply on Jiale Yao's mesh power-off fix
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): **blocked.**
+> 14864878 is still `new` (patchwork, read 2026-11-12). The rerun is done (2026-11-01,
+> `../research-2026-11-01/`): 8/26 → 21/26 and 20/26; the backlog-3 and removal cases still fail; it
+> does not apply on top of CO-04. Next: wait; if a reply is wanted, refresh the lock trace and the
+> removal cases first.
+
 **State:** blocked (2026-10-28). The comparison behind the reply dates from 2026-10-05, before
 `87a49b610708` changed the mesh timing; it must be re-run on today's bluetooth-next before any
 reply. Sending is the operator's decision.

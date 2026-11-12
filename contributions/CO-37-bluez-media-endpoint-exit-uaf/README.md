@@ -1,5 +1,11 @@
 # CO-37: bluetoothd use-after-frees at exit with a streaming sound server (U23, U24)
 
+> **Current state, 2026-11-12** (the index `../README.md` is the current record): **fix series
+> ready, nothing sent.** Six mails exist since 2026-11-02 (the sixth fixes the duplicate
+> `MediaEndpoint1.Release` the series exposed): `work/patches/master-final-6-20261102/`, and the
+> 5.72 backport `5.72-3-20261102/`; the bot's checks pass on both. `U27` (5.72 only) is not covered.
+> Open: the route, one or two series, subjects, fixtures (decisions D3, D13).
+
 **State (2026-11-01):** reproduced on BlueZ master and on 5.72 under ASan; a fix series and a
 test for master are written; backports for 5.72 are ready. Nothing is sent. Sending is the
 operator's decision.
