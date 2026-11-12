@@ -160,10 +160,10 @@ two-line addition to
   `7.0.0-43` carries it and is published in noble-updates and noble-security (seen 2026-11-12).
   Until it is installed the laptop runs the entry as a self-built `btusb`, rebuilt before any new
   kernel boots.
-- **A start-up failure on the fixed driver (`BT-16`).** Twice (boots of 2026-11-05 and 11-11) the
+- **A start-up failure on the fixed driver.** Twice (boots of 2026-11-05 and 11-11) the
   controller came up reporting its firmware patch as already loaded, failed two LE commands, and
   Bluetooth was unavailable for the whole boot; a power-off recovered it. Cause not established
-  ([`docs/issues.md`](docs/issues.md)).
+  (the last issue in the `BT` series of [`docs/issues.md`](docs/issues.md)).
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
   backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
   are released in BlueZ 5.88 (tables above).
