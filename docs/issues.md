@@ -1103,6 +1103,9 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - `usb_scuttle_anchored_urbs()` (`drivers/usb/core/urb.c:995-1013`) only unanchors the URBs and drops the anchor's reference. No completion runs.
   - The two scuttles of `deferred` therefore appear to free neither: in `btusb_close()` (`:2238`) and in `btusb_resume()`'s `failed:` path (`:5076`).
   - `play_deferred()`'s cleanup loop frees the setup packet but not the skb.
+  - `play_deferred()`'s submit-failure branch does the same (`:4997-5005`; found by an outside reviewer, reviewer 2, and checked).
+- **Prior attempt:** "Bluetooth: btusb: Fix memory leak in play_deferred" (RFC v2, 2017) was not merged. The author of btusb's PM code objected: *"We cannot silently drop one part of a transmission."* (`contributions/CO-43-…/prior-art-2026-11-13.md` §4). So a fix must also report the dropped commands to the HCI layer.
+- **Confirmed from the source by two outside reviewers** (reviewers 1 and 2 of the open-work document).
 - **When it would happen:** hci0 closed while commands are deferred on a suspended device, or a failed resume with deferred data. Both are rare; each costs at most a few small allocations.
 - **Next:** a kmemleak run in emulation that closes hci0 with a command deferred; then a fix together with BT-24 (drain under `txlock`, free with `dev_kfree_skb_any()`).
 

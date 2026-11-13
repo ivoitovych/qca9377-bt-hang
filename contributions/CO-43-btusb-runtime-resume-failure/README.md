@@ -129,6 +129,21 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
      - **when the controller needs that reset:** unpatched it recovers, 3/3; with B it stays
        dead, 6/6, and nothing later resets it (no command timer during `HCI_RESET`).
      - **B is not to be sent in this form.**
+   - **Prior art** (`prior-art-2026-11-13.md`, every claim with its source):
+     - **btusb's missing `reset_resume` is deliberate:** one was reverted in 2013, and others
+       were rejected in 2014, 2015 and 2017. So D stays local, as a fallback.
+     - **BT-18 is a known gap:** `9be427efc7644` (2016) names it. A 2014 series that would
+       have rebound after a runtime resume stalled after v4, with no objection on record.
+     - **Nobody else is working on BT-18 to BT-25.** A pending, unmerged rewrite keeps BT-23's
+       window.
+     - **A 2017 RFC for BT-25's leak was not merged:** *"We cannot silently drop one part of a
+       transmission."*
+     - **No upstream test framework** exists for USB driver PM. Precedent describes emulation
+       in the commit body.
+     - **The linux-usb question** goes as one thread: To linux-usb with Alan Stern; Cc
+       linux-bluetooth, the Bluetooth maintainers, Oliver Neukum and Johan Hovold.
+   - **The answers to the open-work tasks:** reviewers 1 and 2 so far, checked in
+     `reviews/2026-11-13T1750Z-bt17-open-work-answers-checks.md`.
    - **E's `Fixes: 7bee549e197c`:** verified in full history. That commit added the anchoring
      outside `txlock`, as well as BT-20's silent waker and BT-24's scuttle.
 6. **The second outside review of the patches (earlier, on the dossiers)**
