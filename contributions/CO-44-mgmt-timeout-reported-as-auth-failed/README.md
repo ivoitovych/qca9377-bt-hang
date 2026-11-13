@@ -63,8 +63,22 @@ Directed Advertising Timeout.
 - **Seen on the way, not fixed:** `unpair_device_complete()` (`mgmt.c:3134`) passes the
   raw negative `err` to `cmd_complete` instead of `mgmt_status(err)`; not traced.
 
+**The list's CI bot, run locally on the kernel patch** (`tmp/bot-ci-local/co44-20261113/`):
+- **Passes:** BuildKernel, BuildKernel32, CheckAllWarning, CheckSparse, CheckKernelLLVM,
+  IncrementalBuild, SubjectPrefix, TestRunnerSetup.
+- **Testers:** `TestRunner_mgmt-tester` passes on both sides, with identical not-passed
+  sets (the bot's BlueZ master, without our new case). The kernel-report scan is clean.
+- **CheckPatch, VerifySignedoff, GitLint:** fail only for the missing Signed-off-by.
+- **VerifyFixes:**
+  - first "Target SHA1 does not exist": an artifact of the runner's history limit (2023);
+  - rerun with history from 2021-06 (`co44-verifyfixes-20261113/`): only "empty lines
+    surround the Fixes tag", because `Fixes:` is the message's last line. The operator's
+    Signed-off-by goes directly under it.
+- **The base side's one non-pass,** `Mesh - Send cancel - 1`, failed once on the unpatched
+  base and passed patched: unrelated to this change (mesh, M-1).
+
 **Next:**
-- the bot's CI on the exact mails, base and base + patch (`scripts/bot-ci-local.sh`);
+- the BlueZ test's bot run with the patched kernel (`--space user --kernel-image`);
 - the kernel patch and the BlueZ test as two sends, the test noting that it needs the kernel fix;
 - the operator's word for both.
 

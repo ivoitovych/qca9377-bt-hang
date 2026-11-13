@@ -58,7 +58,10 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
 `tmp/bot-ci-local/co43-20261113/`):
 - every build and static check passes: BuildKernel, BuildKernel32, CheckAllWarning,
   CheckSparse, CheckKernelLLVM, IncrementalBuild, SubjectPrefix, VerifyFixes, TestRunnerSetup;
-- CheckPatch, VerifySignedoff and GitLint fail only for the missing Signed-off-by.
+- CheckPatch, VerifySignedoff and GitLint fail only for the missing Signed-off-by;
+- the base side (`da3cc0258`) passes its six tree checks too;
+- the bot's file mapping selects no tester for a btusb-only change. The emulation above is
+  what exercises the code.
 
 **Open before any send:**
 1. **D changes the system-resume path** of every btusb device that is reset-resumed at a
