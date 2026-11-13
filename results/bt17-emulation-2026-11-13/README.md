@@ -22,7 +22,9 @@ Bluetooth, and nothing was sent anywhere.
 - **The fault, `--fail-at N`:** at the N-th resume the device does not answer its GET_STATUS
   and holds every later request (a device that NAKs). When the host gives up (unlink), the
   device is "dead": every control transfer fails `-71`. With `--recover` it is healthy again
-  instead (a device that a reset brings back).
+  instead. Strictly, it recovers when the host unlinks the held request, not at a USB reset
+  (`Emu.unlink()`). So it models a device that answers again after the host's reset-resume, but
+  cannot show that a reset is what brought it back.
 - **The triggers:**
   - MGMT Set Device Class after the runtime autosuspend (`bt17`, the laptop's Write Class of
     Device at login);
@@ -113,6 +115,17 @@ key config) is `logs/bzImage-<kernel>.commit`.
 | system suspend (`pm_test=devices`, freeze) | not testable here. `vhci_hcd` refuses system suspend with a device attached (`platform_pm_suspend returns -16`), both kernels. A second emulator on Raw Gadget and `dummy_hcd` (`harness/rg-emu.py`, `*-rg-*` logs, `SHA256SUMS-raw-gadget`) works before the sleep, but the freezer stops the user-space gadget during the resume ("device is not running") | | |
 
 Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
+
+**How the results were judged** (outside review, reviewer 7):
+- **`recover`:** "hci0 back" means that hci0 reappeared. That scenario does not power it on or
+  send a command afterwards, and its `RESULT` line leaves the value out; it was read from the
+  `hci0 back after recovery` line.
+- **Functional checks:** only `close-recover` and `sysfreeze` write the class after the recovery.
+- **Exit status:** the harness does not fail by itself. A scenario's exception is logged and
+  swallowed, `run-guest.sh` ends with a `grep`, and `run-matrix.sh` checks nothing.
+- **Every count above** was read from the logs by hand.
+- **Before any further acceptance run**, the harness gets functional `RESULT`s and non-zero exits
+  (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`, finding 18).
 
 **The laptop tool `scripts/bt17-provoke.py`, run unchanged in a guest:**
 - healthy device: 18 cycles, 18 answered;

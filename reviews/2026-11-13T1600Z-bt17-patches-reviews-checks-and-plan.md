@@ -1,11 +1,12 @@
-# BT-17 patches — four outside reviews of the intermediate document: our checks, and the plan
+# BT-17 patches — outside reviews of the intermediate document (four, then a fifth): our checks, and the plan
 
 *2026-11-13. The four answers to `2026-11-13T1100Z-bt17-patches-intermediate-review.md` are
 kept verbatim beside this file:*
 - *`2026-11-13T1600Z-bt17-patches-review-reviewer-1-verbatim.md`;*
 - *`…-reviewer-2-verbatim.md`;*
 - *`…-reviewer-3-verbatim.md`;*
-- *`…-reviewer-6-verbatim.md`.*
+- *`…-reviewer-6-verbatim.md`;*
+- *reviewer 7, later: `2026-11-13T1700Z-bt17-patches-review-reviewer-7-verbatim.md`.*
 
 *Reviewer 2's earlier assessment of the dossiers is
 `2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md`. Each claim below was checked against
@@ -14,15 +15,19 @@ emulation logs (`results/bt17-emulation-2026-11-13/logs/runs/`).*
 
 ## Where the four agree
 
-| item | R1 | R2 | R3 | R6 | consensus |
-|---|---|---|---|---|---|
-| 1 (A) | nit, ready | nit | nearly ready | nit (wording) | send alone after a wording fix |
-| 2 (B) | should-fix | should-fix (B1 untested) | **blocker** | **blocker** | rewrite, after BT-18 is fixed |
-| 3 (D) | should-fix | **blocker** | **blocker** | RFC to linux-usb only | not as a fix; take BT-18 to the USB core |
-| 4 (E) | ready | strong, one stress test | ready | ready (+ `Fixes:`) | send alone |
-| 5 (C) | RFC ok | RFC only | not as a fix | don't post | keep local; an A/B on the laptop at most |
-| CO-44 kernel | ready, stable | nit, stable for the maintainers | add `-EACCES` | send, no `Cc: stable` | send, after the `-EACCES` question |
-| CO-44 test | — | verify the hook fired | add an auth-failure test | send after the kernel patch lands | refine, send second |
+| item | R1 | R2 | R3 | R6 | R7 (later) | consensus |
+|---|---|---|---|---|---|---|
+| 1 (A) | nit, ready | nit | nearly ready | nit (wording) | nit (wording) | send alone after a wording fix |
+| 2 (B) | should-fix | should-fix (B1 untested) | **blocker** | **blocker** | **blocker** | rewrite, after BT-18 is fixed |
+| 3 (D) | should-fix | **blocker** | **blocker** | RFC to linux-usb only | **blocker** (the queued reset can be lost) | not as a fix; take BT-18 to the USB core |
+| 4 (E) | ready | strong, one stress test | ready | ready (+ `Fixes:`) | ready, guarantee scoped to a successful resume | send alone |
+| 5 (C) | RFC ok | RFC only | not as a fix | don't post | qualified RFC only | keep local; an A/B on the laptop at most |
+| CO-44 kernel | ready, stable | nit, stable for the maintainers | add `-EACCES` | send, no `Cc: stable` | ready, `Fixes:` verified, stable after review | send, after the `-EACCES` question |
+| CO-44 test | — | verify the hook fired | add an auth-failure test | send after the kernel patch lands | no blocker | refine, send second |
+
+Reviewer 7's answer came after the other four
+(`2026-11-13T1700Z-bt17-patches-review-reviewer-7-verbatim.md`). It is checked in its own section
+below ("Reviewer 7, checked").
 
 ## The new findings, checked
 
@@ -102,6 +107,114 @@ emulation logs (`results/bt17-emulation-2026-11-13/logs/runs/`).*
     - The laptop's first reset is attributed to the reset-resume from timing and source, not
       from a USB core trace (R2). The dossiers say so; keep it explicit.
 
+## Reviewer 7, checked
+
+R7 read the sources at the same revisions (bluetooth-next `da3cc0258`, BlueZ `20ffd285b`) and the
+harness at `0a17a7b`, and ran nothing. Each point was checked against `git show da3cc0258:<file>`
+(extracted by `tmp/bt17-review/r7-base-files.sh`), our patches and our harness. **Every source
+claim holds.** Line numbers are those of `da3cc0258`.
+
+12. **B: the counterexample, made exact** (R7 §1; finding 1 above, now with its mechanism).
+    **Confirmed from the source; not yet run.**
+    - `btusb_tx_complete()` drops `tx_in_flight` when the USB transfer completes
+      (`btusb_main.c:2094-2096`), not at the HCI answer.
+    - `btusb_suspend()` refuses an autosuspend only while `tx_in_flight` is non-zero (`:4946-4951`).
+    - So a command whose transfer completed but which the controller never answers leaves
+      nothing that keeps the device awake. With an autosuspend delay shorter than the 2 s
+      command timeout, the device is suspended when `btusb_reset()` runs, and B returns without
+      a reset. There is no deferred URB and no waker.
+    - B's message says "The command that timed out never reached the controller". That holds for
+      BT-17, where the command was deferred, but not for every case B's test admits.
+    - Our `--hold-hci` mode holds the USB transfer itself (`bt17-emu.py:265-267`: no
+      `ret_submit`). So it keeps `tx_in_flight` up and cannot show this.
+    - **Test to add:** complete the transfer, drop only the HCI event, and set
+      `power/autosuspend_delay_ms` below 2000.
+13. **B's PM predicate** (R7 §2; finding 3). **Confirmed:** `pm_runtime_active()` is
+    `runtime_status == RPM_ACTIVE || disable_depth` (`include/linux/pm_runtime.h:168-172`). Its
+    comment says the result can be trusted only under the runtime PM lock or while the status
+    cannot change. R7 adds:
+    - `BTUSB_SUSPENDING` is cleared at the end of `btusb_resume()` (`:5067-5070`), while the
+      device's resume may still be finishing;
+    - so B's "does not block the HCI workqueue" is too strong. It avoids the wait that was
+      observed, not every wait.
+    - Any rewrite must tell a deferred command from one that was sent: R6's
+      `!usb_anchor_empty(&data->deferred)` does that.
+14. **D: the queued reset can be lost** (R7 §3). **New. Confirmed from the source; not yet run.**
+    - The reset work, `__usb_queue_reset_device()` (`drivers/usb/core/message.c:1962-1975`),
+      resets only if `usb_lock_device_for_reset()` succeeds. Otherwise it drops its interface
+      reference: no retry and no message.
+    - `usb_lock_device_for_reset()` (`drivers/usb/core/usb.c:895-925`) fails:
+      - `-EHOSTUNREACH` if the device is suspended;
+      - `-EBUSY` if the device lock is not free within one second;
+      - `-EINTR` while the interface unbinds;
+      - `-ENODEV` once the device is gone.
+    - D queues the reset without holding a runtime PM reference (patch 3:
+      `usb_queue_reset_device(intf)` after `btusb_resume()`). The existing `btusb_reset()`
+      keeps the usage count it took until the disconnect (`btusb_main.c:1101-1111`).
+    - So a device that autosuspends before the work runs is never reset, and btusb is never
+      rebound.
+    - D also stops the core's fallback. With a `reset_resume` callback,
+      `usb_resume_interface()` calls it and no longer sets `needs_binding`
+      (`drivers/usb/core/driver.c:1367-1375`). The system-resume rebinding is then gone as well.
+    - **Test to add:** delay the reset work past the autosuspend.
+    - **For D, if it is ever needed:** hold a PM reference until the reset has run, and define
+      what happens when the lock is not obtained.
+15. **D: return on a failed `btusb_resume()`? No** (R7 §4). **Confirmed:** `usb_resume_both()`
+    ignores each interface's resume result (`driver.c:1580-1582`). So D's unconditional queueing
+    is the only recovery after a failed resume. This answers the question from reviewer 2's
+    earlier review ("say why the reset is queued even when `btusb_resume()` fails").
+16. **D: traffic before recovery** (R7 §4; finding 6). The same as finding 6. R7 adds that our
+    emulator cannot test it: it always reports patch and NVM loaded (`bt17-emu.py`,
+    `QCA_CHECK_STATUS` → `0xc0`). The emulator needs a mode in which a reset clears the
+    controller's state.
+17. **A latent race on `btusb_resume()`'s failure path** (R7 §5). **New. Confirmed from the
+    source; registered as BT-24.**
+    - `failed:` calls `usb_scuttle_anchored_urbs(&data->deferred)` without `txlock`
+      (`btusb_main.c:5075-5076`), then clears `BTUSB_SUSPENDING` under it (`:5078-5080`).
+    - A sender that takes `txlock` in between still sees the flag and anchors its URB on
+      `deferred`. With or without E, that URB is not sent until the next resume.
+    - It predates our patches. E fixes the successful-resume race (BT-23), not this one.
+    - E's message claims nothing about the failure path (checked), so E is unchanged.
+    - **Test to add:** a deferred send that races a failed interrupt or bulk URB submission at
+      resume.
+18. **The harness does not judge recovery by function** (R7 §6). **All three points confirmed.**
+    - **`--recover`:** the device becomes healthy when the host unlinks the held request
+      (`bt17-emu.py:163-178`), not at a USB reset. The README's "a device that a reset brings
+      back" was wrong and is corrected.
+    - **`recover` scenario:** `scenario_bt17()` waits for `hci0` to reappear (`:480`), and its
+      `RESULT` line leaves that value out (`:485`). The README's "5/5 hci0 back" means
+      "reappeared", not "worked". Only `close-recover` and `sysfreeze` write the class after the
+      recovery.
+    - **Exit status:** a scenario's exception is logged and swallowed (`:653-654`).
+      `run-guest.sh` ends with a `grep` (`:23`), and `run-matrix.sh` checks nothing.
+    - The recorded traces stand: every matrix summary was read line by line. But the harness
+      does not fail by itself.
+    - **Fix before more runs:**
+      - every recovery scenario ends with a power-on and an answered command, written into its
+        `RESULT`;
+      - a scenario that raises or fails exits non-zero, and the matrix counts it;
+      - a recovery mode keyed to the USB reset, if vhci lets the emulator see one.
+19. **A's comment** (R7 §7; finding 11). **Holds.** A says "btusb_resume() sends the deferred data
+    when it ends". On the failure path it scuttles them instead (`btusb_main.c:5075-5076`). The
+    comment is to say that `-EACCES` can occur while runtime PM is disabled, as during a system
+    sleep, and nothing more.
+20. **C's wording** (R7 §7). **Holds, on two counts.**
+    - C's message states as fact that the device "did not answer its GET_STATUS". The laptop's
+      log has no GET_STATUS (emulation README, "not logged"). It is inferred from the source and
+      reproduced in emulation, and the message must say so.
+    - The subject "Disable runtime suspend" overstates it. `BTUSB_WAKEUP_BROKEN` acts only while
+      the HCI device is open and needs remote wakeup. The message body already says so.
+21. **CO-44** (R7 §8). **Agrees:** `Fixes: 161510ccf91c` is right.
+    - R7 lists BlueZ code that treats `AUTH_FAILED` specially:
+      - `bonding_attempt_complete()` (`src/adapter.c:8933`, PIN retry);
+      - `device_bonding_complete()` (`src/device.c:7552`) and `:2092`;
+      - the timeout case at `:3528`.
+    - These are reached through pairing results. The kernel takes those from HCI status bytes
+      (the positive-status table) or maps them explicitly (`pair_device()`, `mgmt.c:3772-3779`),
+      so the patch leaves them as they are.
+    - BT-21's audit line ("nothing in BlueZ depends on 0x05 for a timeout") stays true. It must
+      not be read as "the two statuses are interchangeable".
+
 ## The plan this gives (nothing sent; each send is the operator's)
 
 1. **CO-44:**
@@ -120,9 +233,23 @@ emulation logs (`results/bt17-emulation-2026-11-13/logs/runs/`).*
    - put the question there: should `usb_runtime_resume()` schedule the unbind and rebind, and
      deferred, not inline (R3)?
    - Patch D is kept as the btusb-side fallback, not sent as a fix.
-5. **B afterwards:** rewrite it on top of the BT-18 fix, with no exception. Test it in the
-   emulator against a dropped command on an awake controller (finding 1) and against A+B alone
-   (finding 2), judged by a command after the recovery.
-6. **C:** keep it local.
+5. **B afterwards:** rewrite it on top of the BT-18 fix, with no exception.
+   - It must tell a deferred command from one that was sent (finding 13).
+   - Test it in the emulator, judged by a command after the recovery:
+     - against a command whose transfer completed and whose HCI answer is dropped, with an
+       autosuspend delay under 2 s (finding 12);
+     - against A+B alone (finding 2).
+6. **C:** keep it local. If it is ever posted as an RFC, say that the GET_STATUS failure is
+   inferred, not logged, and narrow the subject (finding 20).
 7. **Doc fixes now:** the emulation README title, and the dossiers' statements on resets
    (finding 4).
+8. **The harness before any further acceptance run** (finding 18):
+   - functional `RESULT`s;
+   - non-zero exits, counted by the matrix;
+   - new modes:
+     - drop the HCI event after a completed transfer (finding 12);
+     - delay the reset work past the autosuspend (finding 14);
+     - a reset that clears the controller's state (finding 16);
+     - a deferred send racing a failed resume submission (finding 17).
+9. **D, if BT-18 stays in btusb:** hold a PM reference until the queued reset has run, handle a
+   failed lock, and keep HCI traffic quiet until the rebinding (findings 14 and 16).

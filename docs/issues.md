@@ -1024,6 +1024,12 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - the next power-on fails: HCI Reset `0x0c03` `-110` twice, never sent, MGMT status `0x05`;
   - when the resume is started by a command instead, btusb's own reset from the command timeout rebinds it by accident (BT-19).
 - **Fix candidate:** CO-43 D, a `reset_resume` that resumes and queues a reset, so the core rebinds btusb and the controller is set up again.
+- **D is not to be sent as a fix (outside reviews, 2026-11-13).**
+  - **It lets more devices autosuspend:** it opens `autosuspend_check()`'s gate for devices with the reset-resume quirk.
+  - **It restarts traffic before the rebinding.**
+  - **It still costs two resets.**
+  - **Its queued reset can be lost.** The reset work does nothing if `usb_lock_device_for_reset()` fails, for example because the device has autosuspended meanwhile, and D holds no PM reference. And with the callback present, the core no longer marks the interface for rebinding.
+  - **Next:** the question goes to linux-usb as a USB core one first, with D as the btusb fallback (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`).
 
 ## BT-19 — `btusb_reset()` blocks the HCI workqueue behind a failing resume, and resets a reset-resumed device again
 
@@ -1035,6 +1041,10 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - the HCI workqueue (cmd, RX, TX work) is blocked 5.3 s on the laptop, 5.4 s in emulation;
   - when the reset-resume succeeds, the waiting reset then resets the device once more (`Resetting usb device.` after the rebinding).
 - **Fix candidate:** CO-43 B. Don't reset while `BTUSB_SUSPENDING` is set and the interface is not runtime-active; if it is active although btusb was not resumed (BT-18 without D), reset as before.
+- **B is on hold (outside reviews, 2026-11-13).**
+  - **Its exception never fires:** our own `ab-recover-1.log` shows it.
+  - **It can skip a needed reset.** `tx_in_flight` drops when the USB transfer completes, not at the HCI answer. So a controller can get a command, never answer it, and autosuspend before the timeout fires. B then skips its reset. In BT-17 the command never left; that is not true of every case B's test admits.
+  - **The rewrite** waits for the BT-18 decision, and it must tell a deferred command from one that was sent.
 
 ## BT-20 — `btusb_waker()` swallows a failed resume
 
@@ -1067,6 +1077,17 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - Without the delay the window is a few instructions wide. How often it occurs on real hardware is unknown.
 - **What:** `submit_or_queue_tx_urb()` reads `BTUSB_SUSPENDING` under `txlock`, releases the lock, and only then anchors the URB on `deferred`. `btusb_resume()` drains `deferred` and clears the flag under `txlock`. A resume completing in between leaves the URB parked while the device is active, until the next suspend/resume cycle.
 - **Fix candidate:** CO-43 E, "Bluetooth: btusb: Anchor a deferred URB under txlock": the anchoring moves into the decision's critical section. The lock order is unchanged: `btusb_resume()` already takes the anchor's lock inside `txlock`.
+
+## BT-24 — btusb: a URB deferred during a failed resume is parked after the scuttle
+
+**Status 2026-11-13: race from source (an outside review of the CO-43 patches, reviewer 7); not reproduced; no fix yet; not BT-17.**
+- **What:** on its `failed:` path (an interrupt or bulk URB could not be submitted), `btusb_resume()` (bluetooth-next `da3cc0258`, `btusb_main.c:5075-5080`):
+  - calls `usb_scuttle_anchored_urbs(&data->deferred)` without `txlock`;
+  - then clears `BTUSB_SUSPENDING` under `txlock`.
+
+  A sender that takes `txlock` in between still sees the flag and anchors its URB on `deferred`. Nothing sends it until the next resume, and an HCI command in it times out.
+- **Relation to BT-23:** the same kind of window, on the failure path. CO-43 E closes BT-23's window (successful resume) but not this one.
+- **Next:** an emulator test, a deferred send racing a failed receive-URB submission at resume (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`, finding 17). Then the fix: scuttle under `txlock`, or clear the flag first. The scuttle frees URBs, so which of the two fits is to be decided.
 
 ---
 

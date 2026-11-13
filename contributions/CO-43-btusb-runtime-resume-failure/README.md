@@ -99,6 +99,28 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
      traced.
    - **E and A:** to send alone.
    - **C:** stays local.
+   - **A fifth review (reviewer 7, `reviews/2026-11-13T1700Z-…-reviewer-7-verbatim.md`;
+     checks 12–21 in the same file).** It reaches the same verdicts, and every source claim
+     in it holds. New:
+     - **B:** the exact counterexample. `tx_in_flight` drops at USB completion, so a command
+       sent but never answered lets the device autosuspend before the timeout. Our
+       `--hold-hci` cannot show it; the test needs a dropped HCI event and an autosuspend
+       delay under 2 s.
+     - **D:** its queued reset can be lost. `usb_lock_device_for_reset()` refuses a suspended
+       device and gives up after 1 s, the work drops the request silently, and D holds no PM
+       reference. And with `reset_resume` present, the core no longer sets `needs_binding`.
+     - **D:** returning on a failed `btusb_resume()` would not help: `usb_resume_both()`
+       ignores the result.
+     - **BT-24:** `btusb_resume()`'s failure path scuttles `deferred` outside `txlock`, which
+       E does not cover. Registered.
+     - **The harness:**
+       - `--recover` recovers on unlink, not on reset;
+       - `recover` judges only that hci0 reappears;
+       - failures do not fail the run.
+
+       To be fixed before any further acceptance run.
+     - **C's message:** the GET_STATUS failure is inferred, not logged on the laptop; narrow the
+       subject.
 6. **The second outside review of the patches (earlier, on the dossiers)**
    (`reviews/2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md`, checked there):
    - **Don't send 1–4 as one series.** A and E go separately; B after another review; D only

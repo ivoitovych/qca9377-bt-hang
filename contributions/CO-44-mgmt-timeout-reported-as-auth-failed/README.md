@@ -95,6 +95,16 @@ The bot's user-space checks do not run mgmt-tester; the new case's runs are the 
 - **The BlueZ test:**
   - check that the hook actually saw Write Class of Device;
   - send it only after the kernel patch has landed, or the list's CI fails it.
+- **A fifth review (reviewer 7)** found no blocker in either patch. It verified
+  `161510ccf91c` itself and calls the fix a reasonable stable candidate after normal review.
+  - **It lists BlueZ code that treats `AUTH_FAILED` specially:**
+    - `bonding_attempt_complete()`'s PIN retry, `src/adapter.c:8933`;
+    - `device_bonding_complete()`, `src/device.c:7552`.
+
+    Pairing results reach those through the HCI-status table or explicit mappings
+    (`pair_device()`, `mgmt.c:3772-3779`), so the patch leaves them as they are. Our audit
+    stands. But the two statuses are not interchangeable to user space in general, and the
+    mail must not say so.
 
 **Next:**
 - the kernel patch and the BlueZ test as two sends, the test noting that it needs the kernel fix;
