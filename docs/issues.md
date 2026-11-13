@@ -881,9 +881,9 @@ ended CO-35's first bisect, whose runs ran the whole suite. Ubuntu `7.0.0-42` is
 team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 request only if
 7.3.y releases go without it. CO-35's request states the fact.
 
-## BT-16 — At two boots the controller came up "already patched", failed LE commands, and Bluetooth was unavailable for the whole boot
+## BT-16 — At three boots the controller came up "already patched", failed LE commands, and Bluetooth was unavailable for the whole boot
 
-**Status 2026-11-12: observed twice (boots `7323fc85`, 11-05, and `5e459fa0`, 11-11); cause not established.**
+**Status 2026-11-13: observed three times (boots `7323fc85`, 11-05, `5e459fa0`, 11-11, and `680c448c`, 11-13 on `7.0.0-43` with the stock btusb); cause not established.**
 Found while checking two shutdown verdicts of "HANG"
 ([`evidence/trials/E3/hang-verdicts-check-2026-11-07/`](../evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md)).
 
@@ -929,11 +929,16 @@ Found while checking two shutdown verdicts of "HANG"
   Not checked before the power-off: whether the index was unconfigured or still in setup (the read-only unconfigured-index query was not run; it needs the operator's word).
 - **Not done (operator's call, deferred to a power-off):** the read-only unconfigured-index check; the log-line module. Recovery as on 11-05: full power-off.
 
+**2026-11-13, third occurrence (journal and file reads only; [`results/bt16-third-2026-11-13/`](../results/bt16-third-2026-11-13/README.md)):** boot `680c448c`, 10:41:33, `7.0.0-43` with the **stock** btusb (no module in `updates/`), after a normal power-off and about 4 min 46 s off.
+- Kernel: no rampatch line; `USB disconnect, device number 2` at 10:41:33.939; `Opcode 0x200f failed: -71` during it; re-enumerated as device 4; NVM loaded; `unexpected cc 0x202f length: 1 < 9`, `Opcode 0x202f failed: -38`.
+- bluetoothd: `Number of controllers: 0`. The operator powered off after a minute. The next boot (`af3f9840`, 11:24, about 41 min off) loaded the rampatch normally.
+- New against 11-05 and 11-11: the out-of-tree E3 module is not a condition (stock `-43`), and a short off-time can keep the "already patched" state, so the off-time does not decide it. 3 occurrences now.
+
 **Falsifiers / next:** whether it recurs (scan each new boot: rampatch line present, no
 `usb 3-3: USB disconnect` at start-up); whether the laptop powers USB in S5 (a controller keeping
 RAM through power-off would explain "already patched"); whether bluetoothd's empty list means the
 index was still in setup or was registered unconfigured (`btmgmt info`, the unconfigured index
-list, on a recurrence, read-only). **Reportable:** not yet; two occurrences (11-12), no mechanism.
+list, on a recurrence, read-only). **Reportable:** not yet; three occurrences (11-13), no mechanism.
 
 ---
 

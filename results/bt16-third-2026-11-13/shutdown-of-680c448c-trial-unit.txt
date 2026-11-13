@@ -1,0 +1,27 @@
+$ journalctl -b 680c448c133a498b96762ed099ec5497 -u bt-trial-auto --no-pager -o short-precise
+Nov 13 10:41:37.353165 n systemd[1]: Starting bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown...
+Nov 13 10:41:46.844908 n bt-trial[1372]: auto-trial E3 #11 opened at boot
+Nov 13 10:41:46.846214 n systemd[1]: Finished bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown.
+Nov 13 10:42:26.018735 n systemd[1]: Stopping bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown...
+Nov 13 10:42:26.955328 n bt-trial[4442]: controller does NOT respond
+Nov 13 10:42:47.810579 n bt-trial[4442]:   SCO setup requested   : 0
+Nov 13 10:42:47.810579 n bt-trial[4442]:   SCO -> first timeout  : ? s
+Nov 13 10:42:47.810579 n bt-trial[4442]:   command timeouts      : 0
+Nov 13 10:42:47.810579 n bt-trial[4442]:   responds afterwards   : no
+Nov 13 10:42:47.810579 n bt-trial[4442]:   still on the USB bus  : yes   (bus-loss events: 1)
+Nov 13 10:42:47.810579 n bt-trial[4442]:   request parameters    : /root/exp/qca9377-bt-hang/evidence/trials/E3/trial-11/sco-params.txt
+Nov 13 10:42:47.810924 n bt-trial[4442]:   liveness probes       : 0   (btmon aborts: 0)
+Nov 13 10:42:47.810924 n bt-trial[4442]:   last probe -> timeout : ? s
+Nov 13 10:42:47.810924 n bt-trial[4442]:   previous shutdown     : poweroff   (controller enumerated this boot: yes)
+Nov 13 10:42:47.810924 n bt-trial[4442]: collecting incident evidence...
+Nov 13 10:42:47.818958 n bt-trial[4442]: Trial E3 #11: HANG after 49s
+Nov 13 10:42:47.818958 n bt-trial[4442]:   cold power-off required before the next trial
+Nov 13 10:42:47.825006 n bt-trial[5256]: Trial results  (/root/exp/qca9377-bt-hang/evidence/trials/results.tsv)
+Nov 13 10:42:47.825006 n bt-trial[5256]: ─────────────────────────────────────────────────────────────
+Nov 13 10:42:47.827808 n bt-trial[5262]: trial-summary: unrecognised trial_result "ended_unprobed" on line 16
+Nov 13 10:42:47.828123 n bt-trial[5256]: bt-trial: denominator report FAILED — refusing to print a partial report
+Nov 13 10:42:47.829776 n systemd[1]: bt-trial-auto.service: Control process exited, code=exited, status=1/FAILURE
+Nov 13 10:42:47.829947 n systemd[1]: bt-trial-auto.service: Failed with result 'exit-code'.
+Nov 13 10:42:47.830165 n systemd[1]: Stopped bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown.
+Nov 13 10:42:47.830236 n systemd[1]: bt-trial-auto.service: Consumed 2.408s CPU time, 131.3M memory peak, 0B memory swap peak.
+[exit 0]

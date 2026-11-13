@@ -1,0 +1,8 @@
+$ journalctl -b 46cc4812abd1459d87df126ae80fbfac -u bt-trial-auto --no-pager -o short-precise --since 2026-11-13 10:30
+Nov 13 10:35:16.860159 n systemd[1]: Stopping bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown...
+Nov 13 10:36:46.967542 n systemd[1]: bt-trial-auto.service: Stopping timed out. Terminating.
+Nov 13 10:36:46.969959 n systemd[1]: bt-trial-auto.service: Control process exited, code=killed, status=15/TERM
+Nov 13 10:36:46.970075 n systemd[1]: bt-trial-auto.service: Failed with result 'timeout'.
+Nov 13 10:36:46.970353 n systemd[1]: Stopped bt-trial-auto.service - Open a Bluetooth trial for this boot, and close it at shutdown.
+Nov 13 10:36:46.970433 n systemd[1]: bt-trial-auto.service: Consumed 1min 30.112s CPU time, 121.0M memory peak, 0B memory swap peak.
+[exit 0]
