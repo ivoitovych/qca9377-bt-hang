@@ -116,6 +116,32 @@ key config) is `logs/bzImage-<kernel>.commit`.
 
 Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
 
+**The hardened harness (2026-11-13, after the outside reviews; `*-h-*` logs, `SHA256SUMS-hardened`):**
+- **What changed:**
+  - every scenario now judges its own success;
+  - the guest prints `BT17-EXIT 0|1`, and `run-guest.sh` exits with it (3 if the guest did not
+    finish);
+  - `run-matrix.sh` counts non-zero runs;
+  - `bt17 --recover` now powers hci0 on and writes the class after hci0 reappears.
+- **`recover`, rerun:** `base-h-recover-1` and `final-h-recover-1` both end
+  `back=True powered=True class_write_after=0x00`.
+- **New: `dropcmd`.** The emulated controller completes the USB transfer of one Write Class of
+  Device and never sends its event. The autosuspend delay is 500 ms. The device suspended about
+  0.5 s after the send in every run, before the 2 s command timeout:
+
+  | kernel | `btusb_reset()` at the timeout | Bluetooth usable 15 s later |
+  |---|---|---|
+  | `base` | `Resetting usb device.`, 3/3 | 3/3 |
+  | `ab` (A+B) | `Device not resumed; not resetting`, 3/3 | 3/3 |
+  | `final` | `Device not resumed; not resetting`, 3/3 | 3/3 |
+
+- **What `dropcmd` shows:**
+  - **Shown:** B misclassifies a command that reached the controller and skips the reset, as
+    the reviews predicted.
+  - **Not shown:** that this matters. The emulated controller loses only that one event and
+    answers the next command, so no recovery was needed.
+  - **The deciding test:** a controller that stays silent until it is reset.
+
 **How the results were judged** (outside review, reviewer 7):
 - **`recover`:** "hci0 back" means that hci0 reappeared. That scenario does not power it on or
   send a command afterwards, and its `RESULT` line leaves the value out; it was read from the

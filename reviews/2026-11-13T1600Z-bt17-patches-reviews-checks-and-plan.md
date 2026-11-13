@@ -159,6 +159,15 @@ claim holds.** Line numbers are those of `da3cc0258`.
       `ret_submit`). So it keeps `tx_in_flight` up and cannot show this.
     - **Test to add:** complete the transfer, drop only the HCI event, and set
       `power/autosuspend_delay_ms` below 2000.
+    - **Run (2026-11-13, `dropcmd`, delay 500 ms; `results/bt17-emulation-2026-11-13/logs/runs/*-h-dropcmd-*`):**
+      - the device suspended about 0.5 s after the send, in all 9 runs;
+      - unpatched: `Resetting usb device.`, 3/3;
+      - A+B and the final series: `Device not resumed; not resetting`, 3/3 each;
+      - Bluetooth worked afterwards in all 9.
+
+      **So B's misclassification is confirmed.** Its harm is not shown yet: the emulated
+      controller dropped one event and stayed healthy. Next: a controller that stays silent
+      until a USB reset.
 13. **B's PM predicate** (R7 §2; finding 3). **Confirmed:** `pm_runtime_active()` is
     `runtime_status == RPM_ACTIVE || disable_depth` (`include/linux/pm_runtime.h:168-172`). Its
     comment says the result can be trusted only under the runtime PM lock or while the status
@@ -224,6 +233,12 @@ claim holds.** Line numbers are those of `da3cc0258`.
         `RESULT`;
       - a scenario that raises or fails exits non-zero, and the matrix counts it;
       - a recovery mode keyed to the USB reset, if vhci lets the emulator see one.
+    - **Done 2026-11-13, except the reset-keyed mode:**
+      - every scenario judges its own success, and the guest's verdict is `run-guest.sh`'s exit
+        status;
+      - `run-matrix.sh` counts failures;
+      - `recover` now powers on and writes the class: `base-h-recover-1` and
+        `final-h-recover-1` give `back=True powered=True class_write_after=0x00`.
 19. **A's comment** (R7 §7; finding 11). **Holds.** A says "btusb_resume() sends the deferred data
     when it ends". On the failure path it scuttles them instead (`btusb_main.c:5075-5076`). The
     comment is to say that `-EACCES` can occur while runtime PM is disabled, as during a system

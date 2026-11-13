@@ -22,6 +22,8 @@ Derived from results/laptop-only-work-2026-11-11/.../usbip-bt-emu.py (CO-21). Wh
 It emulates the device only: nothing here is measured on the laptop.
 
 Usage: bt17-emu.py <scenario> [--fail-at N] [--recover] [--cycles N] [--hold-hci]
+       [--drop-hci-event OPCODE] [--autosuspend-ms N]   (dropcmd)
+Exit status: 0 if the scenario's success condition held, 1 if not or if it raised.
 Scenarios: bt17 (fault at a resume, then the class write), cycles (healthy suspend/resume
 cycles with a class write each), up (bring-up only).
 """
@@ -94,6 +96,7 @@ class Emu:
         self.fail_at = fail_at
         self.recover = recover
         self.hold_hci = hold_hci
+        self.drop_op = None              # --drop-hci-event: opcode armed once, by the scenario
         self.state = "healthy"          # healthy | wedged | dead
         self.suspended = False
         self.suspends = 0
@@ -266,6 +269,10 @@ class Emu:
                 self.held[seq] = "HCI 0x%04x" % op
                 return
             self.ret_submit(seq, 0, len(data))
+            if self.drop_op == op:                             # transfer done, event never sent
+                self.drop_op = None
+                self.note("HCI 0x%04x: control transfer completed, event dropped" % op)
+                return
             self.hci_cmd(op, data[3:3 + plen])
         else:
             log("%s not handled" % desc)
@@ -464,7 +471,7 @@ def scenario_bt17(emu, m, dev):
     res = {}
     if not wait_suspended(dev):
         log("RESULT bt17 SKIP device never autosuspended")
-        return
+        return False
     time.sleep(1.0)
     t_send = class_write(m, 0x0C)
     r = m.wait_reply(0x000E, 25)
@@ -478,11 +485,100 @@ def scenario_bt17(emu, m, dev):
     gone = wait_for(lambda: not os.path.exists("/sys/class/bluetooth/hci0"), 25)
     log("hci0 removed: %s; usb device now %s" % (gone, usb_dev()))
     back = wait_for(lambda: os.path.exists("/sys/class/bluetooth/hci0"), 15) if emu.recover else False
+    powered, cw = False, None
     if emu.recover:
         log("hci0 back after recovery: %s" % back)
+        if back:
+            powered = power_on(m)
+            if powered:
+                t3 = class_write(m, 0x10)
+                r3 = m.wait_reply(0x000E, 10)
+                log("class write after recovery: %.3f s %s" % ((r3[0] - t3) if r3 else -1, r3))
+                cw = ("0x%02x" % r3[3]) if r3 else "none"
     log("EMU suspends %d resumes %d state %s held %s" % (emu.suspends, emu.resumes, emu.state, list(emu.held.values())))
     st = ("0x%02x" % r[3]) if r else "none"
-    log("RESULT bt17 fail_at=%d recover=%s class-write-status=%s hci0_removed=%s" % (emu.fail_at, emu.recover, st, gone))
+    log("RESULT bt17 fail_at=%d recover=%s class-write-status=%s hci0_removed=%s back=%s powered=%s class_write_after=%s" %
+        (emu.fail_at, emu.recover, st, gone, back, powered, cw or "none"))
+    # success: the dead device is removed; the recovering one is back, powered, and writes the class
+    return (back and powered and cw == "0x00") if emu.recover else gone
+
+
+def power_on(m, tries=20):
+    """MGMT Set Powered on, retried while the MGMT index is not there yet"""
+    for attempt in range(tries):
+        m.send(0x0005, 0, b"\x01")
+        r = m.wait_reply(0x0005, 15)
+        log("Set Powered reply: %s" % (r,))
+        if r and r[3] == 0:
+            return True
+        time.sleep(0.5)
+    return False
+
+
+def kernel_lines(*patterns):
+    """(kernel time, line) of the dmesg lines that contain one of the patterns"""
+    import re
+    out = []
+    for l in os.popen("dmesg --color=never").read().splitlines():
+        if any(p in l for p in patterns):
+            m_ = re.search(r"\[\s*([0-9.]+)\]", l)
+            out.append((float(m_.group(1)) if m_ else -1.0, l))
+    return out
+
+
+def scenario_dropcmd(emu, m, dev, op, delay_ms):
+    """a command whose USB transfer completes but whose HCI event never comes. The runtime
+    autosuspend delay is lowered (the default 2000 ms equals the 2 s HCI command timeout), the
+    device is made awake by a successful class write, the drop is armed, and the next class
+    write is sent at once. Does the device autosuspend before the timeout, what does
+    btusb_reset() do, and does Bluetooth work afterwards?"""
+    with open(os.path.join(dev, "power", "autosuspend_delay_ms"), "w") as f:
+        f.write(str(delay_ms))
+    log("autosuspend_delay_ms = %s" % rd(os.path.join(dev, "power", "autosuspend_delay_ms")))
+    t = class_write(m, 0x04)
+    r = m.wait_reply(0x000E, 10)
+    log("warm-up class write: %.3f s %s; runtime_status %s" %
+        ((r[0] - t) if r else -1, r, rd(os.path.join(dev, "power", "runtime_status"))))
+    if not r or r[3] != 0:
+        log("RESULT dropcmd SKIP warm-up class write failed")
+        return False
+    susp0 = emu.suspends
+    emu.drop_op = op
+    t_send = class_write(m, 0x08)
+    r = m.wait_reply(0x000E, 25)
+    t_reply = r[0] if r else None
+    st = ("0x%02x" % r[3]) if r else "none"
+    log("Set Device Class with dropped event: reply after %.3f s: %s" % ((t_reply - t_send) if r else -1, r))
+    # the device's suspends after the send, from the emulator's own notes
+    sus = [e[0] for e in emu.events if e[0] >= t_send and e[1].startswith("suspend #")]
+    drop = [e[0] for e in emu.events if e[0] >= t_send and "event dropped" in e[1]]
+    log("EMU send %.6f transfer_done %s autosuspend %s (suspends %d -> %d)" %
+        (t_send, ["%.6f" % x for x in drop], ["%.6f" % x for x in sus], susp0, emu.suspends))
+    # long enough for a reset and the rebinding that follows it
+    time.sleep(15)
+    kl = kernel_lines("tx timeout", "Resetting usb device", "not resetting", "not resumed",
+                      "Failed usb_autopm", "reset full-speed", "USB disconnect")
+    for ts, l in kl:
+        log("KERNEL %s" % l)
+    reset = [l for ts, l in kl if "Resetting usb device" in l]
+    skipped = [l for ts, l in kl if "not resetting" in l]
+    tmo = [ts for ts, l in kl if "tx timeout" in l]
+    hci_up = os.path.exists("/sys/class/bluetooth/hci0")
+    powered, cw = False, None
+    if hci_up:
+        powered = power_on(m)
+        if powered:
+            t3 = class_write(m, 0x10)
+            r3 = m.wait_reply(0x000E, 10)
+            log("final class write: %.3f s %s" % ((r3[0] - t3) if r3 else -1, r3))
+            cw = ("0x%02x" % r3[3]) if r3 else "none"
+    usable = cw == "0x00"
+    log("RESULT dropcmd op=0x%04x delay_ms=%d send=%.6f transfer_done=%s autosuspended=%s tx_timeout=%s "
+        "class-write-status=%s btusb_reset=%s hci0=%s powered=%s final_class_write=%s usable=%s" %
+        (op, delay_ms, t_send, ",".join("%.6f" % x for x in drop) or "none",
+         ",".join("%.6f" % x for x in sus) or "none", ",".join("%.3f" % x for x in tmo) or "none", st,
+         "resetting" if reset else "skipped(not resumed)" if skipped else "none", hci_up, powered, cw or "none", usable))
+    return usable
 
 
 def scenario_close_recover(emu, m, dev):
@@ -491,7 +587,7 @@ def scenario_close_recover(emu, m, dev):
     reset-resume (--recover). Then power on again and write the class: does Bluetooth work?"""
     if not wait_suspended(dev):
         log("RESULT close-recover SKIP device never autosuspended")
-        return
+        return False
     time.sleep(1.0)
     t = mono()
     kmsg_mark("Set Powered off sent at mono %.6f" % t)
@@ -514,6 +610,7 @@ def scenario_close_recover(emu, m, dev):
         ok = bool(r2 and r2[3] == 0)
     log("EMU suspends %d resumes %d state %s" % (emu.suspends, emu.resumes, emu.state))
     log("RESULT close-recover bluetooth_works_after=%s" % ok)
+    return ok
 
 
 def scenario_sysfreeze(emu, m, dev, fault):
@@ -553,6 +650,7 @@ def scenario_sysfreeze(emu, m, dev, fault):
         ok = bool(r2 and r2[3] == 0)
     log("EMU suspends %d resumes %d state %s" % (emu.suspends, emu.resumes, emu.state))
     log("RESULT sysfreeze fault=%s recover=%s hci0=%s bluetooth_works_after=%s" % (fault, emu.recover, ok_hci, ok))
+    return ok
 
 
 def scenario_bt23(emu, m, dev, delay_ms):
@@ -561,7 +659,7 @@ def scenario_bt23(emu, m, dev, delay_ms):
     forced meanwhile by writing power/control=on. Is the command answered?"""
     if not wait_suspended(dev):
         log("RESULT bt23 SKIP device never autosuspended")
-        return
+        return False
     time.sleep(0.5)
     p = "/sys/module/btusb/parameters/bt23_delay_ms"
     with open(p, "w") as f:
@@ -588,6 +686,7 @@ def scenario_bt23(emu, m, dev, delay_ms):
     st = ("0x%02x" % r[3]) if r else "none"
     log("EMU suspends %d resumes %d state %s" % (emu.suspends, emu.resumes, emu.state))
     log("RESULT bt23 delay=%d status=%s latency=%.3f" % (delay_ms, st, lat))
+    return st == "0x00"
 
 
 def scenario_cycles(emu, m, dev, n):
@@ -611,6 +710,7 @@ def scenario_cycles(emu, m, dev, n):
             (len(lat), lat[0], lat[len(lat) // 2], lat[-1]))
     log("EMU suspends %d resumes %d state %s" % (emu.suspends, emu.resumes, emu.state))
     log("RESULT cycles n=%d failures=%d" % (n, bad))
+    return bad == 0
 
 
 def main():
@@ -625,9 +725,11 @@ def main():
     m = Mgmt()
     emu.attach()
     dev = bring_up(emu, m)
+    ok = False
     try:
+        ok = True                       # scenarios without a success condition (provoke, up)
         if sc == "bt17":
-            scenario_bt17(emu, m, dev)
+            ok = scenario_bt17(emu, m, dev)
         elif sc == "provoke":
             # the laptop tool, run unchanged against the emulated device
             import subprocess
@@ -639,22 +741,29 @@ def main():
             log("EMU suspends %d resumes %d state %s" % (emu.suspends, emu.resumes, emu.state))
             log("RESULT provoke exit=%d failure_seen=%s" % (p.returncode, "FAILURE" in p.stdout))
         elif sc == "close-recover":
-            scenario_close_recover(emu, m, dev)
+            ok = scenario_close_recover(emu, m, dev)
         elif sc == "bt23":
-            scenario_bt23(emu, m, dev, int(arg("--delay", "400")))
+            ok = scenario_bt23(emu, m, dev, int(arg("--delay", "400")))
         elif sc == "sysfreeze":
-            scenario_sysfreeze(emu, m, dev, "--fault" in sys.argv)
+            ok = scenario_sysfreeze(emu, m, dev, "--fault" in sys.argv)
         elif sc == "cycles":
-            scenario_cycles(emu, m, dev, int(arg("--cycles", "10")))
+            ok = scenario_cycles(emu, m, dev, int(arg("--cycles", "10")))
+        elif sc == "dropcmd":
+            ok = scenario_dropcmd(emu, m, dev, int(arg("--drop-hci-event", "0x0c24"), 0),
+                                  int(arg("--autosuspend-ms", "500")))
         elif sc == "up":
             log("RESULT up ok")
         else:
             sys.exit("unknown scenario")
     except Exception as e:
         log("scenario raised %r" % (e,))
+        ok = False
     log("unhandled HCI opcodes: %s" % sorted("0x%04x" % o for o in emu.unknown))
     log("---- kernel log ----")
     os.system("dmesg")
+    # the host reads this line: run-guest.sh ends with it
+    log("BT17-EXIT %d" % (0 if ok else 1))
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
