@@ -1045,6 +1045,11 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - **Its exception never fires:** our own `ab-recover-1.log` shows it.
   - **It can skip a needed reset.** `tx_in_flight` drops when the USB transfer completes, not at the HCI answer. So a controller can get a command, never answer it, and autosuspend before the timeout fires. B then skips its reset. In BT-17 the command never left; that is not true of every case B's test admits.
   - **The rewrite** waits for the BT-18 decision, and it must tell a deferred command from one that was sent.
+  - **Shown in emulation (`dropcmd-wedge`, `results/bt17-emulation-2026-11-13/`).** A controller that got the command and stays silent until a USB reset:
+    - recovers unpatched, 3/3;
+    - stays dead with B, 6/6, and also after a 60 s settle.
+
+    The power cycle's HCI Resets cannot trigger another reset, because the command timer is not armed while `HCI_RESET` is set (`hci_core.c:4351-4353`).
 
 ## BT-20 — `btusb_waker()` swallows a failed resume
 

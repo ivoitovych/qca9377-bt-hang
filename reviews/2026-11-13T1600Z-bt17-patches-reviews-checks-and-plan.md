@@ -126,6 +126,14 @@ below ("Reviewer 7, checked").
        `req_result`) instead of a lossy errno.
 10. **Patch E's `Fixes:`** (R6: `7bee549e197c`). **Not checked:** the emulation tree is shallow
     and does not hold that commit. To check in a full-history tree before sending.
+    - **Checked afterwards (`cache/linux`, full history): right.**
+      - `7bee549e197c` is "Bluetooth: Add USB autosuspend support to btusb driver", Oliver
+        Neukum, 2009-08-24.
+      - Its `btusb_send_frame()` decides in `inc_tx()` under `txlock` and calls
+        `usb_anchor_urb(urb, &data->deferred)` after the lock is dropped: BT-23's window,
+        from the start.
+      - The same commit added `btusb_waker()`'s silent return (BT-20, patch A) and the
+        `failed:` path's scuttle outside `txlock` (BT-24).
 11. **Smaller points that hold:**
     - A's "nothing said the resume had failed" overstates it: the unpatched log has
       `Failed usb_autopm_get_interface: -16`, at the disconnect (R6).
@@ -168,6 +176,15 @@ claim holds.** Line numbers are those of `da3cc0258`.
       **So B's misclassification is confirmed.** Its harm is not shown yet: the emulated
       controller dropped one event and stayed healthy. Next: a controller that stays silent
       until a USB reset.
+    - **The harm, shown (`dropcmd-wedge`; `*-h-wedge-*` logs).** Here the controller stays
+      silent until it sees the re-enumeration after a USB reset:
+      - unpatched: reset and usable, 3/3;
+      - A+B and the final series: not reset and **dead**, 3/3 each, and also after a 60 s
+        settle.
+    - **Nothing else would reset it.** The power cycle's HCI Resets time out as
+      `Opcode 0x0c03 failed: -110`. `hci_cmd_work()` does not arm the command timer while
+      `HCI_RESET` is set (`hci_core.c:4351-4353`), so `btusb_reset()` is never called again.
+    - **B is wrong as written; finding 12 is confirmed in full.**
 13. **B's PM predicate** (R7 §2; finding 3). **Confirmed:** `pm_runtime_active()` is
     `runtime_status == RPM_ACTIVE || disable_depth` (`include/linux/pm_runtime.h:168-172`). Its
     comment says the result can be trusted only under the runtime PM lock or while the status

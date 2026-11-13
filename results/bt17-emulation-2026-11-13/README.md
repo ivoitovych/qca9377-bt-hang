@@ -141,6 +141,35 @@ Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
   - **Not shown:** that this matters. The emulated controller loses only that one event and
     answers the next command, so no recovery was needed.
   - **The deciding test:** a controller that stays silent until it is reset.
+- **New: `dropcmd-wedge`, the deciding test.** The run is as `dropcmd`, but after the dropped
+  command the emulated controller completes every HCI transfer and sends no events. It becomes
+  healthy again only when it sees a SET_CONFIGURATION, which is the re-enumeration after a USB
+  reset.
+  - **Why that signal:**
+    - vhci handles the port reset and SET_ADDRESS itself (`drivers/usb/usbip/vhci_hcd.c`), so
+      the emulator never sees them;
+    - a plain resume sends only GET_STATUS and CLEAR_FEATURE;
+    - while the emulator was wedged, every control request was logged, and no plain resume sent
+      a GET_DESCRIPTOR or SET_CONFIGURATION.
+  - **The procedure:** after 15 s (60 s in the `settle60` runs), Set Powered off, Set Powered
+    on, a class write.
+
+  | kernel | `btusb_reset()` | reset seen | Bluetooth usable afterwards |
+  |---|---|---|---|
+  | `base` | `Resetting usb device.` | yes | **3/3** |
+  | `ab` (A+B) | `Device not resumed; not resetting` | no | **0/3**, and 0/1 after 60 s |
+  | `final` | `Device not resumed; not resetting` | no | **0/3**, and 0/1 after 60 s |
+
+  - **On the B kernels, nothing ever resets the device:**
+    - the power cycle's HCI Resets fail with `Opcode 0x0c03 failed: -110`, four times;
+    - Set Powered on returns 0x05.
+  - **Why:** `hci_cmd_work()` does not arm the command timer while an HCI Reset is pending
+    (`net/bluetooth/hci_core.c:4351-4353`, `HCI_RESET`). So these failures never reach
+    `hci_cmd_timeout()` or `btusb_reset()`, and the reset B skipped was the only one there
+    would have been.
+  - **So B, as written, leaves Bluetooth dead** when a controller that got a command needs a
+    reset, and the device autosuspends before the command timeout. The unpatched kernel
+    recovers it.
 
 **How the results were judged** (outside review, reviewer 7):
 - **`recover`:** "hci0 back" means that hci0 reappeared. That scenario does not power it on or

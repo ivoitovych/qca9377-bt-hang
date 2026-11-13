@@ -121,6 +121,16 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
        To be fixed before any further acceptance run.
      - **C's message:** the GET_STATUS failure is inferred, not logged on the laptop; narrow the
        subject.
+   - **B's harm, tested (2026-11-13, `results/bt17-emulation-2026-11-13/`, `dropcmd` and
+     `dropcmd-wedge`).** A controller completes a command's transfer, never answers it, and
+     the device autosuspends before the timeout:
+     - **unpatched:** `btusb_reset()` resets it, 6/6;
+     - **with B:** it skips the reset, 12/12;
+     - **when the controller needs that reset:** unpatched it recovers, 3/3; with B it stays
+       dead, 6/6, and nothing later resets it (no command timer during `HCI_RESET`).
+     - **B is not to be sent in this form.**
+   - **E's `Fixes: 7bee549e197c`:** verified in full history. That commit added the anchoring
+     outside `txlock`, as well as BT-20's silent waker and BT-24's scuttle.
 6. **The second outside review of the patches (earlier, on the dossiers)**
    (`reviews/2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md`, checked there):
    - **Don't send 1–4 as one series.** A and E go separately; B after another review; D only

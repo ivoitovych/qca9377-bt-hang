@@ -97,6 +97,9 @@ class Emu:
         self.recover = recover
         self.hold_hci = hold_hci
         self.drop_op = None              # --drop-hci-event: opcode armed once, by the scenario
+        self.wedge_until_reset = "--wedge-until-reset" in sys.argv
+        self.hci_wedged = False          # after the drop: transfers complete, no events
+        self.reset_seen = []             # mono times of the reset signal
         self.state = "healthy"          # healthy | wedged | dead
         self.suspended = False
         self.suspends = 0
@@ -207,6 +210,16 @@ class Emu:
     def control(self, seq, direction, buflen, setup, data):
         bm, br, wv, wi, wl = struct.unpack("<BBHHH", setup)
         desc = "control %02x %02x %04x %04x %04x" % (bm, br, wv, wi, wl)
+        if self.hci_wedged:
+            # reset signal: SET_CONFIGURATION (usb_reset_and_verify_device() sends it to restore
+            # the configuration after every reset; vhci_hcd handles the port reset and
+            # SET_ADDRESS itself and never forwards them)
+            self.note("ctl while wedged: " + desc)
+            if bm == 0x00 and br == 9:
+                self.hci_wedged = False
+                self.intr_out.clear()
+                self.reset_seen.append(mono())
+                self.note("reset seen (SET_CONFIGURATION value %d)" % wv)
         if self.state == "dead":
             self.note("%s -> -71 (dead)" % desc)
             self.ret_submit(seq, -71, 0)
@@ -272,6 +285,12 @@ class Emu:
             if self.drop_op == op:                             # transfer done, event never sent
                 self.drop_op = None
                 self.note("HCI 0x%04x: control transfer completed, event dropped" % op)
+                if self.wedge_until_reset:
+                    self.hci_wedged = True
+                    self.note("wedged: later HCI commands complete their transfer, no events, until a reset")
+                return
+            if self.hci_wedged:
+                self.note("HCI 0x%04x: control transfer completed, no event (wedged)" % op)
                 return
             self.hci_cmd(op, data[3:3 + plen])
         else:
@@ -280,6 +299,8 @@ class Emu:
 
     # -- events
     def event(self, code, params):
+        if self.hci_wedged:
+            return
         with self.lock:
             self.intr_out += bytes([code, len(params)]) + params
         self.pump()
@@ -526,7 +547,41 @@ def kernel_lines(*patterns):
     return out
 
 
-def scenario_dropcmd(emu, m, dev, op, delay_ms):
+def wedge_tail(emu, m, op, delay_ms, t_send, st, drop, sus):
+    """after the settle time: MGMT Set Powered off, then on, then a class write. Usable = that
+    class write returns 0x00. Records the emulator's reset sightings and the kernel's lines."""
+    hci_up = wait_for(lambda: os.path.exists("/sys/class/bluetooth/hci0"), 15)
+    t_off = mono()
+    m.send(0x0005, 0, b"\x00")
+    r_off = m.wait_reply(0x0005, 15)
+    log("Set Powered off: %.3f s %s" % ((r_off[0] - t_off) if r_off else -1, r_off))
+    powered = power_on(m, tries=3)
+    cw = None
+    if powered:
+        t3 = class_write(m, 0x10)
+        r3 = m.wait_reply(0x000E, 10)
+        log("final class write: %.3f s %s" % ((r3[0] - t3) if r3 else -1, r3))
+        cw = ("0x%02x" % r3[3]) if r3 else "none"
+    kl = kernel_lines("tx timeout", "Resetting usb device", "not resetting", "Failed usb_autopm",
+                      "reset full-speed", "USB disconnect")
+    for ts, l in kl:
+        log("KERNEL %s" % l)
+    n_skip = len([1 for ts, l in kl if "not resetting" in l])
+    n_reset = len([1 for ts, l in kl if "Resetting usb device" in l])
+    tmo = [ts for ts, l in kl if "tx timeout" in l]
+    seen = ",".join("%.6f" % x for x in emu.reset_seen) or "none"
+    usable = cw == "0x00"
+    log("RESULT dropcmd-wedge op=0x%04x delay_ms=%d send=%.6f transfer_done=%s autosuspended=%s "
+        "class-write-status=%s reset_seen=%s tx_timeouts=%d (%s) not_resetting_lines=%d "
+        "resetting_usb_device_lines=%d hci0=%s set_powered_off=%s powered_on=%s final_class_write=%s usable=%s" %
+        (op, delay_ms, t_send, ",".join("%.6f" % x for x in drop) or "none",
+         ",".join("%.6f" % x for x in sus) or "none", st, seen, len(tmo),
+         ",".join("%.3f" % x for x in tmo), n_skip, n_reset, hci_up,
+         ("0x%02x" % r_off[3]) if r_off else "none", powered, cw or "none", usable))
+    return usable
+
+
+def scenario_dropcmd(emu, m, dev, op, delay_ms, settle=15):
     """a command whose USB transfer completes but whose HCI event never comes. The runtime
     autosuspend delay is lowered (the default 2000 ms equals the 2 s HCI command timeout), the
     device is made awake by a successful class write, the drop is armed, and the next class
@@ -555,7 +610,9 @@ def scenario_dropcmd(emu, m, dev, op, delay_ms):
     log("EMU send %.6f transfer_done %s autosuspend %s (suspends %d -> %d)" %
         (t_send, ["%.6f" % x for x in drop], ["%.6f" % x for x in sus], susp0, emu.suspends))
     # long enough for a reset and the rebinding that follows it
-    time.sleep(15)
+    time.sleep(settle)
+    if emu.wedge_until_reset:
+        return wedge_tail(emu, m, op, delay_ms, t_send, st, drop, sus)
     kl = kernel_lines("tx timeout", "Resetting usb device", "not resetting", "not resumed",
                       "Failed usb_autopm", "reset full-speed", "USB disconnect")
     for ts, l in kl:
@@ -748,9 +805,10 @@ def main():
             ok = scenario_sysfreeze(emu, m, dev, "--fault" in sys.argv)
         elif sc == "cycles":
             ok = scenario_cycles(emu, m, dev, int(arg("--cycles", "10")))
-        elif sc == "dropcmd":
+        elif sc in ("dropcmd", "dropcmd-wedge"):
+            emu.wedge_until_reset = emu.wedge_until_reset or sc == "dropcmd-wedge"
             ok = scenario_dropcmd(emu, m, dev, int(arg("--drop-hci-event", "0x0c24"), 0),
-                                  int(arg("--autosuspend-ms", "500")))
+                                  int(arg("--autosuspend-ms", "500")), int(arg("--settle", "15")))
         elif sc == "up":
             log("RESULT up ok")
         else:
