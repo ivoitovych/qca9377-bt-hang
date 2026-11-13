@@ -94,6 +94,36 @@ below ("Reviewer 7, checked").
      controller answers with Authentication Failure is reported as `MGMT_STATUS_FAILED` (0x03).
    - Adding `-EACCES → MGMT_STATUS_AUTH_FAILED` is consistent. Which MGMT commands can actually
      receive HCI `0x05` through the sync path is not yet traced.
+   - **Traced afterwards (ours, `da3cc0258`): `-EACCES` is ambiguous, and `-ETIMEDOUT` is not.**
+     - `__hci_cmd_sync_sk()` returns `-bt_to_errno(req_result)` when the controller answers
+       (`hci_sync.c:189`), and `-ETIMEDOUT` when it does not (`:197`).
+     - `bt_to_errno()` (`lib.c:63-152`) maps two HCI codes to `EACCES`, and `mgmt_status_table`
+       (`mgmt.c:217-282`) treats them differently:
+
+       | HCI code | name | errno | MGMT status from the table |
+       |---|---|---|---|
+       | `0x05` | Authentication Failure | `EACCES` | `AUTH_FAILED` |
+       | `0x18` | Pairing Not Allowed | `EACCES` | `REJECTED` |
+
+       So no single `-EACCES` case can match the table for both. `AUTH_FAILED` would be wrong
+       for `0x18`.
+     - `bt_to_errno()` maps three things to `ETIMEDOUT`, and the table gives `TIMEOUT` for each:
+
+       | source | name | MGMT status from the table |
+       |---|---|---|
+       | HCI `0x08` | Connection Timeout | `TIMEOUT` |
+       | HCI `0x10` | Connection Accept Timeout | `TIMEOUT` |
+       | the sync wait itself | no answer | `TIMEOUT` |
+
+       CO-44's one line makes the errno path agree with the table in every case. That is worth a
+       sentence below the `---`.
+     - Nothing else in `mgmt.c`, `hci_sync.c`, `hci_core.c` or `hci_conn.c` returns `-EACCES`
+       (grep). So in this path `-EACCES` comes only from a controller's answer.
+     - No MGMT sync command was found for which `0x05` or `0x18` is a documented Command
+       Status or Complete result. The search was not exhaustive.
+     - **Recommendation:** keep CO-44 to its one line, and leave `-EACCES` out. If it is ever
+       wanted, the precise fix keeps the HCI status (for example `mgmt_status()` on
+       `req_result`) instead of a lossy errno.
 10. **Patch E's `Fixes:`** (R6: `7bee549e197c`). **Not checked:** the emulation tree is shallow
     and does not hold that commit. To check in a full-history tree before sending.
 11. **Smaller points that hold:**
