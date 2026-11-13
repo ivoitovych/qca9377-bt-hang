@@ -1085,7 +1085,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
 | U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open. **2026-11-01:** the captures are in `archive/hci-capture/hci-20261010-230942` and `-004736` (not `archive/bt-trace`); every SBC-XQ test sound was single-channel, so "silent" cannot tell none from one-sided; a fourth test at 01:40:19; the decisive test is designed (CO-08) |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
-| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19; again 2026-10-31) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80. **2026-11-11:** nine occurrences in the journal, seven not recorded before, three after 11-02 (`results/laptop-only-work-2026-11-11/recordings-mining/`); the remedy is CO-03's backport |
+| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19; again 2026-10-31 and 2026-11-13, the last with the Abort answered) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80. **2026-11-11:** nine occurrences in the journal, seven not recorded before, three after 11-02 (`results/laptop-only-work-2026-11-11/recordings-mining/`); the remedy is CO-03's backport |
 | U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
 | U14 | a Bluetooth headset is forced into Handsfree while an application records from any microphone, and a manual return to A2DP is undone when the recording ends (2026-10-21) | confirmed in the log and the source (WirePlumber 0.4.17); fixed upstream by the 0.5 rewrite. **2026-11-11:** 87 automatic switches in the journal, 85 within 3 s of a Chrome input stream (`results/laptop-only-work-2026-11-11/recordings-mining/`) |
 | U15 | the MOMENTUM 4 says "mute on" at every hands-free start: it reports a microphone gain of 0 at connect, and PipeWire sends that 0 back as `+VGM: 0` (2026-10-23) | mechanism confirmed in the log, the capture and the state; no upstream quirk entry for this headset. **2026-11-11: the microphone sends digital silence** from 10-20 on, every recorded link to 11-09 (at most 1.7 % signal frames on links of 5 s or more), against 99 to 100 % up to 10-19; the first `AT+VGM=00` is at 10-19 20:17:32; that the far end of a call hears nothing is inferred (`results/laptop-only-work-2026-11-11/`) |
@@ -1198,6 +1198,18 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   showed "mSBC". Consistent with the panel not refreshing when the profile is changed behind it
   (`cc_profile_combo_box_set_device()` returns early for an unchanged device, GNOME 46.7
   `cc-profile-combo-box.c:96`, `CO-17`); not yet shown that this is the only cause.
+  **2026-11-13, during U12's third occurrence: the refresh explanation does not cover it.**
+  - **[operator]** 14:33 (screenshot, local): output "Handsfree - MOMENTUM 4", no Configuration row.
+  - **[state]** The card offers three hands-free profiles, all available, with
+    `headset-head-unit-msbc` active (`EX-092`). So a codec choice existed.
+  - **[log]** WirePlumber's switch to that profile was at 14:19:53.481 (`EX-090`).
+  - **[state]** The running GNOME Settings process (pid 56051, `gnome-control-center bluetooth`)
+    started at 14:21:11 (`ps -o lstart`). That is after the switch, so this panel never saw a
+    profile change behind it.
+  - **[inference]** Something else hides the row. Candidates: the card has no A2DP profile at
+    all, or the active route names the base profile (3) while profile 261 is active. Neither is
+    traced in the panel's source.
+  - Raw: `archive/incidents/20261113-a2dp-lost-third/`.
 - **U6 — GNOME Settings' input level meter shows nothing for the internal microphone.**
   **[operator]** 23:10: internal microphone selected in the panel, loud sounds, the input
   level indicator does not move; with the headset's handsfree microphone it does.
@@ -1470,6 +1482,32 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - **[capture] Over the air** (`EX-084`): Start (label 8) at 16.187828, Abort (label 9) at 16.275333, 87.5 ms later; the headset's only answer is Start accepted (label 8, `82 07`) at 16.444751; nothing for the Abort until bluetoothd closes three L2CAP channels at 18.962. An mSBC eSCO link completes with Success at 16.464811 meanwhile.
   - **[log]** No A2DP state change in bluetoothd's log from 13:42:19 to 14:55 (`EX-088`; the same filter matched at 13:42:18 in `EX-085`): 72 minutes and counting on Handsfree only.
   - Raw: `archive/incidents/20261031-momentum-headphones-missing/` (the HCI capture, both journal cuts, the PipeWire graph at 14:5x).
+
+  **Third recorded occurrence, 2026-11-13** (local time; boot `af3f9840`, `7.0.0-43`, the same headset; `EX-089` to `EX-095`):
+  - **[operator]** At 14:26 GNOME Settings offered only "Handsfree - MOMENTUM 4" as output (screenshot kept locally). The card offered no A2DP profile, only `off` and the three hands-free profiles (`EX-092`, graph saved 14:30).
+  - **[log] The same trigger** (`EX-090`):
+    - 14:19:53.437: Google Chrome opens a playback stream.
+    - .478: Chrome opens a recording stream.
+    - .481: WirePlumber switches `a2dp-sink` → `headset-head-unit-msbc`.
+    - 14:20:28: the recording ends, and WirePlumber logs "Failed to restore profile".
+  - **[log] bluetoothd** (`EX-089`):
+    - .445: Acquire.
+    - .482: the request is withdrawn, and `a2dp_cancel()` aborts the setup (stream `OPEN -> ABORTING`).
+    - .509: "ABORT request succeeded".
+    - Then, at once, `a2dp-sink` goes to disconnected, AVRCP follows, and the AVDTP session is closed (.536).
+  - **[capture] New against 10-19 and 10-31** (`EX-091`):
+    - **no AVDTP Start went out** before the Abort (.482304);
+    - **the headset accepted the Abort** 27 ms later (.509065);
+    - bluetoothd still closed the A2DP channels.
+    - So the headset's silence is not needed. In 5.72 the Abort itself ends the A2DP session, whether it is answered or not, as `a14d59725`'s message says ("forcing AVDTP state transition to IDLE, and A2DP profile disconnects"). On the earlier dates the unanswered Abort only delayed the same end by its 2 s timeout.
+    - Why no Start had been sent in the 37 ms after the Acquire is not traced.
+  - **[log] Not the controller:**
+    - the mSBC eSCO link completed with Success at .700386 (`EX-091`);
+    - no HCI command timeout.
+    - The kernel's only error lines from 14:00 are four `SCO packet for unknown connection handle 8` (14:21:02.691 to 14:21:05.123). They came after the host disconnected that link at 14:21:02.673 (`EX-094`, `EX-095`): the late-data race seen under U15 (handle 4) and on 10-13, the SCO counterpart of BT-6. They are not part of this incident.
+    - `EX-093` is kept but superseded by `EX-094`: its claim of a clean log was written before the output was read.
+  - **The remedy is the one already prepared:** CO-03's bluetoothd with `a14d59725`, which waits for a pending Start instead of aborting. It is awaiting the operator's decision to install.
+  - Raw (local): `archive/incidents/20261113-a2dp-lost-third/`. It holds the screenshot, the PipeWire graph of 14:30, and the journal cuts. The HCI capture stays at `/var/log/bt-health/trace/bt-20261113-112428.btsnoop` until the archive copies it.
 
   **[source] The cause.** In BlueZ 5.72's `profiles/audio/transport.c`, a `Release()` during a pending `Acquire()` reaches `transport_a2dp_cancel()`, which calls `a2dp_cancel()`: an AVDTP Abort. Upstream `a14d59725` (Pauli Virtanen, 2024-11-02, "transport: don't disconnect A2DP if canceling Acquire() with Release()", first in 5.80) describes the result: "forcing AVDTP state transition to IDLE, and A2DP profile disconnects". Its fix answers the Acquire with an error, waits for the Start to complete, then suspends. Here the headset's silence made the disconnect certain, through the 2 s timeout.
   - The running bluetoothd is this project's build (`20-patched-bluetoothd.conf`, `/usr/local/libexec/bluetooth/bluetoothd`, built 2026-08-25 from 5.72-0ubuntu5.5's source with the two BT-7 fixes). Its `transport.c` keeps the old path (line 487, no `cancel_resume`).
