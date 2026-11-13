@@ -114,8 +114,45 @@ The bot's user-space checks do not run mgmt-tester; the new case's runs are the 
     stands. But the two statuses are not interchangeable to user space in general, and the
     mail must not say so.
 
+**Prior art and history (2026-11-13, `prior-art-2026-11-13.md`, every claim with its source):**
+- **Why the mapping:** the entry was there from the series' first RFC (2021-05-27) and is
+  unchanged through v8. Nobody commented on it. The only related review was about using errno
+  values at all. The two later changes to the function (`-ECANCELED`, `-ERFKILL`) left it
+  alone.
+- **Competing patches:** none on lore (its git archive, since 2021-05) or patchwork.
+- **User reports:** six, with "Authentication Failed (0x05)" next to a timeout.
+  - Two forum posts show the same Write Class of Device timeout as ours.
+  - Two are on lore: the QCA6390 thread (2024-04-04), and a 2022 BlueZ patch whose message
+    says Set Powered "returns Authentication Failed because disconnection takes too long".
+    These two are the candidates for a `Link:`.
+- **An inconsistency to state in the message (verified):** a pairing connection that times
+  out already reports `MGMT_STATUS_TIMEOUT`. `hci_conn_failed(conn, bt_status(err))`
+  (`hci_sync.c:7825` on `da3cc0258`) maps `bt_status(-ETIMEDOUT)` to 0x08, and the table maps
+  that to `TIMEOUT`. Only the errno path says 0x05.
+- **Consumers:**
+  - in BlueZ only the text changes for the affected commands, including the D-Bus error
+    message; the error name `org.bluez.Error.Failed` stays;
+  - bluetoothd's own request timeout already uses 0x08;
+  - Qt, python-btsocket, bleno, the Android HAL and paypal/gatt do not branch on 0x05.
+- **Stable:** both forms have been accepted by this maintainer.
+  - With `Cc: stable`: `86ef0f58bdec` (ours) and `4728474344793`, 2026-09/11.
+  - Without it: the RFKILLED and ECANCELED additions to this function.
+- **Test timing, by precedent:** the RFKILLED fix (2026-10) and the EIR name length fix (2024-03)
+  sent their mgmt-tester case to BlueZ the same day, naming the kernel fix. The maintainer
+  applied the kernel fix first, minutes before the test. So "send it only after the kernel
+  patch has landed" (above) is stricter than practice: send the same day, and state the
+  dependency below the `---`.
+
 **Next:**
-- the kernel patch and the BlueZ test as two sends, the test noting that it needs the kernel fix;
-- the operator's word for both.
+- **The commit message:** follow the RFKILLED commit's form (the symptom before and after,
+  the mapping, `Fixes:`), and add the pairing-path inconsistency. Optionally add a `Link:` to
+  one lore report.
+- **Below the `---`:**
+  - the BlueZ test is sent separately;
+  - a user-visible status changes, and in BlueZ only the text changes for these commands;
+  - the mgmt-tester totals.
+- **`Cc: stable`:** the operator's decision; precedent supports either.
+- **Sends:** the kernel patch and the BlueZ test on the same day, as two sends, the test naming
+  the kernel fix. The operator's word for both.
 
 **Decides:** the operator, for the send.
