@@ -83,6 +83,19 @@ sides, 0 not PASS. Patched: CheckPatch, GitLint, BuildEll, BluezMake, CheckSmatc
 bluezmakeextell, TestFunctional, IncrementalBuild, ScanBuild. Base: the same six tree checks.
 The bot's user-space checks do not run mgmt-tester; the new case's runs are the table above.
 
+**Four outside reviews** (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`):
+- **All four agree on the fix and on `Fixes: 161510ccf91c`.**
+- **The missing half, confirmed:** `mgmt_errno_status()` has no `-EACCES` case. So a sync
+  command that the controller answers with HCI Authentication Failure (`-bt_to_errno(0x05)` =
+  `-EACCES`, `hci_sync.c:189`) is reported as `MGMT_STATUS_FAILED`.
+  - **To decide:** add `-EACCES → MGMT_STATUS_AUTH_FAILED`, with a second test, once it is
+    traced which commands can receive `0x05` that way.
+- **Stable:** split. Two reviewers say yes; one leaves it to the maintainers; one says skip
+  `Cc: stable` and state below the `---` that a user-visible status changes.
+- **The BlueZ test:**
+  - check that the hook actually saw Write Class of Device;
+  - send it only after the kernel patch has landed, or the list's CI fails it.
+
 **Next:**
 - the kernel patch and the BlueZ test as two sends, the test noting that it needs the kernel fix;
 - the operator's word for both.

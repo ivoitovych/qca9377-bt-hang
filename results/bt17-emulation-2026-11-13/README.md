@@ -1,4 +1,4 @@
-# BT-17 in emulation: the kernel's side of the incident, reproduced, and four btusb candidates (2026-11-13)
+# BT-17 in emulation: the kernel's side of the incident, reproduced, and five btusb candidates (2026-11-13)
 
 Everything here ran in QEMU guests on the investigation machine. Nothing touched the laptop's
 Bluetooth, and nothing was sent anywhere.
@@ -104,7 +104,7 @@ key config) is `logs/bzImage-<kernel>.commit`.
 | scenario | unpatched (`base`) | A+B+D (`abd`) | final series A,B,D,E,C (`final`) |
 |---|---|---|---|
 | dead device, resume started by a class write (`bt17`) | 5/5: the laptop's sequence; `hci_cmd_timeout()` blocked 5.4 s; `Failed usb_autopm_get_interface: -16` at the disconnect | 5/5: `Device not resumed; not resetting`, credit back at once; `Failed to resume device for deferred data: -16`; the core disconnects | 3/3 as A+B+D |
-| device that answers again after the reset-resume, started by a class write (`recover`) | 5/5 hci0 back, through `btusb_reset()`'s second reset (`Resetting usb device.` in every run, BT-19) | 5/5 back through D's rebinding; no reset from btusb | 3/3 back |
+| device that answers again after the reset-resume, started by a class write (`recover`) | 5/5 hci0 back, through `btusb_reset()`'s second reset (`Resetting usb device.` in every run, BT-19) | 5/5 back through D's rebinding; no reset from btusb's timeout path, but still two USB resets, as unpatched: the reset-resume's and D's queued one (`final-m-recover-1`: 11.64 and 11.93; unpatched `base-m-recover-1`: 11.65 and 11.93, where btusb's reset causes the rebinding). The gain is no 5 s stall, not one reset fewer | 3/3 back |
 | the same, started by powering hci0 off (`close-recover`) | **0/5**: Bluetooth dead afterwards (BT-18) | 5/5 works | 3/3 works |
 | healthy suspend/resume cycles with a class write each | 50/50, median 0.062 s | 50/50, median 0.064 s | 50/50, median 0.063 s |
 | dead device, guest with the host's CPU (Ryzen 7 5825U) | fails as above | — | the device no longer autosuspends with hci0 up (C); the fault never arises |

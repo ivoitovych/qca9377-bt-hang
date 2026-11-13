@@ -83,7 +83,23 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
    prefer the core not to restore credit then.
 3. The bot's CI on base and base + series (`scripts/bot-ci-local.sh`); an outside review.
 4. C waits for evidence (a recurrence with USB core debug, an A/B with `power/control=on`).
-5. **The second outside review of the patches**
+5. **Four outside reviews of the intermediate document**
+   (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`, each finding checked).
+   They supersede the plan in item 6.
+   - **B:** a blocker. It can skip the reset of an awake controller that swallowed a command:
+     the autosuspend and the command timeout are both 2 s (not yet tested). Its exception
+     never fires, as our own `ab-recover-1.log` shows. And its message is wrong about where the
+     rebinding comes from: from btusb's reset, not from the core.
+   - **D:** not as a fix.
+     - It opens `autosuspend_check()`'s gate for reset-resume-quirk devices.
+     - It replays traffic before the rebinding.
+     - It still costs two resets, as unpatched.
+     - So BT-18 goes to linux-usb as a USB core question first, with D as the btusb fallback.
+   - **CO-44:** add the missing `-EACCES → MGMT_STATUS_AUTH_FAILED` case, once its reach is
+     traced.
+   - **E and A:** to send alone.
+   - **C:** stays local.
+6. **The second outside review of the patches (earlier, on the dossiers)**
    (`reviews/2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md`, checked there):
    - **Don't send 1–4 as one series.** A and E go separately; B after another review; D only
      after a narrower design.
