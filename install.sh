@@ -532,6 +532,11 @@ install_file "$SRC/systemd/bt-trial-auto.service" /etc/systemd/system/bt-trial-a
 install_file "$SRC/systemd/bt-journal-backup.service" /etc/systemd/system/bt-journal-backup.service 0644
 install_file "$SRC/systemd/bt-journal-backup.timer"   /etc/systemd/system/bt-journal-backup.timer   0644
 
+# The raw HCI captures rotate too (bt-capture keeps 400 files, bt-trace prunes by free
+# space). Their archiver ran on a transient timer that every reboot removed (2026-11-13).
+install_file "$SRC/systemd/bt-raw-archive.service" /etc/systemd/system/bt-raw-archive.service 0644
+install_file "$SRC/systemd/bt-raw-archive.timer"   /etc/systemd/system/bt-raw-archive.timer   0644
+
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
 # enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
 install_file "$SRC/bin/bt-dyndbg"                 /usr/local/sbin/bt-dyndbg              0755
@@ -671,6 +676,8 @@ run systemctl enable --now bt-trial-auto
 # Enabled unconditionally: it archives and never acts on the controller, and the
 # whole point is that it runs when nobody remembers to.
 run systemctl enable --now bt-journal-backup.timer
+# The same for the raw-capture archive: it reads captures and never acts on the controller.
+run systemctl enable --now bt-raw-archive.timer
 run systemctl enable --now bt-dyndbg
 (( USBMON ))  && run systemctl enable --now bt-usbmon
 # Picks up the raised journal size cap. Restarting journald is safe: clients

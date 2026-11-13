@@ -86,6 +86,8 @@ FILES=(
     /etc/systemd/system/bt-trial-auto.service
     /etc/systemd/system/bt-journal-backup.service
     /etc/systemd/system/bt-journal-backup.timer
+    /etc/systemd/system/bt-raw-archive.service
+    /etc/systemd/system/bt-raw-archive.timer
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list
@@ -127,6 +129,7 @@ UNITS=(
     bt-capture.service
     bt-trial-auto.service
     bt-journal-backup.timer
+    bt-raw-archive.timer
 )
 
 # ── BT_DESTDIR — the same staging prefix install.sh takes ────────────────

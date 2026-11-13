@@ -1,0 +1,19 @@
+[Unit]
+Description=Archive closed raw HCI captures before rotation deletes them
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+# bt-capture keeps only its newest 400 desktop captures and bt-trace prunes by free
+# space; captures behind several exhibits were lost that way before this archive existed.
+# scripts/raw-capture-archive-all.sh runs scripts/bt-trace-archive.py on both stores:
+# compress, verify by decompression and SHA-256, never delete, stop at each budget.
+#
+# It was a transient systemd-run timer until 2026-11-13, and every reboot removed it.
+
+[Service]
+Type=oneshot
+# Reads captures and writes only under the project's archive/ directory. It never
+# touches the Bluetooth controller.
+ExecStart=/root/exp/qca9377-bt-hang/scripts/raw-capture-archive-all.sh
+# Compression is CPU- and I/O-heavy; it must never compete with the desktop.
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=2h

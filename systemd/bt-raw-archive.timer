@@ -1,0 +1,13 @@
+[Unit]
+Description=Archive closed raw HCI captures every 10 minutes, across reboots
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+
+[Timer]
+# Not at boot: enumeration, the auto-trial and the desktop all start there.
+OnBootSec=10min
+# The transient timer this replaces ran every 10 minutes; a capture closes about every
+# 15 to 30 minutes, so nothing waits long, and a pass with nothing new is cheap.
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target
