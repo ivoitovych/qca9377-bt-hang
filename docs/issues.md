@@ -978,6 +978,15 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - The loaded btusb srcversion is `4B2BD2C14BA4918C28E7208`, equal to `modinfo -F srcversion` of `-43`'s stock `btusb.ko.zst`, and there is no out-of-tree taint line.
   - **The idle controller is runtime-suspended.** `/sys/bus/usb/devices/3-3/power/`: `control auto`, `autosuspend_delay_ms 2000`, `runtime_status suspended`, `runtime_suspended_time 145431` of ~158,500 ms.
   - So every idle period suspends it, and the first command after one resumes it. That fits candidate 1 and is not proof: the same was presumably true on every earlier E3 boot (same Kconfig, no override). Next: whether a recurrence again follows a suspend, which needs btusb debug or a runtime-PM trace.
+- **2026-11-13, read from the archived full kernel log (btusb debug was on, from `bt-dyndbg`; the earlier "debug off" line above is wrong):**
+  - **The controller was runtime-suspended when the command was sent, and it never resumed.** btusb's `intf %p` prints (`btusb_suspend()`/`btusb_resume()`) show a device suspend at 18:00:28.857, 2.011 s after the last answer, and no `btusb_resume()` before the disconnect at 18:03:16. Monotonic times: suspended 160.83 s; command sent at 178.731; first USB reset at 184.023, 5.291 s later.
+  - Excerpts: `results/incident-2026-11-12-1803/excerpt-boot-1-btusb-suspend-cycles.txt` and `excerpt-boot-2-btusb-suspend-cycles.txt`, written by `tools/suspend-cycles.py`. The boot before (`7e87eae0`, same setup) resumed 8 times, including after suspends of 2,950 s and 4,250 s.
+  - **Source reading (hypotheses, not findings):**
+    - H1: the first reset is the USB core's reset-resume. `finish_port_resume()` retries a failed post-resume GET_STATUS (5,000 ms timeout) as a reset-resume, since `persist` is 1. That would explain why btusb's `Resetting usb device.` (`bt_dev_err`) never appears.
+    - H2: `hci_cmd_timeout()` → `btusb_reset()` waited 5.3 s in `usb_autopm_get_interface()` behind that resume, then got `-EBUSY` (`rpm_resume()`'s parent check), so the command credit came back only at 186.083.
+  - **Candidate H3:** mainline `dcaf83ead130` sets `BTUSB_WAKEUP_BROKEN` (no runtime suspend with remote wakeup armed) for MT7922/MT7925 on Ryzen root hubs. It describes the same symptom: unresponsive, resetting the root hub does not help, only a power cycle recovers. This laptop is a Ryzen 7 5825U, and the controller is a direct child of the SoC root hub (`1022:1639`). It is not traced as ours yet.
+  - `mgmt_errno_status()` maps `-ETIMEDOUT` to `MGMT_STATUS_AUTH_FAILED` (`mgmt.c:299`): candidate 3 is confirmed in source.
+  - Outside source review requested: `reviews/2026-11-13T0003Z-bt17-source-investigation-task.md`.
 
 ---
 

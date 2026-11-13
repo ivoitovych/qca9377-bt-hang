@@ -130,6 +130,10 @@ Each file starts with the exact command that produced it. Addresses are replaced
 | `excerpt-boot-1-hci-capture-decode.txt` | `btmon` decode from frame #119 to `Delete Index` |
 | `excerpt-boot-2-end.txt`, `excerpt-boot-1-end.txt` | How the two earlier boots ended (power-off 17:52, reboot 18:07) |
 | `excerpt-boot0-kernel-no-controller.txt` | Current boot: port 3-3 does not enumerate; Wi-Fi up |
+| `excerpt-boot-1-btusb-suspend-cycles.txt` | Failing boot: device-level runtime suspends and resumes from btusb's debug prints. The last suspend, at 18:00:28.857, is never followed by a resume (added 2026-11-13) |
+| `excerpt-boot-2-btusb-suspend-cycles.txt` | The boot before: 8 completed suspend/resume cycles, the longest 4,250 s (added 2026-11-13) |
+
+The two suspend-cycle files are the output of `python3 -I tools/suspend-cycles.py <boot>-kernel.txt`, run on the archived full kernel logs (below). The script's header gives the classification rules.
 
 ## Full logs (local, git-ignored)
 
