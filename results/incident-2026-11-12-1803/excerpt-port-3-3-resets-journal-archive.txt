@@ -1,0 +1,165 @@
+# Every reset, power cycle and disconnect of USB port 3-3 (the Bluetooth controller) in the archived boot journals
+# Command (run 2026-11-13 ~03:35 CET):
+#   python3 -I scripts/journal-archive-grep.py 'usb 3-3: reset|usb3-port3: attempt power cycle|usb 3-3: USB disconnect' ~/bt-journal-archive/boot-*.export.zst
+# 76 archived boots, 2026-08-12 to 2026-11-12 (the archive keeps a boot only after it ends, and
+# journald may have dropped the start of a long boot before then).
+# Reading:
+# - Every reset sequence before BT-17 falls in 2026-08-12 to 2026-08-16 and on 2026-09-24
+#   04:02, all on the stock btusb (ROM firmware), the BT-1 period, before the device-table
+#   entry was in use (09-24 is the controller wedged by death 9 and the rfkill cycle after it,
+#   EX-047 and EX-048).
+# - No reset of 3-3 appears between 2026-09-24 04:04 and 2026-11-12 18:03:14 (BT-17).
+# - The disconnects of 2026-11-05 19:33:05 and 2026-11-11 18:58:34 are the BT-16 start-ups.
+# - The shape differs. In each earlier sequence the four resets are about 31, 32 and 11 s
+#   apart, with the power cycle about 64 s after the disconnect. In BT-17 the four resets fall
+#   within 18:03:14 to 18:03:15, and the power cycle comes 2 s after the disconnect.
+# Output verbatim:
+boot-0343c15d.export.zst: 0 match(es)
+boot-045caff5.export.zst: 0 match(es)
+  2026-11-12 18:03:14  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-11-12 18:03:14  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-11-12 18:03:15  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-11-12 18:03:15  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-11-12 18:03:16  usb 3-3: USB disconnect, device number 2
+  2026-11-12 18:03:18  usb usb3-port3: attempt power cycle
+boot-08956069.export.zst: 6 match(es)
+boot-17cfdfc4.export.zst: 0 match(es)
+boot-197f351e.export.zst: 0 match(es)
+boot-1bbf9aea.export.zst: 0 match(es)
+  2026-09-24 04:02:14  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-09-24 04:02:45  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-09-24 04:03:17  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-09-24 04:03:28  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-09-24 04:03:39  usb 3-3: USB disconnect, device number 2
+  2026-09-24 04:04:43  usb usb3-port3: attempt power cycle
+boot-20fbb9a2.export.zst: 6 match(es)
+boot-226965f1.export.zst: 0 match(es)
+boot-247c23c4.export.zst: 0 match(es)
+boot-257d1599.export.zst: 0 match(es)
+boot-262af9f0.export.zst: 0 match(es)
+  2026-08-15 05:00:17  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 05:00:48  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 05:01:20  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 05:01:31  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 05:01:43  usb 3-3: USB disconnect, device number 2
+  2026-08-15 05:02:46  usb usb3-port3: attempt power cycle
+boot-30bf5509.export.zst: 6 match(es)
+boot-3caa9acf.export.zst: 0 match(es)
+boot-3e8809d5.export.zst: 0 match(es)
+boot-46cb5188.export.zst: 0 match(es)
+boot-482d2579.export.zst: 0 match(es)
+boot-49067785.export.zst: 0 match(es)
+boot-4e50c3f3.export.zst: 0 match(es)
+  2026-08-14 13:04:53  usb 3-3: USB disconnect, device number 2
+boot-54b5b306.export.zst: 1 match(es)
+boot-56afa828.export.zst: 0 match(es)
+boot-5b6803e6.export.zst: 0 match(es)
+  2026-11-11 18:58:34  usb 3-3: USB disconnect, device number 2
+boot-5e459fa0.export.zst: 1 match(es)
+boot-5ee9ab78.export.zst: 0 match(es)
+  2026-08-16 15:38:15  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-16 15:38:46  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-16 15:39:18  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-16 15:39:29  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-16 15:39:40  usb 3-3: USB disconnect, device number 2
+  2026-08-16 15:40:44  usb usb3-port3: attempt power cycle
+boot-60ddb417.export.zst: 6 match(es)
+boot-7098fa06.export.zst: 0 match(es)
+  2026-11-05 19:33:05  usb 3-3: USB disconnect, device number 2
+boot-7323fc85.export.zst: 1 match(es)
+boot-7345fa45.export.zst: 0 match(es)
+boot-738e228b.export.zst: 0 match(es)
+  2026-08-12 05:47:25  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 05:51:43  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:25:18  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:28:36  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:29:07  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:29:39  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:29:50  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 06:30:01  usb 3-3: USB disconnect, device number 2
+  2026-08-12 06:31:05  usb usb3-port3: attempt power cycle
+boot-7ab86388.export.zst: 9 match(es)
+boot-7dd5d642.export.zst: 0 match(es)
+boot-7e63226d.export.zst: 0 match(es)
+boot-7e87eae0.export.zst: 0 match(es)
+boot-7ff777a6.export.zst: 0 match(es)
+boot-855a927e.export.zst: 0 match(es)
+boot-85cab7e8.export.zst: 0 match(es)
+boot-8709ee7c.export.zst: 0 match(es)
+boot-8c329da6.export.zst: 0 match(es)
+  2026-08-15 21:12:44  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 21:13:15  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 21:13:47  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 21:13:58  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-15 21:14:09  usb 3-3: USB disconnect, device number 2
+  2026-08-15 21:15:13  usb usb3-port3: attempt power cycle
+boot-95d14e7a.export.zst: 6 match(es)
+boot-97510325.export.zst: 0 match(es)
+  2026-08-14 21:03:35  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-14 21:04:07  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-14 21:04:39  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-14 21:04:50  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-14 21:05:01  usb 3-3: USB disconnect, device number 2
+  2026-08-14 21:06:04  usb usb3-port3: attempt power cycle
+boot-9d973714.export.zst: 6 match(es)
+boot-a840c7c0.export.zst: 0 match(es)
+boot-aa947d1b.export.zst: 0 match(es)
+boot-aab68152.export.zst: 0 match(es)
+boot-afd71c7b.export.zst: 0 match(es)
+  2026-11-12 18:08:03  usb usb3-port3: attempt power cycle
+boot-b314ca88.export.zst: 1 match(es)
+boot-b60dba2a.export.zst: 0 match(es)
+  2026-08-22 11:41:11  usb usb3-port3: attempt power cycle
+boot-b8e9a9fb.export.zst: 1 match(es)
+boot-be19fc39.export.zst: 0 match(es)
+boot-bf0f9804.export.zst: 0 match(es)
+boot-c07704d5.export.zst: 0 match(es)
+boot-c128a59a.export.zst: 0 match(es)
+boot-c34cfa10.export.zst: 0 match(es)
+boot-c383d535.export.zst: 0 match(es)
+boot-c707a1a7.export.zst: 0 match(es)
+boot-c8342e9b.export.zst: 0 match(es)
+boot-cc59ae05.export.zst: 0 match(es)
+boot-cfcc2da9.export.zst: 0 match(es)
+boot-d0bc81b5.export.zst: 0 match(es)
+  2026-08-12 08:27:38  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 08:54:56  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 08:58:54  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 10:07:31  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 14:15:37  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 14:49:47  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 15:17:51  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 15:36:18  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 16:22:51  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 18:06:33  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 22:14:24  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-12 23:05:50  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+boot-d28ebac2.export.zst: 12 match(es)
+boot-d479d374.export.zst: 0 match(es)
+boot-d55ebbba.export.zst: 0 match(es)
+boot-d6d9b2dc.export.zst: 0 match(es)
+  2026-08-13 06:26:47  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-13 06:27:19  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-13 06:27:51  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-13 06:28:02  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+  2026-08-13 06:28:13  usb 3-3: USB disconnect, device number 2
+  2026-08-13 06:29:16  usb usb3-port3: attempt power cycle
+boot-e3f66b3e.export.zst: 6 match(es)
+boot-e672b454.export.zst: 0 match(es)
+boot-e68d6d90.export.zst: 0 match(es)
+boot-e792fe5f.export.zst: 0 match(es)
+boot-e8152eae.export.zst: 0 match(es)
+boot-e90c9c57.export.zst: 0 match(es)
+  2026-08-17 11:17:38  usb 3-3: USB disconnect, device number 2
+boot-e9399c8c.export.zst: 1 match(es)
+  2026-08-16 18:48:02  usb usb3-port3: attempt power cycle
+boot-ea26d5d0.export.zst: 1 match(es)
+boot-eb117101.export.zst: 0 match(es)
+boot-eddd1961.export.zst: 0 match(es)
+boot-ef992099.export.zst: 0 match(es)
+boot-f5de8066.export.zst: 0 match(es)
+boot-f759ae02.export.zst: 0 match(es)
+boot-f7e60123.export.zst: 0 match(es)
+total: 70
+
+[exited with code 0]

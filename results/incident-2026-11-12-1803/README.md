@@ -132,6 +132,8 @@ Each file starts with the exact command that produced it. Addresses are replaced
 | `excerpt-boot0-kernel-no-controller.txt` | Current boot: port 3-3 does not enumerate; Wi-Fi up |
 | `excerpt-boot-1-btusb-suspend-cycles.txt` | Failing boot: device-level runtime suspends and resumes from btusb's debug prints. The last suspend, at 18:00:28.857, is never followed by a resume (added 2026-11-13) |
 | `excerpt-boot-2-btusb-suspend-cycles.txt` | The boot before: 8 completed suspend/resume cycles, the longest 4,250 s (added 2026-11-13) |
+| `excerpt-port-3-3-resets-system-journal.txt` | Every reset, power cycle and disconnect of port 3-3 in the system journal (2026-10-22 11:32 to 11-13): the only resets are BT-17's; the two disconnects are the BT-16 start-ups (added 2026-11-13) |
+| `excerpt-port-3-3-resets-journal-archive.txt` | The same search over the 76 archived boots (08-12 to 11-12): earlier reset sequences only on ROM firmware (08-12 to 08-16, 09-24), with a different spacing; none between 09-24 04:04 and BT-17 (added 2026-11-13) |
 
 The two suspend-cycle files are the output of `python3 -I tools/suspend-cycles.py <boot>-kernel.txt`, run on the archived full kernel logs (below). The script's header gives the classification rules.
 
