@@ -19,7 +19,8 @@ Directed Advertising Timeout.
   one line, `Fixes: 161510ccf91c`. No Signed-off-by: the operator adds his own.
   checkpatch `--strict --no-tree`: only the missing Signed-off-by, and "Unknown commit id"
   because it ran without a tree.
-- **The test:** `patch/bluez-mgmt-tester-set-dev-class-timeout.diff`, a new mgmt-tester case,
+- **The test:** `patch/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch` (`[PATCH BlueZ]`
+  on master `20ffd285b`; the same change as `patch/bluez-mgmt-tester-set-dev-class-timeout.diff`), a new mgmt-tester case,
   "Set Device Class - Timeout 1". Its emulated controller drops Write Class of Device (a
   `HCIEMU_HOOK_PRE_CMD` hook returning false, `emulator/btdev.c:8742-8744`). It expects
   `MGMT_STATUS_TIMEOUT`.
