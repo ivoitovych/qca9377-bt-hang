@@ -110,7 +110,9 @@ below ("Reviewer 7, checked").
 
        So no single `-EACCES` case can match the table for both. `AUTH_FAILED` would be wrong
        for `0x18`.
-     - `bt_to_errno()` maps three things to `ETIMEDOUT`, and the table gives `TIMEOUT` for each:
+     - Three outcomes become `-ETIMEDOUT`. The table gives `TIMEOUT` for the two HCI codes; "no
+       answer" is not a table entry and reaches `mgmt_errno_status()` directly. (Corrected
+       after outside reviewer 7: the first wording said "the table gives `TIMEOUT` for each".)
 
        | source | name | MGMT status from the table |
        |---|---|---|

@@ -94,8 +94,11 @@ The bot's user-space checks do not run mgmt-tester; the new case's runs are the 
     Authentication Failure (`0x05`) and Pairing Not Allowed (`0x18`) to `EACCES`. The
     HCI-status table maps them to `AUTH_FAILED` and `REJECTED`, so no single `-EACCES` case
     is right. `ETIMEDOUT`, by contrast, comes only from Connection Timeout (`0x08`),
-    Connection Accept Timeout (`0x10`) or no answer, and the table says `TIMEOUT` for all
-    three.
+    Connection Accept Timeout (`0x10`) or no answer.
+    - The table says `TIMEOUT` for both HCI codes.
+    - "No answer" is not a table entry: it reaches the errno path directly.
+    - So the patch makes that path agree with the table's timeout entries. (Wording
+      corrected after outside reviewer 7.)
     - **Recommendation:** CO-44 stays one line, without the `-EACCES` case.
     - **Below the `---`:** the patch makes the errno path agree with the table.
 - **Stable:** split. Two reviewers say yes; one leaves it to the maintainers; one says skip

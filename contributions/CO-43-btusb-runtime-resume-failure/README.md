@@ -136,8 +136,12 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
        have rebound after a runtime resume stalled after v4, with no objection on record.
      - **Nobody else is working on BT-18 to BT-25.** A pending, unmerged rewrite keeps BT-23's
        window.
-     - **A 2017 RFC for BT-25's leak was not merged:** *"We cannot silently drop one part of a
-       transmission."*
+     - **A 2017 fix for a leak in `play_deferred()` was merged,** `19cfe912c37b`, Reviewed-by
+       Oliver Neukum. It left the skb leak, which is BT-25.
+       - The search report calls it unmerged. That is wrong: outside reviewer 7 cited the
+         commit, and it is checked in `cache/linux`.
+       - An earlier RFC of that series drew the objection *"We cannot silently drop one part
+         of a transmission."*
      - **No upstream test framework** exists for USB driver PM. Precedent describes emulation
        in the commit body.
      - **The linux-usb question** goes as one thread: To linux-usb with Alan Stern; Cc

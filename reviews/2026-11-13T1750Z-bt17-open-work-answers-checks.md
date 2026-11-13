@@ -133,9 +133,12 @@ R1 proposes:
   - `setup_packet` is NULL for bulk URBs, and `kfree(NULL)` is a no-op.
   - Detaching the list under the lock and freeing it outside, as R2 suggests, is the
     production form.
-- **Prior art that constrains the fix** (CO-43 prior art §4): "Bluetooth: btusb: Fix memory leak
-  in play_deferred" (RFC v2, 2017) was not merged. Oliver Neukum, the author of btusb's PM code,
-  objected: *"We cannot silently drop one part of a transmission."*
+- **Prior art that constrains the fix** (CO-43 prior art §4): an RFC v2 of "Bluetooth: btusb: Fix
+  memory leak in play_deferred" (2017) drew an objection from Oliver Neukum, the author of
+  btusb's PM code: *"We cannot silently drop one part of a transmission."*
+  - **Corrected after reviewer 7:** the series was merged, as `19cfe912c37b`, with his
+    Reviewed-by. That commit added today's failure branch and cleanup loop, without freeing the
+    skb.
   - So the fix must report the dropped commands to the HCI layer, not only free them. R2 says the
     same: notify after releasing `txlock`.
   - The 2017 thread is to be read in full before our patch.
@@ -354,6 +357,151 @@ R6 checked against mainline master, by function name; nothing was run.
   - An outer VM, with nested QEMU, needs no such word. To be tried that way.
 
 ### Correction to the earlier checks, finding 7: accepted
+
+(Reviewer 6's section ends here; reviewer 7 follows.)
+
+## Reviewer 7
+
+R7 checked against `da3cc0258` and upstream history, and ran nothing. Every commit R7 cites was
+checked in `cache/linux` (full history):
+- `19cfe912c37b`, `811ae81320da`, `7bdb8a5cf17f`, `600b21507eb6`;
+- `e2bef3847e3d` (2019, driver-specific timeout hook), `6933568aec92` (2020, QCA port reset on
+  timeout);
+- `7c393421755d` (2025, removed btusb's command-timeout count), `7ecacafc2406`.
+
+All exist and say what R7 says.
+
+### Two corrections to our own records, both accepted
+
+1. **The 2017 leak fix was merged.**
+   - Our CO-43 prior-art search called "Bluetooth: btusb: Fix memory leak in play_deferred"
+     unmerged. It is `19cfe912c37b` (Jeffy Chen, 2017-07-20, Reviewed-by Oliver Neukum).
+   - It added today's submit-failure branch and cleanup loop in `play_deferred()`, which free
+     the URB and the setup packet but not the skb.
+   - So the skb half of BT-25 at those two sites dates from that commit. The two scuttles date
+     from `7bee549e197c`.
+   - The search most likely missed it because the remotes in `cache/linux` are shallow.
+   - Corrected in BT-25, in the CO-43 dossier, in the ported prior-art report and in reviewer
+     2's section above.
+2. **CO-44's below-the-line note.** "No answer" is not an entry in `mgmt_status_table`: it
+   reaches `mgmt_errno_status()` as `-ETIMEDOUT` from the sync path. Our earlier wording, "the
+   table gives `TIMEOUT` for each", was imprecise.
+   - The note must say: the change makes that outcome consistent with the table's timeout
+     entries, HCI 0x08 and 0x10.
+   - Corrected in finding 9 of `2026-11-13T1600Z-…-checks-and-plan.md` and in the CO-44 dossier.
+
+### T2: a direct precedent, `811ae81320da`
+
+- **`811ae81320da`** (Kai-Heng Feng, 2021-12-10, "xhci: Remove CONFIG_USB_DEFAULT_PERSIST to
+  prevent xHCI from runtime suspending", Cc stable): *"there's no subsequent call of
+  usb_dev_complete() -> usb_resume_complete() to force rebinding the driver"*, and *"btusb device
+  stops working after xHCI controller is runtime resumed"*.
+- That is BT-18's mechanism, named for btusb, with a different trigger (`XHCI_RESET_ON_RESUME`).
+  The fix avoided the trigger; it did not add a runtime rebind.
+- This is the strongest citation for the linux-usb question, together with `9be427efc7644` (2016)
+  and the 2014 Poulain series.
+- **R7's draft mail:** its log excerpt matches `base-m-close-1.log`. The "HCI reset during
+  shutdown failed" line is at line 109 and at 16.387781 in the kernel log. Of the drafts so
+  far it is the closest to sendable.
+- **Its open points:** add the reproduction's public URL, and recipients from `get_maintainer.pl`
+  and the precedent (CO-43 prior art §5).
+
+### T1: why a btusb-only work item may not be enough
+
+R7 goes further than reviewers 1, 2 and 6:
+- the recovery should be core-owned, with a binding generation that makes stale requests no-ops;
+- a work item in `btusb_data` can be freed by the reset it queues;
+- `cancel_work_sync()` in the disconnect can deadlock, if the work waits on the device lock the
+  disconnect holds.
+
+**Against B2 as specified:**
+- B2's work takes no device lock. It calls `usb_autopm_get_interface()`, then
+  `usb_queue_reset_device()`, which only schedules the core's own reset work and returns.
+- So the lock cycle R7 describes needs the PM wait itself to depend on the disconnect. That is
+  the case of reviewer 2's warning, and B2's dead-device `bt17` runs, with the hung-task detector
+  and lockdep, test it.
+- The stale-request point does apply to B2. A reset work queued for one binding can run after a
+  rebind and reset the new binding's device. B2 does not guard against that.
+
+**Credits:**
+- Today `btusb_reset()` blocks on the resume, so the credit returns late in the BT-17 case.
+  Returning promptly changes when later commands go out. That is the intended effect for
+  requirement (a), but it is a scheduling change, as R7 says.
+- `7c393421755d` (2025) removed btusb's multiple-timeout count because only one command is in
+  flight. That argues for one coalesced recovery, not one per timeout.
+
+**Conclusion, shared by all four answers:** B2 can show the mechanism in emulation, but B is not
+merge-ready until request lifetime, cancellation and T2 coordination are designed. B2 remains an
+experiment, not a candidate.
+
+### T3: agrees, with a candidate diff, and an argument against error completion
+
+- **Agrees on all four leak sites.** R7 stresses "the first rejected URB" in `play_deferred()`:
+  its failure branch, which reviewer 2 also found.
+- **A companion diff, `BT17-deferred-cleanup-candidate.diff`.**
+  - R7 reports: `git apply --check` passes on `da3cc0258`, and checkpatch `--strict` is clean;
+    not compiled.
+  - It includes E's producer-side change, so it is not to be applied on top of E as it stands.
+  - **It was not included in the text received here.** We need the file itself.
+- **Against `hci_cmd_sync_cancel()` in the free loop:** it acts on the current synchronous request,
+  not on the one that a discarded URB belonged to. An old deferred command can outlive its
+  requester. So error completion needs request correlation, and belongs with the recovery work.
+  - This answers the open question in BT-25 for now: the leak fix frees, and does not cancel.
+- **Order of drain and flag clear:** R7 makes the failed-resume drain and the flag clear one
+  transaction under `txlock`, as reviewer 2 did. Reviewer 6 cleared first and drained outside.
+  - With E both are race-free. Reviewer 6's frees in process context.
+  - To decide when we write the patch; the diff, once we have it, shows R7's version concretely.
+- **Reaching `failed:` needs a synchronous submit failure** (an allocation or enqueue fault in the
+  kernel), not an emulated completion error. All three answers agree.
+
+### T4: agrees, with two more commits
+
+- `600b21507eb6` (2015, a race on the `HCI_RESET` flag and the command credit) shows the flag is
+  part of command sequencing.
+- `e2bef3847e3d` (2019) and `6933568aec92` (2020) came later than the 2011 timer exception. So the
+  missing recovery after a failed Reset was never a choice, only a consequence.
+- **R7's proposal:** bounded recovery after the failed open has unwound (`hci_dev_open_sync()`
+  already flushes, purges and closes), with the timer exception kept.
+- **R7's tests:**
+  - a slow Reset that succeeds must not release the next command early;
+  - an unanswered Reset triggers one bounded recovery;
+  - a late completion, a power-off or a disconnect does not revive an obsolete request.
+
+### T5: overlapping work
+
+- **A September 2026 Intel reset-resume proposal**
+  (https://lkml.iu.edu/hypermail/linux/kernel/2609.2/05888.html): a narrow `reset_resume` for
+  fixed Intel adapters. Oliver Neukum's reply asks about other devices, S4, and the state of
+  connections after data loss.
+  - Not yet checked by us. It is relevant to D and to the linux-usb question, and is to be read
+    before either.
+- **Two external MGMT users:** python-btsocket, and the Rust `btmgmt` crate. Both see the status
+  value; neither branches on the wrong mapping. This agrees with the CO-44 prior art, and adds
+  one more consumer.
+
+### T6: wording
+
+- **A:** the comment, `/* Runtime PM may be disabled, including during system sleep. */`, and
+  the message are accurate. No stable nomination.
+- **E:** accurate. R7 sees a plausible stable case after the stress test, which differs from the
+  others' silence on it.
+- **CO-44:** the message is accurate, and its below-`---` text fixes the "no answer" nit above.
+  R7 recommends no `Cc: stable` at first, asking the maintainer below the `---`. That makes
+  three of the answers for it (reviewers 2, 6 and 7). It remains the operator's decision.
+- **C:** "Block wake-enabled autosuspend for QCA9377 on Ryzen", with the evidence qualified.
+  Accurate.
+
+### T7
+
+- **The reset signal:** the same assessment as reviewer 6. It is a constrained proxy, too late to
+  model firmware loss at the bus reset, and to be cross-checked against the kernel's reset line.
+- **The four modes:** R7's designs are concrete: a debug gate before the reset work's lock, a
+  reset-generation and firmware state in the emulator, gated sender and resume with a forced
+  synchronous failure, and allocation counters next to kmemleak. They are taken into the plan as
+  written.
+- **System suspend:** emulate the device in QEMU's own USB device model, with a real reset
+  callback, or as an in-kernel gadget. An external usbip server does not lift vhci's
+  restriction. Agreed.
 
 `failed to resubmit (2)` appears on the unpatched kernel as well: `base-h-wedge-1` has it twice,
 after btusb's own reset. So it belongs to the forced unbind after any reset, not to D. Finding 7
