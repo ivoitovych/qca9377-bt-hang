@@ -1,0 +1,35 @@
+From bd55bec1d356bec086740fbb514b7fa228256964 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:42:21 +0100
+Subject: [PATCH] DEBUG ONLY: btusb: bt23_delay_ms widens the window after the
+ suspend decision
+
+---
+ drivers/bluetooth/btusb_main.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 5f6d90d43..bcd978102 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -36,6 +36,9 @@
+ static bool disable_scofix;
+ static bool force_scofix;
+ static bool enable_autosuspend = IS_ENABLED(CONFIG_BT_HCIBTUSB_AUTOSUSPEND);
++/* DEBUG ONLY (BT-23 test) */
++static unsigned int bt23_delay_ms;
++module_param(bt23_delay_ms, uint, 0644);
+ static bool enable_poll_sync = IS_ENABLED(CONFIG_BT_HCIBTUSB_POLL_SYNC);
+ static bool reset = true;
+ 
+@@ -2403,6 +2406,10 @@ static int submit_or_queue_tx_urb(struct hci_dev *hdev, struct urb *urb)
+ 		usb_anchor_urb(urb, &data->deferred);
+ 	spin_unlock_irqrestore(&data->txlock, flags);
+ 
++	/* DEBUG ONLY (BT-23 test): widen the window after the decision */
++	if (suspending && bt23_delay_ms)
++		mdelay(bt23_delay_ms);
++
+ 	if (!suspending)
+ 		return submit_tx_urb(hdev, urb);
+ 

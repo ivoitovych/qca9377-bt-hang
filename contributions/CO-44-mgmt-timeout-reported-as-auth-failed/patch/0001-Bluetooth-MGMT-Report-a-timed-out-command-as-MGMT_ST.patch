@@ -1,0 +1,41 @@
+From 0c5ea70d6182733c0c8e8f24e21f23c196217c93 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:19:58 +0100
+Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
+ MGMT_STATUS_TIMEOUT
+
+mgmt_errno_status() maps -ETIMEDOUT to MGMT_STATUS_AUTH_FAILED. The
+-ETIMEDOUT comes from the HCI command layer when the controller does not
+answer a command in time (__hci_cmd_sync_sk() and hci_cmd_timeout()), or
+when the controller itself reports a connection timeout status, so no
+authentication is involved.
+
+As a result, when the controller stops responding, user space is told
+that authentication failed. For example, a Write Class of Device that
+times out during Add UUID or Remove UUID completes with 0x05 and
+bluetoothd logs "Failed to remove UUID: Authentication Failed (0x05)".
+This sends anyone reading the log to look at pairing and keys instead of
+at the controller.
+
+MGMT_STATUS_TIMEOUT (0x08) already exists and is what the HCI status
+table in this file returns for Connection Timeout, Host Timeout and
+Directed Advertising Timeout. Return it for -ETIMEDOUT as well.
+
+Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+---
+ net/bluetooth/mgmt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 6ed3bf6f1..0056e3484 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -295,7 +295,7 @@ static u8 mgmt_errno_status(int err)
+ 	case -EBUSY:
+ 		return MGMT_STATUS_BUSY;
+ 	case -ETIMEDOUT:
+-		return MGMT_STATUS_AUTH_FAILED;
++		return MGMT_STATUS_TIMEOUT;
+ 	case -ENOMEM:
+ 		return MGMT_STATUS_NO_RESOURCES;
+ 	case -EISCONN:

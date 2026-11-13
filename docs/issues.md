@@ -987,6 +987,81 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - **Candidate H3:** mainline `dcaf83ead130` sets `BTUSB_WAKEUP_BROKEN` (no runtime suspend with remote wakeup armed) for MT7922/MT7925 on Ryzen root hubs. It describes the same symptom: unresponsive, resetting the root hub does not help, only a power cycle recovers. This laptop is a Ryzen 7 5825U, and the controller is a direct child of the SoC root hub (`1022:1639`). It is not traced as ours yet.
   - `mgmt_errno_status()` maps `-ETIMEDOUT` to `MGMT_STATUS_AUTH_FAILED` (`mgmt.c:299`): candidate 3 is confirmed in source.
   - Outside source review requested: `reviews/2026-11-13T0003Z-bt17-source-investigation-task.md`.
+- **2026-11-13, the outside reviews** (five answers, `reviews/2026-11-13T02*`–`T04*-bt17-source-investigation-reviewer-*-verbatim.md`, each with our checks in its header):
+  - **H2 holds**, by all five. The log alone proves it: no `cmd_cnt` line between 18:03:08.8 and 18:03:16.2 although three commands were queued on the ordered HCI workqueue (sixth review).
+  - **H1 is the best fit**, by all five. With the xHCI driver's own 40 ms resume drive and the port reset (60 ms) and its recovery (50 ms) that precede the `reset full-speed` line, the fixed waits come to 5,200 ms of the 5,291 ms; about 91 ms is left for scheduling. Open: who started the resume (host or a remote wakeup), and which branch issued the reset.
+  - **H3 is a candidate for an A/B test, not a finding**, by all five.
+  - **Corrections to our brief:**
+    - frame #122 never reached the hardware: `BTUSB_SUSPENDING` was still set, so btusb parked it on the deferred anchor;
+    - the capture proves only core send attempts (the monitor copy precedes the `HCI_RUNNING` test);
+    - a missing `btusb_resume()` print alone does not prove a failed resume; the failed reset-resume and the disconnect do.
+  - **New, verified:** a queued xHCI fix matches the tail of our log (BT-22).
+- **2026-11-13, reproduced in emulation** (`results/bt17-emulation-2026-11-13/`):
+  - Setup: real btusb (bluetooth-next `da3cc0258`) in a QEMU guest, bound through usbip to an emulated `13d3:3503` (QCA ROME path, full speed, remote wakeup). It stops answering at a chosen resume: GET_STATUS held, then `-71` after the host gives up.
+  - **The laptop's sequence comes out step by step, with the USB core debug lines the laptop lacked:**
+    - `usb auto-resume`, `finish resume`, `tx timeout` at +2.05 s;
+    - MGMT status `0x05` for the class write;
+    - `retry with reset-resume`, first `reset full-speed` at +5.38 s (laptop: +5.29 s);
+    - four resets, `gone after usb resume?`, `USB disconnect` at +7.43 s (laptop: +7.35 s);
+    - `Failed usb_autopm_get_interface: -16` 2 ms later; no `Resetting usb device.`
+  - So H1 and H2 hold for this kernel's code when a device stops answering after a host-initiated runtime resume. What made the real controller stop answering is not addressed by this; it needs a recurrence on the laptop.
+  - **Found with it:** BT-18, BT-19, BT-20 (btusb) and BT-21 (MGMT); BT-23 reproduced with a widened window; patch candidates in CO-43 (five) and CO-44.
+
+---
+
+## BT-18 — After a successful runtime reset-resume, btusb is never resumed and Bluetooth stays dead
+
+**Status 2026-11-13: reproduced in emulation; fix candidate CO-43 D; not seen on the laptop (there the reset-resume failed).**
+- **What:** when a runtime resume fails and USB persist is on, the USB core resets the device. btusb has no `reset_resume` callback, so `usb_resume_interface()` only marks its interfaces for rebinding (`no reset_resume for driver btusb?`). The core rebinds marked interfaces only after a system resume (`usb_resume_complete()`) or a `usb_reset_device()`, not after a runtime resume (`drivers/usb/core/driver.c`, bluetooth-next `da3cc0258`).
+- **Effect:** btusb stays bound and is never resumed. `BTUSB_SUSPENDING` stays set and the suspend count is off by one, so every URB is parked on the deferred anchor. The controller answers USB requests, yet Bluetooth is dead until unplug or reboot.
+- **Reproduced** (`close-recover` scenario):
+  - the resume is started by powering hci0 off (`btusb_close()` takes a PM reference), the device answers again after the reset-resume;
+  - the next power-on fails: HCI Reset `0x0c03` `-110` twice, never sent, MGMT status `0x05`;
+  - when the resume is started by a command instead, btusb's own reset from the command timeout rebinds it by accident (BT-19).
+- **Fix candidate:** CO-43 D, a `reset_resume` that resumes and queues a reset, so the core rebinds btusb and the controller is set up again.
+
+## BT-19 — `btusb_reset()` blocks the HCI workqueue behind a failing resume, and resets a reset-resumed device again
+
+**Status 2026-11-13: in the laptop's log (H2) and reproduced in emulation; fix candidate CO-43 B.**
+- **What:**
+  - `hci_cmd_timeout()` calls `hdev->reset` on the ordered `hdev->workqueue` before it restores the credit. `btusb_reset()` first calls `usb_autopm_get_interface()`, which waits for the resume in progress.
+  - The command that timed out never reached the controller (still on the deferred anchor).
+- **Effect:**
+  - the HCI workqueue (cmd, RX, TX work) is blocked 5.3 s on the laptop, 5.4 s in emulation;
+  - when the reset-resume succeeds, the waiting reset then resets the device once more (`Resetting usb device.` after the rebinding).
+- **Fix candidate:** CO-43 B. Don't reset while `BTUSB_SUSPENDING` is set and the interface is not runtime-active; if it is active although btusb was not resumed (BT-18 without D), reset as before.
+
+## BT-20 — `btusb_waker()` swallows a failed resume
+
+**Status 2026-11-13: in source; shown in emulation; fix candidate CO-43 A.**
+- **What:** the waker returns on a failed `usb_autopm_get_interface()` without a message (bluetooth-next `btusb_main.c:2656`, from `7bee549e197c`, 2009). At the default log level the only trace of a failed resume is the HCI timeout two seconds later, which points at the controller.
+- **Fix candidate:** CO-43 A, log the error (except `-EACCES`, a system sleep transition).
+
+## BT-21 — MGMT reports a command timeout as "Authentication Failed"
+
+**Status 2026-11-13: in the laptop's log (bluetoothd: "Failed to remove UUID: Authentication Failed (0x05)") and reproduced; fix candidate CO-44.**
+- **What:** `mgmt_errno_status()` maps `-ETIMEDOUT` to `MGMT_STATUS_AUTH_FAILED`, since `161510ccf91c` (2021-10-27), with no stated reason. `MGMT_STATUS_TIMEOUT` (0x08) exists.
+- **Reproduced:** a new mgmt-tester case, whose emulated controller never answers Write Class of Device, fails on bluetooth-next with 0x05 and passes with the one-line fix. The other 526 mgmt-tester cases, l2cap-tester (144) and smp-tester (8) are unchanged (`agent-work/bt17-mgmt-timeout/`, logs with SHA256SUMS).
+- **Audit:** pairing paths use the HCI status table, not this function, so they are unaffected. bluetoothd only logs the text for the sync-queued commands; nothing in BlueZ depends on 0x05 for a timeout.
+
+## BT-22 — xHCI: ep0 maxpacket update on a slot left Enabled (another author's fix, queued)
+
+**Status 2026-11-13: in the laptop's log (the BT-17 tail); fixed by another author, queued by the xHCI maintainer on 2026-11-09; not ours.**
+- **What:** after an Address Device transaction error the slot is left Enabled. `xhci_check_ep0_maxpacket()` then issues Evaluate Context on it (`WARN: invalid context state for evaluate context command`, harmless) and corrupts the input context, so the next Address Device is refused with Parameter Error (`completion code 0x11`).
+- **The fix:** "[PATCH] usb: xhci: Fix ep0 maxpacket update on enabled slots", Michal Pecio, 2026-11-09, `<20261109112846.04bfeb0f.michal.pecio@gmail.com>`; "Added to queue" by Mathias Nyman the same day.
+- **On the laptop:** the code it fixes is in v7.0 and in Ubuntu's `-42` (no hunk there). Our log has the sequence for the full-speed device at 18:03:15.65–15.97. It made the reset retries fail in a messier way; it did not cause the loss: the device had already failed a descriptor read, and the next boot's fresh xHCI could not read it either.
+- **Next:** watch for it in mainline and stable; an Ubuntu backport candidate.
+
+## BT-23 — btusb: a URB can be parked on the deferred anchor after the resume that would send it
+
+**Status 2026-11-13: race from source (seventh review), reproduced in emulation with the window widened by a debug-only delay; fix candidate CO-43 E; not BT-17.**
+- **Reproduced:** `bt23` scenario, with a 400 ms delay after the decision (debug-only module parameter) and a resume forced meanwhile (`power/control=on`):
+  - unpatched: btusb's resume ran, the command was parked after it, and the class write timed out after 2.02 s with MGMT 0x05, 3 of 3;
+  - with E: answered after the 0.40 s delay, 2 of 2;
+  - 20 healthy cycles on the E kernel: 20 of 20, latency unchanged.
+- Without the delay the window is a few instructions wide. How often it occurs on real hardware is unknown.
+- **What:** `submit_or_queue_tx_urb()` reads `BTUSB_SUSPENDING` under `txlock`, releases the lock, and only then anchors the URB on `deferred`. `btusb_resume()` drains `deferred` and clears the flag under `txlock`. A resume completing in between leaves the URB parked while the device is active, until the next suspend/resume cycle.
+- **Fix candidate:** CO-43 E, "Bluetooth: btusb: Anchor a deferred URB under txlock": the anchoring moves into the decision's critical section. The lock order is unchanged: `btusb_resume()` already takes the anchor's lock inside `txlock`.
 
 ---
 

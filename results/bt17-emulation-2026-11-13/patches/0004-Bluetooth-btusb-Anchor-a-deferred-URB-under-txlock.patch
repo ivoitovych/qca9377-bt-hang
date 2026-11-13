@@ -1,0 +1,51 @@
+From aedb5636f15e513f3e5f4e1667306c5fac26662e Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:42:06 +0100
+Subject: [PATCH 4/5] Bluetooth: btusb: Anchor a deferred URB under txlock
+
+submit_or_queue_tx_urb() reads BTUSB_SUSPENDING under txlock, drops
+the lock, and only then anchors the URB on data->deferred.
+btusb_resume() sends the deferred URBs and clears BTUSB_SUSPENDING
+under txlock. If the resume completes in between, the URB is anchored
+after the drain: it is not sent, and the waker it schedules finds the
+device active and does nothing. The URB then waits for the next
+suspend and resume, and an HCI command in it times out.
+
+Anchor the URB in the same critical section as the decision.
+btusb_resume() takes the anchor's lock inside txlock as well
+(play_deferred() under txlock), so the lock order does not change.
+
+Seen with a delay inserted after the decision and a resume forced
+meanwhile: a command was parked on an active device and timed out;
+with this change it was sent at that resume.
+---
+ drivers/bluetooth/btusb_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 4d2f4e136..1c1cbf6bb 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2408,16 +2408,21 @@ static int submit_or_queue_tx_urb(struct hci_dev *hdev, struct urb *urb)
+ 	unsigned long flags;
+ 	bool suspending;
+ 
++	/* Decide and anchor under txlock: btusb_resume() sends the deferred
++	 * URBs and clears BTUSB_SUSPENDING under the same lock, so a URB
++	 * anchored after that would wait for the next resume.
++	 */
+ 	spin_lock_irqsave(&data->txlock, flags);
+ 	suspending = test_bit(BTUSB_SUSPENDING, &data->flags);
+ 	if (!suspending)
+ 		data->tx_in_flight++;
++	else
++		usb_anchor_urb(urb, &data->deferred);
+ 	spin_unlock_irqrestore(&data->txlock, flags);
+ 
+ 	if (!suspending)
+ 		return submit_tx_urb(hdev, urb);
+ 
+-	usb_anchor_urb(urb, &data->deferred);
+ 	schedule_work(&data->waker);
+ 
+ 	usb_free_urb(urb);

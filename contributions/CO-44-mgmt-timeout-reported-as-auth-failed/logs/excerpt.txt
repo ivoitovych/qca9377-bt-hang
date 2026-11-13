@@ -1,0 +1,68 @@
+# CO-44: decisive lines of the tester runs (full logs local: /root/exp/agent-work/bt17-mgmt-timeout/logs, SHA256SUMS there)
+# grep -a -E 'Set Device Class - Timeout 1|Unexpected status|^Total:' <log>, ANSI colours removed
+
+== mgmt-newcase-base.log (sha256 cb22562ea00468a4...)
+Set Device Class - Timeout 1 - init
+Set Device Class - Timeout 1 - setup
+Set Device Class - Timeout 1 - setup complete
+Set Device Class - Timeout 1 - run
+  Unexpected status got Authentication Failed (0x05) expected Timeout (0x08)
+Set Device Class - Timeout 1 - test failed
+Set Device Class - Timeout 1 - teardown
+Set Device Class - Timeout 1 - teardown complete
+Set Device Class - Timeout 1 - done
+Set Device Class - Timeout 1                         Failed       2.045 seconds
+Total: 168, Passed: 167 (99.4%), Failed: 1, Not Run: 0
+
+== mgmt-newcase-patched.log (sha256 b663c7f202b479c1...)
+Set Device Class - Timeout 1 - init
+Set Device Class - Timeout 1 - setup
+Set Device Class - Timeout 1 - setup complete
+Set Device Class - Timeout 1 - run
+Set Device Class - Timeout 1 - test passed
+Set Device Class - Timeout 1 - teardown
+Set Device Class - Timeout 1 - teardown complete
+Set Device Class - Timeout 1 - done
+Set Device Class - Timeout 1                         Passed       2.050 seconds
+Total: 168, Passed: 168 (100.0%), Failed: 0, Not Run: 0
+
+== mgmt-full-base.log (sha256 45bf4f89ca0e383e...)
+Set Device Class - Timeout 1 - init
+Set Device Class - Timeout 1 - setup
+Set Device Class - Timeout 1 - setup complete
+Set Device Class - Timeout 1 - run
+  Unexpected status got Authentication Failed (0x05) expected Timeout (0x08)
+Set Device Class - Timeout 1 - test failed
+Set Device Class - Timeout 1 - teardown
+Set Device Class - Timeout 1 - teardown complete
+Set Device Class - Timeout 1 - done
+  Unexpected status got 15 expected 14
+  Unexpected status got 5 expected 15
+Set Device Class - Timeout 1                         Failed       2.039 seconds
+Total: 527, Passed: 526 (99.8%), Failed: 1, Not Run: 0
+
+== mgmt-full-patched.log (sha256 04c57d5cf1576d83...)
+Set Device Class - Timeout 1 - init
+Set Device Class - Timeout 1 - setup
+Set Device Class - Timeout 1 - setup complete
+Set Device Class - Timeout 1 - run
+Set Device Class - Timeout 1 - test passed
+Set Device Class - Timeout 1 - teardown
+Set Device Class - Timeout 1 - teardown complete
+Set Device Class - Timeout 1 - done
+  Unexpected status got 15 expected 14
+  Unexpected status got 8 expected 15
+Set Device Class - Timeout 1                         Passed       2.037 seconds
+Total: 527, Passed: 527 (100.0%), Failed: 0, Not Run: 0
+
+== l2cap-full-base.log (sha256 8fd555d0826fc9ef...)
+Total: 144, Passed: 144 (100.0%), Failed: 0, Not Run: 0
+
+== l2cap-full-patched.log (sha256 c54436e3e0478a91...)
+Total: 144, Passed: 144 (100.0%), Failed: 0, Not Run: 0
+
+== smp-full-base.log (sha256 3c538f19ecd13469...)
+Total: 8, Passed: 8 (100.0%), Failed: 0, Not Run: 0
+
+== smp-full-patched.log (sha256 16f1e22339454850...)
+Total: 8, Passed: 8 (100.0%), Failed: 0, Not Run: 0

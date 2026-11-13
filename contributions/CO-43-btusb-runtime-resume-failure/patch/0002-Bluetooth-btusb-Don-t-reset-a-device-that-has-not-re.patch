@@ -1,0 +1,64 @@
+From 64775948647a7f234060996cb063139f767fd6ef Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:25:10 +0100
+Subject: [PATCH 2/5] Bluetooth: btusb: Don't reset a device that has not
+ resumed
+
+hci_cmd_timeout() calls hdev->reset() on the ordered HCI workqueue and
+restores the command credit only when it returns. btusb_reset() first
+takes a runtime PM reference with usb_autopm_get_interface(). If the
+command timed out because the device is still resuming, that call
+waits for the resume to end. When the device does not answer, the USB
+core spends more than five seconds on it (the GET_STATUS timeout, then
+a reset-resume and its retries), and the HCI workqueue, including RX
+and TX work, is blocked all that time.
+
+The command that timed out never reached the controller: btusb sets
+BTUSB_SUSPENDING at suspend and clears it only in btusb_resume(), and
+while it is set submit_or_queue_tx_urb() parks every URB on the
+deferred anchor. A failed resume is already handled by the USB core,
+which tries a reset-resume and disconnects the device if that fails
+too. If the reset-resume succeeds, the core rebinds the interface,
+because btusb has no reset_resume callback, and the reset queued here
+then resets the device a second time.
+
+Both were seen with an emulated QCA9377 (13d3:3503) whose GET_STATUS
+after a runtime resume was never answered, as on a laptop where that
+controller was lost: "Failed usb_autopm_get_interface: -16" was
+logged 5.4 s after the command timeout, at the disconnect; with a
+device that came back after the reset-resume, "Resetting usb device."
+followed the rebinding and reset it again.
+
+So don't reset, and don't wait, while BTUSB_SUSPENDING is set.
+---
+ drivers/bluetooth/btusb_main.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index a7d36e84a..9c66ab5d8 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1098,6 +1098,23 @@ static void btusb_reset(struct hci_dev *hdev)
+ 	int err;
+ 
+ 	data = hci_get_drvdata(hdev);
++
++	/* The device has not finished its resume, so the command that timed
++	 * out is still waiting on the deferred anchor and never reached the
++	 * controller. A resume that fails is handled by the USB core (a
++	 * reset-resume, then a disconnect), and resetting from here would
++	 * first block the HCI workqueue until that resume has ended.
++	 *
++	 * If the interface is active although btusb_resume() never ran, the
++	 * device was reset-resumed and btusb was not called back: then the
++	 * reset below, which unbinds and rebinds btusb, is what recovers it.
++	 */
++	if (test_bit(BTUSB_SUSPENDING, &data->flags) &&
++	    !pm_runtime_active(&data->intf->dev)) {
++		bt_dev_err(hdev, "Device not resumed; not resetting");
++		return;
++	}
++
+ 	err = usb_autopm_get_interface(data->intf);
+ 	if (err) {
+ 		bt_dev_err(hdev, "Failed usb_autopm_get_interface: %d", err);

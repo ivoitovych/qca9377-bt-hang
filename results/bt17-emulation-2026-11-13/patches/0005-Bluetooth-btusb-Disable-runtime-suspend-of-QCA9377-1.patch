@@ -1,0 +1,51 @@
+From 4b86065ff2f89adf72cfecb502a6cb3d3a2d3653 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:30:55 +0100
+Subject: [PATCH] Bluetooth: btusb: Disable runtime suspend of QCA9377
+ 13d3:3503 on Ryzen
+
+RFC, not for merging as is: one occurrence on one laptop.
+
+On a laptop with a Ryzen 7 5825U, an IMC Networks QCA9377 (13d3:3503),
+a direct child of the SoC's xHCI root hub (1022:1639), was runtime
+suspended for 160 s with the HCI device open and no connection. The
+next command started a resume; the device did not answer its
+GET_STATUS, the USB core's reset-resume failed, the device was
+disconnected, and it stayed off the bus through a reboot. Only a power
+cycle brought it back. The device had come back from eight runtime
+suspends, of up to 71 minutes, in the boot before.
+
+That is the failure that commit dcaf83ead130 ("Bluetooth: Properly
+disable remote wakeup for MT7922/MT7925 on Ryzen platform") describes
+for two MediaTek devices on Ryzen root hubs, though there the resume
+was started by a remote wakeup. Apply the same condition to this device:
+no runtime suspend while the HCI device is open with remote wakeup
+armed, on a Ryzen platform, when it is a direct child of a root hub.
+
+The cost is the device's runtime suspend while Bluetooth is on.
+---
+ drivers/bluetooth/btusb_main.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 1c1cbf6bb..2aae27d84 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -4683,6 +4683,17 @@ static int btusb_probe(struct usb_interface *intf,
+ 		hdev->reset = btusb_qca_reset;
+ 		hci_set_quirk(hdev, HCI_QUIRK_SIMULTANEOUS_DISCOVERY);
+ 		btusb_check_needs_reset_resume(intf);
++
++		/* An idle IMC Networks QCA9377 (13d3:3503) attached to a Ryzen
++		 * root hub failed to answer after a runtime resume, and only a
++		 * power cycle brought it back, as reported for MT7922/MT7925
++		 * in btusb_mtk_setup(). Keep it out of runtime suspend while
++		 * the HCI device is open.
++		 */
++		if (id->idVendor == 0x13d3 && id->idProduct == 0x3503 &&
++		    platform_is_ryzen() &&
++		    is_direct_child_of_root_hub(interface_to_usbdev(intf)))
++			set_bit(BTUSB_WAKEUP_BROKEN, &data->flags);
+ 	}
+ 
+ 	if (id->driver_info & BTUSB_QCA_WCN6855) {

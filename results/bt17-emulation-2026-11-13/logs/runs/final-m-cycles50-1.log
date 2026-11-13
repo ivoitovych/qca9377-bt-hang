@@ -1,0 +1,2005 @@
+start 2026-11-13 04:46:34 kernel final label m-cycles50-1 args cycles --cycles 50 cpus 4
+056c9f3d1fde2d0e3a0cbc06de069aed2f5eae3b13bc327fe3d7612bd8ac4532  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-final
+f67696b05f1f3e92c9361ee33cd08c097d111e64dbda3afd1f8788c1b87ab17c  /root/exp/agent-work/bt17-emu-20261113/scripts/bt17-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba32c4
+input_len: 0x000000000103c493
+output: 0x0000000001000000
+output_len: 0x0000000003833174
+kernel_total_size: 0x0000000004c22000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ab2d0).
+Linux version 7.3.0-g5a5668adfe81 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #9 SMP PREEMPT_DYNAMIC Fri Nov 13 04:44:19 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/bt17-emu.py cycles --cycles 50'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/bt17-emu.py cycles --cycles 50
+Changing into directory /root/exp
+New process 59 created
+random: crng init done
+   0.002 [mono   2.758050] dyndbg: file drivers/usb/core/hub.c +p | file drivers/usb/core/driver.c +p | func btusb_suspend +p | func btusb_resume +p | func btusb_disconnect +p | func btusb_waker +p | func hci_cmd_work +p | func hci_cmd_timeout +p
+   0.009 [mono   2.764295] attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+   0.387 [mono   3.143163] HCI cmd 0x0c03 
+   0.388 [mono   3.143564] HCI command 0x0c03: generic Command Complete
+   0.389 [mono   3.144401] HCI cmd 0x1003 
+   0.389 [mono   3.144876] HCI cmd 0x1001 
+   0.390 [mono   3.145278] HCI cmd 0x1009 
+   0.390 [mono   3.145644] HCI cmd 0x1002 
+   0.390 [mono   3.146134] HCI cmd 0x0c45 01
+   0.391 [mono   3.146244] HCI command 0x0c45: generic Command Complete
+   0.391 [mono   3.146543] HCI cmd 0x1005 
+   0.391 [mono   3.146843] HCI cmd 0x0c23 
+   0.391 [mono   3.147115] HCI cmd 0x0c14 
+   0.393 [mono   3.148416] HCI cmd 0x0c25 
+   0.393 [mono   3.148697] HCI cmd 0x0c38 
+   0.393 [mono   3.148919] HCI cmd 0x0c39 
+   0.393 [mono   3.149172] HCI cmd 0x0c16 007d
+   0.394 [mono   3.149275] HCI command 0x0c16: generic Command Complete
+   0.394 [mono   3.149555] HCI cmd 0x0c01 fffffbff03180000
+   0.394 [mono   3.149663] HCI command 0x0c01: generic Command Complete
+   0.395 [mono   3.150231] MGMT Index Added index 0 
+   0.425 [mono   3.180285] hci0 present
+   0.425 [mono   3.180625] MGMT send opcode 0x0005 index 0 params 01
+   0.426 [mono   3.181678] HCI cmd 0x0c1c 00081200
+   0.426 [mono   3.181967] HCI command 0x0c1c: generic Command Complete
+   0.427 [mono   3.182717] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   0.427 [mono   3.182851] HCI command 0x0c13: generic Command Complete
+   0.428 [mono   3.183266] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+   0.450 [mono   3.205240] Set Powered reply: (3.183261235, 1, 5, 0, 0)
+   0.453 [mono   3.209137] usb device /sys/bus/usb/devices/2-1 power {'control': 'auto', 'runtime_status': 'active', 'autosuspend_delay_ms': '2000', 'persist': '1', 'wakeup': 'disabled'}
+   2.432 [mono   5.188105] EMU suspend #1 (SET_FEATURE remote wakeup)
+   2.481 [mono   5.236545] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 5.236839
+   2.482 [mono   5.237247] MGMT send opcode 0x000e index 0 params 0104
+   2.545 [mono   5.300716] EMU resume #1: GET_STATUS answered
+   2.547 [mono   5.302259] HCI cmd 0x0c24 040100
+   2.547 [mono   5.302554] HCI command 0x0c24: generic Command Complete
+   2.547 [mono   5.303212] MGMT Class Of Device Changed index 0 040100
+   2.548 [mono   5.303386] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   4.550 [mono   7.306092] EMU suspend #2 (SET_FEATURE remote wakeup)
+   4.580 [mono   7.335933] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 7.336189
+   4.581 [mono   7.336558] MGMT send opcode 0x000e index 0 params 0108
+   4.644 [mono   7.399751] EMU resume #2: GET_STATUS answered
+   4.645 [mono   7.400665] HCI cmd 0x0c24 080100
+   4.645 [mono   7.401032] MGMT Class Of Device Changed index 0 080100
+   4.645 [mono   7.401121] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   6.721 [mono   9.477086] EMU suspend #3 (SET_FEATURE remote wakeup)
+   6.784 [mono   9.539807] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 9.540015
+   6.785 [mono   9.540292] MGMT send opcode 0x000e index 0 params 010c
+   6.848 [mono   9.603851] EMU resume #3: GET_STATUS answered
+   6.849 [mono   9.605052] HCI cmd 0x0c24 0c0100
+   6.850 [mono   9.605530] MGMT Class Of Device Changed index 0 0c0100
+   6.850 [mono   9.605780] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   9.122 [mono  11.877345] EMU suspend #4 (SET_FEATURE remote wakeup)
+   9.144 [mono  11.899804] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 11.900001
+   9.145 [mono  11.900230] MGMT send opcode 0x000e index 0 params 0104
+   9.208 [mono  11.963804] EMU resume #4: GET_STATUS answered
+   9.209 [mono  11.964990] HCI cmd 0x0c24 040100
+   9.210 [mono  11.965480] MGMT Class Of Device Changed index 0 040100
+   9.210 [mono  11.965663] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  11.214 [mono  13.969766] EMU suspend #5 (SET_FEATURE remote wakeup)
+  11.249 [mono  14.004577] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 14.004881
+  11.250 [mono  14.005249] MGMT send opcode 0x000e index 0 params 0108
+  11.313 [mono  14.068301] EMU resume #5: GET_STATUS answered
+  11.314 [mono  14.069436] HCI cmd 0x0c24 080100
+  11.314 [mono  14.069927] MGMT Class Of Device Changed index 0 080100
+  11.314 [mono  14.070148] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  13.316 [mono  16.071716] EMU suspend #6 (SET_FEATURE remote wakeup)
+  13.345 [mono  16.100551] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 16.100916
+  13.346 [mono  16.101361] MGMT send opcode 0x000e index 0 params 010c
+  13.408 [mono  16.164025] EMU resume #6: GET_STATUS answered
+  13.411 [mono  16.167132] HCI cmd 0x0c24 0c0100
+  13.413 [mono  16.168609] MGMT Class Of Device Changed index 0 0c0100
+  13.414 [mono  16.169402] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  15.415 [mono  18.171140] EMU suspend #7 (SET_FEATURE remote wakeup)
+  15.461 [mono  18.216897] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 18.217203
+  15.462 [mono  18.217619] MGMT send opcode 0x000e index 0 params 0104
+  15.524 [mono  18.279735] EMU resume #7: GET_STATUS answered
+  15.525 [mono  18.280786] HCI cmd 0x0c24 040100
+  15.526 [mono  18.281348] MGMT Class Of Device Changed index 0 040100
+  15.526 [mono  18.281488] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  17.562 [mono  20.318059] EMU suspend #8 (SET_FEATURE remote wakeup)
+  17.613 [mono  20.368786] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 20.369089
+  17.614 [mono  20.369763] MGMT send opcode 0x000e index 0 params 0108
+  17.673 [mono  20.428742] EMU resume #8: GET_STATUS answered
+  17.674 [mono  20.429386] HCI cmd 0x0c24 080100
+  17.674 [mono  20.429721] MGMT Class Of Device Changed index 0 080100
+  17.674 [mono  20.429823] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  19.678 [mono  22.433492] EMU suspend #9 (SET_FEATURE remote wakeup)
+  19.713 [mono  22.469004] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 22.469317
+  19.714 [mono  22.469671] MGMT send opcode 0x000e index 0 params 010c
+  19.776 [mono  22.532032] EMU resume #9: GET_STATUS answered
+  19.778 [mono  22.533292] HCI cmd 0x0c24 0c0100
+  19.778 [mono  22.533851] MGMT Class Of Device Changed index 0 0c0100
+  19.778 [mono  22.534033] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  21.815 [mono  24.570513] EMU suspend #10 (SET_FEATURE remote wakeup)
+  21.865 [mono  24.620754] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 24.620997
+  21.866 [mono  24.621361] MGMT send opcode 0x000e index 0 params 0104
+  21.928 [mono  24.683945] EMU resume #10: GET_STATUS answered
+  21.930 [mono  24.685431] HCI cmd 0x0c24 040100
+  21.932 [mono  24.687748] MGMT Class Of Device Changed index 0 040100
+  21.932 [mono  24.688216] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  23.961 [mono  26.717147] EMU suspend #11 (SET_FEATURE remote wakeup)
+  24.014 [mono  26.769267] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 26.769529
+  24.014 [mono  26.769944] MGMT send opcode 0x000e index 0 params 0108
+  24.073 [mono  26.828724] EMU resume #11: GET_STATUS answered
+  24.074 [mono  26.829914] HCI cmd 0x0c24 080100
+  24.075 [mono  26.830542] MGMT Class Of Device Changed index 0 080100
+  24.075 [mono  26.830838] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  26.125 [mono  28.880889] EMU suspend #12 (SET_FEATURE remote wakeup)
+  26.165 [mono  28.921135] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 28.921386
+  26.166 [mono  28.921789] MGMT send opcode 0x000e index 0 params 010c
+  26.225 [mono  28.980550] EMU resume #12: GET_STATUS answered
+  26.226 [mono  28.981453] HCI cmd 0x0c24 0c0100
+  26.226 [mono  28.981953] MGMT Class Of Device Changed index 0 0c0100
+  26.226 [mono  28.982205] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  28.228 [mono  30.984104] EMU suspend #13 (SET_FEATURE remote wakeup)
+  28.269 [mono  31.025073] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 31.025320
+  28.270 [mono  31.025741] MGMT send opcode 0x000e index 0 params 0104
+  28.329 [mono  31.084967] EMU resume #13: GET_STATUS answered
+  28.331 [mono  31.086238] HCI cmd 0x0c24 040100
+  28.331 [mono  31.086666] MGMT Class Of Device Changed index 0 040100
+  28.331 [mono  31.086885] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  30.335 [mono  33.090715] EMU suspend #14 (SET_FEATURE remote wakeup)
+  30.369 [mono  33.125065] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 33.125250
+  30.370 [mono  33.125672] MGMT send opcode 0x000e index 0 params 0108
+  30.430 [mono  33.186008] EMU resume #14: GET_STATUS answered
+  30.436 [mono  33.191670] HCI cmd 0x0c24 080100
+  30.437 [mono  33.192450] MGMT Class Of Device Changed index 0 080100
+  30.437 [mono  33.192663] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  32.440 [mono  35.195348] EMU suspend #15 (SET_FEATURE remote wakeup)
+  32.469 [mono  35.224909] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 35.225138
+  32.470 [mono  35.225384] MGMT send opcode 0x000e index 0 params 010c
+  32.529 [mono  35.285122] EMU resume #15: GET_STATUS answered
+  32.531 [mono  35.286244] HCI cmd 0x0c24 0c0100
+  32.531 [mono  35.286777] MGMT Class Of Device Changed index 0 0c0100
+  32.531 [mono  35.287002] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  34.534 [mono  37.289616] EMU suspend #16 (SET_FEATURE remote wakeup)
+  34.565 [mono  37.320615] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 37.320823
+  34.565 [mono  37.321200] MGMT send opcode 0x000e index 0 params 0104
+  34.625 [mono  37.381170] EMU resume #16: GET_STATUS answered
+  34.627 [mono  37.382422] HCI cmd 0x0c24 040100
+  34.627 [mono  37.382911] MGMT Class Of Device Changed index 0 040100
+  34.627 [mono  37.383167] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  36.629 [mono  39.384319] EMU suspend #17 (SET_FEATURE remote wakeup)
+  36.665 [mono  39.420756] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 39.421026
+  36.666 [mono  39.421577] MGMT send opcode 0x000e index 0 params 0108
+  36.725 [mono  39.480799] EMU resume #17: GET_STATUS answered
+  36.727 [mono  39.483071] HCI cmd 0x0c24 080100
+  36.730 [mono  39.485656] MGMT Class Of Device Changed index 0 080100
+  36.730 [mono  39.485854] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  38.735 [mono  41.491002] EMU suspend #18 (SET_FEATURE remote wakeup)
+  38.761 [mono  41.516688] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 41.516991
+  38.762 [mono  41.517363] MGMT send opcode 0x000e index 0 params 010c
+  38.821 [mono  41.576443] EMU resume #18: GET_STATUS answered
+  38.822 [mono  41.577421] HCI cmd 0x0c24 0c0100
+  38.822 [mono  41.577951] MGMT Class Of Device Changed index 0 0c0100
+  38.822 [mono  41.578137] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  40.824 [mono  43.580025] EMU suspend #19 (SET_FEATURE remote wakeup)
+  40.861 [mono  43.616984] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 43.617231
+  40.862 [mono  43.617590] MGMT send opcode 0x000e index 0 params 0104
+  40.921 [mono  43.676680] EMU resume #19: GET_STATUS answered
+  40.922 [mono  43.677830] HCI cmd 0x0c24 040100
+  40.923 [mono  43.678276] MGMT Class Of Device Changed index 0 040100
+  40.923 [mono  43.678509] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  42.926 [mono  45.682204] EMU suspend #20 (SET_FEATURE remote wakeup)
+  42.961 [mono  45.717063] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 45.717345
+  42.962 [mono  45.717806] MGMT send opcode 0x000e index 0 params 0108
+  43.021 [mono  45.776389] EMU resume #20: GET_STATUS answered
+  43.021 [mono  45.777123] HCI cmd 0x0c24 080100
+  43.022 [mono  45.777458] MGMT Class Of Device Changed index 0 080100
+  43.022 [mono  45.777631] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  45.147 [mono  47.902491] EMU suspend #21 (SET_FEATURE remote wakeup)
+  45.165 [mono  47.920794] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 47.921084
+  45.166 [mono  47.921498] MGMT send opcode 0x000e index 0 params 010c
+  45.227 [mono  47.982376] EMU resume #21: GET_STATUS answered
+  45.230 [mono  47.985948] HCI cmd 0x0c24 0c0100
+  45.232 [mono  47.987638] MGMT Class Of Device Changed index 0 0c0100
+  45.232 [mono  47.988040] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  47.234 [mono  49.990010] EMU suspend #22 (SET_FEATURE remote wakeup)
+  47.261 [mono  50.016850] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 50.018125
+  47.265 [mono  50.020381] MGMT send opcode 0x000e index 0 params 0104
+  47.325 [mono  50.080605] EMU resume #22: GET_STATUS answered
+  47.326 [mono  50.081705] HCI cmd 0x0c24 040100
+  47.326 [mono  50.082028] MGMT Class Of Device Changed index 0 040100
+  47.326 [mono  50.082138] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  49.329 [mono  52.084693] EMU suspend #23 (SET_FEATURE remote wakeup)
+  49.364 [mono  52.119721] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 52.119982
+  49.365 [mono  52.120314] MGMT send opcode 0x000e index 0 params 0108
+  49.425 [mono  52.181140] EMU resume #23: GET_STATUS answered
+  49.427 [mono  52.182371] HCI cmd 0x0c24 080100
+  49.429 [mono  52.184871] MGMT Class Of Device Changed index 0 080100
+  49.429 [mono  52.185045] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  51.433 [mono  54.188396] EMU suspend #24 (SET_FEATURE remote wakeup)
+  51.469 [mono  54.224420] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 54.224785
+  51.469 [mono  54.225223] MGMT send opcode 0x000e index 0 params 010c
+  51.529 [mono  54.285144] EMU resume #24: GET_STATUS answered
+  51.531 [mono  54.286340] HCI cmd 0x0c24 0c0100
+  51.531 [mono  54.286899] MGMT Class Of Device Changed index 0 0c0100
+  51.533 [mono  54.288837] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  53.536 [mono  56.291694] EMU suspend #25 (SET_FEATURE remote wakeup)
+  53.568 [mono  56.323803] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 56.324051
+  53.569 [mono  56.324397] MGMT send opcode 0x000e index 0 params 0104
+  53.629 [mono  56.384724] EMU resume #25: GET_STATUS answered
+  53.630 [mono  56.385915] HCI cmd 0x0c24 040100
+  53.631 [mono  56.386520] MGMT Class Of Device Changed index 0 040100
+  53.631 [mono  56.386829] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  55.635 [mono  58.390958] EMU suspend #26 (SET_FEATURE remote wakeup)
+  55.664 [mono  58.419884] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 58.420166
+  55.665 [mono  58.420586] MGMT send opcode 0x000e index 0 params 0108
+  55.725 [mono  58.480713] EMU resume #26: GET_STATUS answered
+  55.726 [mono  58.481776] HCI cmd 0x0c24 080100
+  55.727 [mono  58.482323] MGMT Class Of Device Changed index 0 080100
+  55.727 [mono  58.482665] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  57.730 [mono  60.485724] EMU suspend #27 (SET_FEATURE remote wakeup)
+  57.760 [mono  60.515614] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 60.515834
+  57.760 [mono  60.516144] MGMT send opcode 0x000e index 0 params 010c
+  57.821 [mono  60.576292] EMU resume #27: GET_STATUS answered
+  57.821 [mono  60.576985] HCI cmd 0x0c24 0c0100
+  57.822 [mono  60.577301] MGMT Class Of Device Changed index 0 0c0100
+  57.822 [mono  60.577545] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  59.827 [mono  62.582565] EMU suspend #28 (SET_FEATURE remote wakeup)
+  59.860 [mono  62.616022] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 62.616499
+  59.861 [mono  62.617013] MGMT send opcode 0x000e index 0 params 0104
+  59.921 [mono  62.677037] EMU resume #28: GET_STATUS answered
+  59.923 [mono  62.678493] HCI cmd 0x0c24 040100
+  59.923 [mono  62.678982] MGMT Class Of Device Changed index 0 040100
+  59.923 [mono  62.679186] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  61.927 [mono  64.683035] EMU suspend #29 (SET_FEATURE remote wakeup)
+  61.956 [mono  64.711925] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 64.712196
+  61.957 [mono  64.712680] MGMT send opcode 0x000e index 0 params 0108
+  62.017 [mono  64.772745] EMU resume #29: GET_STATUS answered
+  62.018 [mono  64.773991] HCI cmd 0x0c24 080100
+  62.019 [mono  64.774543] MGMT Class Of Device Changed index 0 080100
+  62.019 [mono  64.774790] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  64.024 [mono  66.779323] EMU suspend #30 (SET_FEATURE remote wakeup)
+  64.056 [mono  66.812099] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 66.812392
+  64.057 [mono  66.812657] MGMT send opcode 0x000e index 0 params 010c
+  64.117 [mono  66.873000] EMU resume #30: GET_STATUS answered
+  64.119 [mono  66.874403] HCI cmd 0x0c24 0c0100
+  64.119 [mono  66.874898] MGMT Class Of Device Changed index 0 0c0100
+  64.119 [mono  66.875177] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  66.123 [mono  68.878901] EMU suspend #31 (SET_FEATURE remote wakeup)
+  66.152 [mono  68.907889] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 68.908151
+  66.153 [mono  68.908547] MGMT send opcode 0x000e index 0 params 0104
+  66.215 [mono  68.970547] EMU resume #31: GET_STATUS answered
+  66.216 [mono  68.971692] HCI cmd 0x0c24 040100
+  66.216 [mono  68.972121] MGMT Class Of Device Changed index 0 040100
+  66.217 [mono  68.972392] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  68.219 [mono  70.974387] EMU suspend #32 (SET_FEATURE remote wakeup)
+  68.248 [mono  71.003930] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 71.004174
+  68.249 [mono  71.004534] MGMT send opcode 0x000e index 0 params 0108
+  68.309 [mono  71.064345] EMU resume #32: GET_STATUS answered
+  68.309 [mono  71.065201] HCI cmd 0x0c24 080100
+  68.310 [mono  71.065525] MGMT Class Of Device Changed index 0 080100
+  68.310 [mono  71.065678] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  70.313 [mono  73.068713] EMU suspend #33 (SET_FEATURE remote wakeup)
+  70.348 [mono  73.103837] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 73.104193
+  70.349 [mono  73.104698] MGMT send opcode 0x000e index 0 params 010c
+  70.409 [mono  73.164914] EMU resume #33: GET_STATUS answered
+  70.410 [mono  73.166001] HCI cmd 0x0c24 0c0100
+  70.411 [mono  73.166500] MGMT Class Of Device Changed index 0 0c0100
+  70.411 [mono  73.166719] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  72.416 [mono  75.171680] EMU suspend #34 (SET_FEATURE remote wakeup)
+  72.448 [mono  75.203903] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 75.204236
+  72.449 [mono  75.204705] MGMT send opcode 0x000e index 0 params 0104
+  72.509 [mono  75.265075] EMU resume #34: GET_STATUS answered
+  72.511 [mono  75.266321] HCI cmd 0x0c24 040100
+  72.511 [mono  75.266824] MGMT Class Of Device Changed index 0 040100
+  72.511 [mono  75.267047] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  74.516 [mono  77.271738] EMU suspend #35 (SET_FEATURE remote wakeup)
+  74.544 [mono  77.299854] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 77.300127
+  74.545 [mono  77.300544] MGMT send opcode 0x000e index 0 params 0108
+  74.605 [mono  77.360364] EMU resume #35: GET_STATUS answered
+  74.606 [mono  77.361260] HCI cmd 0x0c24 080100
+  74.606 [mono  77.361598] MGMT Class Of Device Changed index 0 080100
+  74.606 [mono  77.361730] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  76.607 [mono  79.363105] EMU suspend #36 (SET_FEATURE remote wakeup)
+  76.644 [mono  79.400053] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 79.400416
+  76.645 [mono  79.400759] MGMT send opcode 0x000e index 0 params 010c
+  76.705 [mono  79.460901] EMU resume #36: GET_STATUS answered
+  76.706 [mono  79.462055] HCI cmd 0x0c24 0c0100
+  76.707 [mono  79.462568] MGMT Class Of Device Changed index 0 0c0100
+  76.707 [mono  79.462808] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  78.712 [mono  81.467691] EMU suspend #37 (SET_FEATURE remote wakeup)
+  78.748 [mono  81.503744] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 81.503983
+  78.749 [mono  81.504468] MGMT send opcode 0x000e index 0 params 0104
+  78.809 [mono  81.564760] EMU resume #37: GET_STATUS answered
+  78.810 [mono  81.565912] HCI cmd 0x0c24 040100
+  78.811 [mono  81.566382] MGMT Class Of Device Changed index 0 040100
+  78.811 [mono  81.566612] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  80.812 [mono  83.568226] EMU suspend #38 (SET_FEATURE remote wakeup)
+  80.848 [mono  83.603665] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 83.603919
+  80.849 [mono  83.604263] MGMT send opcode 0x000e index 0 params 0108
+  80.911 [mono  83.666476] EMU resume #38: GET_STATUS answered
+  80.912 [mono  83.667635] HCI cmd 0x0c24 080100
+  80.912 [mono  83.668065] MGMT Class Of Device Changed index 0 080100
+  80.913 [mono  83.668339] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  83.105 [mono  85.860960] EMU suspend #39 (SET_FEATURE remote wakeup)
+  83.156 [mono  85.911654] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 85.912324
+  83.157 [mono  85.912713] MGMT send opcode 0x000e index 0 params 010c
+  83.217 [mono  85.972352] EMU resume #39: GET_STATUS answered
+  83.218 [mono  85.973445] HCI cmd 0x0c24 0c0100
+  83.218 [mono  85.973897] MGMT Class Of Device Changed index 0 0c0100
+  83.218 [mono  85.974201] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  85.222 [mono  87.977914] EMU suspend #40 (SET_FEATURE remote wakeup)
+  85.256 [mono  88.011643] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 88.011903
+  85.257 [mono  88.012306] MGMT send opcode 0x000e index 0 params 0104
+  85.317 [mono  88.072718] EMU resume #40: GET_STATUS answered
+  85.318 [mono  88.074016] HCI cmd 0x0c24 040100
+  85.319 [mono  88.074479] MGMT Class Of Device Changed index 0 040100
+  85.319 [mono  88.074732] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  87.323 [mono  90.078742] EMU suspend #41 (SET_FEATURE remote wakeup)
+  87.356 [mono  90.111582] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 90.111855
+  87.356 [mono  90.112223] MGMT send opcode 0x000e index 0 params 0108
+  87.419 [mono  90.174450] EMU resume #41: GET_STATUS answered
+  87.420 [mono  90.175654] HCI cmd 0x0c24 080100
+  87.420 [mono  90.176055] MGMT Class Of Device Changed index 0 080100
+  87.421 [mono  90.176391] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  89.422 [mono  92.177453] EMU suspend #42 (SET_FEATURE remote wakeup)
+  89.456 [mono  92.211869] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 92.212174
+  89.457 [mono  92.212551] MGMT send opcode 0x000e index 0 params 010c
+  89.519 [mono  92.274871] EMU resume #42: GET_STATUS answered
+  89.521 [mono  92.276274] HCI cmd 0x0c24 0c0100
+  89.521 [mono  92.276808] MGMT Class Of Device Changed index 0 0c0100
+  89.521 [mono  92.277077] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  91.526 [mono  94.281463] EMU suspend #43 (SET_FEATURE remote wakeup)
+  91.552 [mono  94.307612] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 94.307861
+  91.553 [mono  94.308288] MGMT send opcode 0x000e index 0 params 0104
+  91.615 [mono  94.370713] EMU resume #43: GET_STATUS answered
+  91.616 [mono  94.371629] HCI cmd 0x0c24 040100
+  91.616 [mono  94.372091] MGMT Class Of Device Changed index 0 040100
+  91.617 [mono  94.372297] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  93.618 [mono  96.374191] EMU suspend #44 (SET_FEATURE remote wakeup)
+  93.652 [mono  96.407540] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 96.407769
+  93.652 [mono  96.407999] MGMT send opcode 0x000e index 0 params 0108
+  93.713 [mono  96.468323] EMU resume #44: GET_STATUS answered
+  93.714 [mono  96.469395] HCI cmd 0x0c24 080100
+  93.714 [mono  96.469829] MGMT Class Of Device Changed index 0 080100
+  93.714 [mono  96.470114] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  95.716 [mono  98.471292] EMU suspend #45 (SET_FEATURE remote wakeup)
+  95.752 [mono  98.507621] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 98.507857
+  95.752 [mono  98.508190] MGMT send opcode 0x000e index 0 params 010c
+  95.813 [mono  98.568349] EMU resume #45: GET_STATUS answered
+  95.814 [mono  98.569514] HCI cmd 0x0c24 0c0100
+  95.814 [mono  98.569976] MGMT Class Of Device Changed index 0 0c0100
+  95.815 [mono  98.570235] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  97.816 [mono 100.571889] EMU suspend #46 (SET_FEATURE remote wakeup)
+  97.853 [mono 100.608292] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 100.608580
+  97.853 [mono 100.608937] MGMT send opcode 0x000e index 0 params 0104
+  97.913 [mono 100.668236] EMU resume #46: GET_STATUS answered
+  97.913 [mono 100.668772] HCI cmd 0x0c24 040100
+  97.913 [mono 100.668991] MGMT Class Of Device Changed index 0 040100
+  97.913 [mono 100.669148] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  99.918 [mono 102.673552] EMU suspend #47 (SET_FEATURE remote wakeup)
+  99.948 [mono 102.703695] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 102.703928
+  99.949 [mono 102.704366] MGMT send opcode 0x000e index 0 params 0108
+ 100.009 [mono 102.764268] EMU resume #47: GET_STATUS answered
+ 100.010 [mono 102.765235] HCI cmd 0x0c24 080100
+ 100.010 [mono 102.765648] MGMT Class Of Device Changed index 0 080100
+ 100.010 [mono 102.765887] MGMT Command Complete opcode 0x000e status 0x00 index 0
+ 102.014 [mono 104.769780] EMU suspend #48 (SET_FEATURE remote wakeup)
+ 102.052 [mono 104.807621] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 12 sent at mono 104.807885
+ 102.053 [mono 104.808308] MGMT send opcode 0x000e index 0 params 010c
+ 102.113 [mono 104.868363] EMU resume #48: GET_STATUS answered
+ 102.114 [mono 104.869511] HCI cmd 0x0c24 0c0100
+ 102.114 [mono 104.870037] MGMT Class Of Device Changed index 0 0c0100
+ 102.115 [mono 104.870654] MGMT Command Complete opcode 0x000e status 0x00 index 0
+ 104.118 [mono 106.873791] EMU suspend #49 (SET_FEATURE remote wakeup)
+ 104.148 [mono 106.903960] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 4 sent at mono 106.904345
+ 104.149 [mono 106.904747] MGMT send opcode 0x000e index 0 params 0104
+ 104.208 [mono 106.964142] EMU resume #49: GET_STATUS answered
+ 104.209 [mono 106.964755] HCI cmd 0x0c24 040100
+ 104.209 [mono 106.965090] MGMT Class Of Device Changed index 0 040100
+ 104.210 [mono 106.965299] MGMT Command Complete opcode 0x000e status 0x00 index 0
+ 106.211 [mono 108.966801] EMU suspend #50 (SET_FEATURE remote wakeup)
+ 106.248 [mono 109.003408] runtime_status suspended after waiting (ok=True)
+bt17-emu: Set Device Class minor 8 sent at mono 109.003600
+ 106.248 [mono 109.003933] MGMT send opcode 0x000e index 0 params 0108
+ 106.309 [mono 109.064648] EMU resume #50: GET_STATUS answered
+ 106.310 [mono 109.065750] HCI cmd 0x0c24 080100
+ 106.310 [mono 109.066204] MGMT Class Of Device Changed index 0 080100
+ 106.311 [mono 109.066385] MGMT Command Complete opcode 0x000e status 0x00 index 0
+ 106.315 [mono 109.071103] class write latency after a suspend: n=50 min 0.060 median 0.063 max 0.068 s
+ 106.316 [mono 109.071390] EMU suspends 50 resumes 50 state healthy
+ 106.316 [mono 109.071581] RESULT cycles n=50 failures=0
+ 106.316 [mono 109.071795] unhandled HCI opcodes: ['0x0c01', '0x0c03', '0x0c13', '0x0c16', '0x0c1c', '0x0c24', '0x0c45']
+ 106.316 [mono 109.071981] ---- kernel log ----
+[32m[    0.000000] [0mLinux version 7.3.0-g5a5668adfe81 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #9 SMP PREEMPT_DYNAMIC Fri Nov 13 04:44:19 CET 2026
+[32m[    0.000000] [0m[33mCommand line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/bt17-emu.py cycles --cycles 50'
+[32m[    0.000000] [0mBIOS-provided physical RAM map:
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000000a0000-0x00000000000effff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000010000000-0x00000000afffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000c0000000-0x00000000fed1bfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000fed20000-0x00000000feffbfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000ff000000-0x00000000fffbffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000100000000-0x000000fcffffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[32m[    0.000000] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] enabled
+[32m[    0.000000] [0mHash pointers mode set to never.
+[32m[    0.000000] [0m[33mNX (Execute Disable) protection: [0mactive
+[32m[    0.000000] [0m[33mAPIC: [0mStatic calls initialized
+[32m[    0.000000] [0m[33mDMI: [0mSMBIOS 3.0.0 present.
+[32m[    0.000000] [0m[33mDMI: [0mQEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[32m[    0.000000] [0m[33mDMI: [0mMemory slots populated: 1/1
+[32m[    0.000000] [0m[33mHypervisor detected: [0mKVM
+[32m[    0.000000] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.000000] [0m[33mkvm-clock: [0mUsing msrs 4b564d01 and 4b564d00
+[32m[    0.000001] [0m[33mkvm-clock: [0musing sched offset of 250638122 cycles
+[32m[    0.000004] [0m[33mclocksource: [0mkvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[32m[    0.000010] [0m[33mtsc: [0mDetected 1996.258 MHz processor
+[32m[    0.000373] [0m[33me820: [0mupdate [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[32m[    0.000380] [0m[33me820: [0mremove [mem 0x000a0000-0x000fffff] System RAM
+[32m[    0.000387] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.000428] [0m[33mMTRR map: [0m4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[32m[    0.000432] [0m[33mx86/PAT: [0mConfiguration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[32m[    0.002024] [0mfound SMP MP-table at [mem 0x000f5470-0x000f547f]
+[32m[    0.002278] [0m[33mACPI: [0mEarly table checksum verification disabled
+[32m[    0.002284] [0m[33mACPI: [0mRSDP 0x00000000000F52B0 000014 (v00 BOCHS )
+[32m[    0.002292] [0m[33mACPI: [0mRSDT 0x000000000FFE23D6 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002301] [0m[33mACPI: [0mFACP 0x000000000FFE21B6 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002310] [0m[33mACPI: [0mDSDT 0x000000000FFE0040 002176 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002316] [0m[33mACPI: [0mFACS 0x000000000FFE0000 000040
+[32m[    0.002320] [0m[33mACPI: [0mAPIC 0x000000000FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002326] [0m[33mACPI: [0mHPET 0x000000000FFE233A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002331] [0m[33mACPI: [0mMCFG 0x000000000FFE2372 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002336] [0m[33mACPI: [0mWAET 0x000000000FFE23AE 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.002341] [0m[33mACPI: [0mReserving FACP table memory at [mem 0xffe21b6-0xffe22a9]
+[32m[    0.002343] [0m[33mACPI: [0mReserving DSDT table memory at [mem 0xffe0040-0xffe21b5]
+[32m[    0.002345] [0m[33mACPI: [0mReserving FACS table memory at [mem 0xffe0000-0xffe003f]
+[32m[    0.002347] [0m[33mACPI: [0mReserving APIC table memory at [mem 0xffe22aa-0xffe2339]
+[32m[    0.002349] [0m[33mACPI: [0mReserving HPET table memory at [mem 0xffe233a-0xffe2371]
+[32m[    0.002351] [0m[33mACPI: [0mReserving MCFG table memory at [mem 0xffe2372-0xffe23ad]
+[32m[    0.002353] [0m[33mACPI: [0mReserving WAET table memory at [mem 0xffe23ae-0xffe23d5]
+[32m[    0.008692] [0mKernelAddressSanitizer initialized (generic)
+[32m[    0.009250] [0m[33mACPI: [0mPM-Timer IO Port: 0x608
+[32m[    0.009270] [0m[33mACPI: [0mLAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[32m[    0.009315] [0m[33mIOAPIC[0]: [0mapic_id 0, version 17, address 0xfec00000, GSI 0-23
+[32m[    0.009320] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[32m[    0.009324] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[32m[    0.009326] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[32m[    0.009329] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[32m[    0.009331] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[32m[    0.009336] [0m[33mACPI: [0mUsing ACPI (MADT) for SMP configuration information
+[32m[    0.009338] [0m[33mACPI: [0mHPET id: 0x8086a201 base: 0xfed00000
+[32m[    0.009349] [0m[33mCPU topo: [0mMax. logical packages:   1
+[32m[    0.009352] [0m[33mCPU topo: [0mMax. logical nodes:      1
+[32m[    0.009353] [0m[33mCPU topo: [0mNum. nodes per package:  1
+[32m[    0.009360] [0m[33mCPU topo: [0mMax. logical dies:       1
+[32m[    0.009362] [0m[33mCPU topo: [0mMax. dies per package:   1
+[32m[    0.009373] [0m[33mCPU topo: [0mMax. threads per core:   1
+[32m[    0.009375] [0m[33mCPU topo: [0mNum. cores per package:     4
+[32m[    0.009377] [0m[33mCPU topo: [0mNum. threads per package:   4
+[32m[    0.009379] [0m[33mCPU topo: [0mAllowing 4 present CPUs plus 0 hotplug CPUs
+[32m[    0.009412] [0m[33mkvm-guest: [0mAPIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[32m[    0.009439] [0m[gap 0x10000000-0xafffffff] available for PCI devices
+[32m[    0.009441] [0mBooting paravirtualized kernel on KVM
+[32m[    0.009445] [0m[33mclocksource: [0mrefined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[32m[    0.015832] [0mZone ranges:
+[32m[    0.015834] [0m  DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[32m[    0.015839] [0m  DMA32    [mem 0x0000000001000000-0x000000000ffdffff]
+[32m[    0.015842] [0m  Normal   empty
+[32m[    0.015844] [0mMovable zone start for each node
+[32m[    0.015846] [0mEarly memory node ranges
+[32m[    0.015847] [0m[33m  node   0: [0m[mem 0x0000000000001000-0x000000000009efff]
+[32m[    0.015849] [0m[33m  node   0: [0m[mem 0x0000000000100000-0x000000000ffdffff]
+[32m[    0.015852] [0mInitmem setup node 0 [mem 0x0000000000001000-0x000000000ffdffff]
+[32m[    0.016129] [0m[33mOn node 0, zone DMA: [0m1 pages in unavailable ranges
+[32m[    0.016196] [0m[33mOn node 0, zone DMA: [0m97 pages in unavailable ranges
+[32m[    0.017407] [0m[33mOn node 0, zone DMA32: [0m32 pages in unavailable ranges
+[32m[    0.017415] [0m[33msetup_percpu: [0mNR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[32m[    0.017765] [0m[33mpercpu: [0mEmbedded 62 pages/cpu s223120 r0 d30832 u524288
+[32m[    0.017771] [0m[33mpcpu-alloc: [0ms223120 r0 d30832 u524288 alloc=1*2097152
+[32m[    0.017775] [0m[33mpcpu-alloc: [0m[0] 0 1 2 3 
+[32m[    0.017801] [0m[33mKernel command line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/bt17-emu.py cycles --cycles 50'
+[32m[    0.017942] [0mUnknown kernel command line parameters "-I cycles --cycles 50' TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3", will be passed to user space.
+[32m[    0.017955] [0m[33mprintk: [0mlog buffer data + meta data: 131072 + 458752 = 589824 bytes
+[32m[    0.017994] [0m[33mDentry cache hash table entries: [0m32768 (order: 6, 262144 bytes, linear)
+[32m[    0.018003] [0m[33mInode-cache hash table entries: [0m16384 (order: 5, 131072 bytes, linear)
+[32m[    0.018094] [0m[33mBuilt 1 zonelists, mobility grouping on.  Total pages: [0m65406
+[32m[    0.018098] [0m[33mmem auto-init: [0mstack:all(zero), heap alloc:off, heap free:off
+[32m[    0.018101] [0m[33mstackdepot: [0mallocating hash table via alloc_large_system_hash
+[32m[    0.018104] [0m[33mstackdepot hash table entries: [0m1048576 (order: 12, 16777216 bytes, linear)
+[32m[    0.020455] [0m[33mstackdepot: [0mallocating space for 8192 stack pools via memblock
+[32m[    0.023281] [0m[1m**********************************************************[0m
+[32m[    0.023287] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.023289] [0m[1m**                                                      **[0m
+[32m[    0.023291] [0m[1m** This system shows unhashed kernel memory addresses   **[0m
+[32m[    0.023293] [0m[1m** via the console, logs, and other interfaces. This    **[0m
+[32m[    0.023294] [0m[1m** might reduce the security of your system.            **[0m
+[32m[    0.023295] [0m[1m**                                                      **[0m
+[32m[    0.023297] [0m[1m** If you see this message and you are not debugging    **[0m
+[32m[    0.023298] [0m[1m** the kernel, report this immediately to your system   **[0m
+[32m[    0.023300] [0m[1m** administrator!                                       **[0m
+[32m[    0.023301] [0m[1m**                                                      **[0m
+[32m[    0.023303] [0m[1m** Use hash_pointers=always to force this mode off      **[0m
+[32m[    0.023304] [0m[1m**                                                      **[0m
+[32m[    0.023305] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.023307] [0m[1m**********************************************************[0m
+[32m[    0.023959] [0m[33mSLUB: [0mHWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[32m[    0.024884] [0m[33mDynamic Preempt: [0mlazy
+[32m[    0.025816] [0mRunning RCU self tests
+[32m[    0.025818] [0mRunning RCU synchronous self tests
+[32m[    0.025821] [0m[33mrcu: [0mPreemptible hierarchical RCU implementation.
+[32m[    0.025823] [0m[33mrcu: [0m	RCU event tracing is enabled.
+[32m[    0.025825] [0m[33mrcu: [0m	RCU lockdep checking is enabled.
+[32m[    0.025827] [0m	Trampoline variant of Tasks RCU enabled.
+[32m[    0.025829] [0m	Tracing variant of Tasks RCU enabled.
+[32m[    0.025831] [0m[33mrcu: [0mRCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[32m[    0.025950] [0mRunning RCU synchronous self tests
+[32m[    0.025956] [0m[33mRCU Tasks: [0mSetting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[32m[    0.035637] [0m[33mNR_IRQS: [0m4352, nr_irqs: 72, preallocated irqs: 16
+[32m[    0.035988] [0m[33mrcu: [0msrcu_init: Setting srcu_struct sizes based on contention.
+[32m[    0.036004] [0m[33mclocksource: [0mjiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[32m[    0.036377] [0m[33mConsole: [0mcolour *CGA 80x25
+[32m[    0.036426] [0m[33mLock dependency validator: [0mCopyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[32m[    0.036428] [0m[33m... MAX_LOCKDEP_SUBCLASSES: [0m 8
+[32m[    0.036430] [0m[33m... MAX_LOCK_DEPTH: [0m         48
+[32m[    0.036432] [0m[33m... MAX_LOCKDEP_KEYS: [0m       8192
+[32m[    0.036433] [0m[33m... CLASSHASH_SIZE: [0m         4096
+[32m[    0.036435] [0m[33m... MAX_LOCKDEP_ENTRIES: [0m    32768
+[32m[    0.036437] [0m[33m... MAX_LOCKDEP_CHAINS: [0m     65536
+[32m[    0.036438] [0m[33m... CHAINHASH_SIZE: [0m         32768
+[32m[    0.036440] [0m[33m memory used by lock dependency info: [0m6429 kB
+[32m[    0.036442] [0m[33m memory used for stack traces: [0m16896 kB
+[32m[    0.036443] [0m[33m per task-struct memory footprint: [0m1920 bytes
+[32m[    0.036452] [0m[33mACPI: [0mCore revision 20260408
+[32m[    0.036981] [0m[33mclocksource: [0mhpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[32m[    0.037228] [0m[33mAPIC: [0mSwitch to symmetric I/O mode setup
+[32m[    0.037428] [0mx2apic enabled
+[32m[    0.037783] [0m[33mAPIC: [0mSwitched APIC routing to: physical x2apic
+[32m[    0.039157] [0m[33m..TIMER: [0mvector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[32m[    0.039186] [0m[33mclocksource: [0mtsc-early: mask: 0xffffffffffffffff max_cycles: 0x398cbed4ccd, max_idle_ns: 881590514681 ns
+[32m[    0.039194] [0mCalibrating delay loop (skipped) preset value.. 3992.51 BogoMIPS (lpj=7985032)
+[32m[    0.039398] [0m[33mLast level iTLB entries: [0m4KB 512, 2MB 255, 4MB 127
+[32m[    0.039403] [0m[33mLast level dTLB entries: [0m4KB 512, 2MB 255, 4MB 127, 1GB 0
+[32m[    0.039408] [0m[33mmitigations: [0mEnabled attack vectors: user_kernel, user_user, SMT mitigations: auto
+[32m[    0.039416] [0m[33mSpectre V2 : [0mMitigation: Retpolines
+[32m[    0.039419] [0m[33mSpectre V1 : [0mMitigation: usercopy/swapgs barriers and __user pointer sanitization
+[32m[    0.039422] [0m[33mSpectre V2 : [0mSpectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+[32m[    0.039435] [0m[33mx86/fpu: [0mx87 FPU will use FXSAVE
+[32m[    0.056860] [0m[33mpid_max: [0mdefault: 32768 minimum: 301
+[32m[    0.057454] [0m[33mMount-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.057460] [0m[33mMountpoint-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.058237] [0m[33mVFS: [0mFinished mounting rootfs on nullfs
+[32m[    0.058974] [0mRunning RCU synchronous self tests
+[32m[    0.058979] [0mRunning RCU synchronous self tests
+[32m[    0.167193] [0m[33msmpboot: [0mCPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[32m[    0.167193] [0m[33mPerformance Events: [0mAMD PMU driver.
+[32m[    0.167193] [0m[33m... version: [0m                  0
+[32m[    0.167193] [0m[33m... bit width: [0m                48
+[32m[    0.167193] [0m[33m... generic counters: [0m         4
+[32m[    0.167193] [0m[33m... generic bitmap: [0m           000000000000000f
+[32m[    0.167193] [0m[33m... fixed-purpose counters: [0m   0
+[32m[    0.167193] [0m[33m... fixed-purpose bitmap: [0m     0000000000000000
+[32m[    0.167193] [0m[33m... value mask: [0m               0000ffffffffffff
+[32m[    0.167193] [0m[33m... max period: [0m               00007fffffffffff
+[32m[    0.167193] [0m[33m... global_ctrl mask: [0m         000000000000000f
+[32m[    0.167193] [0m[33msignal: [0mmax sigframe size: 1040
+[32m[    0.167193] [0m[33mrcu: [0mHierarchical SRCU implementation.
+[32m[    0.167193] [0m[33mrcu: [0m	Max phase no-delay instances is 1000.
+[32m[    0.167193] [0m[33msmp: [0mBringing up secondary CPUs ...
+[32m[    0.167193] [0m[33msmpboot: [0mx86: Booting SMP configuration:
+[32m[    0.167193] [0m[33m.... node  #0, CPUs: [0m     #1 #2 #3
+[32m[    0.173748] [0m[33msmp: [0mBrought up 1 node, 4 CPUs
+[32m[    0.173754] [0m[33msmpboot: [0mTotal of 4 processors activated (15970.06 BogoMIPS)
+[32m[    0.174466] [0m[33mMemory: [0m114084K/261624K available (29436K kernel code, 5837K rwdata, 6884K rodata, 4128K init, 23956K bss, 143200K reserved, 0K cma-reserved)
+[32m[    0.175963] [0m[33mdevtmpfs: [0minitialized
+[32m[    0.179562] [0mRunning RCU synchronous self tests
+[32m[    0.179579] [0mRunning RCU synchronous self tests
+[32m[    0.179716] [0mRunning RCU Tasks wait API self tests
+[32m[    0.179849] [0mRunning RCU Tasks Trace wait API self tests
+[32m[    0.180066] [0m[33mposixtimers hash table entries: [0m2048 (order: 6, 147456 bytes, linear)
+[32m[    0.180118] [0m[33mfutex hash table entries: [0m1024 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[32m[    0.181175] [0m[33mNET: [0mRegistered PF_NETLINK/PF_ROUTE protocol family
+[32m[    0.182815] [0m[33mthermal_sys: [0mRegistered thermal governor 'step_wise'
+[32m[    0.182884] [0m[33mcpuidle: [0musing governor ladder
+[32m[    0.183627] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff]
+[32m[    0.183636] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry
+[32m[    0.183659] [0m[33mPCI: [0mUsing configuration type 1 for base access
+[32m[    0.185174] [0m[33mACPI: [0mAdded _OSI(Module Device)
+[32m[    0.185178] [0m[33mACPI: [0mAdded _OSI(Processor Device)
+[32m[    0.185181] [0m[33mACPI: [0mAdded _OSI(Processor Aggregator Device)
+[32m[    0.215200] [0mCallback from call_rcu_tasks_trace() invoked.
+[32m[    0.224599] [0m[33mACPI: [0m1 ACPI AML tables successfully acquired and loaded
+[32m[    0.229260] [0m[33mACPI: [0m\_SB_: platform _OSC: OS support mask [000a7eee]
+[32m[    0.232174] [0m[33mACPI: [0mInterpreter enabled
+[32m[    0.233807] [0m[33mACPI: [0mPM: (supports S0 S3 S5)
+[32m[    0.233817] [0m[33mACPI: [0mUsing IOAPIC for interrupt routing
+[32m[    0.234019] [0m[33mPCI: [0mUsing host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[32m[    0.234022] [0m[33mPCI: [0mUsing E820 reservations for host bridge windows
+[32m[    0.235475] [0m[33mACPI: [0mEnabled 2 GPEs in block 00 to 3F
+[32m[    0.279117] [0m[33mACPI: [0mPCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[32m[    0.279158] [0m[33macpi PNP0A08:00: [0m_OSC: OS supports [ExtendedConfig ASPM ClockPM Segments HPX-Type3]
+[32m[    0.279164] [0m[33macpi PNP0A08:00: [0mPCIe port services disabled; not requesting _OSC control
+[32m[    0.281660] [0mPCI host bridge to bus 0000:00
+[32m[    0.281767] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0000-0x0cf7 window]
+[32m[    0.281776] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0d00-0xffff window]
+[32m[    0.281783] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x000a0000-0x000bffff window]
+[32m[    0.281790] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x10000000-0xafffffff window]
+[32m[    0.281797] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0xc0000000-0xfebfffff window]
+[32m[    0.281803] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x100000000-0x8ffffffff window]
+[32m[    0.281811] [0m[33mpci_bus 0000:00: [0mroot bus resource [bus 00-ff]
+[32m[    0.281823] [0m[33macpi PNP0A08:00: [0mOS native features: SHPCHotplug- PCIeHotplug- PME- AER- DPC- LTR-
+[32m[    0.281976] [0m[33mpci 0000:00:00.0: [0m[8086:29c0] type 00 class 0x060000 conventional PCI endpoint
+[32m[    0.284003] [0mCallback from call_rcu_tasks() invoked.
+[32m[    0.284446] [0m[33mpci 0000:00:01.0: [0m[1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+[32m[    0.285702] [0m[33mpci 0000:00:01.0: [0mBAR 0 [io  0xc000-0xc03f]
+[32m[    0.285722] [0m[33mpci 0000:00:01.0: [0mBAR 1 [mem 0xfebfd000-0xfebfdfff]
+[32m[    0.285778] [0m[33mpci 0000:00:01.0: [0mBAR 4 [mem 0xfebf4000-0xfebf7fff 64bit pref]
+[32m[    0.288111] [0m[33mpci 0000:00:02.0: [0m[1af4:1009] type 00 class 0x000200 conventional PCI endpoint
+[32m[    0.289349] [0m[33mpci 0000:00:02.0: [0mBAR 0 [io  0xc040-0xc07f]
+[32m[    0.289369] [0m[33mpci 0000:00:02.0: [0mBAR 1 [mem 0xfebfe000-0xfebfefff]
+[32m[    0.289562] [0m[33mpci 0000:00:02.0: [0mBAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]
+[32m[    0.292087] [0m[33mpci 0000:00:1f.0: [0m[8086:2918] type 00 class 0x060100 conventional PCI endpoint
+[32m[    0.292765] [0m[33mpci 0000:00:1f.0: [0mquirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO
+[32m[    0.294269] [0m[33mpci 0000:00:1f.2: [0m[8086:2922] type 00 class 0x010601 conventional PCI endpoint
+[32m[    0.295074] [0m[33mpci 0000:00:1f.2: [0mBAR 4 [io  0xc0c0-0xc0df]
+[32m[    0.295093] [0m[33mpci 0000:00:1f.2: [0mBAR 5 [mem 0xfebff000-0xfebfffff]
+[32m[    0.296825] [0m[33mpci 0000:00:1f.3: [0m[8086:2930] type 00 class 0x0c0500 conventional PCI endpoint
+[32m[    0.297510] [0m[33mpci 0000:00:1f.3: [0mBAR 4 [io  0x0700-0x073f]
+[32m[    0.298961] [0m[33mpci_bus 0000:00: [0mon NUMA node 0
+[32m[    0.303992] [0m[33mACPI: [0mPCI: Interrupt link LNKA configured for IRQ 10
+[32m[    0.305583] [0m[33mACPI: [0mPCI: Interrupt link LNKB configured for IRQ 10
+[32m[    0.307117] [0m[33mACPI: [0mPCI: Interrupt link LNKC configured for IRQ 11
+[32m[    0.308631] [0m[33mACPI: [0mPCI: Interrupt link LNKD configured for IRQ 11
+[32m[    0.310151] [0m[33mACPI: [0mPCI: Interrupt link LNKE configured for IRQ 10
+[32m[    0.311684] [0m[33mACPI: [0mPCI: Interrupt link LNKF configured for IRQ 10
+[32m[    0.313234] [0m[33mACPI: [0mPCI: Interrupt link LNKG configured for IRQ 11
+[32m[    0.314811] [0m[33mACPI: [0mPCI: Interrupt link LNKH configured for IRQ 11
+[32m[    0.315175] [0m[33mACPI: [0mPCI: Interrupt link GSIA configured for IRQ 16
+[32m[    0.315390] [0m[33mACPI: [0mPCI: Interrupt link GSIB configured for IRQ 17
+[32m[    0.315587] [0m[33mACPI: [0mPCI: Interrupt link GSIC configured for IRQ 18
+[32m[    0.315793] [0m[33mACPI: [0mPCI: Interrupt link GSID configured for IRQ 19
+[32m[    0.315986] [0m[33mACPI: [0mPCI: Interrupt link GSIE configured for IRQ 20
+[32m[    0.316180] [0m[33mACPI: [0mPCI: Interrupt link GSIF configured for IRQ 21
+[32m[    0.316376] [0m[33mACPI: [0mPCI: Interrupt link GSIG configured for IRQ 22
+[32m[    0.316570] [0m[33mACPI: [0mPCI: Interrupt link GSIH configured for IRQ 23
+[32m[    0.322405] [0m[33miommu: [0mDefault domain type: Translated
+[32m[    0.322409] [0m[33miommu: [0mDMA domain TLB invalidation policy: lazy mode
+[32m[    0.322849] [0m[33mACPI: [0mbus type USB registered
+[32m[    0.322991] [0m[33musbcore: [0mregistered new interface driver usbfs
+[32m[    0.323060] [0m[33musbcore: [0mregistered new interface driver hub
+[32m[    0.323151] [0m[33musbcore: [0mregistered new device driver usb
+[32m[    0.323353] [0m[33mpps_core: [0mLinuxPPS API ver. 1 registered
+[32m[    0.323356] [0m[33mpps_core: [0mSoftware ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[32m[    0.323384] [0mPTP clock support registered
+[32m[    0.324775] [0m[33mBluetooth: [0mCore ver 2.22
+[32m[    0.324814] [0m[33mNET: [0mRegistered PF_BLUETOOTH protocol family
+[32m[    0.324817] [0m[33mBluetooth: [0mHCI device and connection manager initialized
+[32m[    0.324834] [0m[33mBluetooth: [0mHCI socket layer initialized
+[32m[    0.324840] [0m[33mBluetooth: [0mL2CAP socket layer initialized
+[32m[    0.324864] [0m[33mBluetooth: [0mSCO socket layer initialized
+[32m[    0.325357] [0m[33mPCI: [0mUsing ACPI for IRQ routing
+[32m[    0.434033] [0m[33mPCI: [0mpci_cache_line_size set to 64 bytes
+[32m[    0.434213] [0m[33me820: [0mregister RAM buffer resource [mem 0x0009fc00-0x0009ffff]
+[32m[    0.434253] [0m[33me820: [0mregister RAM buffer resource [mem 0x0ffe0000-0x0fffffff]
+[32m[    0.434577] [0m[33mvgaarb: [0mloaded
+[32m[    0.434907] [0m[33mclocksource: [0mSwitched to clocksource kvm-clock
+[32m[    0.445639] [0m[33macpi PNP0C01:00: [0mReserved [mem 0xb0000000-0xbfffffff]
+[32m[    0.445752] [0m[33mpnp: [0mPnP ACPI init
+[32m[    0.450659] [0m[33mpnp: [0mPnP ACPI: found 3 devices
+[32m[    0.455466] [0m[33mclocksource: [0macpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[32m[    0.455685] [0m[33mNET: [0mRegistered PF_INET protocol family
+[32m[    0.455797] [0m[33mIP idents hash table entries: [0m4096 (order: 3, 32768 bytes, linear)
+[32m[    0.456299] [0m[33mtcp_listen_portaddr_hash hash table entries: [0m128 (order: 2, 9216 bytes, linear)
+[32m[    0.456307] [0m[33mTable-perturb hash table entries: [0m65536 (order: 6, 262144 bytes, linear)
+[32m[    0.456350] [0m[33mTCP established hash table entries: [0m2048 (order: 2, 16384 bytes, linear)
+[32m[    0.456376] [0m[33mTCP bind hash table entries: [0m2048 (order: 7, 294912 bytes, linear)
+[32m[    0.456429] [0m[33mTCP: [0mHash tables configured (established 2048 bind 2048)
+[32m[    0.456525] [0m[33mUDP hash table entries: [0m256 (order: 4, 65536 bytes, linear)
+[32m[    0.456704] [0m[33mNET: [0mRegistered PF_UNIX/PF_LOCAL protocol family
+[32m[    0.456752] [0m[33mpci_bus 0000:00: [0mresource 4 [io  0x0000-0x0cf7 window]
+[32m[    0.456756] [0m[33mpci_bus 0000:00: [0mresource 5 [io  0x0d00-0xffff window]
+[32m[    0.456759] [0m[33mpci_bus 0000:00: [0mresource 6 [mem 0x000a0000-0x000bffff window]
+[32m[    0.456762] [0m[33mpci_bus 0000:00: [0mresource 7 [mem 0x10000000-0xafffffff window]
+[32m[    0.456765] [0m[33mpci_bus 0000:00: [0mresource 8 [mem 0xc0000000-0xfebfffff window]
+[32m[    0.456767] [0m[33mpci_bus 0000:00: [0mresource 9 [mem 0x100000000-0x8ffffffff window]
+[32m[    0.456984] [0m[33mPCI: [0mCLS 0 bytes, default 64
+[32m[    0.457162] [0m[33mNET: [0mRegistered PF_INET6 protocol family
+[32m[    0.458284] [0mSegment Routing with IPv6
+[32m[    0.458348] [0mIn-situ OAM (IOAM) with IPv6
+[32m[    0.458564] [0m[33mclocksource: [0mtsc: mask: 0xffffffffffffffff max_cycles: 0x398cbed4ccd, max_idle_ns: 881590514681 ns
+[32m[    0.460679] [0m[33mworkingset: [0mtimestamp_bits=62 (anon: 57) max_order=15 bucket_order=0 (anon: 0)
+[32m[    0.460998] [0m[33mfuse: [0minit (API version 7.47)
+[32m[    0.461282] [0m[33m9p: [0mInstalling v9fs 9p2000 file system support
+[32m[    0.461408] [0m[33mNET: [0mRegistered PF_ALG protocol family
+[32m[    0.461488] [0mio scheduler mq-deadline registered
+[32m[    0.461490] [0mio scheduler kyber registered
+[32m[    0.462227] [0m[33minput: [0mPower Button as /devices/platform/LNXPWRBN:00/input/input0
+[32m[    0.462569] [0m[33mACPI: [0mbutton: Power Button [PWRF]
+[32m[    0.475838] [0m[33mACPI: [0m\_SB_.GSIF: Enabled at IRQ 21
+[32m[    0.489033] [0m[33mACPI: [0m\_SB_.GSIG: Enabled at IRQ 22
+[32m[    0.554401] [0m[33mSerial: [0m8250/16550 driver, 4 ports, IRQ sharing disabled
+[32m[    0.555731] [0m[33m00:02: [0mttyS0 I/O:0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[32m[    0.575016] [0m[33mdummy_hcd dummy_hcd.0: [0mUSB Host+Gadget Emulator, driver 02 May 2005
+[32m[    0.575036] [0m[33mdummy_hcd dummy_hcd.0: [0mDummy host controller
+[32m[    0.575101] [0m[33mprintk: [0mlegacy console [hvc0] enabled
+[32m[    0.575106] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] disabled
+[32m[    0.575706] [0m[33mdummy_hcd dummy_hcd.0: [0mnew USB bus registered, assigned bus number 1
+[32m[    0.575915] [0m[33musb usb1: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    0.576310] [0m[33musb usb1: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    0.576314] [0m[33musb usb1: [0mProduct: Dummy host controller
+[32m[    0.576317] [0m[33musb usb1: [0mManufacturer: Linux 7.3.0-g5a5668adfe81 dummy_hcd
+[32m[    0.576319] [0m[33musb usb1: [0mSerialNumber: dummy_hcd.0
+[32m[    0.577701] [0m[33mhub 1-0:1.0: [0mUSB hub found
+[32m[    0.577830] [0m[33mhub 1-0:1.0: [0m1 port detected
+[32m[    0.580367] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    0.580691] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 2
+[32m[    0.580767] [0m[33mvhci_hcd vhci_hcd.0: [0mcreated sysfs vhci_hcd.0
+[32m[    0.580827] [0m[33musb usb2: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    0.581204] [0m[33musb usb2: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    0.581208] [0m[33musb usb2: [0mProduct: USB/IP Virtual Host Controller
+[32m[    0.581211] [0m[33musb usb2: [0mManufacturer: Linux 7.3.0-g5a5668adfe81 vhci_hcd
+[32m[    0.581213] [0m[33musb usb2: [0mSerialNumber: vhci_hcd.0
+[32m[    0.582203] [0m[33mhub 2-0:1.0: [0mUSB hub found
+[32m[    0.582324] [0m[33mhub 2-0:1.0: [0m8 ports detected
+[32m[    0.586342] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    0.587177] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 3
+[32m[    0.587437] [0m[33musb usb3: [0mWe don't know the algorithms for LPM for this host, disabling LPM.
+[32m[    0.587443] [0m[33musb usb3: [0mNew USB device found: idVendor=1d6b, idProduct=0003, bcdDevice=7.03
+[32m[    0.588117] [0m[33musb usb3: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    0.588130] [0m[33musb usb3: [0mProduct: USB/IP Virtual Host Controller
+[32m[    0.588136] [0m[33musb usb3: [0mManufacturer: Linux 7.3.0-g5a5668adfe81 vhci_hcd
+[32m[    0.588146] [0m[33musb usb3: [0mSerialNumber: vhci_hcd.0
+[32m[    0.590694] [0m[33mhub 3-0:1.0: [0mUSB hub found
+[32m[    0.590911] [0m[33mhub 3-0:1.0: [0m8 ports detected
+[32m[    0.600791] [0m[33mi8042: [0mPNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[32m[    0.602149] [0m[33mserio: [0mi8042 KBD port at 0x60,0x64 irq 1
+[32m[    0.602223] [0m[33mserio: [0mi8042 AUX port at 0x60,0x64 irq 12
+[32m[    0.603790] [0m[33minput: [0mAT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+[32m[    0.604921] [0m[33mBluetooth: [0mHCI UART driver ver 2.3
+[32m[    0.604926] [0m[33mBluetooth: [0mHCI UART protocol H4 registered
+[32m[    0.604929] [0m[33mBluetooth: [0mHCI UART protocol BCSP registered
+[32m[    0.604981] [0m[33mBluetooth: [0mHCI UART protocol LL registered
+[32m[    0.604984] [0m[33mBluetooth: [0mHCI UART protocol ATH3K registered
+[32m[    0.605030] [0m[33mBluetooth: [0mHCI UART protocol Three-wire (H5) registered
+[32m[    0.605068] [0m[33mBluetooth: [0mHCI UART protocol QCA registered
+[32m[    0.605070] [0m[33mBluetooth: [0mHCI UART protocol AG6XX registered
+[32m[    0.605108] [0m[33mBluetooth: [0mHCI UART protocol Marvell registered
+[32m[    0.605145] [0m[33mBluetooth: [0mHCI UART protocol AML registered
+[32m[    0.605199] [0m[33musbcore: [0mregistered new interface driver bcm203x
+[32m[    0.605297] [0m[33musbcore: [0mregistered new interface driver bpa10x
+[32m[    0.605342] [0m[33musbcore: [0mregistered new interface driver bfusb
+[32m[    0.605387] [0m[33musbcore: [0mregistered new interface driver btusb
+[32m[    0.605480] [0m[33musbcore: [0mregistered new interface driver ath3k
+[32m[    0.605679] [0m[33mhid: [0mraw HID events driver (C) Jiri Kosina
+[32m[    0.606125] [0m[33musbcore: [0mregistered new interface driver usbhid
+[32m[    0.606129] [0m[33musbhid: [0mUSB HID core driver
+[32m[    0.606281] [0m[33msit: [0mIPv6, IPv4 and MPLS over IPv4 tunneling driver
+[32m[    0.607307] [0m[33mNET: [0mRegistered PF_PACKET protocol family
+[32m[    0.607488] [0m[33mBluetooth: [0mRFCOMM socket layer initialized
+[32m[    0.607515] [0m[33mBluetooth: [0mRFCOMM ver 1.11
+[32m[    0.607544] [0m[33mBluetooth: [0mBNEP (Ethernet Emulation) ver 1.3
+[32m[    0.607623] [0m[33mBluetooth: [0mBNEP socket layer initialized
+[32m[    0.607627] [0m[33mBluetooth: [0mHIDP (Human Interface Emulation) ver 1.2
+[32m[    0.607640] [0m[33mBluetooth: [0mHIDP socket layer initialized
+[32m[    0.607732] [0m[33m9pnet: [0mInstalling 9P2000 support
+[32m[    0.613588] [0m[33mIPI shorthand broadcast: [0menabled
+[32m[    0.636963] [0m[33msched_clock: [0mMarking stable (634438298, -809290)->(639597787, -5968779)
+[32m[    1.027656] [0m[33minput: [0mImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[32m[    1.028099] [0m[33m9p: [0m[31mBad value for 'source'[0m
+[32m[    1.031632] [0m[33mVFS: [0mMounted root (9p filesystem) readonly on device 0:18.
+[32m[    1.031857] [0m[33mVFS: [0mPivoted into new rootfs
+[32m[    1.033622] [0m[33mFreeing unused kernel image (initmem) memory: [0m4128K
+[32m[    1.033629] [0m[33mWrite protecting the kernel read-only data: [0m38912k
+[32m[    1.034959] [0m[33mFreeing unused kernel image (text/rodata gap) memory: [0m1280K
+[32m[    1.035551] [0m[33mFreeing unused kernel image (rodata/data gap) memory: [0m1308K
+[32m[    1.076612] [0m[33mx86/mm: [0mChecked W+X mappings: passed, no W+X pages found.
+[32m[    1.076630] [0mRun /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+[32m[    1.076632] [0m  with arguments:
+[32m[    1.076635] [0m    /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+[32m[    1.076637] [0m    -I
+[32m[    1.076639] [0m    cycles
+[32m[    1.076640] [0m    --cycles
+[32m[    1.076642] [0m    50'
+[32m[    1.076644] [0m  with environment:
+[32m[    1.076646] [0m    HOME=/
+[32m[    1.076648] [0m    TERM=linux
+[32m[    1.076649] [0m    TESTHOME=/root/exp
+[32m[    1.076651] [0m    TESTDBUS=0
+[32m[    1.076653] [0m    TESTDAEMON=0
+[32m[    1.076655] [0m    TESTDBUSSESSION=0
+[32m[    1.076656] [0m    XDG_RUNTIME_DIR=/run/user/0
+[32m[    1.076658] [0m    TESTMONITOR=0
+[32m[    1.076660] [0m    TESTEMULATOR=0
+[32m[    1.076662] [0m    TESTDEVS=0
+[32m[    1.076663] [0m    TESTAUTO=0
+[32m[    1.076665] [0m    TESTAUDIO=''
+[32m[    1.076667] [0m    TESTARGS='python3
+[32m[    2.246741] [0m[33mrandom: [0mcrng init done
+[32m[    2.763169] [0m[33mvhci_hcd vhci_hcd.0: [0mpdev(0) rhport(0) sockfd(4)
+[32m[    2.763182] [0m[33mvhci_hcd vhci_hcd.0: [0mdevid(65538) speed(2) speed_str(full-speed)
+[32m[    2.763289] [0m[33mvhci_hcd vhci_hcd.0: [0mDevice attached
+[32m[    2.763331] [0m[33musb usb2: [0musb wakeup-resume
+[32m[    2.763372] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[    2.763694] [0m[33musb usb2-port1: [0mstatus 0101 change 0001
+[32m[    2.870576] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0002 evt 0000
+[32m[    2.871242] [0m[33musb usb2-port1: [0mstatus 0101, change 0000, 12 Mb/s
+[32m[    2.937745] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[    2.993704] [0m[33musb 2-1: [0mnew full-speed USB device number 2 using vhci_hcd
+[32m[    3.061714] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[    3.117848] [0m[33musb 2-1: [0mSetAddress Request (2) to port 0
+[32m[    3.134099] [0m[33musb 2-1: [0mNew USB device found: idVendor=13d3, idProduct=3503, bcdDevice=0.01
+[32m[    3.134749] [0m[33musb 2-1: [0mudev 2, busnum 2, minor = 129
+[32m[    3.134759] [0m[33musb 2-1: [0mNew USB device strings: Mfr=0, Product=0, SerialNumber=0
+[32m[    3.135405] [0m[33musb 2-1: [0musb_probe_device
+[32m[    3.135947] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface
+[32m[    3.135961] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface - got id
+[32m[    3.139786] [0m[33mBluetooth: [0m[1mhci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.[0m
+[32m[    3.139799] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[    3.141149] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.143403] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.143948] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.144382] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.144752] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.145262] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.145669] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.145963] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.146234] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.147542] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.147824] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.148049] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.148302] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.148685] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.180095] [0m[33mBluetooth: [0mMGMT ver 1.23
+[32m[    3.180492] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.181684] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    3.551946] [0m[33mclocksource: [0mWatchdog remote CPU 2 read timed out
+[32m[    5.185756] [0mintf ffff88800298f000
+[32m[    5.186301] [0m[33mvhci_hcd: [0munlink->seqnum 63
+[32m[    5.186322] [0m[33mvhci_hcd: [0murb->status -104
+[32m[    5.186670] [0m[33mvhci_hcd: [0munlink->seqnum 64
+[32m[    5.186682] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    5.186946] [0m[33mvhci_hcd: [0munlink->seqnum 65
+[32m[    5.186956] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    5.187060] [0mintf ffff888002931000
+[32m[    5.187991] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[    5.206829] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[    5.236163] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 5.236839[0m
+[32m[    5.236811] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    5.237044] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[    5.237201] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[    5.237920] [0m[33musb 2-1: [0musb auto-resume
+[32m[    5.238046] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[    5.282786] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[    5.298981] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[    5.299217] [0m[33musb 2-1: [0mfinish resume
+[32m[    5.301109] [0mintf ffff888002931000
+[32m[    5.301118] [0mintf ffff88800298f000
+[32m[    7.303601] [0mintf ffff88800298f000
+[32m[    7.304021] [0m[33mvhci_hcd: [0munlink->seqnum 74
+[32m[    7.304039] [0m[33mvhci_hcd: [0murb->status -104
+[32m[    7.304473] [0m[33mvhci_hcd: [0munlink->seqnum 75
+[32m[    7.304485] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    7.304865] [0m[33mvhci_hcd: [0munlink->seqnum 76
+[32m[    7.304877] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    7.304985] [0mintf ffff888002931000
+[32m[    7.305802] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[    7.322702] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[    7.335465] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 7.336189[0m
+[32m[    7.336116] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    7.336180] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[    7.336257] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[    7.336690] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[    7.336771] [0m[33musb 2-1: [0musb auto-resume
+[32m[    7.383233] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[    7.398626] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[    7.398640] [0m[33musb 2-1: [0mfinish resume
+[32m[    7.399655] [0mintf ffff888002931000
+[32m[    7.399665] [0mintf ffff88800298f000
+[32m[    9.475509] [0mintf ffff88800298f000
+[32m[    9.475766] [0m[33mvhci_hcd: [0munlink->seqnum 85
+[32m[    9.475774] [0m[33mvhci_hcd: [0murb->status -104
+[32m[    9.475956] [0m[33mvhci_hcd: [0munlink->seqnum 86
+[32m[    9.475962] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    9.476119] [0m[33mvhci_hcd: [0munlink->seqnum 87
+[32m[    9.476125] [0m[33mvhci_hcd: [0murb->status 0
+[32m[    9.476156] [0mintf ffff888002931000
+[32m[    9.476753] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[    9.491518] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[    9.539270] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 9.540015[0m
+[32m[    9.539727] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[    9.539789] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[    9.539863] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[    9.540219] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[    9.540277] [0m[33musb 2-1: [0musb auto-resume
+[32m[    9.587029] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[    9.602649] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[    9.602663] [0m[33musb 2-1: [0mfinish resume
+[32m[    9.603928] [0mintf ffff888002931000
+[32m[    9.603949] [0mintf ffff88800298f000
+[32m[   11.875550] [0mintf ffff88800298f000
+[32m[   11.875935] [0m[33mvhci_hcd: [0munlink->seqnum 96
+[32m[   11.875956] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   11.876218] [0m[33mvhci_hcd: [0munlink->seqnum 97
+[32m[   11.876227] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   11.876378] [0m[33mvhci_hcd: [0munlink->seqnum 98
+[32m[   11.876384] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   11.876417] [0mintf ffff888002931000
+[32m[   11.878279] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   11.892138] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   11.899248] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 11.900001[0m
+[32m[   11.899653] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.899708] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   11.899773] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   11.900079] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   11.900135] [0m[33musb 2-1: [0musb auto-resume
+[32m[   11.946837] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   11.962623] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   11.962635] [0m[33musb 2-1: [0mfinish resume
+[32m[   11.963926] [0mintf ffff888002931000
+[32m[   11.963937] [0mintf ffff88800298f000
+[32m[   13.967600] [0mintf ffff88800298f000
+[32m[   13.968185] [0m[33mvhci_hcd: [0munlink->seqnum 107
+[32m[   13.968198] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   13.968451] [0m[33mvhci_hcd: [0munlink->seqnum 108
+[32m[   13.968460] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   13.968691] [0m[33mvhci_hcd: [0munlink->seqnum 109
+[32m[   13.968698] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   13.968755] [0mintf ffff888002931000
+[32m[   13.969562] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   13.985741] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   14.004168] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 14.004881[0m
+[32m[   14.004976] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   14.005060] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   14.005151] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   14.005588] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   14.005680] [0m[33musb 2-1: [0musb auto-resume
+[32m[   14.051113] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   14.066952] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   14.066974] [0m[33musb 2-1: [0mfinish resume
+[32m[   14.068414] [0mintf ffff888002931000
+[32m[   14.068424] [0mintf ffff88800298f000
+[32m[   16.069679] [0mintf ffff88800298f000
+[32m[   16.070065] [0m[33mvhci_hcd: [0munlink->seqnum 118
+[32m[   16.070078] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   16.070365] [0m[33mvhci_hcd: [0munlink->seqnum 119
+[32m[   16.070377] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   16.070662] [0m[33mvhci_hcd: [0munlink->seqnum 120
+[32m[   16.070680] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   16.070713] [0mintf ffff888002931000
+[32m[   16.071342] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   16.084553] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   16.100234] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 16.100916[0m
+[32m[   16.100921] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   16.101003] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   16.101090] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   16.101530] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   16.101610] [0m[33musb 2-1: [0musb auto-resume
+[32m[   16.146762] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   16.162685] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   16.162708] [0m[33musb 2-1: [0mfinish resume
+[32m[   16.165788] [0mintf ffff888002931000
+[32m[   16.165822] [0mintf ffff88800298f000
+[32m[   18.168469] [0mintf ffff88800298f000
+[32m[   18.169017] [0m[33mvhci_hcd: [0munlink->seqnum 129
+[32m[   18.169035] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   18.169776] [0m[33mvhci_hcd: [0munlink->seqnum 130
+[32m[   18.169793] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   18.170064] [0m[33mvhci_hcd: [0munlink->seqnum 131
+[32m[   18.170073] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   18.170105] [0mintf ffff888002931000
+[32m[   18.175870] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   18.193726] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   18.216506] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 18.217203[0m
+[32m[   18.217133] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   18.217219] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   18.217305] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   18.217740] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   18.217822] [0m[33musb 2-1: [0musb auto-resume
+[32m[   18.263232] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   18.278591] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   18.278605] [0m[33musb 2-1: [0mfinish resume
+[32m[   18.279732] [0mintf ffff888002931000
+[32m[   18.279740] [0mintf ffff88800298f000
+[32m[   20.316011] [0mintf ffff88800298f000
+[32m[   20.316320] [0m[33mvhci_hcd: [0munlink->seqnum 140
+[32m[   20.316333] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   20.316657] [0m[33mvhci_hcd: [0munlink->seqnum 141
+[32m[   20.316669] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   20.316952] [0m[33mvhci_hcd: [0munlink->seqnum 142
+[32m[   20.316964] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   20.317011] [0mintf ffff888002931000
+[32m[   20.317784] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   20.333619] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   20.368432] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 20.369089[0m
+[32m[   20.369315] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   20.369398] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   20.369477] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   20.369933] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   20.370021] [0m[33musb 2-1: [0musb auto-resume
+[32m[   20.411896] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   20.427465] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   20.427480] [0m[33musb 2-1: [0mfinish resume
+[32m[   20.428455] [0mintf ffff888002931000
+[32m[   20.428461] [0mintf ffff88800298f000
+[32m[   22.430660] [0mintf ffff88800298f000
+[32m[   22.431464] [0m[33mvhci_hcd: [0munlink->seqnum 151
+[32m[   22.431489] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   22.431960] [0m[33mvhci_hcd: [0munlink->seqnum 152
+[32m[   22.431973] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   22.432327] [0m[33mvhci_hcd: [0munlink->seqnum 153
+[32m[   22.432337] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   22.432416] [0mintf ffff888002931000
+[32m[   22.434141] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   22.450649] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   22.468577] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 22.469317[0m
+[32m[   22.469205] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   22.469282] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   22.469373] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   22.469830] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   22.469926] [0m[33musb 2-1: [0musb auto-resume
+[32m[   22.514953] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   22.530646] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   22.530668] [0m[33musb 2-1: [0mfinish resume
+[32m[   22.532197] [0mintf ffff888002931000
+[32m[   22.532204] [0mintf ffff88800298f000
+[32m[   24.567522] [0mintf ffff88800298f000
+[32m[   24.568666] [0m[33mvhci_hcd: [0munlink->seqnum 162
+[32m[   24.568688] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   24.569140] [0m[33mvhci_hcd: [0munlink->seqnum 163
+[32m[   24.569149] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   24.569414] [0m[33mvhci_hcd: [0munlink->seqnum 164
+[32m[   24.569424] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   24.569456] [0mintf ffff888002931000
+[32m[   24.570162] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   24.584019] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   24.620283] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 24.620997[0m
+[32m[   24.621003] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   24.621216] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   24.621329] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   24.622028] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   24.622140] [0m[33musb 2-1: [0musb auto-resume
+[32m[   24.667082] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   24.682637] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   24.682664] [0m[33musb 2-1: [0mfinish resume
+[32m[   24.684293] [0mintf ffff888002931000
+[32m[   24.684312] [0mintf ffff88800298f000
+[32m[   26.715472] [0mintf ffff88800298f000
+[32m[   26.715699] [0m[33mvhci_hcd: [0munlink->seqnum 173
+[32m[   26.715707] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   26.715963] [0m[33mvhci_hcd: [0munlink->seqnum 174
+[32m[   26.715973] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   26.716137] [0m[33mvhci_hcd: [0munlink->seqnum 175
+[32m[   26.716145] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   26.716178] [0mintf ffff888002931000
+[32m[   26.716814] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   26.733991] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   26.768843] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 26.769529[0m
+[32m[   26.769547] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.769643] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   26.769748] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   26.770212] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   26.770296] [0m[33musb 2-1: [0musb auto-resume
+[32m[   26.811894] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   26.827515] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   26.827529] [0m[33musb 2-1: [0mfinish resume
+[32m[   26.828796] [0mintf ffff888002931000
+[32m[   26.828817] [0mintf ffff88800298f000
+[32m[   28.878932] [0mintf ffff88800298f000
+[32m[   28.879245] [0m[33mvhci_hcd: [0munlink->seqnum 184
+[32m[   28.879254] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   28.879522] [0m[33mvhci_hcd: [0munlink->seqnum 185
+[32m[   28.879529] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   28.879813] [0m[33mvhci_hcd: [0munlink->seqnum 186
+[32m[   28.879829] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   28.879886] [0mintf ffff888002931000
+[32m[   28.880470] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   28.899116] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   28.920673] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 28.921386[0m
+[32m[   28.921457] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   28.921542] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   28.921628] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   28.922113] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   28.922195] [0m[33musb 2-1: [0musb auto-resume
+[32m[   28.963570] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   28.979415] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   28.979426] [0m[33musb 2-1: [0mfinish resume
+[32m[   28.980386] [0mintf ffff888002931000
+[32m[   28.980393] [0mintf ffff88800298f000
+[32m[   30.982556] [0mintf ffff88800298f000
+[32m[   30.982806] [0m[33mvhci_hcd: [0munlink->seqnum 195
+[32m[   30.982818] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   30.982946] [0m[33mvhci_hcd: [0munlink->seqnum 196
+[32m[   30.982957] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   30.983113] [0m[33mvhci_hcd: [0munlink->seqnum 197
+[32m[   30.983121] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   30.983153] [0mintf ffff888002931000
+[32m[   30.983780] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   31.002579] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   31.024590] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 31.025320[0m
+[32m[   31.025302] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   31.025410] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   31.025498] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   31.025974] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   31.026057] [0m[33musb 2-1: [0musb auto-resume
+[32m[   31.067671] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   31.083661] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   31.083674] [0m[33musb 2-1: [0mfinish resume
+[32m[   31.085145] [0mintf ffff888002931000
+[32m[   31.085162] [0mintf ffff88800298f000
+[32m[   33.088789] [0mintf ffff88800298f000
+[32m[   33.089171] [0m[33mvhci_hcd: [0munlink->seqnum 206
+[32m[   33.089186] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   33.089422] [0m[33mvhci_hcd: [0munlink->seqnum 207
+[32m[   33.089429] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   33.089653] [0m[33mvhci_hcd: [0munlink->seqnum 208
+[32m[   33.089660] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   33.089700] [0mintf ffff888002931000
+[32m[   33.090384] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   33.104179] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   33.124532] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 33.125250[0m
+[32m[   33.125234] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   33.125306] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   33.125385] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   33.125930] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   33.126024] [0m[33musb 2-1: [0musb auto-resume
+[32m[   33.167588] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   33.183581] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   33.183632] [0m[33musb 2-1: [0mfinish resume
+[32m[   33.190480] [0mintf ffff888002931000
+[32m[   33.190536] [0mintf ffff88800298f000
+[32m[   35.193582] [0mintf ffff88800298f000
+[32m[   35.193949] [0m[33mvhci_hcd: [0munlink->seqnum 217
+[32m[   35.193965] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   35.194170] [0m[33mvhci_hcd: [0munlink->seqnum 218
+[32m[   35.194182] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   35.194336] [0m[33mvhci_hcd: [0munlink->seqnum 219
+[32m[   35.194344] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   35.194381] [0mintf ffff888002931000
+[32m[   35.195061] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   35.210805] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   35.224387] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 35.225138[0m
+[32m[   35.224798] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   35.224861] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   35.224936] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   35.225256] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   35.225312] [0m[33musb 2-1: [0musb auto-resume
+[32m[   35.267899] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   35.283423] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   35.283442] [0m[33musb 2-1: [0mfinish resume
+[32m[   35.285176] [0mintf ffff888002931000
+[32m[   35.285199] [0mintf ffff88800298f000
+[32m[   37.288091] [0mintf ffff88800298f000
+[32m[   37.288359] [0m[33mvhci_hcd: [0munlink->seqnum 228
+[32m[   37.288369] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   37.288535] [0m[33mvhci_hcd: [0munlink->seqnum 229
+[32m[   37.288544] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   37.288658] [0m[33mvhci_hcd: [0munlink->seqnum 230
+[32m[   37.288665] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   37.288702] [0mintf ffff888002931000
+[32m[   37.289157] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   37.305616] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   37.320078] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 37.320823[0m
+[32m[   37.320633] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   37.320707] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   37.320771] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   37.321065] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   37.321122] [0m[33musb 2-1: [0musb auto-resume
+[32m[   37.363826] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   37.379489] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   37.379511] [0m[33musb 2-1: [0mfinish resume
+[32m[   37.381358] [0mintf ffff888002931000
+[32m[   37.381366] [0mintf ffff88800298f000
+[32m[   39.382167] [0mintf ffff88800298f000
+[32m[   39.382659] [0m[33mvhci_hcd: [0munlink->seqnum 239
+[32m[   39.382670] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   39.382992] [0m[33mvhci_hcd: [0munlink->seqnum 240
+[32m[   39.383001] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   39.383245] [0m[33mvhci_hcd: [0munlink->seqnum 241
+[32m[   39.383252] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   39.383328] [0mintf ffff888002931000
+[32m[   39.384027] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   39.400263] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   39.420280] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 39.421026[0m
+[32m[   39.421086] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   39.421171] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   39.421258] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   39.421709] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   39.421795] [0m[33musb 2-1: [0musb auto-resume
+[32m[   39.463835] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   39.479424] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   39.479454] [0m[33musb 2-1: [0mfinish resume
+[32m[   39.481730] [0mintf ffff888002931000
+[32m[   39.481751] [0mintf ffff88800298f000
+[32m[   41.488271] [0mintf ffff88800298f000
+[32m[   41.488882] [0m[33mvhci_hcd: [0munlink->seqnum 250
+[32m[   41.488907] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   41.489355] [0m[33mvhci_hcd: [0munlink->seqnum 251
+[32m[   41.489367] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   41.489578] [0m[33mvhci_hcd: [0munlink->seqnum 252
+[32m[   41.489595] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   41.489706] [0mintf ffff888002931000
+[32m[   41.493816] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   41.509565] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   41.516259] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 41.516991[0m
+[32m[   41.516982] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   41.517044] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   41.517126] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   41.517562] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   41.517645] [0m[33musb 2-1: [0musb auto-resume
+[32m[   41.559562] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   41.575374] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   41.575385] [0m[33musb 2-1: [0mfinish resume
+[32m[   41.576357] [0mintf ffff888002931000
+[32m[   41.576366] [0mintf ffff88800298f000
+[32m[   43.577834] [0mintf ffff88800298f000
+[32m[   43.578244] [0m[33mvhci_hcd: [0munlink->seqnum 261
+[32m[   43.578259] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   43.578608] [0m[33mvhci_hcd: [0munlink->seqnum 262
+[32m[   43.578623] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   43.578985] [0m[33mvhci_hcd: [0munlink->seqnum 263
+[32m[   43.578999] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   43.579052] [0mintf ffff888002931000
+[32m[   43.579705] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   43.596125] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   43.616516] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 43.617231[0m
+[32m[   43.617119] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   43.617209] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   43.617297] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   43.617753] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   43.617835] [0m[33musb 2-1: [0musb auto-resume
+[32m[   43.659555] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   43.675437] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   43.675451] [0m[33musb 2-1: [0mfinish resume
+[32m[   43.676736] [0mintf ffff888002931000
+[32m[   43.676757] [0mintf ffff88800298f000
+[32m[   45.680217] [0mintf ffff88800298f000
+[32m[   45.680580] [0m[33mvhci_hcd: [0munlink->seqnum 272
+[32m[   45.680591] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   45.680897] [0m[33mvhci_hcd: [0munlink->seqnum 273
+[32m[   45.680904] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   45.681165] [0m[33mvhci_hcd: [0munlink->seqnum 274
+[32m[   45.681171] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   45.681243] [0mintf ffff888002931000
+[32m[   45.681972] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   45.697582] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   45.716657] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 45.717345[0m
+[32m[   45.717364] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   45.717468] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   45.717556] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   45.718040] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   45.718123] [0m[33musb 2-1: [0musb auto-resume
+[32m[   45.759645] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   45.775357] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   45.775369] [0m[33musb 2-1: [0mfinish resume
+[32m[   45.776169] [0mintf ffff888002931000
+[32m[   45.776177] [0mintf ffff88800298f000
+[32m[   47.900588] [0mintf ffff88800298f000
+[32m[   47.901163] [0m[33mvhci_hcd: [0munlink->seqnum 283
+[32m[   47.901176] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   47.901337] [0m[33mvhci_hcd: [0munlink->seqnum 284
+[32m[   47.901346] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   47.901495] [0m[33mvhci_hcd: [0munlink->seqnum 285
+[32m[   47.901503] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   47.901544] [0mintf ffff888002931000
+[32m[   47.902647] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   47.916232] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   47.920379] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 47.921084[0m
+[32m[   47.921011] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   47.921082] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   47.921182] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   47.921630] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   47.921721] [0m[33musb 2-1: [0musb auto-resume
+[32m[   47.963900] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   47.979408] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   47.979431] [0m[33musb 2-1: [0mfinish resume
+[32m[   47.984226] [0mintf ffff888002931000
+[32m[   47.984282] [0mintf ffff88800298f000
+[32m[   49.988266] [0mintf ffff88800298f000
+[32m[   49.988629] [0m[33mvhci_hcd: [0munlink->seqnum 294
+[32m[   49.988640] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   49.988807] [0m[33mvhci_hcd: [0munlink->seqnum 295
+[32m[   49.988815] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   49.988994] [0m[33mvhci_hcd: [0munlink->seqnum 296
+[32m[   49.989004] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   49.989047] [0mintf ffff888002931000
+[32m[   49.989740] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   50.005990] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   50.017495] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 50.018125[0m
+[32m[   50.020898] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   50.020989] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   50.021097] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   50.021630] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   50.021693] [0m[33musb 2-1: [0musb auto-resume
+[32m[   50.063468] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   50.079388] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   50.079404] [0m[33musb 2-1: [0mfinish resume
+[32m[   50.080758] [0mintf ffff888002931000
+[32m[   50.080764] [0mintf ffff88800298f000
+[32m[   52.081855] [0mintf ffff88800298f000
+[32m[   52.082440] [0m[33mvhci_hcd: [0munlink->seqnum 305
+[32m[   52.082452] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   52.082854] [0m[33mvhci_hcd: [0munlink->seqnum 306
+[32m[   52.082866] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   52.083205] [0m[33mvhci_hcd: [0munlink->seqnum 307
+[32m[   52.083217] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   52.083338] [0mintf ffff888002931000
+[32m[   52.084338] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   52.101931] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   52.119245] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 52.119982[0m
+[32m[   52.120183] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   52.120274] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   52.120379] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   52.120948] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   52.121050] [0m[33musb 2-1: [0musb auto-resume
+[32m[   52.164050] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   52.179707] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   52.179738] [0m[33musb 2-1: [0mfinish resume
+[32m[   52.181262] [0mintf ffff888002931000
+[32m[   52.181279] [0mintf ffff88800298f000
+[32m[   54.185562] [0mintf ffff88800298f000
+[32m[   54.186038] [0m[33mvhci_hcd: [0munlink->seqnum 316
+[32m[   54.186060] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   54.186886] [0m[33mvhci_hcd: [0munlink->seqnum 317
+[32m[   54.186895] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   54.187228] [0m[33mvhci_hcd: [0munlink->seqnum 318
+[32m[   54.187238] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   54.187329] [0mintf ffff888002931000
+[32m[   54.188148] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   54.205628] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   54.224086] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 54.224785[0m
+[32m[   54.224835] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   54.224932] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   54.225019] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   54.225492] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   54.225612] [0m[33musb 2-1: [0musb auto-resume
+[32m[   54.267474] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   54.283428] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   54.283464] [0m[33musb 2-1: [0mfinish resume
+[32m[   54.285328] [0mintf ffff888002931000
+[32m[   54.285340] [0mintf ffff88800298f000
+[32m[   56.288117] [0mintf ffff88800298f000
+[32m[   56.288980] [0m[33mvhci_hcd: [0munlink->seqnum 327
+[32m[   56.289000] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   56.290067] [0m[33mvhci_hcd: [0munlink->seqnum 328
+[32m[   56.290081] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   56.290325] [0m[33mvhci_hcd: [0munlink->seqnum 329
+[32m[   56.290340] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   56.290437] [0mintf ffff888002931000
+[32m[   56.291433] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   56.308093] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   56.323314] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 56.324051[0m
+[32m[   56.323769] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   56.323832] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   56.323906] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   56.324269] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   56.324337] [0m[33musb 2-1: [0musb auto-resume
+[32m[   56.367494] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   56.383411] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   56.383433] [0m[33musb 2-1: [0mfinish resume
+[32m[   56.384855] [0mintf ffff888002931000
+[32m[   56.384864] [0mintf ffff88800298f000
+[32m[   58.388648] [0mintf ffff88800298f000
+[32m[   58.389362] [0m[33mvhci_hcd: [0munlink->seqnum 338
+[32m[   58.389374] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   58.389657] [0m[33mvhci_hcd: [0munlink->seqnum 339
+[32m[   58.389667] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   58.389913] [0m[33mvhci_hcd: [0munlink->seqnum 340
+[32m[   58.389919] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   58.389975] [0mintf ffff888002931000
+[32m[   58.390601] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   58.404190] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   58.419461] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 58.420166[0m
+[32m[   58.420127] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   58.420231] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   58.420336] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   58.420900] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   58.421001] [0m[33musb 2-1: [0musb auto-resume
+[32m[   58.463832] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   58.479438] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   58.479461] [0m[33musb 2-1: [0mfinish resume
+[32m[   58.480708] [0mintf ffff888002931000
+[32m[   58.480716] [0mintf ffff88800298f000
+[32m[   60.484022] [0mintf ffff88800298f000
+[32m[   60.484319] [0m[33mvhci_hcd: [0munlink->seqnum 349
+[32m[   60.484328] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   60.484549] [0m[33mvhci_hcd: [0munlink->seqnum 350
+[32m[   60.484557] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   60.484734] [0m[33mvhci_hcd: [0munlink->seqnum 351
+[32m[   60.484739] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   60.484769] [0mintf ffff888002931000
+[32m[   60.485294] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   60.500049] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   60.515108] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 60.515834[0m
+[32m[   60.515617] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   60.515682] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   60.515756] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   60.516127] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   60.516197] [0m[33musb 2-1: [0musb auto-resume
+[32m[   60.559617] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   60.575288] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   60.575298] [0m[33musb 2-1: [0mfinish resume
+[32m[   60.575997] [0mintf ffff888002931000
+[32m[   60.576012] [0mintf ffff88800298f000
+[32m[   62.580070] [0mintf ffff88800298f000
+[32m[   62.580689] [0m[33mvhci_hcd: [0munlink->seqnum 360
+[32m[   62.580710] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   62.581162] [0m[33mvhci_hcd: [0munlink->seqnum 361
+[32m[   62.581177] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   62.581551] [0m[33mvhci_hcd: [0munlink->seqnum 362
+[32m[   62.581558] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   62.581613] [0mintf ffff888002931000
+[32m[   62.582228] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   62.596563] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   62.615770] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 62.616499[0m
+[32m[   62.616625] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   62.616709] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   62.616813] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   62.617354] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   62.617453] [0m[33musb 2-1: [0musb auto-resume
+[32m[   62.659644] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   62.675662] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   62.675684] [0m[33musb 2-1: [0mfinish resume
+[32m[   62.677337] [0mintf ffff888002931000
+[32m[   62.677345] [0mintf ffff88800298f000
+[32m[   64.680385] [0mintf ffff88800298f000
+[32m[   64.681004] [0m[33mvhci_hcd: [0munlink->seqnum 371
+[32m[   64.681025] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   64.681633] [0m[33mvhci_hcd: [0munlink->seqnum 372
+[32m[   64.681643] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   64.681916] [0m[33mvhci_hcd: [0munlink->seqnum 373
+[32m[   64.681925] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   64.682009] [0mintf ffff888002931000
+[32m[   64.682867] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   64.697890] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   64.711453] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 64.712196[0m
+[32m[   64.712202] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   64.712307] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   64.712408] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   64.712881] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   64.712966] [0m[33musb 2-1: [0musb auto-resume
+[32m[   64.755876] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   64.771610] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   64.771623] [0m[33musb 2-1: [0mfinish resume
+[32m[   64.772863] [0mintf ffff888002931000
+[32m[   64.772882] [0mintf ffff88800298f000
+[32m[   66.777468] [0mintf ffff88800298f000
+[32m[   66.777762] [0m[33mvhci_hcd: [0munlink->seqnum 382
+[32m[   66.777778] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   66.778016] [0m[33mvhci_hcd: [0munlink->seqnum 383
+[32m[   66.778028] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   66.778204] [0m[33mvhci_hcd: [0munlink->seqnum 384
+[32m[   66.778213] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   66.778284] [0mintf ffff888002931000
+[32m[   66.779301] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   66.797709] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   66.811652] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 66.812392[0m
+[32m[   66.812229] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   66.812408] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   66.812594] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   66.813149] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   66.813302] [0m[33musb 2-1: [0musb auto-resume
+[32m[   66.855539] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   66.871606] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   66.871628] [0m[33musb 2-1: [0mfinish resume
+[32m[   66.873303] [0mintf ffff888002931000
+[32m[   66.873311] [0mintf ffff88800298f000
+[32m[   68.876112] [0mintf ffff88800298f000
+[32m[   68.876994] [0m[33mvhci_hcd: [0munlink->seqnum 393
+[32m[   68.877008] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   68.877386] [0m[33mvhci_hcd: [0munlink->seqnum 394
+[32m[   68.877398] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   68.877757] [0m[33mvhci_hcd: [0munlink->seqnum 395
+[32m[   68.877769] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   68.877846] [0mintf ffff888002931000
+[32m[   68.878579] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   68.892293] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   68.907430] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 68.908151[0m
+[32m[   68.908112] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   68.908202] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   68.908307] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   68.908985] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   68.909090] [0m[33musb 2-1: [0musb auto-resume
+[32m[   68.953773] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   68.969429] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   68.969444] [0m[33musb 2-1: [0mfinish resume
+[32m[   68.970574] [0mintf ffff888002931000
+[32m[   68.970586] [0mintf ffff88800298f000
+[32m[   70.971749] [0mintf ffff88800298f000
+[32m[   70.972371] [0m[33mvhci_hcd: [0munlink->seqnum 404
+[32m[   70.972392] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   70.972833] [0m[33mvhci_hcd: [0munlink->seqnum 405
+[32m[   70.972845] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   70.973198] [0m[33mvhci_hcd: [0munlink->seqnum 406
+[32m[   70.973210] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   70.973319] [0mintf ffff888002931000
+[32m[   70.974132] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   70.987477] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   71.003463] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 71.004174[0m
+[32m[   71.004141] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   71.004251] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   71.004357] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   71.004920] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   71.005022] [0m[33musb 2-1: [0musb auto-resume
+[32m[   71.047715] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   71.063286] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   71.063298] [0m[33musb 2-1: [0mfinish resume
+[32m[   71.064188] [0mintf ffff888002931000
+[32m[   71.064197] [0mintf ffff88800298f000
+[32m[   73.067291] [0mintf ffff88800298f000
+[32m[   73.067534] [0m[33mvhci_hcd: [0munlink->seqnum 415
+[32m[   73.067544] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   73.067675] [0m[33mvhci_hcd: [0munlink->seqnum 416
+[32m[   73.067680] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   73.067782] [0m[33mvhci_hcd: [0munlink->seqnum 417
+[32m[   73.067787] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   73.067811] [0mintf ffff888002931000
+[32m[   73.068230] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   73.083396] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   73.103615] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 73.104193[0m
+[32m[   73.104294] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   73.104380] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   73.104498] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   73.105043] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   73.105143] [0m[33musb 2-1: [0musb auto-resume
+[32m[   73.147374] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   73.163317] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   73.163335] [0m[33musb 2-1: [0mfinish resume
+[32m[   73.164892] [0mintf ffff888002931000
+[32m[   73.164899] [0mintf ffff88800298f000
+[32m[   75.169472] [0mintf ffff88800298f000
+[32m[   75.170096] [0m[33mvhci_hcd: [0munlink->seqnum 426
+[32m[   75.170112] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   75.170451] [0m[33mvhci_hcd: [0munlink->seqnum 427
+[32m[   75.170465] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   75.170674] [0m[33mvhci_hcd: [0munlink->seqnum 428
+[32m[   75.170681] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   75.170739] [0mintf ffff888002931000
+[32m[   75.171468] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   75.189543] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   75.203552] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 75.204236[0m
+[32m[   75.204353] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   75.204480] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   75.204587] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   75.205030] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   75.205113] [0m[33musb 2-1: [0musb auto-resume
+[32m[   75.247624] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   75.263586] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   75.263610] [0m[33musb 2-1: [0mfinish resume
+[32m[   75.265219] [0mintf ffff888002931000
+[32m[   75.265227] [0mintf ffff88800298f000
+[32m[   77.269495] [0mintf ffff88800298f000
+[32m[   77.269905] [0m[33mvhci_hcd: [0munlink->seqnum 437
+[32m[   77.269918] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   77.270265] [0m[33mvhci_hcd: [0munlink->seqnum 438
+[32m[   77.270277] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   77.270615] [0m[33mvhci_hcd: [0munlink->seqnum 439
+[32m[   77.270626] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   77.270725] [0mintf ffff888002931000
+[32m[   77.271473] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   77.287319] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   77.299454] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 77.300127[0m
+[32m[   77.300059] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   77.300141] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   77.300238] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   77.300742] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   77.300823] [0m[33musb 2-1: [0musb auto-resume
+[32m[   77.343476] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   77.359262] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   77.359278] [0m[33musb 2-1: [0mfinish resume
+[32m[   77.360225] [0mintf ffff888002931000
+[32m[   77.360234] [0mintf ffff88800298f000
+[32m[   79.361434] [0mintf ffff88800298f000
+[32m[   79.361717] [0m[33mvhci_hcd: [0munlink->seqnum 448
+[32m[   79.361728] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   79.361912] [0m[33mvhci_hcd: [0munlink->seqnum 449
+[32m[   79.361920] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   79.362097] [0m[33mvhci_hcd: [0munlink->seqnum 450
+[32m[   79.362104] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   79.362152] [0mintf ffff888002931000
+[32m[   79.362726] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   79.377457] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   79.399692] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 79.400416[0m
+[32m[   79.400282] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   79.400362] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   79.400475] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   79.400942] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   79.401026] [0m[33musb 2-1: [0musb auto-resume
+[32m[   79.443423] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   79.459555] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   79.459576] [0m[33musb 2-1: [0mfinish resume
+[32m[   79.461001] [0mintf ffff888002931000
+[32m[   79.461009] [0mintf ffff88800298f000
+[32m[   81.465453] [0mintf ffff88800298f000
+[32m[   81.466034] [0m[33mvhci_hcd: [0munlink->seqnum 459
+[32m[   81.466051] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   81.466472] [0m[33mvhci_hcd: [0munlink->seqnum 460
+[32m[   81.466486] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   81.466698] [0m[33mvhci_hcd: [0munlink->seqnum 461
+[32m[   81.466704] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   81.466736] [0mintf ffff888002931000
+[32m[   81.467382] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   81.485419] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   81.503279] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 81.503983[0m
+[32m[   81.504054] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   81.504161] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   81.504259] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   81.504780] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   81.504862] [0m[33musb 2-1: [0musb auto-resume
+[32m[   81.547434] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   81.563320] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   81.563347] [0m[33musb 2-1: [0mfinish resume
+[32m[   81.564824] [0mintf ffff888002931000
+[32m[   81.564838] [0mintf ffff88800298f000
+[32m[   83.565712] [0mintf ffff88800298f000
+[32m[   83.566277] [0m[33mvhci_hcd: [0munlink->seqnum 470
+[32m[   83.566289] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   83.566663] [0m[33mvhci_hcd: [0munlink->seqnum 471
+[32m[   83.566675] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   83.567044] [0m[33mvhci_hcd: [0munlink->seqnum 472
+[32m[   83.567056] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   83.567156] [0mintf ffff888002931000
+[32m[   83.567933] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   83.585456] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   83.603184] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 83.603919[0m
+[32m[   83.603715] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   83.603798] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   83.603888] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   83.604327] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   83.604422] [0m[33musb 2-1: [0musb auto-resume
+[32m[   83.649552] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   83.665384] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   83.665394] [0m[33musb 2-1: [0mfinish resume
+[32m[   83.666578] [0mintf ffff888002931000
+[32m[   83.666590] [0mintf ffff88800298f000
+[32m[   85.859252] [0mintf ffff88800298f000
+[32m[   85.859572] [0m[33mvhci_hcd: [0munlink->seqnum 481
+[32m[   85.859586] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   85.859730] [0m[33mvhci_hcd: [0munlink->seqnum 482
+[32m[   85.859736] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   85.859905] [0m[33mvhci_hcd: [0munlink->seqnum 483
+[32m[   85.859913] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   85.859959] [0mintf ffff888002931000
+[32m[   85.861300] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   85.876245] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   85.911596] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 85.912324[0m
+[32m[   85.912247] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   85.912348] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   85.912525] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   85.913085] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   85.913170] [0m[33musb 2-1: [0musb auto-resume
+[32m[   85.955729] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   85.971246] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   85.971261] [0m[33musb 2-1: [0mfinish resume
+[32m[   85.972413] [0mintf ffff888002931000
+[32m[   85.972423] [0mintf ffff88800298f000
+[32m[   87.975968] [0mintf ffff88800298f000
+[32m[   87.976395] [0m[33mvhci_hcd: [0munlink->seqnum 492
+[32m[   87.976408] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   87.976640] [0m[33mvhci_hcd: [0munlink->seqnum 493
+[32m[   87.976649] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   87.976894] [0m[33mvhci_hcd: [0munlink->seqnum 494
+[32m[   87.976900] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   87.976955] [0mintf ffff888002931000
+[32m[   87.977627] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   87.991959] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   88.011176] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 88.011903[0m
+[32m[   88.011865] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   88.011988] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   88.012081] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   88.012542] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   88.012625] [0m[33musb 2-1: [0musb auto-resume
+[32m[   88.055743] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   88.071570] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   88.071584] [0m[33musb 2-1: [0mfinish resume
+[32m[   88.072845] [0mintf ffff888002931000
+[32m[   88.072853] [0mintf ffff88800298f000
+[32m[   90.075955] [0mintf ffff88800298f000
+[32m[   90.076635] [0m[33mvhci_hcd: [0munlink->seqnum 503
+[32m[   90.076657] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   90.077289] [0m[33mvhci_hcd: [0munlink->seqnum 504
+[32m[   90.077331] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   90.077647] [0m[33mvhci_hcd: [0munlink->seqnum 505
+[32m[   90.077656] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   90.077740] [0mintf ffff888002931000
+[32m[   90.078410] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   90.091985] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   90.111124] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 90.111855[0m
+[32m[   90.111721] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   90.111808] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   90.111911] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   90.112388] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   90.112499] [0m[33musb 2-1: [0musb auto-resume
+[32m[   90.157495] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   90.173382] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   90.173395] [0m[33musb 2-1: [0mfinish resume
+[32m[   90.174560] [0mintf ffff888002931000
+[32m[   90.174567] [0mintf ffff88800298f000
+[32m[   92.175201] [0mintf ffff88800298f000
+[32m[   92.175579] [0m[33mvhci_hcd: [0munlink->seqnum 514
+[32m[   92.175591] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   92.175956] [0m[33mvhci_hcd: [0munlink->seqnum 515
+[32m[   92.175968] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   92.176267] [0m[33mvhci_hcd: [0munlink->seqnum 516
+[32m[   92.176273] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   92.176324] [0mintf ffff888002931000
+[32m[   92.177123] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   92.193466] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   92.211463] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 92.212174[0m
+[32m[   92.212182] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   92.212275] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   92.212395] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   92.212945] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   92.213057] [0m[33musb 2-1: [0musb auto-resume
+[32m[   92.257954] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   92.273605] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   92.273620] [0m[33musb 2-1: [0mfinish resume
+[32m[   92.275195] [0mintf ffff888002931000
+[32m[   92.275203] [0mintf ffff88800298f000
+[32m[   94.279262] [0mintf ffff88800298f000
+[32m[   94.279650] [0m[33mvhci_hcd: [0munlink->seqnum 525
+[32m[   94.279664] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   94.279969] [0m[33mvhci_hcd: [0munlink->seqnum 526
+[32m[   94.279981] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   94.280292] [0m[33mvhci_hcd: [0munlink->seqnum 527
+[32m[   94.280304] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   94.280414] [0mintf ffff888002931000
+[32m[   94.281175] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   94.295253] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   94.307137] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 94.307861[0m
+[32m[   94.307811] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   94.307950] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   94.308101] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   94.308716] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   94.308817] [0m[33musb 2-1: [0musb auto-resume
+[32m[   94.353792] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   94.369385] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   94.369401] [0m[33musb 2-1: [0mfinish resume
+[32m[   94.370593] [0mintf ffff888002931000
+[32m[   94.370604] [0mintf ffff88800298f000
+[32m[   96.371354] [0mintf ffff88800298f000
+[32m[   96.372180] [0m[33mvhci_hcd: [0munlink->seqnum 536
+[32m[   96.372195] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   96.372557] [0m[33mvhci_hcd: [0munlink->seqnum 537
+[32m[   96.372567] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   96.372954] [0m[33mvhci_hcd: [0munlink->seqnum 538
+[32m[   96.372968] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   96.373027] [0mintf ffff888002931000
+[32m[   96.374428] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   96.389441] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   96.407021] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 96.407769[0m
+[32m[   96.407399] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   96.407480] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   96.407547] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   96.407837] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   96.407892] [0m[33musb 2-1: [0musb auto-resume
+[32m[   96.451313] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   96.467175] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   96.467185] [0m[33musb 2-1: [0mfinish resume
+[32m[   96.468311] [0mintf ffff888002931000
+[32m[   96.468318] [0mintf ffff88800298f000
+[32m[   98.469367] [0mintf ffff88800298f000
+[32m[   98.469635] [0m[33mvhci_hcd: [0munlink->seqnum 547
+[32m[   98.469648] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   98.469896] [0m[33mvhci_hcd: [0munlink->seqnum 548
+[32m[   98.469907] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   98.470143] [0m[33mvhci_hcd: [0munlink->seqnum 549
+[32m[   98.470153] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   98.470188] [0mintf ffff888002931000
+[32m[   98.470989] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   98.483247] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   98.507128] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 98.507857[0m
+[32m[   98.507704] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   98.507785] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   98.507875] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   98.508320] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   98.508397] [0m[33musb 2-1: [0musb auto-resume
+[32m[   98.551693] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   98.567199] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   98.567213] [0m[33musb 2-1: [0mfinish resume
+[32m[   98.568410] [0mintf ffff888002931000
+[32m[   98.568418] [0mintf ffff88800298f000
+[32m[  100.569522] [0mintf ffff88800298f000
+[32m[  100.570056] [0m[33mvhci_hcd: [0munlink->seqnum 558
+[32m[  100.570076] [0m[33mvhci_hcd: [0murb->status -104
+[32m[  100.570434] [0m[33mvhci_hcd: [0munlink->seqnum 559
+[32m[  100.570446] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  100.570763] [0m[33mvhci_hcd: [0munlink->seqnum 560
+[32m[  100.570775] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  100.570836] [0mintf ffff888002931000
+[32m[  100.571728] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[  100.587578] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[  100.607872] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 100.608580[0m
+[32m[  100.608477] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[  100.608587] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[  100.608695] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[  100.609356] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[  100.609475] [0m[33musb 2-1: [0musb auto-resume
+[32m[  100.651587] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[  100.667185] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[  100.667195] [0m[33musb 2-1: [0mfinish resume
+[32m[  100.667846] [0mintf ffff888002931000
+[32m[  100.667851] [0mintf ffff88800298f000
+[32m[  102.671902] [0mintf ffff88800298f000
+[32m[  102.672233] [0m[33mvhci_hcd: [0munlink->seqnum 569
+[32m[  102.672247] [0m[33mvhci_hcd: [0murb->status -104
+[32m[  102.672428] [0m[33mvhci_hcd: [0munlink->seqnum 570
+[32m[  102.672437] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  102.672572] [0m[33mvhci_hcd: [0munlink->seqnum 571
+[32m[  102.672579] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  102.672612] [0mintf ffff888002931000
+[32m[  102.673153] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[  102.687927] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[  102.703192] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 102.703928[0m
+[32m[  102.703968] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[  102.704043] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[  102.704121] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[  102.704686] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[  102.704767] [0m[33musb 2-1: [0musb auto-resume
+[32m[  102.747285] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[  102.763161] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[  102.763171] [0m[33musb 2-1: [0mfinish resume
+[32m[  102.764156] [0mintf ffff888002931000
+[32m[  102.764181] [0mintf ffff88800298f000
+[32m[  104.767881] [0mintf ffff88800298f000
+[32m[  104.768284] [0m[33mvhci_hcd: [0munlink->seqnum 580
+[32m[  104.768298] [0m[33mvhci_hcd: [0murb->status -104
+[32m[  104.768534] [0m[33mvhci_hcd: [0munlink->seqnum 581
+[32m[  104.768543] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  104.768756] [0m[33mvhci_hcd: [0munlink->seqnum 582
+[32m[  104.768763] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  104.768804] [0mintf ffff888002931000
+[32m[  104.769452] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[  104.783892] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[  104.807182] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 104.807885[0m
+[32m[  104.807904] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[  104.807986] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[  104.808079] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[  104.808538] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[  104.808620] [0m[33musb 2-1: [0musb auto-resume
+[32m[  104.851291] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[  104.867184] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[  104.867219] [0m[33musb 2-1: [0mfinish resume
+[32m[  104.868475] [0mintf ffff888002931000
+[32m[  104.868483] [0mintf ffff88800298f000
+[32m[  106.871880] [0mintf ffff88800298f000
+[32m[  106.872202] [0m[33mvhci_hcd: [0munlink->seqnum 591
+[32m[  106.872216] [0m[33mvhci_hcd: [0murb->status -104
+[32m[  106.872458] [0m[33mvhci_hcd: [0munlink->seqnum 592
+[32m[  106.872467] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  106.872742] [0m[33mvhci_hcd: [0munlink->seqnum 593
+[32m[  106.872754] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  106.872824] [0mintf ffff888002931000
+[32m[  106.873450] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[  106.887935] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[  106.903651] [0m[33mbt17-emu: [0m[1mSet Device Class minor 4 sent at mono 106.904345[0m
+[32m[  106.904286] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[  106.904372] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[  106.904465] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[  106.904960] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[  106.905059] [0m[33musb 2-1: [0musb auto-resume
+[32m[  106.947268] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[  106.963146] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[  106.963155] [0m[33musb 2-1: [0mfinish resume
+[32m[  106.963753] [0mintf ffff888002931000
+[32m[  106.963760] [0mintf ffff88800298f000
+[32m[  108.965292] [0mintf ffff88800298f000
+[32m[  108.965487] [0m[33mvhci_hcd: [0munlink->seqnum 602
+[32m[  108.965496] [0m[33mvhci_hcd: [0murb->status -104
+[32m[  108.965679] [0m[33mvhci_hcd: [0munlink->seqnum 603
+[32m[  108.965687] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  108.965830] [0m[33mvhci_hcd: [0munlink->seqnum 604
+[32m[  108.965836] [0m[33mvhci_hcd: [0murb->status 0
+[32m[  108.965858] [0mintf ffff888002931000
+[32m[  108.966395] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[  108.981303] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[  109.002887] [0m[33mbt17-emu: [0m[1mSet Device Class minor 8 sent at mono 109.003600[0m
+[32m[  109.003435] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[  109.003506] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[  109.003568] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[  109.003858] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[  109.003912] [0m[33musb 2-1: [0musb auto-resume
+[32m[  109.047573] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[  109.063152] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[  109.063195] [0m[33musb 2-1: [0mfinish resume
+[32m[  109.064746] [0mintf ffff888002931000
+[32m[  109.064752] [0mintf ffff88800298f000
+Process 59 exited with status 0
+exit=0 end 2026-11-13 04:48:23

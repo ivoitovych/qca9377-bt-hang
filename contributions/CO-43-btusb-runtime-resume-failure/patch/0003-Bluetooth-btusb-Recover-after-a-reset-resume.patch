@@ -1,0 +1,78 @@
+From 179737e017058d8e10959533905be4cc8b6c00b7 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:29:29 +0100
+Subject: [PATCH 3/5] Bluetooth: btusb: Recover after a reset-resume
+
+When a runtime resume fails and USB persist is enabled, the USB core
+resets the device (a reset-resume). btusb has no reset_resume
+callback, so usb_resume_interface() only marks its interfaces for
+rebinding. Marked interfaces are rebound after a system resume
+(usb_resume_complete()) and after usb_reset_device(), but not after a
+runtime resume. btusb therefore stays bound without ever being
+resumed: BTUSB_SUSPENDING stays set, its suspend count is off by one,
+and every URB it sends from then on is parked on the deferred anchor.
+The controller answers USB requests, but Bluetooth is dead until the
+device is unplugged or the machine rebooted.
+
+With an emulated QCA9377 (13d3:3503) that answered its GET_STATUS only
+after the reset-resume, closing hci0 (which runtime-resumes the
+device) left it in that state: the next power-on failed with HCI Reset
+timeouts that never reached the device. When the resume was started
+by a command, btusb_reset() from the command timeout happened to
+recover it, by resetting the device once more.
+
+Add a reset_resume callback that resumes as usual and queues a USB
+reset. With no pre_reset and post_reset callbacks, the core then
+unbinds and rebinds btusb, so the controller, which the reset may have
+cleared, is set up again.
+
+The devices of btusb_needs_reset_resume_table get the same rebinding
+at system resume as before, now after one more USB reset.
+---
+ drivers/bluetooth/btusb_main.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 9c66ab5d8..4d2f4e136 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5106,6 +5106,31 @@ static int btusb_resume(struct usb_interface *intf)
+ 	return err;
+ }
+ 
++static int btusb_reset_resume(struct usb_interface *intf)
++{
++	struct btusb_data *data = usb_get_intfdata(intf);
++	int err;
++
++	BT_DBG("intf %p", intf);
++
++	/* The USB core reset the device to resume it. Without this callback
++	 * it marks the interfaces for rebinding, but it rebinds them only
++	 * after a system resume: after a runtime resume btusb stayed bound
++	 * and was never resumed, with BTUSB_SUSPENDING set and every later
++	 * URB parked on the deferred anchor.
++	 *
++	 * Resume as usual, then queue a USB reset: btusb has no pre_reset
++	 * and post_reset callbacks, so the core unbinds and rebinds it, and
++	 * the controller, whose state the reset may have cleared, is set up
++	 * again.
++	 */
++	err = btusb_resume(intf);
++	if (intf == data->intf)
++		usb_queue_reset_device(intf);
++
++	return err;
++}
++
+ #ifdef CONFIG_DEV_COREDUMP
+ static void btusb_coredump(struct device *dev)
+ {
+@@ -5123,6 +5148,7 @@ static struct usb_driver btusb_driver = {
+ 	.disconnect	= btusb_disconnect,
+ 	.suspend	= pm_ptr(btusb_suspend),
+ 	.resume		= pm_ptr(btusb_resume),
++	.reset_resume	= pm_ptr(btusb_reset_resume),
+ 	.id_table	= btusb_table,
+ 	.supports_autosuspend = 1,
+ 	.disable_hub_initiated_lpm = 1,

@@ -92,6 +92,14 @@ All wait for the operator's word; none sent.
 
 **State of 2026-11-11 (supersedes the rows above where they differ; [`results/laptop-only-work-2026-11-11/`](../results/laptop-only-work-2026-11-11/README.md)):** CO-09: `7.0.0-43`, in noble-proposed, carries the entry; a post-install hook is ready, not installed. CO-20: the prototype clears the teardown messages in a guest. CO-21: real btusb tested in a guest through usbip, base 0 of 5, patch 5 of 5; patch 2's title needs one character less. CO-03, CO-19, CO-32, CO-07, CO-33, CO-08, CO-17, CO-18, CO-29, CO-15: one session checklist, about 2 hours (`headset-session/SESSION-CHECKLIST.md`); CO-19 must not be installed as the two packages of its plan, which would remove the audio stack. CO-18: the recordings place the earbuds' silence on their side. All wait for the operator's word.
 
+**From BT-17 (2026-11-13):**
+
+| ID | dossier | target | state | next step | decides |
+|---|---|---|---|---|---|
+| CO-43 | [btusb: a device that fails or needs a reset to resume (BT-18, BT-19, BT-20; BT-17's H3 as RFC)](CO-43-btusb-runtime-resume-failure/README.md) | kernel / btusb | **five patches written and tested in emulation, nothing sent**: A reports a failed resume, B does not reset or wait for a device that has not resumed, D rebinds after a reset-resume, E anchors a deferred URB under txlock (BT-23), C (RFC) keeps 13d3:3503 out of runtime suspend on a Ryzen root hub; QEMU with an emulated 13d3:3503 (`results/bt17-emulation-2026-11-13/`) | an outside review; the bot's CI on base and base + series; a system-suspend case for D (needs dummy_hcd: vhci refuses system suspend) | the operator, for any send |
+| CO-44 | [MGMT: a command timeout reported as Authentication Failed (BT-21)](CO-44-mgmt-timeout-reported-as-auth-failed/README.md) | kernel; BlueZ test | **patch and mgmt-tester case written and tested, nothing sent**: the new case fails on base with 0x05, passes patched; the other 526 mgmt-tester cases, l2cap-tester and smp-tester unchanged | the bot's CI on the exact mails | the operator, for the send |
+| CO-45 | xHCI ep0 maxpacket update on an Enabled slot (BT-22; another author's fix) | Ubuntu (kernel) | **queued upstream 2026-11-09**, not ours | watch mainline and stable; then whether Ubuntu's 7.0 kernels pick it up | — |
+
 **Off-topic (not Bluetooth), gvfs's audio-CD backend.** Issues in `docs/issues.md` (X1–X4).
 
 | ID | item | target | state | next step | decides |

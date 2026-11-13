@@ -1,0 +1,45 @@
+From 71a90d1a16699a9422c5289a280fe4202211c3dc Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:24:55 +0100
+Subject: [PATCH 1/5] Bluetooth: btusb: Report a failed resume for deferred
+ data
+
+When data is sent while the device is runtime suspended,
+submit_or_queue_tx_urb() anchors the URB on data->deferred and
+btusb_waker() resumes the device. If that resume fails, the waker
+returns without a word and the URB stays deferred, so the only trace
+at the default log level is the HCI command timeout two seconds later,
+which points at the controller rather than at the resume.
+
+This happened with an idle QCA9377 (13d3:3503) that did not answer the
+GET_STATUS after a runtime resume: the log showed "command 0x0c24 tx
+timeout" and USB resets, and nothing that said the resume had failed.
+
+Log the error, except -EACCES: then runtime PM is disabled for a
+system sleep transition, and btusb_resume() sends the deferred data
+when it ends.
+---
+ drivers/bluetooth/btusb_main.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca..a7d36e84a 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2659,8 +2659,15 @@ static void btusb_waker(struct work_struct *work)
+ 	int err;
+ 
+ 	err = usb_autopm_get_interface(data->intf);
+-	if (err < 0)
++	if (err < 0) {
++		/* -EACCES: runtime PM is disabled for a system sleep transition,
++		 * and btusb_resume() sends the deferred data when it ends.
++		 */
++		if (err != -EACCES)
++			bt_dev_err(data->hdev, "Failed to resume device for deferred data: %d",
++				   err);
+ 		return;
++	}
+ 
+ 	usb_autopm_put_interface(data->intf);
+ }
