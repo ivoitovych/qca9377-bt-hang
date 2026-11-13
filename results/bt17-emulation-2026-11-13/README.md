@@ -160,7 +160,10 @@ Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
   | `ab` (A+B) | `Device not resumed; not resetting` | no | **0/3**, and 0/1 after 60 s |
   | `final` | `Device not resumed; not resetting` | no | **0/3**, and 0/1 after 60 s |
 
-  - **On the B kernels, nothing ever resets the device:**
+  - **On the B kernels, nothing in the kernel ever resets the device.** User space still
+    could, by writing the hci device's `reset` attribute (`reset_store()`,
+    `net/bluetooth/hci_sysfs.c`; outside review, reviewer 6). B refuses that too while the
+    device is suspended. The details:
     - the power cycle's HCI Resets fail with `Opcode 0x0c03 failed: -110`, four times;
     - Set Powered on returns 0x05.
   - **Why:** `hci_cmd_work()` does not arm the command timer while an HCI Reset is pending

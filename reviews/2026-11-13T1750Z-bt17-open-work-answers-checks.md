@@ -241,3 +241,120 @@ From `contributions/CO-43-…/prior-art-2026-11-13.md`:
   agrees with finding 14 of the earlier checks.
 - **Tests:** there is no upstream test framework for USB driver PM. Precedent describes emulation
   in a sentence or two in the body; none links an out-of-tree harness.
+
+## Reviewer 6
+
+R6 checked against mainline master, by function name; nothing was run.
+
+### T1: one new fact, and a test that is weaker than R6 says
+
+- **`hdev->reset` has a second caller: confirmed, and new to us.** `reset_store()`
+  (`net/bluetooth/hci_sysfs.c:108-117` on `da3cc0258`) calls `hdev->reset(hdev)` from a write
+  to the `reset` attribute.
+  - So B refuses a manual reset of a suspended device too. And B2 as specified (a flag-based
+    skip in `btusb_reset()`) would refuse it while a command is deferred.
+  - **The skip belongs to the timeout path, not to every `hdev->reset` call.** An explicit user
+    reset should always reset. `hdev->reset` has no caller argument, so the design must handle
+    this, for example with a flag set around the call in `hci_cmd_timeout()`. That would touch
+    `hci_core.c`, which is a maintainers' choice. To be added to the B2 design.
+  - "Nothing ever resets it" in our `dropcmd-wedge` write-up therefore means nothing in the
+    kernel; user space could, through this attribute. To be worded so.
+- **R6's test, `BTUSB_SUSPENDING && !usb_anchor_empty(&data->deferred)`**, rests on "with one
+  command credit, a non-empty `deferred` at the timeout holds the timed-out command". That does
+  not hold:
+  - a command can be sent and swallowed, the device can autosuspend (`tx_in_flight` 0), and
+    ACL or ISO data can then be deferred before the timeout (reviewers 1 and 2; our check of
+    R1, point 2);
+  - so the flag recording a deferred `HCI_COMMAND_PKT` (B2) remains the precise test.
+- **R6's raw-socket point applies to B2's flag as well.** A vendor command sent through a raw
+  socket bypasses the credit, and if it is deferred it would set the flag although the
+  timed-out command was sent. An edge case, to be stated in B2's message or excluded in the
+  design.
+- **R6's work item:** the same as B2's, with `cancel_work_sync()` after `hci_unregister_dev()`.
+  - The table of cases is right, with the corrections above.
+  - "(c) cannot be met inside btusb" agrees with our check of R1, point 3.
+  - "Credit unchanged in practice, because the reset itself was always asynchronous" is right:
+    `usb_queue_reset_device()` never waited.
+
+### T2: confirmed; and a btusb fallback without D's side effects
+
+- **Not inline, confirmed:** `usb_unbind_interface()` calls `usb_autoresume_device(udev)` near
+  its start (`drivers/usb/core/driver.c:440-442`), so an unbind inside the runtime resume would
+  wait on itself.
+- **"every later resume skips it":** `usb_resume_interface()` jumps past the driver while
+  `needs_binding` is set (`driver.c:1363`).
+- **R6's fallback, `btusb_check_missed_resume()`, is new.** btusb keeps no `reset_resume`. After
+  btusb itself has taken a PM reference (in the waker, open or close), it checks
+  `intf->needs_binding`, or `BTUSB_SUSPENDING`. If set, it queues a reset, keeping the
+  reference through `BTUSB_RESET`.
+  - Against D, it opens no autosuspend gate, changes nothing at system resume, and cannot lose
+    its reset.
+  - It still pays a second reset, and catches a remote-wakeup resume only at the next TX.
+  - **Worth prototyping as D2,** in place of D as the fallback: in emulation, `recover` and
+    `close-recover`, plus `cycles`.
+- **The mail draft:** the log lines are real (`base-m-close-1`, lines 581-618). But the excerpt
+  leaves out the second interface's "no reset_resume" line (`btusb 2-1:1.1`), and must be copied
+  verbatim with times when used.
+  - The four questions are the right ones, and agree with the CO-43 prior art (one thread;
+    `9be427efc7644` cited).
+- **R6's warning from 2026-08** (Hongyu Xie's RFC, deferred unbind and rebind): Oliver Neukum
+  objected to the system workqueue for work that allocates with `GFP_KERNEL`. A core fix needs
+  a suitable queue. Taken into the question.
+
+### T3: agrees; a better order for the fix
+
+- **The leak:** agrees at all four sites. `urb_destroy()` frees the transfer buffer only with
+  `URB_FREE_BUFFER`, which these URBs do not set.
+- **R6 clears the flag under `txlock` first, then drains outside the lock in process context.**
+  R2 drained and cleared in one critical section.
+  - After E, a sender anchors on `deferred` only while the flag is set, under `txlock`. Once the
+    flag is cleared under the lock, nothing can be added. So draining afterwards, outside the
+    lock, is race-free.
+  - It lets the free use `kfree_skb()` in process context instead of freeing under a spinlock
+    with interrupts off.
+  - R2's concern, that new URBs then bypass the queue while RX failed to restart, changes
+    nothing in practice: on that path the device is unusable either way.
+  - **R6's order is preferred.** It needs E first, as R6 says.
+- **BT-24 "nearly moot"** (the submission fails only with `-ENODEV`, `-ESHUTDOWN` or `-ENOMEM`):
+  fair as severity. The stranded URB then also leaks at close (BT-25). The combined fix covers
+  both.
+- **Error completion:** R6 is not sure it is worth it. The 2017 objection (*"We cannot silently
+  drop one part of a transmission"*) argues for it. To be decided in the patch, with the 2017
+  thread read.
+
+### T4: agrees
+
+- The exemption is intended (`7bdb8a5cf17f`, 2011, checked); the missing recovery is not.
+- A fix belongs on the sync side. The risk of a reset loop at power-on, and the sysfs attribute
+  as the user-space answer, are points for the maintainers.
+
+### T6: wording
+
+- **A:** clear. Its comment, `/* -EACCES: runtime PM is disabled, e.g. during system sleep */`,
+  is the right size.
+- **E:** accurate.
+- **CO-44:** good. Its below-`---` note names `bt_status()` and the table, as the CO-44 prior art
+  also recommends, and asks the maintainer whether the old value was deliberate.
+  - "`Fixes:` alone usually gets it picked" for stable: true of the stable team's automatic
+    selection. So the note should say what we intend, either way.
+- **C:** the corrected sentence on what was and was not captured is right.
+
+### T7
+
+- **Reset signal:** the fakes R6 lists are real, but none occurs in our scenarios: no
+  `usb_reset_configuration()`, and no usbfs or sysfs configuration write. Pairing the signal
+  with the preceding device-descriptor read, and with the kernel's own `reset full-speed` line,
+  is cheap, and will be done.
+- **(d), a prediction for the kmemleak test:** an A+B `bt17` run should leak three skbs and three
+  8-byte setup packets at the disconnect. Passed on to the kmemleak run.
+- **System suspend:** run the emulator outside the guest, Raw Gadget on `dummy_hcd`, passed in
+  with `-device usb-host` on QEMU's xHCI.
+  - On this machine's own kernel that means loading `dummy_hcd` and `raw_gadget` on the host,
+    which is the laptop, and needs the operator's word.
+  - An outer VM, with nested QEMU, needs no such word. To be tried that way.
+
+### Correction to the earlier checks, finding 7: accepted
+
+`failed to resubmit (2)` appears on the unpatched kernel as well: `base-h-wedge-1` has it twice,
+after btusb's own reset. So it belongs to the forced unbind after any reset, not to D. Finding 7
+in `2026-11-13T1600Z-…-checks-and-plan.md` is corrected.

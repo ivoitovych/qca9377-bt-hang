@@ -84,6 +84,9 @@ below ("Reviewer 7, checked").
 7. **D's `failed to resubmit (2)`** (R6). **Confirmed:** once per `final` recover and close run
    (`final-m-recover-1.log` line 653, 11.781107), right after the forced unbind: a URB killed by
    the unbind, `-ENOENT`. Harmless, but it is printed at error level.
+   - **Corrected (outside reviewer 6, 2026-11-13; checked):** this is not D's. The unpatched
+     `base-h-wedge-1` has it twice as well, after btusb's own reset. It comes with the forced
+     unbind after any reset.
 8. **Is queueing the reset from the callback safe?** All four say yes, from the source:
    `usb_lock_device_for_reset()` refuses NOTATTACHED, UNBINDING and UNBOUND interfaces, and the
    work holds an interface reference.
