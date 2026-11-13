@@ -11,7 +11,7 @@ tag=${1:?usage}
 mkdir -p "$obj" "$w/img"
 if [ ! -e "$obj/.config" ]; then
 	cp /root/exp/agent-work/co20-diag-20261101/img/config-base "$obj/.config" || exit 2
-	cat "$w/scripts/frag-bt17.config" >>"$obj/.config"
+	cat "$w/harness/frag-bt17.config" >>"$obj/.config"
 fi
 make -C "$t" O="$obj" ARCH=x86_64 olddefconfig || exit 1
 make -C "$t" O="$obj" ARCH=x86_64 -j14 bzImage

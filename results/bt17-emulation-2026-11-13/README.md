@@ -173,6 +173,51 @@ Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
   - **So B, as written, leaves Bluetooth dead** when a controller that got a command needs a
     reset, and the device autosuspends before the command timeout. The unpatched kernel
     recovers it.
+- **B2, an experiment after the outside reviews**
+  (`patches/experimental/0001-B2-btusb-Don-t-wait-for-a-resume-in-the-HCI-command-timeout.patch`;
+  kernels `b2` and `ab2d` = A + B2 + D; `*-h2-*` logs, `SHA256SUMS-b2-kml`).
+  - **What B2 changes:**
+    - it marks a command parked on the deferred anchor (`BTUSB_CMD_DEFERRED`, under `txlock`);
+    - `btusb_reset()` skips the reset only for such a command;
+    - otherwise it hands the reset to a work item outside the HCI workqueue, which takes the PM
+      reference and resets as before.
+  - **Not a candidate:** the outside reviews require a core-coordinated recovery with request
+    lifetime, which B2 lacks.
+
+  | scenario | `b2` | `ab2d` |
+  |---|---|---|
+  | `bt17`, dead device | 3/3; no stall: credit back at once, the next commands time out every 2 s (base: blocked ~5.2 s) | 3/3, the same |
+  | `dropcmd` | 3/3 reset, usable | 3/3 |
+  | `dropcmd-wedge` (B failed here) | **3/3 reset seen, usable** | **3/3** |
+  | `bt17 --recover` | 0/3 (BT-18 without D) | 3/6 (power-on fails 3 times) |
+  | `close-recover` | 0/3 (BT-18 without D) | 3/3 |
+  | `cycles` 50 | 0 failures | 0 failures |
+  | sysfs `reset`, device suspended, nothing deferred | reset, usable | reset, usable |
+  | sysfs `reset` while a command is deferred | refused ("Command not sent; not resetting") | refused |
+
+  - **The `ab2d` recover failures are not B2's.** The same power-on failure (Set Powered 0x11,
+    HCI Reset `-110` although the emulator sent its event) appears once in 4 runs of `abd`,
+    with the original B. `final` passed 5/5 and `base` 5/5. The cause is open.
+  - **The sysfs refusal** confirms reviewer 6's point: the skip must belong to the timeout path,
+    not to every `hdev->reset` call.
+  - No kernel report in any run.
+- **BT-25, kmemleak** (kernels `base-kml` and `ab-kml`; `*-h-kml-*` logs; `matrix-kml-batch.txt`):
+  - **Controls:** the healthy runs show 0 unreferenced objects on both kernels.
+  - **Dead device, then disconnect:**
+    - `base-kml`: 5 and 2 objects;
+    - `ab-kml`: 3 and 9 objects;
+    - `dead-off`: 1 and 2 objects.
+  - **What leaks:**
+    - 8-byte setup packets from `alloc_ctrl_urb()`. The bytes are `20 00 00 00 00 00 06 00`, the
+      request header of a Write Class of Device;
+    - skbs from `hci_cmd_sync_alloc()`.
+  - `ab-kml` dead-2 matches the prediction of outside reviewer 6 exactly: three skbs and three
+    setup packets.
+  - **Only the close/disconnect scuttle was exercised.** The `failed:` path and
+    `play_deferred()`'s branches need a synchronous submit fault.
+- **The reset signal, both sides:** in `dropcmd-wedge` and the sysfs runs, the kernel's
+  `reset full-speed USB device` line comes first, then the two device-descriptor reads and the
+  config read, then the SET_CONFIGURATION the emulator keys on.
 
 **How the results were judged** (outside review, reviewer 7):
 - **`recover`:** "hci0 back" means that hci0 reappeared. That scenario does not power it on or

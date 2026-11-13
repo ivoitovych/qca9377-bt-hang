@@ -1097,7 +1097,12 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-25 — btusb: discarding deferred URBs appears to leak their skb and setup packet
 
-**Status 2026-11-13: suspected from source (ours); not yet checked by test (kmemleak in emulation planned); asked of outside reviewers (`reviews/2026-11-13T1740Z-bt17-open-work-for-outside-reviewers.md`, T3); not BT-17.**
+**Status 2026-11-13: confirmed by kmemleak in emulation on the close/disconnect path; from source on the other three sites; not BT-17.**
+- **The test:** `results/bt17-emulation-2026-11-13/`, `*-h-kml-*` logs.
+  - Healthy controls show 0 unreferenced objects.
+  - Dead-device runs leak 1 to 9 objects each: 8-byte setup packets from `alloc_ctrl_urb()`, and skbs from `hci_cmd_sync_alloc()`.
+  - One run matched an outside reviewer's prediction of three of each.
+- **First suspected from source (ours),** then asked of outside reviewers (`reviews/2026-11-13T1740Z-bt17-open-work-for-outside-reviewers.md`, T3).
 - **What a deferred URB owns:** its skb (`urb->context`) and, for an HCI command, its setup packet (`alloc_ctrl_urb()`, bluetooth-next `da3cc0258` `btusb_main.c:2294-2327`). Both are freed only in `btusb_tx_complete()` (`:2072-2101`), and the setup packet also in `play_deferred()`'s cleanup loop (`:5012-5016`).
 - **Where they are dropped:**
   - `usb_scuttle_anchored_urbs()` (`drivers/usb/core/urb.c:995-1013`) only unanchors the URBs and drops the anchor's reference. No completion runs.

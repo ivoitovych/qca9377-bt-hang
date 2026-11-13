@@ -100,6 +100,8 @@ class Emu:
         self.wedge_until_reset = "--wedge-until-reset" in sys.argv
         self.hci_wedged = False          # after the drop: transfers complete, no events
         self.reset_seen = []             # mono times of the reset signal
+        self.watch = False               # log control requests and note reset signals (sysfs-reset)
+        self.desc_seen = []              # mono times of device-descriptor reads while watching
         self.state = "healthy"          # healthy | wedged | dead
         self.suspended = False
         self.suspends = 0
@@ -210,11 +212,13 @@ class Emu:
     def control(self, seq, direction, buflen, setup, data):
         bm, br, wv, wi, wl = struct.unpack("<BBHHH", setup)
         desc = "control %02x %02x %04x %04x %04x" % (bm, br, wv, wi, wl)
-        if self.hci_wedged:
+        if self.hci_wedged or self.watch:
             # reset signal: SET_CONFIGURATION (usb_reset_and_verify_device() sends it to restore
             # the configuration after every reset; vhci_hcd handles the port reset and
             # SET_ADDRESS itself and never forwards them)
-            self.note("ctl while wedged: " + desc)
+            self.note("ctl while watched: " + desc)
+            if bm == 0x80 and br == 6 and (wv >> 8) == 1:
+                self.desc_seen.append(mono())
             if bm == 0x00 and br == 9:
                 self.hci_wedged = False
                 self.intr_out.clear()
@@ -573,11 +577,13 @@ def wedge_tail(emu, m, op, delay_ms, t_send, st, drop, sus):
     usable = cw == "0x00"
     log("RESULT dropcmd-wedge op=0x%04x delay_ms=%d send=%.6f transfer_done=%s autosuspended=%s "
         "class-write-status=%s reset_seen=%s tx_timeouts=%d (%s) not_resetting_lines=%d "
-        "resetting_usb_device_lines=%d hci0=%s set_powered_off=%s powered_on=%s final_class_write=%s usable=%s" %
+        "resetting_usb_device_lines=%d hci0=%s set_powered_off=%s powered_on=%s final_class_write=%s usable=%s desc_read=%s kernel_reset_line=%s" %
         (op, delay_ms, t_send, ",".join("%.6f" % x for x in drop) or "none",
          ",".join("%.6f" % x for x in sus) or "none", st, seen, len(tmo),
          ",".join("%.3f" % x for x in tmo), n_skip, n_reset, hci_up,
-         ("0x%02x" % r_off[3]) if r_off else "none", powered, cw or "none", usable))
+         ("0x%02x" % r_off[3]) if r_off else "none", powered, cw or "none", usable,
+         ",".join("%.6f" % x for x in emu.desc_seen) or "none",
+         ",".join("%.3f" % ts for ts, l in kl if "reset full-speed" in l) or "none"))
     return usable
 
 
@@ -746,6 +752,123 @@ def scenario_bt23(emu, m, dev, delay_ms):
     return st == "0x00"
 
 
+def scenario_sysfs_reset(emu, m, dev):
+    """the manual reset: hci0 up and the device suspended, then 1 is written to
+    /sys/class/bluetooth/hci0/reset (hdev->reset(), the second caller of the driver's reset hook).
+    Expect a USB reset (seen by the emulator and by the kernel) and a usable Bluetooth afterwards."""
+    if not wait_suspended(dev):
+        log("RESULT sysfs-reset SKIP device never autosuspended")
+        return False
+    time.sleep(0.5)
+    emu.watch = True
+    if "--while-deferred" in sys.argv:
+        # a command parked on the deferred anchor (its resume hangs, --fail-at 1), then the manual reset
+        class_write(m, 0x0C)
+        time.sleep(1.0)
+    t = mono()
+    kmsg_mark("sysfs reset written at mono %.6f" % t)
+    with open("/sys/class/bluetooth/hci0/reset", "w") as f:
+        f.write("1")
+    log("sysfs reset written: returned after %.3f s" % (mono() - t))
+    seen = wait_for(lambda: len(emu.reset_seen) > 0, 15)
+    time.sleep(3)
+    back = wait_for(lambda: os.path.exists("/sys/class/bluetooth/hci0"), 15)
+    powered, cw = False, None
+    if back:
+        powered = power_on(m, tries=30)
+        if powered:
+            t3 = class_write(m, 0x10)
+            r3 = m.wait_reply(0x000E, 10)
+            log("final class write: %.3f s %s" % ((r3[0] - t3) if r3 else -1, r3))
+            cw = ("0x%02x" % r3[3]) if r3 else "none"
+    kl = kernel_lines("tx timeout", "Resetting usb device", "not resetting", "Failed usb_autopm",
+                      "reset full-speed", "USB disconnect")
+    for ts, l in kl:
+        log("KERNEL %s" % l)
+    usable = cw == "0x00"
+    log("RESULT sysfs-reset write=%.6f reset_seen=%s desc_read=%s kernel_reset_line=%s "
+        "not_resetting_lines=%d resetting_usb_device_lines=%d hci0=%s powered_on=%s final_class_write=%s usable=%s" %
+        (t, ",".join("%.6f" % x for x in emu.reset_seen) or "none",
+         ",".join("%.6f" % x for x in emu.desc_seen) or "none",
+         ",".join("%.3f" % ts for ts, l in kl if "reset full-speed" in l) or "none",
+         len([1 for ts, l in kl if "not resetting" in l]),
+         len([1 for ts, l in kl if "Resetting usb device" in l]), back, powered, cw or "none", usable))
+    return seen and usable
+
+
+KML = "/sys/kernel/debug/kmemleak"
+
+
+def kml_scan(label):
+    """kmemleak: scan twice, 10 s apart, then read the report. Returns the report text."""
+    for i in range(2):
+        with open(KML, "w") as f:
+            f.write("scan")
+        if i == 0:
+            time.sleep(10)
+    rep = open(KML).read()
+    n = rep.count("unreferenced object")
+    log("KMEMLEAK %s: %d unreferenced objects" % (label, n))
+    for l in rep.splitlines():
+        log("KMEMLEAK %s | %s" % (label, l))
+    return rep
+
+
+def scenario_kml(emu, m, dev, mode):
+    """kmemleak after a close with URBs left on btusb's deferred anchor.
+    healthy: the device is suspended, one class write is answered (the deferred URB is played),
+             then hci0 is powered off.
+    dead:    --fail-at 1; the BT-17 sequence (suspended device, class writes, the resume hangs)
+             until the USB core disconnects the device and hci_unregister_dev() closes hci0.
+    dead-off: as dead, but hci0 is powered off (MGMT) one second after the first class write.
+    The kernel log shows how many commands it timed out; the emulator logs the HCI command
+    transfers it received: a command that timed out without a transfer was still deferred."""
+    with open(KML, "w") as f:
+        f.write("scan")
+    time.sleep(10)
+    with open(KML, "w") as f:
+        f.write("scan")
+    base_n = open(KML).read().count("unreferenced object")
+    with open(KML, "w") as f:
+        f.write("clear")
+    log("KMEMLEAK baseline before the scenario: %d objects (cleared)" % base_n)
+    n_cmds0 = len(emu.hci_cmds)
+    if mode == "healthy":
+        wait_suspended(dev)
+        t = class_write(m, 0x0C)
+        r = m.wait_reply(0x000E, 10)
+        log("class write after suspend: %s" % (r,))
+        m.send(0x0005, 0, b"\x00")
+        r = m.wait_reply(0x0005, 15)
+        log("Set Powered off: %s" % (r,))
+        ok = bool(r and r[3] == 0)
+    elif mode == "dead":
+        ok = scenario_bt17(emu, m, dev) is True
+    else:
+        if not wait_suspended(dev):
+            return False
+        time.sleep(1.0)
+        class_write(m, 0x0C)
+        time.sleep(1.0)
+        m.send(0x0005, 0, b"\x00")
+        r = m.wait_reply(0x0005, 25)
+        log("Set Powered off reply: %s" % (r,))
+        ok = wait_for(lambda: not os.path.exists("/sys/class/bluetooth/hci0"), 25)
+    time.sleep(3)
+    sent = len(emu.hci_cmds) - n_cmds0
+    log("EMU HCI command transfers received during the scenario: %d: %s" %
+        (sent, ["0x%04x" % o for t_, o in emu.hci_cmds[n_cmds0:]]))
+    tmo = kernel_lines("tx timeout")
+    log("kernel tx timeout lines: %d" % len(tmo))
+    rep = kml_scan("after " + mode)
+    objs = rep.split("unreferenced object")[1:]
+    hits = [o for o in objs if any(k in o for k in ("alloc_ctrl_urb", "__alloc_skb", "bt_skb_alloc",
+                                                    "hci_prepare_cmd", "btusb", "hci_send_cmd"))]
+    log("RESULT kml mode=%s scenario_ok=%s objects=%d bluetooth_related=%d hci_transfers_received=%d tx_timeouts=%d" %
+        (mode, ok, len(objs), len(hits), sent, len(tmo)))
+    return ok
+
+
 def scenario_cycles(emu, m, dev, n):
     lat = []
     bad = 0
@@ -805,6 +928,10 @@ def main():
             ok = scenario_sysfreeze(emu, m, dev, "--fault" in sys.argv)
         elif sc == "cycles":
             ok = scenario_cycles(emu, m, dev, int(arg("--cycles", "10")))
+        elif sc == "sysfs-reset":
+            ok = scenario_sysfs_reset(emu, m, dev)
+        elif sc == "kml":
+            ok = scenario_kml(emu, m, dev, arg("--mode", "healthy"))
         elif sc in ("dropcmd", "dropcmd-wedge"):
             emu.wedge_until_reset = emu.wedge_until_reset or sc == "dropcmd-wedge"
             ok = scenario_dropcmd(emu, m, dev, int(arg("--drop-hci-event", "0x0c24"), 0),
