@@ -77,8 +77,13 @@ Directed Advertising Timeout.
 - **The base side's one non-pass,** `Mesh - Send cancel - 1`, failed once on the unpatched
   base and passed patched: unrelated to this change (mesh, M-1).
 
+**The list's CI bot, run locally on the BlueZ test** (`--space user`, master `20ffd285b`, the
+patched kernel image; `tmp/bot-ci-local/co44-bluez-20261113/`): every check passes on both
+sides, 0 not PASS. Patched: CheckPatch, GitLint, BuildEll, BluezMake, CheckSmatch,
+bluezmakeextell, TestFunctional, IncrementalBuild, ScanBuild. Base: the same six tree checks.
+The bot's user-space checks do not run mgmt-tester; the new case's runs are the table above.
+
 **Next:**
-- the BlueZ test's bot run with the patched kernel (`--space user --kernel-image`);
 - the kernel patch and the BlueZ test as two sends, the test noting that it needs the kernel fix;
 - the operator's word for both.
 
