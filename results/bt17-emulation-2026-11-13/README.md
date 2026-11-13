@@ -110,7 +110,7 @@ key config) is `logs/bzImage-<kernel>.commit`.
 | dead device, guest with the host's CPU (Ryzen 7 5825U) | fails as above | — | the device no longer autosuspends with hci0 up (C); the fault never arises |
 | the same with C, guest CPU not Zen (`abdc`) | — | — | as A+B+D (C does not apply) |
 | BT-23, window widened to 400 ms by a debug-only delay, resume forced inside it (`bt23`) | 3/3: parked on an active device, timed out after 2.02 s, MGMT 0x05 | — | E: 2/2 answered after 0.40 s; 20/20 healthy cycles |
-| system suspend (`pm_test=devices`, freeze) | not testable: `vhci_hcd` refuses system suspend with a device attached (`platform_pm_suspend returns -16`), both kernels | | |
+| system suspend (`pm_test=devices`, freeze) | not testable here. `vhci_hcd` refuses system suspend with a device attached (`platform_pm_suspend returns -16`), both kernels. A second emulator on Raw Gadget and `dummy_hcd` (`harness/rg-emu.py`, `*-rg-*` logs, `SHA256SUMS-raw-gadget`) works before the sleep, but the freezer stops the user-space gadget during the resume ("device is not running") | | |
 
 Kernel reports (`BUG:`, `WARNING:`, KASAN, lockdep, hung task) in any run: none.
 

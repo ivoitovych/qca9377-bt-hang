@@ -1,0 +1,165 @@
+start 2026-11-13 04:54:25 kernel base-pm label rg-plain-1 args sysfreeze
+316bf9ac5215a2387e3413f4039f48ed17a9610a17a6422d7ccc4d9b2ce7c6b9  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base-pm
+e1add5b9ee84be9cc1c78255514bbec48a643852042eae62275252dce89b2dd1  /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba12c4
+input_len: 0x000000000103bf74
+output: 0x0000000001000000
+output_len: 0x0000000003831114
+kernel_total_size: 0x0000000004c20000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030aa2d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #6 SMP PREEMPT_DYNAMIC Fri Nov 13 04:39:30 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py sysfreeze'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py sysfreeze
+Changing into directory /root/exp
+New process 57 created
+random: crng init done
+   0.011 [mono   3.763631] GADGET event CONNECT
+   0.112 [mono   3.864583] GADGET event RESET
+   0.176 [mono   3.928105] GADGET event RESUME
+   0.240 [mono   3.992029] GADGET event RESET
+   0.304 [mono   4.056050] GADGET event RESUME
+Exception in thread Thread-2 (ep0_loop):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py", line 122, in ep0_loop
+    self.control(bytes(buf[8:16]))
+  File "/root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py", line 143, in control
+    log("GADGET configured, interrupt endpoint handle %d" % self.ep_int)
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+TypeError: %d format: a real number is required, not bytes
+usb 1-1: can't set config #1, error -110
+  20.039 [mono  23.791741] no hci0
+[    1.104379] usb usb3: Product: USB/IP Virtual Host Controller
+[    1.104383] usb usb3: Manufacturer: Linux 7.3.0-gda3cc02587c6 vhci_hcd
+[    1.104387] usb usb3: SerialNumber: vhci_hcd.0
+[    1.106151] hub 3-0:1.0: USB hub found
+[    1.106318] hub 3-0:1.0: 8 ports detected
+[    1.112890] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[    1.115130] serio: i8042 KBD port at 0x60,0x64 irq 1
+[    1.115212] serio: i8042 AUX port at 0x60,0x64 irq 12
+[    1.117441] Bluetooth: HCI UART driver ver 2.3
+[    1.117458] Bluetooth: HCI UART protocol H4 registered
+[    1.117465] Bluetooth: HCI UART protocol BCSP registered
+[    1.117594] Bluetooth: HCI UART protocol LL registered
+[    1.117602] Bluetooth: HCI UART protocol ATH3K registered
+[    1.117709] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    1.117821] Bluetooth: HCI UART protocol QCA registered
+[    1.117823] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+[    1.117830] Bluetooth: HCI UART protocol AG6XX registered
+[    1.117952] Bluetooth: HCI UART protocol Marvell registered
+[    1.118076] Bluetooth: HCI UART protocol AML registered
+[    1.118244] usbcore: registered new interface driver bcm203x
+[    1.118520] usbcore: registered new interface driver bpa10x
+[    1.118654] usbcore: registered new interface driver bfusb
+[    1.118780] usbcore: registered new interface driver btusb
+[    1.119058] usbcore: registered new interface driver ath3k
+[    1.119717] hid: raw HID events driver (C) Jiri Kosina
+[    1.120465] usbcore: registered new interface driver usbhid
+[    1.120473] usbhid: USB HID core driver
+[    1.121067] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+[    1.124418] NET: Registered PF_PACKET protocol family
+[    1.124849] Bluetooth: RFCOMM socket layer initialized
+[    1.124908] Bluetooth: RFCOMM ver 1.11
+[    1.124942] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    1.124972] Bluetooth: BNEP socket layer initialized
+[    1.124979] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    1.124997] Bluetooth: HIDP socket layer initialized
+[    1.125142] 9pnet: Installing 9P2000 support
+[    1.131069] IPI shorthand broadcast: enabled
+[    1.170773] sched_clock: Marking stable (1167819380, 744688)->(1207740743, -39176675)
+[    1.536166] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[    1.536990] 9p: Bad value for 'source'
+[    1.542038] VFS: Mounted root (9p filesystem) readonly on device 0:18.
+[    1.542368] VFS: Pivoted into new rootfs
+[    1.545079] Freeing unused kernel image (initmem) memory: 4124K
+[    1.545095] Write protecting the kernel read-only data: 38912k
+[    1.547354] Freeing unused kernel image (text/rodata gap) memory: 1284K
+[    1.548321] Freeing unused kernel image (rodata/data gap) memory: 1308K
+[    1.613649] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    1.613697] Run /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+[    1.613702]   with arguments:
+[    1.613706]     /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+[    1.613710]     -I
+[    1.613713]     sysfreeze'
+[    1.613716]   with environment:
+[    1.613719]     HOME=/
+[    1.613722]     TERM=linux
+[    1.613724]     TESTHOME=/root/exp
+[    1.613727]     TESTDBUS=0
+[    1.613730]     TESTDAEMON=0
+[    1.613733]     TESTDBUSSESSION=0
+[    1.613736]     XDG_RUNTIME_DIR=/run/user/0
+[    1.613738]     TESTMONITOR=0
+[    1.613741]     TESTEMULATOR=0
+[    1.613744]     TESTDEVS=0
+[    1.613746]     TESTAUTO=0
+[    1.613749]     TESTAUDIO=''
+[    1.613751]     TESTARGS='python3
+[    2.882673] random: crng init done
+[    3.762907] usb usb1: usb wakeup-resume
+[    3.762972] hub 1-0:1.0: hub_resume
+[    3.763113] usb usb1-port1: status 0101 change 0001
+[    3.864698] hub 1-0:1.0: state 7 ports 1 chg 0002 evt 0000
+[    3.864963] usb usb1-port1: status 0101, change 0000, 12 Mb/s
+[    3.984654] usb 1-1: new full-speed USB device number 2 using dummy_hcd
+[    4.140749] usb 1-1: New USB device found: idVendor=13d3, idProduct=3503, bcdDevice=0.01
+[    4.156728] usb 1-1: udev 2, busnum 1, minor = 1
+[    4.156745] usb 1-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    4.157837] usb 1-1: usb_probe_device
+[    9.404702] usb 1-1: can't set config #1, error -110
+[    9.405404] hub 1-0:1.0: state 7 ports 1 chg 0000 evt 0002
+[   18.744276] clocksource: Watchdog remote CPU 3 read timed out
+Process 57 exited with status 2
+exit=0 end 2026-11-13 04:54:50

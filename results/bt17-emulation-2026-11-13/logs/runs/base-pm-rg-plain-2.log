@@ -1,0 +1,164 @@
+start 2026-11-13 04:55:00 kernel base-pm label rg-plain-2 args sysfreeze
+316bf9ac5215a2387e3413f4039f48ed17a9610a17a6422d7ccc4d9b2ce7c6b9  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base-pm
+a129c8c09d1e6689731d6d9b32732c64d1dafecc2da9c6cfcca03e0023dd3bd2  /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba12c4
+input_len: 0x000000000103bf74
+output: 0x0000000001000000
+output_len: 0x0000000003831114
+kernel_total_size: 0x0000000004c20000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030aa2d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #6 SMP PREEMPT_DYNAMIC Fri Nov 13 04:39:30 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py sysfreeze'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/bt17-emu-20261113/scripts/rg-emu.py sysfreeze
+Changing into directory /root/exp
+New process 58 created
+random: crng init done
+   0.022 [mono   3.519506] GADGET event CONNECT
+   0.127 [mono   3.624010] GADGET event RESET
+   0.191 [mono   3.687521] GADGET event RESUME
+   0.256 [mono   3.752492] GADGET event RESET
+   0.319 [mono   3.815454] GADGET event RESUME
+   0.423 [mono   3.919659] GADGET configured, interrupt endpoint handle 2
+Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+   0.658 [mono   4.154336] MGMT event 0x0004 index 0
+   0.969 [mono   4.465959] MGMT reply opcode 0x0005 status 0x00 index 0
+   0.981 [mono   4.477749] MGMT event 0x0007 index 0
+   0.981 [mono   4.477960] MGMT reply opcode 0x000e status 0x00 index 0
+   0.995 [mono   4.492265] class write minor 12: (4.477956854, 1, 14, 0, 0)
+   0.996 [mono   4.492435] before sleep: bluetooth works=True
+   1.001 [mono   4.497699] MGMT event 0x002d index 0
+usb 1-1: device descriptor read/64, error -32
+usb 1-1: device descriptor read/64, error -32
+usb 1-1: device descriptor read/64, error -32
+usb 1-1: device descriptor read/64, error -32
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+random: crng reseeded on system resumption
+Bluetooth: hci0: Opcode 0x0c01 failed: -19
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+usb 1-1: device descriptor read/64, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+usb 1-1: device descriptor read/64, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+usb 1-1: device descriptor read/64, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+usb 1-1: device descriptor read/64, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+raw-gadget.0 gadget.0: failed to queue disconnect event
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+raw-gadget.0 gadget.0: failed to queue reset event
+raw-gadget.0 gadget.0: failed to queue resume event
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+raw-gadget.0 gadget.0: ignoring, device is not running
+usb 1-1: device descriptor read/8, error -32
+raw-gadget.0 gadget.0: failed to queue suspend event
+usb usb1-port1: unable to enumerate USB device
+qemu-system-x86_64: terminating on signal 15 from pid 453062 (timeout)
+exit=124 end 2026-11-13 05:00:00

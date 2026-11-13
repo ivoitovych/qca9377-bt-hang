@@ -54,8 +54,13 @@ plus on patch 5 an unknown commit id (no tree) and two CamelCase notes for the U
 1. D changes the system-resume path for the devices of `btusb_needs_reset_resume_table` (one
    USB reset more before the same rebinding). This harness cannot test it: `vhci_hcd`
    refuses system suspend while a device is attached (`platform_pm_suspend returns -16`,
-   `results/bt17-emulation-2026-11-13/logs/runs/*-pm-sysfreeze-*`). Next: the same device on `dummy_hcd` with a raw-gadget emulator
-   (both already in the guest config), or a real QCA ROME on a spare machine.
+   `results/bt17-emulation-2026-11-13/logs/runs/*-pm-sysfreeze-*`). A second emulator on
+   Raw Gadget and `dummy_hcd` (`harness/rg-emu.py`) brings btusb up and works before the
+   sleep, but it cannot take part in a system resume: the freezer stops the user-space
+   gadget until the devices have resumed. raw-gadget then leaves its running state
+   ("device is not running"), and the re-enumeration fails (`logs/runs/base-pm-rg-plain-2.log`).
+   Next: an in-kernel gadget function for this device, or a real QCA ROME on a spare machine
+   with a DMI-table quirk set through `usbcore.quirks=13d3:3503:b`.
 2. B makes each queued command time out on its own while the device resumes (three `tx
    timeout` lines in emulation instead of one blocked one). Acceptable, but the maintainers may
    prefer the core not to restore credit then.
