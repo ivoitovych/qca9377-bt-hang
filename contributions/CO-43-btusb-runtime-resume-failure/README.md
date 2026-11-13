@@ -83,5 +83,24 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
    prefer the core not to restore credit then.
 3. The bot's CI on base and base + series (`scripts/bot-ci-local.sh`); an outside review.
 4. C waits for evidence (a recurrence with USB core debug, an A/B with `power/control=on`).
+5. **The second outside review of the patches**
+   (`reviews/2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md`, checked there):
+   - **Don't send 1–4 as one series.** A and E go separately; B after another review; D only
+     after a narrower design.
+   - **D:**
+     - queue the reset only after a runtime suspend, recording `PMSG_IS_AUTO()` in
+       `btusb_suspend()`, so the system-resume path stays as it is;
+     - say why the reset is queued even when `btusb_resume()` fails;
+     - check the order of the two interfaces' callbacks against `suspend_count`.
+     - Prototype and test that variant in the emulator. The runtime path is testable here; the
+       system path still is not.
+   - **B:** a focused reading of `hci_cmd_timeout()` and `hci_cmd_work()` when B returns early,
+     above all when the device is about to be unregistered. Also correct the message's last
+     line.
+   - **E:** a final review of the lock order and the teardown cases.
+   - **Order of sending, by the review's priority:** CO-44, then E, then A, then B, then D;
+     C as an RFC only.
+   - **`scripts/bt17-arm-usb-debug.sh`:** make the usbmon capture rotate instead of stopping
+     at 500 MB, and have `--off` restore the saved state.
 
 **Decides:** the operator, for any send.
