@@ -49,9 +49,12 @@ Directed Advertising Timeout.
     Information is answered `0x05` on base, `0x08` patched.
   - The test expects `0x0f` Not Powered, logs "Unexpected status got 5 expected 15" (base) or
     "got 8 expected 15" (patched), and **passes anyway**: this test only logs a wrong status.
-  - So the patch changes this case too, and the test cannot tell. The case itself is a lead: a
-    Get Conn Info pending at power-off gets a timeout status instead of Not Powered, which is
-    the area of BT-8 (`86ef0f58bdec`). Not traced yet.
+  - So the patch changes this case too, and the test cannot tell. That is by design: the case
+    is declared `fail_tolerant = true` (`tools/mgmt-tester.c`, `get_conn_info_power_off_test`),
+    since the emulated controller is powered off under the pending Read RSSI. Not a defect
+    signal.
+  - With the patch, the reply there reads "Timeout" instead of "Authentication Failed",
+    which is the more accurate of the two.
 - **Logs:** `logs/excerpt.txt` (the new case's lines and every tester's totals, with each full
   log's SHA-256). The full logs stay local in `agent-work/bt17-mgmt-timeout/logs/` with
   `SHA256SUMS`: they carry the emulated controllers' addresses, which the publishing scan

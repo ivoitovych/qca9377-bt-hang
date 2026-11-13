@@ -50,9 +50,23 @@ plus on patch 5 an unknown commit id (no tree) and two CamelCase notes for the U
   - unpatched: parked and timed out, 3 of 3;
   - with E: answered, 2 of 2.
 
+**Ubuntu:** all five apply, in order, to Ubuntu `7.0.0-42`'s single `drivers/bluetooth/btusb.c`
+with line offsets only (`tmp/bt17-review/ubuntu-port-check.sh`, a dry run on a copy). A test
+module for the laptop's `-43` would need `-43`'s btusb source and the operator's word to install.
+
+**The list's CI bot, run locally** (`scripts/bot-ci-local.sh`, patches 1–4, the RFC left out;
+`tmp/bot-ci-local/co43-20261113/`):
+- every build and static check passes: BuildKernel, BuildKernel32, CheckAllWarning,
+  CheckSparse, CheckKernelLLVM, IncrementalBuild, SubjectPrefix, VerifyFixes, TestRunnerSetup;
+- CheckPatch, VerifySignedoff and GitLint fail only for the missing Signed-off-by.
+
 **Open before any send:**
-1. D changes the system-resume path for the devices of `btusb_needs_reset_resume_table` (one
-   USB reset more before the same rebinding). This harness cannot test it: `vhci_hcd`
+1. **D changes the system-resume path** of every btusb device that is reset-resumed at a
+   system resume. That is one USB reset more, before a rebinding they already got.
+   - **Affected:** the devices of `btusb_needs_reset_resume_table`, and **all Realtek
+     devices** with wakeup disabled (`btusb_suspend()` sets `reset_resume` for them,
+     `BTUSB_WAKEUP_AUTOSUSPEND`). The second group is the wider one.
+   - **Narrower variant to weigh:** queue the reset only for a runtime resume. This harness cannot test it: `vhci_hcd`
    refuses system suspend while a device is attached (`platform_pm_suspend returns -16`,
    `results/bt17-emulation-2026-11-13/logs/runs/*-pm-sysfreeze-*`). A second emulator on
    Raw Gadget and `dummy_hcd` (`harness/rg-emu.py`) brings btusb up and works before the

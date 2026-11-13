@@ -1,6 +1,6 @@
-From 179737e017058d8e10959533905be4cc8b6c00b7 Mon Sep 17 00:00:00 2001
+From 7d94e97d0a0b216380cc78a4faef70a005bc4a6b Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Fri, 13 Nov 2026 04:29:29 +0100
+Date: Fri, 13 Nov 2026 05:05:15 +0100
 Subject: [PATCH 3/5] Bluetooth: btusb: Recover after a reset-resume
 
 When a runtime resume fails and USB persist is enabled, the USB core
@@ -26,8 +26,13 @@ reset. With no pre_reset and post_reset callbacks, the core then
 unbinds and rebinds btusb, so the controller, which the reset may have
 cleared, is set up again.
 
-The devices of btusb_needs_reset_resume_table get the same rebinding
-at system resume as before, now after one more USB reset.
+At a system resume, a reset-resume was already followed by a rebinding
+(usb_resume_complete()): for the devices of
+btusb_needs_reset_resume_table, and for Realtek devices, whose
+btusb_suspend() sets reset_resume when wakeup is disabled. With this
+change those are rebound by the queued reset instead, that is after
+one more USB reset. That path was not tested: the emulated device
+cannot take part in a system sleep.
 ---
  drivers/bluetooth/btusb_main.c | 26 ++++++++++++++++++++++++++
  1 file changed, 26 insertions(+)
