@@ -20,4 +20,4 @@ echo "start $(date '+%F %T') kernel $tag label $label args $* cpus ${QEMU_SMP:-4
 sha256sum "$w/img/bzImage-$tag" "$w/scripts/bt17-emu.py" >>"$log"
 timeout 300 "$tr" -q "$q" -k "$w/img/bzImage-$tag" -- python3 -I "$w/scripts/bt17-emu.py" "$@" >>"$log" 2>&1
 echo "exit=$? end $(date '+%F %T')" >>"$log"
-grep -a -E "RESULT|EMU |MGMT (Command|Index)|tx timeout|Failed usb_autopm|Resetting usb|reset-resume|reset full-speed|USB disconnect|descriptor read|can't resume|gone after|failed: -110|btusb_waker|autoresume" "$log"
+grep -a -E "RESULT|EMU |MGMT (Command|Index)|command( 0x[0-9a-f]+)? tx timeout|Failed usb_autopm|Resetting usb|reset-resume|reset full-speed|USB disconnect|descriptor read|can't resume|gone after|failed: -110|btusb_waker|autoresume" "$log"
