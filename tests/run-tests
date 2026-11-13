@@ -13725,6 +13725,16 @@ git -C "$RSP" add -A
 (( $? != 0 )) \
     && ok "a bare unlisted UUID is still refused when the public list names a UUID Message-ID" \
     || bad "a bare unlisted UUID passed"
+# Two listed <uuid>@<host> Message-IDs must both pass (2026-11-13: the list was read with
+# its newlines deleted, so a second listed UUID ran into the first and neither matched)
+printf '%s%s%s\n' "$RSU2" "$RSAT" "$RSDOM" >> "$RSP/devtools/repo-scan-public-addresses"
+cp "$RSP/README.base" "$RSP/README.md"
+printf 'In-Reply-To: <%s%s%s>\nReferences: <%s%s%s>\n' "$RSU1" "$RSAT" "$RSDOM" "$RSU2" "$RSAT" "$RSDOM" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan lets two listed <uuid>@<host> Message-IDs through together" \
+    || bad "repo-scan refused one of two listed <uuid>@<host> Message-IDs"
 cp "$RSP/list.base" "$RSP/devtools/repo-scan-public-addresses"; rm -f "$RSP/list.base"
 cp "$RSP/README.base" "$RSP/README.md"; git -C "$RSP" add -A
 
