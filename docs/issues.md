@@ -1092,7 +1092,19 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
   A sender that takes `txlock` in between still sees the flag and anchors its URB on `deferred`. Nothing sends it until the next resume, and an HCI command in it times out.
 - **Relation to BT-23:** the same kind of window, on the failure path. CO-43 E closes BT-23's window (successful resume) but not this one.
+- **See also BT-25,** on the same scuttle.
 - **Next:** an emulator test, a deferred send racing a failed receive-URB submission at resume (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`, finding 17). Then the fix: scuttle under `txlock`, or clear the flag first. The scuttle frees URBs, so which of the two fits is to be decided.
+
+## BT-25 — btusb: discarding deferred URBs appears to leak their skb and setup packet
+
+**Status 2026-11-13: suspected from source (ours); not yet checked by test (kmemleak in emulation planned); asked of outside reviewers (`reviews/2026-11-13T1740Z-bt17-open-work-for-outside-reviewers.md`, T3); not BT-17.**
+- **What a deferred URB owns:** its skb (`urb->context`) and, for an HCI command, its setup packet (`alloc_ctrl_urb()`, bluetooth-next `da3cc0258` `btusb_main.c:2294-2327`). Both are freed only in `btusb_tx_complete()` (`:2072-2101`), and the setup packet also in `play_deferred()`'s cleanup loop (`:5012-5016`).
+- **Where they are dropped:**
+  - `usb_scuttle_anchored_urbs()` (`drivers/usb/core/urb.c:995-1013`) only unanchors the URBs and drops the anchor's reference. No completion runs.
+  - The two scuttles of `deferred` therefore appear to free neither: in `btusb_close()` (`:2238`) and in `btusb_resume()`'s `failed:` path (`:5076`).
+  - `play_deferred()`'s cleanup loop frees the setup packet but not the skb.
+- **When it would happen:** hci0 closed while commands are deferred on a suspended device, or a failed resume with deferred data. Both are rare; each costs at most a few small allocations.
+- **Next:** a kmemleak run in emulation that closes hci0 with a command deferred; then a fix together with BT-24 (drain under `txlock`, free with `dev_kfree_skb_any()`).
 
 ---
 
