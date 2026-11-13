@@ -1199,7 +1199,7 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (`cc_profile_combo_box_set_device()` returns early for an unchanged device, GNOME 46.7
   `cc-profile-combo-box.c:96`, `CO-17`); not yet shown that this is the only cause.
   **2026-11-13, during U12's third occurrence: the refresh explanation does not cover it.**
-  - **[operator]** 14:33 (screenshot, local): output "Handsfree - MOMENTUM 4", no Configuration row.
+  - **[operator]** 14:33 (screenshot shown in the session, not saved as a file): output "Handsfree - MOMENTUM 4", no Configuration row.
   - **[state]** The card offers three hands-free profiles, all available, with
     `headset-head-unit-msbc` active (`EX-092`). So a codec choice existed.
   - **[log]** WirePlumber's switch to that profile was at 14:19:53.481 (`EX-090`).
@@ -1506,6 +1506,18 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
     - no HCI command timeout.
     - The kernel's only error lines from 14:00 are four `SCO packet for unknown connection handle 8` (14:21:02.691 to 14:21:05.123). They came after the host disconnected that link at 14:21:02.673 (`EX-094`, `EX-095`): the late-data race seen under U15 (handle 4) and on 10-13, the SCO counterpart of BT-6. They are not part of this incident.
     - `EX-093` is kept but superseded by `EX-094`: its claim of a clean log was written before the output was read.
+  - **Restored at 15:13:00, 53 minutes later, without a reconnect.** The operator left the
+    choice of step to us; we picked the gentlest: one D-Bus `ConnectProfile` call for the A2DP
+    sink (`0000110b`) on the connected headset. The adapter power cycle was ruled out because
+    powering on resumes an idle controller, BT-17's path.
+    - bluetoothd opened AVDTP signalling and transport.
+    - `a2dp-sink` was connected at .485 and streaming at .543 (Chrome was playing); AVRCP followed (`EX-096`).
+    - WirePlumber set `a2dp-sink` by itself at .400. The card offered all eight profiles again (`EX-097`).
+    - So the controller, the link and the headset were fine throughout: only bluetoothd's A2DP
+      session was gone, and nothing in the stack tried to bring it back.
+    - That the policy plugin does not reconnect A2DP after a local abort is a reading of the
+      log, not yet of the source.
+    - State snapshots before (14:36) and after (15:13) are in the raw archive.
   - **The remedy is the one already prepared:** CO-03's bluetoothd with `a14d59725`, which waits for a pending Start instead of aborting. It is awaiting the operator's decision to install.
   - Raw (local): `archive/incidents/20261113-a2dp-lost-third/`. It holds the screenshot, the PipeWire graph of 14:30, and the journal cuts. The HCI capture stays at `/var/log/bt-health/trace/bt-20261113-112428.btsnoop` until the archive copies it.
 
