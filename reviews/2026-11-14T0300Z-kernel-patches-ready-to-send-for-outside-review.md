@@ -70,8 +70,8 @@ author's overlapping patch.
 ## 1. CO-44 — MGMT: a timed-out command reported as Authentication Failed
 
 **The defect.** When an HCI command sent from an MGMT handler gets no answer, the sync layer
-returns `-ETIMEDOUT`, and `mgmt_errno_status()` has no case for it, so user space is told
-`MGMT_STATUS_AUTH_FAILED` (0x05). bluetoothd then prints "Authentication Failed" for a Set
+returns `-ETIMEDOUT`, and `mgmt_errno_status()` maps that case to the wrong status, so user
+space is told `MGMT_STATUS_AUTH_FAILED` (0x05). bluetoothd then prints "Authentication Failed" for a Set
 Device Class or a Set Powered that simply timed out; users and maintainers read it as a pairing
 problem. The table for HCI statuses already maps the controller's own timeouts (0x08, 0x10) to
 `MGMT_STATUS_TIMEOUT`, and a timed-out pairing connection already reports 0x08; the patch makes
