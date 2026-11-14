@@ -1,0 +1,109 @@
+From 627f4c5328a61ae7c33a694b07417d48f6b24e23 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:31:36 +0100
+Subject: [PATCH 1/2] Bluetooth: btusb: Report SCO receive failures by cause
+
+btusb_isoc_complete() logs "corrupted SCO packet" whenever
+btusb_recv_isoc() fails, but btusb_recv_isoc() fails in three different
+cases: no memory for a new packet, a header whose length does not fit
+the buffer, and a header whose handle is not a live SCO or eSCO
+connection. The last one is the common case. It is how a continuation
+fragment taken for a header after a lost isochronous frame is caught,
+but it also catches the data that controllers deliver for a link the
+host has just deleted, which happens at the end of most calls. All
+three print the same line, so the log cannot tell a hang-up from data
+loss, and the rejected handle is not shown.
+
+Return a distinct error for each case. Keep "corrupted SCO packet" for
+the length check, and give allocation failure and the unknown handle
+messages of their own, the latter naming the handle. Rate-limit the two
+new messages: an isochronous URB completes every millisecond.
+
+All three still count in err_rx. Allocation failures count there on the
+interrupt and bulk paths too. An unknown handle cannot be told apart
+from a misaligned fragment here, and it is the check that catches one:
+bt_skb_alloc(HCI_MAX_SCO_SIZE) leaves at least 252 bytes of tailroom
+after the header, so the length check can reject only a dlen of 253 to
+255.
+---
+ drivers/bluetooth/btusb_main.c | 36 +++++++++++++++++++++++++++-------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca098e..3e69091001567 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1545,7 +1545,12 @@ static bool btusb_validate_sco_handle(struct hci_dev *hdev,
+ 	}
+ }
+ 
+-static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count)
++/* Returns 0, -ENOMEM when no buffer could be allocated, -EILSEQ for a header
++ * whose length does not fit, or -ENOENT for a header whose handle is not a
++ * live SCO or eSCO connection; the rejected handle is then stored in *handle.
++ */
++static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
++			   u16 *handle)
+ {
+ 	struct sk_buff *skb;
+ 	unsigned long flags;
+@@ -1581,14 +1586,22 @@ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count)
+ 
+ 			hci_skb_expect(skb) = hdr->dlen;
+ 
+-			if (skb_tailroom(skb) < hci_skb_expect(skb) ||
+-			    !btusb_validate_sco_handle(data->hdev, hdr)) {
++			if (skb_tailroom(skb) < hci_skb_expect(skb)) {
+ 				kfree_skb(skb);
+ 				skb = NULL;
+ 
+ 				err = -EILSEQ;
+ 				break;
+ 			}
++
++			if (!btusb_validate_sco_handle(data->hdev, hdr)) {
++				*handle = hci_handle(__le16_to_cpu(hdr->handle));
++				kfree_skb(skb);
++				skb = NULL;
++
++				err = -ENOENT;
++				break;
++			}
+ 		}
+ 
+ 		if (!hci_skb_expect(skb)) {
+@@ -1821,6 +1834,7 @@ static void btusb_isoc_complete(struct urb *urb)
+ {
+ 	struct hci_dev *hdev = urb->context;
+ 	struct btusb_data *data = hci_get_drvdata(hdev);
++	u16 handle;
+ 	int i, err;
+ 
+ 	BT_DBG("%s urb %p status %d count %d", hdev->name, urb, urb->status,
+@@ -1839,11 +1853,19 @@ static void btusb_isoc_complete(struct urb *urb)
+ 
+ 			hdev->stat.byte_rx += length;
+ 
+-			if (btusb_recv_isoc(data, urb->transfer_buffer + offset,
+-					    length) < 0) {
++			err = btusb_recv_isoc(data, urb->transfer_buffer + offset,
++					      length, &handle);
++			if (!err)
++				continue;
++
++			if (err == -ENOMEM)
++				bt_dev_err_ratelimited(hdev, "no memory for SCO packet");
++			else if (err == -ENOENT)
++				bt_dev_err_ratelimited(hdev, "SCO packet for unknown handle %u dropped",
++						       handle);
++			else
+ 				bt_dev_err(hdev, "corrupted SCO packet");
+-				hdev->stat.err_rx++;
+-			}
++			hdev->stat.err_rx++;
+ 		}
+ 	} else if (urb->status == -ENOENT) {
+ 		/* Avoid suspend failed when usb_kill_urb */
+-- 
+2.43.0
+

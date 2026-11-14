@@ -1,0 +1,6 @@
+s3f f-dead-1 bt17 --fail-at 1
+s3f f-recover-1 bt17 --fail-at 1 --recover
+s3f f-close-1 close-recover --fail-at 1 --recover
+s3f f-dropcmd-1 dropcmd
+s3f f-wedge-1 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+s3f f-cycles-1 cycles --cycles 30

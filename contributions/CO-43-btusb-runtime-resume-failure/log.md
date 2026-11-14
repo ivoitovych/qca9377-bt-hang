@@ -82,5 +82,13 @@ D (not as a fix); a lane is working on the harness fixes, B2 and a narrowed D (`
   alone, none with the fix (12/12).
 - **BT-24 fixed and shown on the B2 tree** (not reachable on E alone): a parked URB 3/3 unfixed,
   none 3/3 fixed.
+
+## 2026-11-14 — the series rebased on E (`send-series-20261114/`)
+
+E goes first, alone. The rest is one series on top of it: A, B2, D v2, BT-24's fix, BT-25's fix,
+with a cover letter that names E as the base and says B2 needs D. Runtime matrix 18/18 on the full
+stack (`results/co43-co21-co20-packages-2026-11-14/`). checkpatch: only the missing
+Signed-off-by. Open before a send: an outside review of B2 and D v2 (the system path is shown by
+reading only).
   Open: a device already runtime-suspended at system sleep still queues the reset at system
   resume (source reading), so the system path is not yet unchanged; untestable on `vhci_hcd`.

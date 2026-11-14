@@ -3,9 +3,9 @@
 *Prepared 2026-11-14 by the project <https://github.com/ivoitovych/qca9377-bt-hang> (fixes for
 the Linux Bluetooth stack found on a laptop with a QCA9377 controller, USB `13d3:3503`). Nothing
 in this document has been sent. Every patch is reproduced verbatim from the file named above it,
-with that file's SHA-256, so the text you review is the text that would be mailed. Items 1 to 3
-carry no Signed-off-by yet: the author adds it when sending. Items 4 to 9 were prepared earlier
-and already carry it; please ignore that line.*
+with that file's SHA-256, so the text you review is the text that would be mailed. Most items carry
+no Signed-off-by yet: the author adds it when sending. Items 4 to 7 were prepared earlier and
+already carry it; please ignore that line.*
 
 ## A. What we ask of you
 
@@ -53,14 +53,16 @@ Each item says which of these it had, and where the logs are in the repository.
 | 6 | CO-05 + CO-26: `mesh_send_sync()` without `hdev->lock`, and a lost failed add | bluetooth-next | 2 + cover letter |
 | 7 | CO-35: the L2CAP ECRED deferred-accept hang, backported to stable (retested 2026-11-14) | 6.18.y, 6.12.y, 6.6.y (and a request for 7.3.y) | 2 per line + covers |
 | 8 | CO-22: two ASUS QCA ROME device-table entries for stable (rechecked 2026-11-14) | stable (request only) | — |
-| 9 | CO-21 (close to ready): btusb picks alternate setting 0 while a SCO link is up | bluetooth-next | 2 |
+| 9 | CO-21: btusb picks alternate setting 0 while a SCO link is up (added 2026-11-14) | bluetooth-next | 2 + cover letter |
+| 10 | CO-20: btusb logs the data of a just-closed SCO link as corruption (added 2026-11-14) | bluetooth-next | 2 + cover letter |
+| 11 | CO-43, the rest: btusb when a resume fails (for review; not yet to send) | bluetooth-next, on top of item 2 | 4 shown + cover letter |
 
-Items 1 to 8 are ready to send. Item 9 passed its emulator test and the bot's checks except one
-title length, and is included because its design changed after an earlier review.
+Items 1 to 10 are ready to send. Item 11 is complete and tested in emulation, but one of its
+paths can only be argued from the source, so it is here for review before anyone sends it.
 
-**Not included:** CO-02's SCO series is already on the list (2026-10-27) and its v2 is being
-prepared; CO-43's B and D (the other btusb resume fixes) are still in testing; CO-12's
-advertising-duration clamp waits on a design decision and on another author's overlapping patch.
+**Not included:** CO-02's SCO series is already on the list (2026-10-27); its v2 is built and one
+test result is still being explained. CO-12's advertising-duration clamp waits on a design
+decision and on another author's overlapping patch.
 
 ---
 
@@ -4029,30 +4031,62 @@ Only `btusb.o` was built (as asked); no module was loaded and no device test was
 
 ---
 
-## 9. CO-21 (close to ready) — btusb picks alternate setting 0 while a SCO link is up
+## 9. CO-21 — btusb picks alternate setting 0 while a SCO link is up
 
 **The defect** (`Fixes: baac6276c0a9`). `btusb_notify()` takes the air mode from the one link
 whose state changed and picks the USB alternate setting from it. With two SCO links, one going
 down switches the other to alt 0, and a single-link race does the same (seen twice on the laptop,
-2026-09-02). **The design** (two patches on bluetooth-next `42b8c2d72926`): the core keeps the air
+2026-09-02). **The design** (two patches, now on bluetooth-next `da3cc02587c6`): the core keeps the air
 mode of each SCO link that came up (from its Synchronous Connection Complete event), and btusb's
 worker derives the setting from the links that are up; notify only schedules it. An earlier
 single-patch candidate was judged not ready by an outside review (a failed second setup still
 sends the link-up notification); this design answers that.
 
-**Tested** (2026-11-11): real btusb in a QEMU guest against an emulated controller through usbip:
-the base kernel fails 5 of 5 scenarios, the patches pass 5 of 5; a 20-scenario model of the
-worker. The bot's checks on current bluetooth-next: no new findings except GitLint (patch 2's
-title is 81 characters; it will be shortened). Patch 1 changes `struct hci_conn`, so `bluetooth.ko`
-and btusb must be rebuilt together.
+**Tested** (2026-11-14, on the rebased pair): real btusb in a QEMU guest against an emulated
+controller through usbip, five scenarios (two links, either one going down first; mSBC and CVSD;
+the single-link race), two runs each: unpatched 0 of 10, patched 10 of 10; a 20-scenario model of
+the worker (11-01). The bot's checks: builds and all 11 testers pass, tester results identical to
+the base side; only the three Signed-off-by checks fail. Patch 2's subject is now 65 characters.
+Patch 1 changes `struct hci_conn`, so `bluetooth.ko` and btusb must be rebuilt together.
 
 **Questions for you.** The design itself: is a per-link air mode in the core acceptable, or should
-btusb track it alone? The counting helper's locking.
+btusb track it alone? The counting helper's locking. `Cc: stable`: patch 2 cannot build without
+patch 1, so a stable tag would have to cover both.
 
-**`contributions/CO-21-btusb-sco-alt-setting/patches-20261101/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch`** (SHA-256 `03a2b67e4bea17998ab9a8973e44e456972f9c72d25128230cf8538f592f751b`)
+**`contributions/CO-21-btusb-sco-alt-setting/send-20261114/cover-letter.txt`** (SHA-256 `081023850715ada81bcba3a0bdbce3aae19a880c86ba5f7744c51ab49aadb9ee`)
+
+```text
+Subject: [PATCH 0/2] Bluetooth: btusb: Pick the SCO alternate setting from the links that are up
+
+btusb chooses the isochronous alternate setting from the last SCO
+notification, not from the SCO links that exist. When one of two SCO
+links goes down, the remaining link is moved to alternate setting 0,
+which has no isochronous bandwidth. A SCO connection is also counted
+from the start of its setup: if another connection is added or removed
+while it is being set up, the notification of the link coming up is
+ignored.
+
+ 1: keep the air mode of a SCO link that came up in the connection and
+    add a helper that counts the links that are up by air mode.
+ 2: let btusb_work() select the alternate setting from those counts.
+
+Patch 2 needs patch 1.
+
+Tested with a userspace controller attached over usbip to a QEMU guest
+(the real btusb and core): five scenarios (two mSBC links with either
+one hung up first, two CVSD links, and a single link set up while another
+connection is added and removed, for mSBC and for CVSD). Unpatched, the
+setting is wrong at some point in all five; with the series all five
+pass, in two runs each.
+
+The series applies on bluetooth-next without conflicts. The existing
+sco-tester results are the same with and without it.
+```
+
+**`contributions/CO-21-btusb-sco-alt-setting/send-20261114/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch`** (SHA-256 `2a32bab6cf0b0c994745a27e144d1bf425c21cc562626a1de877c67e168ec5c8`)
 
 ```diff
-From 38c2e8c9620f1450d9892307d266eb915779c98d Mon Sep 17 00:00:00 2001
+From b3081ed5919f046c579809afc699b771efb2e2bc Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sun, 1 Nov 2026 18:33:56 +0100
 Subject: [PATCH 1/2] Bluetooth: Keep the air mode of SCO links that came up
@@ -4071,8 +4105,6 @@ the one its notification already assumes. Add hci_conn_sco_up_num() to
 count the SCO links that are up by air mode, so that a driver can
 configure itself from the links that exist instead of from the last
 notification.
-
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  include/net/bluetooth/hci.h      |  6 ++++++
  include/net/bluetooth/hci_core.h | 25 +++++++++++++++++++++++++
@@ -4080,10 +4112,10 @@ Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
  3 files changed, 33 insertions(+)
 
 diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
-index 1c992e87534d7..419d756b5d21b 100644
+index efb85c781e4e9..4a21721411689 100644
 --- a/include/net/bluetooth/hci.h
 +++ b/include/net/bluetooth/hci.h
-@@ -2762,6 +2762,12 @@ struct hci_ev_sync_conn_complete {
+@@ -2898,6 +2898,12 @@ struct hci_ev_sync_conn_complete {
  	__u8     air_mode;
  } __packed;
  
@@ -4097,10 +4129,10 @@ index 1c992e87534d7..419d756b5d21b 100644
  struct hci_ev_sync_conn_changed {
  	__u8     status;
 diff --git a/include/net/bluetooth/hci_core.h b/include/net/bluetooth/hci_core.h
-index 9d5d3ab4a075e..36cfa06894867 100644
+index 6e07bf206e4ad..5380aa39dac97 100644
 --- a/include/net/bluetooth/hci_core.h
 +++ b/include/net/bluetooth/hci_core.h
-@@ -762,6 +762,7 @@ struct hci_conn {
+@@ -778,6 +778,7 @@ struct hci_conn {
  	__u16		disc_timeout;
  	__u16		conn_timeout;
  	__u16		setting;
@@ -4108,7 +4140,7 @@ index 9d5d3ab4a075e..36cfa06894867 100644
  	__u16		auth_payload_timeout;
  	__u16		le_conn_min_interval;
  	__u16		le_conn_max_interval;
-@@ -1132,6 +1133,30 @@ static inline unsigned int hci_conn_num(struct hci_dev *hdev, __u8 type)
+@@ -1149,6 +1150,30 @@ static inline unsigned int hci_conn_num(struct hci_dev *hdev, __u8 type)
  	}
  }
  
@@ -4140,10 +4172,10 @@ index 9d5d3ab4a075e..36cfa06894867 100644
  {
  	struct hci_conn_hash *c = &hdev->conn_hash;
 diff --git a/net/bluetooth/hci_event.c b/net/bluetooth/hci_event.c
-index d05934fef4d99..9237d05557ca2 100644
+index 419a7e6748507..4ea66f6aa7120 100644
 --- a/net/bluetooth/hci_event.c
 +++ b/net/bluetooth/hci_event.c
-@@ -3366,6 +3366,7 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
+@@ -3432,6 +3432,7 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
  	} else if (ev->link_type == SCO_LINK) {
  		switch (conn->setting & SCO_AIRMODE_MASK) {
  		case SCO_AIRMODE_CVSD:
@@ -4151,7 +4183,7 @@ index d05934fef4d99..9237d05557ca2 100644
  			if (hdev->notify)
  				hdev->notify(hdev, HCI_NOTIFY_ENABLE_SCO_CVSD);
  			break;
-@@ -5232,6 +5233,7 @@ static void hci_sync_conn_complete_evt(struct hci_dev *hdev, void *data,
+@@ -5624,6 +5625,7 @@ static void hci_sync_conn_complete_evt(struct hci_dev *hdev, void *data,
  
  		conn->state  = BT_CONNECTED;
  		conn->type   = ev->link_type;
@@ -4159,21 +4191,19 @@ index d05934fef4d99..9237d05557ca2 100644
  
  		hci_debugfs_create_conn(conn);
  		hci_conn_add_sysfs(conn);
-
-base-commit: 42b8c2d729268a65a2d98064e8dc59ff53646b14
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-21-btusb-sco-alt-setting/patches-20261101/0002-Bluetooth-btusb-Pick-the-SCO-alternate-setting-from-.patch`** (SHA-256 `a26df223b10be5d4195b0553e97e48f7df26696a0915445b740adfa47ab7be0f`)
+**`contributions/CO-21-btusb-sco-alt-setting/send-20261114/0002-Bluetooth-btusb-Pick-the-SCO-alt-setting-from-links-.patch`** (SHA-256 `c6619e69a92ceba902f2053d1d3830b957279cc439a3921423379e01e43b4626`)
 
 ```diff
-From f5cdb7fda6f0e1dbf40cc1c7a269f1d5ad351f3d Mon Sep 17 00:00:00 2001
+From 18500f5259e29f7114e4cb63a5762ee7cc90c53e Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sun, 1 Nov 2026 18:33:58 +0100
-Subject: [PATCH 2/2] Bluetooth: btusb: Pick the SCO alternate setting from the
- links that are up
+Subject: [PATCH 2/2] Bluetooth: btusb: Pick the SCO alt setting from links
+ that are up
 
 btusb_notify() takes the air mode from whichever notification changed
 the number of SCO connections, and btusb_work() selects alternate
@@ -4200,13 +4230,12 @@ when no link is up. The notifications only schedule the work, so
 notifications that come before it runs are all taken into account.
 
 Fixes: baac6276c0a9 ("Bluetooth: btusb: handle mSBC audio over USB Endpoints")
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  drivers/bluetooth/btusb_main.c | 26 ++++++++++++++++----------
  1 file changed, 16 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
-index 92a78a7e60396..26c18cf238fa6 100644
+index 95398e2ca098e..4e017a9cd9555 100644
 --- a/drivers/bluetooth/btusb_main.c
 +++ b/drivers/bluetooth/btusb_main.c
 @@ -1069,8 +1069,6 @@ struct btusb_data {
@@ -4218,7 +4247,7 @@ index 92a78a7e60396..26c18cf238fa6 100644
  	bool usb_alt6_packet_flow;
  	int isoc_altsetting;
  	int suspend_count;
-@@ -2473,10 +2471,13 @@ static void btusb_notify(struct hci_dev *hdev, unsigned int evt)
+@@ -2475,10 +2473,13 @@ static void btusb_notify(struct hci_dev *hdev, unsigned int evt)
  
  	BT_DBG("%s evt %d", hdev->name, evt);
  
@@ -4235,7 +4264,7 @@ index 92a78a7e60396..26c18cf238fa6 100644
  	}
  }
  
-@@ -2585,6 +2586,7 @@ static void btusb_work(struct work_struct *work)
+@@ -2587,6 +2588,7 @@ static void btusb_work(struct work_struct *work)
  {
  	struct btusb_data *data = container_of(work, struct btusb_data, work);
  	struct hci_dev *hdev = data->hdev;
@@ -4243,7 +4272,7 @@ index 92a78a7e60396..26c18cf238fa6 100644
  	int new_alts = 0;
  	int err;
  
-@@ -2595,7 +2597,11 @@ static void btusb_work(struct work_struct *work)
+@@ -2597,7 +2599,11 @@ static void btusb_work(struct work_struct *work)
  	if (data->proto == BTUSB_PROTO_H4)
  		return;
  
@@ -4256,7 +4285,7 @@ index 92a78a7e60396..26c18cf238fa6 100644
  		if (!test_bit(BTUSB_DID_ISO_RESUME, &data->flags)) {
  			err = usb_autopm_get_interface(data->isoc ? data->isoc : data->intf);
  			if (err < 0) {
-@@ -2607,18 +2613,18 @@ static void btusb_work(struct work_struct *work)
+@@ -2609,18 +2615,18 @@ static void btusb_work(struct work_struct *work)
  			set_bit(BTUSB_DID_ISO_RESUME, &data->flags);
  		}
  
@@ -4279,6 +4308,1182 @@ index 92a78a7e60396..26c18cf238fa6 100644
  			/* Bluetooth USB spec recommends alt 6 (63 bytes), but
  			 * many adapters do not support it.  Alt 1 appears to
  			 * work for all adapters that do not have alt 6, and
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-21-btusb-sco-alt-setting/send-20261114/CHECKS.md`** (SHA-256 `720a211066a03b3d3483478ed395e81f7154507c52eec5b651e7c0471a106a43`)
+
+````markdown
+# CO-21 - checks, with commands and results (2026-11-14)
+
+Paths are under `/root/exp/agent-work/lane1-btusb-20261114/` (the work directory) unless absolute.
+Nothing was sent. Nothing touched this machine's Bluetooth (every kernel ran in a QEMU guest or in the
+bot's Docker image).
+
+## The patches and the tip
+
+| | |
+|---|---|
+| patches | `0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch`, `0002-Bluetooth-btusb-Pick-the-SCO-alt-setting-from-links-.patch` (this directory), exported from branch `lane1-co21` of `lx/` (`b3081ed5919f`, `18500f5259e2`) |
+| bluetooth-next tip | `da3cc02587c629420603df4395179ec82955c941` "Bluetooth: hci_vhci: Report write readiness with queued input" (`git ls-remote https://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next.git refs/heads/master` returned it on 2026-11-14) |
+| from | the patches of `contributions/CO-21-btusb-sco-alt-setting/patches-20261101/` (base `42b8c2d72926`), applied to the tip with `git am --3way`: no conflict. Changes: patch 2's subject (75 to 65 characters, "alternate" to "alt", "the links" to "links"), the Signed-off-by lines removed |
+| `Fixes:` target | `baac6276c0a9f36f1fe1f00590ef00d2ba5ba626` "Bluetooth: btusb: handle mSBC audio over USB Endpoints", 2020-04-03 (`git log -1`, found in the history) |
+
+## checkpatch `--strict`
+
+`harness/checkpatch-docker.sh <patch>` (the tree's `scripts/checkpatch.pl --strict` in the list bot's image,
+commit ids resolved in the project's `cache/linux`):
+
+```
+== checkpatch --strict 0001-...
+ERROR: Missing Signed-off-by: line(s)
+total: 1 errors, 0 warnings, 0 checks, 63 lines checked
+== checkpatch --strict 0002-...
+ERROR: Missing Signed-off-by: line(s)
+total: 1 errors, 0 warnings, 0 checks, 65 lines checked
+```
+
+The only finding on each is the Signed-off-by you add. (Plain `perl scripts/checkpatch.pl --strict --no-tree`
+gives the same, plus the no-tree warning for the `Fixes:` id on patch 2.)
+
+## get_maintainer.pl
+
+`harness/get-maintainer-docker.sh <patch>` (default options, top of the tree, bot image):
+
+```
+0001: Marcel Holtmann <marcel@holtmann.org> (maintainer:BLUETOOTH SUBSYSTEM)
+      Luiz Augusto von Dentz <luiz.dentz@gmail.com> (maintainer:BLUETOOTH SUBSYSTEM)
+      linux-bluetooth@vger.kernel.org (open list:BLUETOOTH SUBSYSTEM)
+      linux-kernel@vger.kernel.org (open list)
+0002: Marcel Holtmann <marcel@holtmann.org> (maintainer:BLUETOOTH DRIVERS,blamed_fixes:1/1=100%)
+      Luiz Augusto von Dentz <luiz.dentz@gmail.com> (maintainer:BLUETOOTH DRIVERS)
+      Hsin-Yu Chao <hychao@chromium.org> (blamed_fixes:1/1=100%)
+      Chethan T N <chethan.tumkur.narayan@intel.com> (blamed_fixes:1/1=100%)
+      Johan Hedberg <johan.hedberg@intel.com> (blamed_fixes:1/1=100%)
+      Amit K Bag <amit.k.bag@intel.com> (blamed_fixes:1/1=100%)
+      linux-bluetooth@vger.kernel.org (open list:BLUETOOTH DRIVERS)
+      linux-kernel@vger.kernel.org (open list)
+```
+
+## VerifyFixes with full history
+
+The bot's patched-side run has a partial history here (the project's kernel repository has holes: "Could not
+read 10d97b74e2ee"), so its VerifyFixes says "Target SHA should be an ancestor of your tree". The bot's own
+`verify_fixes.sh` on patch 2's message, committed on mainline master in a repository with the complete
+history (`harness/verifyfixes-full.sh`, output `logs/verifyfixes-full-0002-...txt`):
+
+```
+== verify_fixes.sh master..37e815da42ba (0 Signed-off-by line(s))
+	Fixes tag: Fixes: baac6276c0a9 ("Bluetooth: btusb: handle mSBC audio over USB Endpoints")
+	Has these problem(s):
+		- empty lines surround the Fixes tag
+== exit 1
+== verify_fixes.sh master..2026116af3f3 (1 Signed-off-by line(s))
+== exit 0
+```
+
+Without a Signed-off-by, `Fixes:` is the body's last line, which the script reads as surrounded by empty
+lines. With your Signed-off-by right after it, VerifyFixes passes: id, subject and ancestry are right. The
+same as CO-43 E.
+
+## The five usbip scenarios, base against patched, on the rebased tree
+
+The emulator of 2026-11-11 (`harness/usbip-bt-emu.py`, `usbip-bt-emu.py` of the CO-21 results; the only change is
+that it exits non-zero on FAIL and prints `BT17-EXIT`): a userspace controller attached to `vhci_hcd` in a QEMU
+guest (4 CPUs), the real btusb and core. Kernels: `base` = bluetooth-next `da3cc02587c6` (image of the
+CO-43 emulation work, same config family), `co21` = the same plus the two patches (`img/bzImage-co21`, KASAN
+and lockdep config of `img/config-co21`). Commands: `harness/run-batch-usbip.sh harness/spec-co21.txt
+logs/summary-co21.txt`; logs `logs/runs/*-c21-*.log` (`logs/SHA256SUMS`).
+
+| scenario | base (2 runs) | patched (2 runs) |
+|---|---|---|
+| msbc-two-links-first | FAIL, FAIL | PASS, PASS |
+| msbc-two-links-second | FAIL, FAIL | PASS, PASS |
+| cvsd-two-links-first | FAIL, FAIL | PASS, PASS |
+| msbc-single-race | FAIL, FAIL | PASS, PASS |
+| cvsd-single-race | FAIL, FAIL | PASS, PASS |
+
+Unpatched: 0 of 10; patched: 10 of 10. The same as 2026-11-11 (5 of 5 each way). In each failing run the
+alternate setting is wrong at the step the scenario names (alt 0 after one of two links hangs up, or never
+set after the single-link race), in the logs' `STATE ... WRONG` lines.
+
+## The bot's CI, run locally
+
+`harness/run-bot-co21.sh`: the project clone's `scripts/bot-ci-local.sh` (`project/`, a clone of the project made
+in this work directory), the list bot's own code (action-ci `c7d077f185cd`, image
+`bluez-action-ci:c7d077f185cd`) in Docker, dry run, nothing posted. Base `da3cc02587c6`, BlueZ `20ffd285b58f`,
+ELL `002b32d7c091`. Results: `project/tmp/bot-ci-local/co21-20261114/` (`summary.txt`, `patched/`, `base/`,
+`compare-*.txt`, `kernel-report-scan.txt`; the `work/` tree deleted after the run).
+
+Local changes to that clone's script (each marked in it): the three of the CO-43 E package (the patched side
+gets a `--shared` clone of this tree instead of kernel.org's blobless history clone, which is slow; the
+tree's common git directory mounted read-only; Docker limited to 6 CPUs), and a read-only mount of the
+tree's object-store alternates.
+
+| check | patched (base + 2 patches) | base |
+|---|---|---|
+| CheckPatch | FAIL: only `Missing Signed-off-by` (both patches) | - |
+| VerifyFixes | FAIL: `Target SHA should be an ancestor of your tree` (the project's partial history; passes with full history, see above) | - |
+| VerifySignedoff | FAIL: author and committer Signed-off-by missing | - |
+| GitLint | FAIL: only `CC1 Body does not contain a 'Signed-off-by' line` (no title-length message on either patch) | - |
+| SubjectPrefix | PASS | - |
+| BuildKernel | PASS | PASS |
+| CheckAllWarning | PASS | PASS |
+| CheckSparse | WARNING | WARNING (identical output: a `note: in included file` line for `hci_event.c`; the sparse log shows only existing "array of flexible structures" warnings in `hci.h` and `hci_core.h`, with the bot's own verdict line `PASS`) |
+| BuildKernel32 | PASS | PASS |
+| CheckKernelLLVM | PASS | PASS |
+| TestRunnerSetup | PASS | PASS |
+| TestRunner_* (l2cap, iso, bnep, mgmt, rfcomm, sco, ioctl, mesh, smp, userchan, 6lowpan) | all PASS | all PASS |
+| IncrementalBuild | PASS | - |
+
+`compare-TestRunner_*.txt`: the not-passed sets are identical on both sides for every tester (0 and 0), including
+`TestRunner_sco-tester`. `kernel-report-scan.txt`: every tester log of both sides is `clean`. Every failure
+on the patched side is the missing Signed-off-by or the project's partial history; none comes from the change.
+
+GitLint's title-length rule (80 characters) does not fire on either title (the new 65-character one, or the
+old 75-character one: the README's "81 characters" was not reproduced). The bot's note on a `Fixes:` that is
+the last line of the body is VerifyFixes's, handled by the position of your Signed-off-by.
+
+## W=1 builds
+
+`harness/build-kernel.sh co21`: the guest kernel build of the series (the config with KASAN and lockdep,
+`-j4`): `make rc=0`. The bot's BuildKernel, CheckAllWarning (W=1 for the changed files), BuildKernel32 and
+CheckKernelLLVM passed on the patched side (table above).
+````
+
+---
+
+## 10. CO-20 — btusb logs the data of a just-closed SCO link as corruption
+
+**The defect.** After a SCO link's Disconnection Complete, the controller can still deliver a few
+packets for its handle. btusb drops them, but logs "corrupted SCO packet" and counts them in
+`err_rx`, the same message and counter as real corruption and allocation failure, so every hung-up
+call looks like a link error (on the laptop, 25 of 32 such lines fell within 0.5 s of a
+disconnect). Patch 1 reports receive failures by cause; patch 2 logs data for a just-closed link at
+debug level and does not count it as an error. No `Fixes:`. Mainline's separate newline fix for the
+same message is `f51ee3bb5fbe`.
+
+**Tested** (2026-11-14, real btusb in a QEMU guest, emulated controller): 20 calls hung up with
+data in flight, 3 runs: unpatched 17, 19 and 24 "corrupted SCO packet" lines, patched none (the
+residue at debug level). Five packets for a handle that never was a link: unpatched counted as
+corrupted, patched reported as an unknown handle and not as corrupted. Limitation (in patch 2's
+message): with two links up, data of the closed link that follows a packet of the remaining one is
+still reported. The bot's checks: only the Signed-off-by checks fail; it selects no tester for a
+btusb-only change.
+
+**Questions for you.** Whether the classification belongs in btusb or in the core's SCO receive
+path; whether the debug-level line is worth keeping at all.
+
+**`contributions/CO-20-sco-unknown-handle-messages/send-20261114/cover-letter.txt`** (SHA-256 `165af202fc66230cec2d3179452a712a8e14148849511eadf9b18a1836dd9238`)
+
+```text
+Subject: [PATCH 0/2] Bluetooth: btusb: Do not report the end of a SCO call as corruption
+
+At the end of most SCO and eSCO calls the controller still delivers
+data it queued before the Disconnection Complete. btusb rejects it,
+because the connection is gone, with the same "corrupted SCO packet"
+error as for real corruption, and counts it in err_rx. On one laptop
+155 of 181 closed links had receive data after the Disconnection
+Complete (up to 33.6 ms), and 25 of 32 "corrupted SCO packet" lines
+fell within 0.5 s of one.
+
+ 1: btusb_recv_isoc() returns a distinct error for an allocation
+    failure, a header whose length does not fit, and a header whose
+    handle is not a live connection; each gets its own message, the
+    last naming the handle, and the two new ones are rate limited.
+ 2: data for the handle of the link that has just closed is logged at
+    debug level and not counted in err_rx. Any other unknown handle,
+    which is how a misaligned fragment after a lost isochronous frame
+    shows, stays an error and is counted.
+
+Tested with a userspace controller attached over usbip to a QEMU guest
+(the real btusb and core). In three runs of 20 calls with data in flight
+at the hang-up, the unpatched kernel logged "corrupted SCO packet" 17,
+19 and 24 times and the series none, with 15 to 18 debug lines. With
+two links up and five packets injected for a handle that never was a
+link, the unpatched kernel logged 6 or 7 "corrupted SCO packet" and the
+series 5 to 7 "unknown handle dropped" and none of the former; the
+excess over five is data of the link that closed first, which patch 2
+documents as still reported.
+```
+
+**`contributions/CO-20-sco-unknown-handle-messages/send-20261114/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch`** (SHA-256 `cc00b6ef028c6f3b1b96f87e2a8c28481a3daeca1d713d2ceb8926a3db93272c`)
+
+```diff
+From 627f4c5328a61ae7c33a694b07417d48f6b24e23 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:31:36 +0100
+Subject: [PATCH 1/2] Bluetooth: btusb: Report SCO receive failures by cause
+
+btusb_isoc_complete() logs "corrupted SCO packet" whenever
+btusb_recv_isoc() fails, but btusb_recv_isoc() fails in three different
+cases: no memory for a new packet, a header whose length does not fit
+the buffer, and a header whose handle is not a live SCO or eSCO
+connection. The last one is the common case. It is how a continuation
+fragment taken for a header after a lost isochronous frame is caught,
+but it also catches the data that controllers deliver for a link the
+host has just deleted, which happens at the end of most calls. All
+three print the same line, so the log cannot tell a hang-up from data
+loss, and the rejected handle is not shown.
+
+Return a distinct error for each case. Keep "corrupted SCO packet" for
+the length check, and give allocation failure and the unknown handle
+messages of their own, the latter naming the handle. Rate-limit the two
+new messages: an isochronous URB completes every millisecond.
+
+All three still count in err_rx. Allocation failures count there on the
+interrupt and bulk paths too. An unknown handle cannot be told apart
+from a misaligned fragment here, and it is the check that catches one:
+bt_skb_alloc(HCI_MAX_SCO_SIZE) leaves at least 252 bytes of tailroom
+after the header, so the length check can reject only a dlen of 253 to
+255.
+---
+ drivers/bluetooth/btusb_main.c | 36 +++++++++++++++++++++++++++-------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca098e..3e69091001567 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1545,7 +1545,12 @@ static bool btusb_validate_sco_handle(struct hci_dev *hdev,
+ 	}
+ }
+ 
+-static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count)
++/* Returns 0, -ENOMEM when no buffer could be allocated, -EILSEQ for a header
++ * whose length does not fit, or -ENOENT for a header whose handle is not a
++ * live SCO or eSCO connection; the rejected handle is then stored in *handle.
++ */
++static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
++			   u16 *handle)
+ {
+ 	struct sk_buff *skb;
+ 	unsigned long flags;
+@@ -1581,14 +1586,22 @@ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count)
+ 
+ 			hci_skb_expect(skb) = hdr->dlen;
+ 
+-			if (skb_tailroom(skb) < hci_skb_expect(skb) ||
+-			    !btusb_validate_sco_handle(data->hdev, hdr)) {
++			if (skb_tailroom(skb) < hci_skb_expect(skb)) {
+ 				kfree_skb(skb);
+ 				skb = NULL;
+ 
+ 				err = -EILSEQ;
+ 				break;
+ 			}
++
++			if (!btusb_validate_sco_handle(data->hdev, hdr)) {
++				*handle = hci_handle(__le16_to_cpu(hdr->handle));
++				kfree_skb(skb);
++				skb = NULL;
++
++				err = -ENOENT;
++				break;
++			}
+ 		}
+ 
+ 		if (!hci_skb_expect(skb)) {
+@@ -1821,6 +1834,7 @@ static void btusb_isoc_complete(struct urb *urb)
+ {
+ 	struct hci_dev *hdev = urb->context;
+ 	struct btusb_data *data = hci_get_drvdata(hdev);
++	u16 handle;
+ 	int i, err;
+ 
+ 	BT_DBG("%s urb %p status %d count %d", hdev->name, urb, urb->status,
+@@ -1839,11 +1853,19 @@ static void btusb_isoc_complete(struct urb *urb)
+ 
+ 			hdev->stat.byte_rx += length;
+ 
+-			if (btusb_recv_isoc(data, urb->transfer_buffer + offset,
+-					    length) < 0) {
++			err = btusb_recv_isoc(data, urb->transfer_buffer + offset,
++					      length, &handle);
++			if (!err)
++				continue;
++
++			if (err == -ENOMEM)
++				bt_dev_err_ratelimited(hdev, "no memory for SCO packet");
++			else if (err == -ENOENT)
++				bt_dev_err_ratelimited(hdev, "SCO packet for unknown handle %u dropped",
++						       handle);
++			else
+ 				bt_dev_err(hdev, "corrupted SCO packet");
+-				hdev->stat.err_rx++;
+-			}
++			hdev->stat.err_rx++;
+ 		}
+ 	} else if (urb->status == -ENOENT) {
+ 		/* Avoid suspend failed when usb_kill_urb */
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-20-sco-unknown-handle-messages/send-20261114/0002-Bluetooth-btusb-Log-SCO-data-for-a-just-closed-link-.patch`** (SHA-256 `ed885c0b6ad0ba896f03edcddfe97a92ec80d10ca25dbc350f5a675bc91aad42`)
+
+```diff
+From b40e722f699e3343cf03458548dfaedf823f08f1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:31:44 +0100
+Subject: [PATCH 2/2] Bluetooth: btusb: Log SCO data for a just closed link at
+ debug level
+
+When a SCO or eSCO link is disconnected, the controller can still
+deliver data that it queued before the Disconnection Complete. Once
+hci_conn_del() has removed the connection from the hash, and until the
+notification that stops the isochronous URBs has been handled, such data
+reaches btusb_recv_isoc() with a handle that btusb_validate_sco_handle()
+no longer finds. It is then logged as an unknown handle and counted in
+err_rx, at the end of most calls.
+
+Remember the handle of the last SCO header that validated. A header
+whose handle is no longer live but equals that handle is data for the
+link that has just closed: log it at debug level and do not count it in
+err_rx. Any other unknown handle, most likely a continuation fragment
+taken for a header after a lost isochronous frame, stays an error and is
+counted.
+
+The remembered handle is protected by rxlock, like the reassembly
+state. It is forgotten when the reassembly state is, on an alternate
+setting change and in btusb_free_frags(), and when the last SCO link is
+gone and the isochronous URBs have been killed, so that it cannot match
+a later misaligned fragment. Only a misaligned fragment in the short
+window after its own link closed, whose first two bytes give that
+link's handle, is still taken for residue. With two links up, data of
+the closed link that comes after a packet of the remaining one is still
+reported as an unknown handle.
+---
+ drivers/bluetooth/btusb_main.c | 42 ++++++++++++++++++++++++++++++----
+ 1 file changed, 38 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 3e69091001567..12dc6bb3ade1e 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1055,6 +1055,10 @@ struct btusb_data {
+ 	struct sk_buff *sco_skb;
+ 	struct sk_buff *rx_skb;
+ 
++	/* Handle of the last SCO header that validated, under rxlock */
++	u16 sco_last_handle;
++	bool sco_last_valid;
++
+ 	struct usb_endpoint_descriptor *intr_ep;
+ 	struct usb_endpoint_descriptor *bulk_tx_ep;
+ 	struct usb_endpoint_descriptor *bulk_rx_ep;
+@@ -1299,6 +1303,7 @@ static inline void btusb_free_frags(struct btusb_data *data)
+ 
+ 	dev_kfree_skb_irq(data->sco_skb);
+ 	data->sco_skb = NULL;
++	data->sco_last_valid = false;
+ 
+ 	/* rx_skb may hold an ERR_PTR from a previous h4_recv_skb() call */
+ 	if (!IS_ERR(data->rx_skb))
+@@ -1546,14 +1551,18 @@ static bool btusb_validate_sco_handle(struct hci_dev *hdev,
+ }
+ 
+ /* Returns 0, -ENOMEM when no buffer could be allocated, -EILSEQ for a header
+- * whose length does not fit, or -ENOENT for a header whose handle is not a
+- * live SCO or eSCO connection; the rejected handle is then stored in *handle.
++ * whose length does not fit, -ENOTCONN for a header whose handle is no longer
++ * live but is the handle of the last header that validated, which is data
++ * for a link that has just been deleted, or -ENOENT for any other header
++ * whose handle is not a live SCO or eSCO connection. For -ENOTCONN and
++ * -ENOENT the rejected handle is stored in *handle.
+  */
+ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
+ 			   u16 *handle)
+ {
+ 	struct sk_buff *skb;
+ 	unsigned long flags;
++	u16 h;
+ 	int err = 0;
+ 
+ 	spin_lock_irqsave(&data->rxlock, flags);
+@@ -1594,14 +1603,23 @@ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
+ 				break;
+ 			}
+ 
++			h = hci_handle(__le16_to_cpu(hdr->handle));
++
+ 			if (!btusb_validate_sco_handle(data->hdev, hdr)) {
+-				*handle = hci_handle(__le16_to_cpu(hdr->handle));
++				*handle = h;
+ 				kfree_skb(skb);
+ 				skb = NULL;
+ 
+-				err = -ENOENT;
++				if (data->sco_last_valid &&
++				    h == data->sco_last_handle)
++					err = -ENOTCONN;
++				else
++					err = -ENOENT;
+ 				break;
+ 			}
++
++			data->sco_last_handle = h;
++			data->sco_last_valid = true;
+ 		}
+ 
+ 		if (!hci_skb_expect(skb)) {
+@@ -1858,6 +1876,12 @@ static void btusb_isoc_complete(struct urb *urb)
+ 			if (!err)
+ 				continue;
+ 
++			if (err == -ENOTCONN) {
++				bt_dev_dbg(hdev, "SCO packet for closed handle %u dropped",
++					   handle);
++				continue;
++			}
++
+ 			if (err == -ENOMEM)
+ 				bt_dev_err_ratelimited(hdev, "no memory for SCO packet");
+ 			else if (err == -ENOENT)
+@@ -2570,6 +2594,7 @@ static int btusb_switch_alt_setting(struct hci_dev *hdev, int new_alts)
+ 		spin_lock_irqsave(&data->rxlock, flags);
+ 		dev_kfree_skb_irq(data->sco_skb);
+ 		data->sco_skb = NULL;
++		data->sco_last_valid = false;
+ 		spin_unlock_irqrestore(&data->rxlock, flags);
+ 
+ 		err = __set_isoc_interface(hdev, new_alts);
+@@ -2665,8 +2690,17 @@ static void btusb_work(struct work_struct *work)
+ 		if (btusb_switch_alt_setting(hdev, new_alts) < 0)
+ 			bt_dev_err(hdev, "set USB alt:(%d) failed!", new_alts);
+ 	} else {
++		unsigned long flags;
++
+ 		usb_kill_anchored_urbs(&data->isoc_anchor);
+ 
++		/* No more SCO data can arrive: forget the last handle so that
++		 * a later misaligned fragment is not taken for its data.
++		 */
++		spin_lock_irqsave(&data->rxlock, flags);
++		data->sco_last_valid = false;
++		spin_unlock_irqrestore(&data->rxlock, flags);
++
+ 		if (test_and_clear_bit(BTUSB_ISOC_RUNNING, &data->flags))
+ 			__set_isoc_interface(hdev, 0);
+ 
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-20-sco-unknown-handle-messages/send-20261114/CHECKS.md`** (SHA-256 `48770b7a8d246eba0a9bbe35b432df78f447e78237e9589fc994db7c93ae502f`)
+
+````markdown
+# CO-20 - checks, with commands and results (2026-11-14)
+
+Paths are under `/root/exp/agent-work/lane1-btusb-20261114/` unless absolute. Nothing was sent; nothing
+touched this machine's Bluetooth (QEMU guests and the bot's Docker image only).
+
+## The patches and the tip
+
+| | |
+|---|---|
+| patches | `0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch`, `0002-Bluetooth-btusb-Log-SCO-data-for-a-just-closed-link-.patch` (this directory), branch `lane1-co20` of `lx/` |
+| bluetooth-next tip | `da3cc02587c629420603df4395179ec82955c941` (`git ls-remote` of kernel.org, 2026-11-14) |
+| from | the 2026-11-11 prototype `0003-co20-...` and `0004-co20-...` (`results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/patches/`), made for the older `btusb.c`; converted to `btusb_main.c` with `scripts/convert-patch.py` and applied with `git apply --3way`: clean. Messages kept, the review-free wording as in the prototype; no `Fixes:` tag; no Signed-off-by |
+| the newline fix | mainline's `f51ee3bb5fbe` "Bluetooth: Add missing newline to bt_dev_{err,warn}_ratelimited()" is an ancestor of the tip (`git merge-base --is-ancestor`): `bt_dev_err_ratelimited()` ends its line, so the new messages are complete records |
+
+## What the patches do (and do not)
+
+1. Distinct errors from `btusb_recv_isoc()`: `-ENOMEM`, `-EILSEQ` (the length check, still "corrupted SCO
+   packet"), `-ENOENT` (header whose handle is not a live link; its own message naming the handle, rate
+   limited). All three still count in `err_rx`.
+2. `-ENOTCONN`: the handle equals the last header that validated, i.e. data of the link that has just closed:
+   debug level, not counted. The remembered handle is under `rxlock` and forgotten with the reassembly
+   state, on an alternate-setting change, in `btusb_free_frags()`, and when the last SCO link is gone.
+   Not changed: the core's "SCO packet for unknown connection handle" (`hci_core.c`), which the emulator
+   still shows (1 to 6 per run); and with two links up, data of the closed link after a packet of the
+   remaining one is still reported (the patch says so).
+
+## checkpatch `--strict`
+
+`harness/checkpatch-docker.sh <patch>` (bot image, tree `lx`):
+
+```
+== checkpatch --strict 0001-...   ERROR: Missing Signed-off-by: line(s)  total: 1 errors, 0 warnings, 0 checks, 67 lines checked
+== checkpatch --strict 0002-...   ERROR: Missing Signed-off-by: line(s)  total: 1 errors, 0 warnings, 0 checks, 98 lines checked
+```
+
+The only finding is the Signed-off-by you add.
+
+## get_maintainer.pl
+
+`harness/get-maintainer-docker.sh <patch>`, the same output for both patches:
+
+```
+Marcel Holtmann <marcel@holtmann.org> (maintainer:BLUETOOTH DRIVERS)
+Luiz Augusto von Dentz <luiz.dentz@gmail.com> (maintainer:BLUETOOTH DRIVERS)
+linux-bluetooth@vger.kernel.org (open list:BLUETOOTH DRIVERS)
+linux-kernel@vger.kernel.org (open list)
+```
+
+## Emulator, base against patched
+
+The usbip emulator of 2026-11-11 (`harness/usbip-bt-emu.py`; changes: exits non-zero on FAIL, and a `JUDGE` of
+the kernel's SCO receive messages with `--expect clean|noisy`): a userspace controller attached to `vhci_hcd`
+in a QEMU guest (4 CPUs), real btusb and core. Kernels: `base` = bluetooth-next `da3cc02587c6`, `co20` = the
+same plus the two patches (`img/bzImage-co20`). Commands: `harness/run-batch-usbip.sh harness/spec-co20.txt
+logs/summary-co20.txt`, then `spec-co20-rerun.txt` -> `summary-co20-rerun.txt`; logs `logs/runs/*-c20-*.log`.
+
+- **`rx-cycles`:** 20 times, one mSBC link up with SCO data flowing, hung up with data still in flight. Counts
+  from `dmesg` per run:
+
+  | run | base: "corrupted SCO packet" | patched: "corrupted" / "unknown handle dropped" / debug "closed handle" |
+  |---|---|---|
+  | 1 | 17 | 0 / 0 / 15 |
+  | 2 | 19 (rerun `2b`; the first base run lost its emulator socket, `OSError 77`, no verdict) | 0 / 0 / 16 |
+  | 3 | 24 | 0 / 0 / 18 |
+
+  The patched kernel logs nothing above debug level for the hang-ups; the unpatched one logs an error for
+  most of them.
+- **`rx-unknown`:** two mSBC links up with data, a packet for a handle that is no link injected five times,
+  then both closed.
+
+  | runs | base: "corrupted SCO packet" | patched: "unknown handle dropped" (corrupted was 0 in every run) |
+  |---|---|---|
+  | first batch, 1 to 3 | 7, 7, 6 | 5, 6, 6 (runs 2 and 3 judged WRONG by the first, strict judge, below) |
+  | rerun, `r1` to `r5` | 6 (`r1`) | 5, 7, 6, 6, 6 |
+
+  The injected five are still reported, as `unknown handle dropped`, and none as `corrupted`. The extra one or
+  two are data of the link that closed first, after a packet of the other: the limitation stated in patch 2.
+  My first judge demanded exactly five and called runs 2 and 3 of the patched kernel WRONG; it is relaxed to "at
+  least five and no `corrupted`" (`usbip-bt-emu.py`, `judge_counts()`), and the rerun runs `r1` to `r5` use it.
+  The first runs are kept as they were.
+- **The first batch:** 12 runs, exit 1 on three: the base `rx-cycles-2` (socket lost, rerun), and the two patched
+  `rx-unknown` runs under the strict judge. The rerun batch: 7 runs, 0 FAIL.
+
+## The bot's CI, run locally
+
+`harness/run-bot-co20.sh`: as for CO-21 (`CHECKS.md` there lists the three local changes to the clone's
+`bot-ci-local.sh` and the added alternates mount): list bot's code `c7d077f185cd` in Docker, dry run, base
+`da3cc02587c6`, BlueZ `20ffd285b58f`, ELL `002b32d7c091`. Results:
+`project/tmp/bot-ci-local/co20-20261114/` (`summary.txt`, `patched/`, `base/`; `work/` deleted).
+
+| check | patched (base + 2 patches) | base |
+|---|---|---|
+| CheckPatch | FAIL: only `Missing Signed-off-by` | - |
+| VerifyFixes | PASS (no `Fixes:` tag) | - |
+| VerifySignedoff | FAIL: author and committer Signed-off-by missing | - |
+| GitLint | FAIL: only `CC1 Body does not contain a 'Signed-off-by' line` | - |
+| SubjectPrefix | PASS | - |
+| BuildKernel | PASS | PASS |
+| CheckAllWarning | PASS | PASS |
+| CheckSparse | PASS | PASS |
+| BuildKernel32 | PASS | PASS |
+| CheckKernelLLVM | PASS | PASS |
+| TestRunnerSetup | PASS | PASS |
+| IncrementalBuild | PASS | - |
+
+The bot's file mapping selects no `TestRunner_*` tester for a btusb-only change, so there is nothing to compare
+between the sides; the emulator above is what exercises the code. Every patched-side failure is the missing
+Signed-off-by.
+
+`harness/build-kernel.sh co20`: `make rc=0` (the guest kernel with KASAN and lockdep).
+````
+
+---
+
+## 11. CO-43, the rest (for review, not yet to send) — btusb when a resume fails
+
+**What it is.** The other btusb fixes from BT-17's emulation, as one series on top of item 2 (E):
+A (item 3), then B2 (the HCI command timeout no longer waits 5 s on a resume that never comes,
+and still resets a wedged controller), D v2 (after a runtime reset-resume, queue a reset so btusb
+is rebound; BT-18), BT-24's fix (a failed resume drops the deferred URBs under `txlock`) and BT-25's
+fix (the skb of a dropped deferred URB is freed). B2 needs D: alone it leaves a recovering device
+dead.
+
+**Tested** (QEMU, emulated `13d3:3503` that fails its resume): with the whole series, the runtime
+matrix (dead device, recovering device, power-off-started resume, dropped command, wedged
+controller, 30 healthy cycles; 3 runs each) 18 of 18; unpatched, the recovering-after-power-off
+case is dead 3 of 3 and the dead device blocks the HCI workqueue for 5.4 s. BT-25: kmemleak finds
+leaked HCI command skbs in 11 of 12 fault runs without the fix, none with it. **Not tested:** the
+system-suspend path, which `vhci_hcd` cannot exercise; D v2 queues its reset only inside a runtime
+resume, and that the system path is unchanged rests on reading `drivers/usb/core/driver.c`.
+
+**Questions for you.** D v2's `RPM_RESUMING` test as the way to tell a runtime reset-resume from a
+system one; whether D belongs in btusb at all, or BT-18 is the USB core's to fix (a question to
+linux-usb is drafted); B2's handling of the command credit.
+
+**`contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114/0000-cover-letter.patch`** (SHA-256 `eaedfc9a4a11fe1de6e6ae5a9159c207804ccbe049fb51ab0505232da8e716fc`)
+
+```diff
+From a2fda18e5f156d765b0e396f8e457916b97ee0ae Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:50:00 +0100
+Subject: [PATCH 0/5] Bluetooth: btusb: A device that does not resume
+
+This series applies on top of "Bluetooth: btusb: Anchor a deferred URB
+under txlock" (bluetooth-next da3cc02587c6 plus that patch).
+
+A QCA9377 (13d3:3503) that is runtime-suspended and does not answer
+when it is resumed leaves the HCI workqueue blocked for more than five
+seconds, logs nothing about the failed resume, and, when the USB
+core's reset-resume brings the device back, leaves Bluetooth dead.
+Two more problems sit on the failure path of btusb_resume() and in the
+code that discards deferred URBs. Reproduced with an emulated
+controller attached over usbip in a QEMU guest (KASAN, lockdep, four
+CPUs); why the controller stopped answering (firmware, platform power
+or the host's xHCI) is not addressed here.
+
+ 1: log the failed resume of the waker.
+ 2: do not block the HCI workqueue in the command timeout while the
+    device resumes, and keep the reset for a command that did reach
+    the controller.
+ 3: add a reset_resume callback that rebinds btusb after a runtime
+    reset-resume.
+ 4: drop the deferred URBs and clear BTUSB_SUSPENDING under txlock on
+    a failed resume, so that no URB stays parked.
+ 5: free the skb and the setup packet of a deferred URB that is
+    discarded instead of sent.
+
+Patch 2 depends on patch 3. Without the rebinding that patch 3 adds,
+a device that answers after the core's reset-resume stays bound and
+is never resumed (0 of 3 runs recovered with patch 2 alone; unpatched,
+the reset that btusb_reset() queued after the wait is what rebound
+it). Please apply them together. Patches 4 and 5 are independent of
+2 and 3 in effect; 4 can only be exercised once 2 is applied, because
+without it the command credit does not return before the failed
+resume's path has ended.
+
+Emulation, three runs of each; the unpatched kernel, then the series:
+
+  dead device (core disconnects it): command credit restored after
+    5.38 s, then 0.001 s
+  device that answers after the reset-resume: back and usable 3 of 3,
+    then 3 of 3
+  resume started by powering hci0 off: 0 of 3 (the dead state above),
+    then 3 of 3
+  command whose event is dropped, device autosuspended before the
+    timeout: reset, then reset; also for a controller that stays
+    silent until it is reset
+  30 healthy suspend and resume cycles: no failure, no failure
+  failed resume or discard with a command deferred (fault injected
+    in the driver for the test): 1 to 4 kmemleak objects per run
+    (skbs and setup packets), then none in 12 of 12 runs
+  deferred anchor after a failed resume with a second sender in the
+    window (injected delay): parked URB in 3 of 3, then none in 3
+    of 3
+
+No kernel report in any run. Not tested: the system suspend and resume
+path (the emulated device cannot take part in a system sleep); patch 3
+queues the reset only while the device's runtime PM status is
+RPM_RESUMING, which the PM core sets only in rpm_resume(), before the
+runtime_resume callback; this was checked in the source only.
+
+Iaroslav Voitovych (5):
+  Bluetooth: btusb: Report a failed runtime resume for deferred data
+  Bluetooth: btusb: Don't wait for a resume in the HCI command timeout
+  Bluetooth: btusb: Recover after a runtime reset-resume
+  Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+  Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+
+ drivers/bluetooth/btusb_main.c | 148 +++++++++++++++++++++++++++++-----
+ 1 file changed, 131 insertions(+), 17 deletions(-)
+
+--
+2.43.0
+
+```
+
+**`contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114/0002-Bluetooth-btusb-Don-t-wait-for-a-resume-in-the-HCI-c.patch`** (SHA-256 `7c83d379dcd4dfd4600c827d6809a10f58f2a77265a37f6168319d23b1be0eca`)
+
+```diff
+From 55141d8369a62cfbcc323b549dcfedf02c15bfab Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 18:50:17 +0100
+Subject: [PATCH 2/5] Bluetooth: btusb: Don't wait for a resume in the HCI
+ command timeout
+
+hci_cmd_timeout() calls hdev->reset() on the ordered HCI workqueue and
+restores the command credit only when it returns. btusb_reset() first
+takes a runtime PM reference with usb_autopm_get_interface(). If the
+command timed out because the device is still resuming, that call
+waits for the resume to end. When the device does not answer, the USB
+core spends more than five seconds on it (the GET_STATUS timeout, then
+a reset-resume and its retries), and the HCI workqueue, including RX
+and TX work, is blocked all that time.
+
+A command that is parked on the deferred anchor never reached the
+controller, and the failed resume belongs to the USB core: it resets
+the device and disconnects it if that fails too. A command whose
+transfer completed is different: the controller did not answer it, and
+the reset is the recovery for that, even if the device has
+autosuspended since.
+
+Mark a command that is parked on the deferred anchor with
+BTUSB_CMD_DEFERRED, set and cleared under txlock where the anchor is
+filled and drained. btusb_reset() then returns at once when the flag
+is set. Otherwise it queues a work item, which takes the runtime PM
+reference, where waiting is harmless, and resets the device as before.
+The work is cancelled in btusb_disconnect() once hci_unregister_dev()
+has stopped the HCI workqueues, before BTUSB_RESET is examined and the
+data is freed.
+
+Two things change for the device:
+
+- The command credit is restored at once, so each command queued while
+  the device resumes times out on its own, about two seconds apart,
+  instead of one timeout blocking the queue.
+
+- btusb_reset() no longer resets a device that is resuming. When the
+  USB core's reset-resume succeeds, that second reset used to be what
+  unbound and rebound btusb: btusb has no reset_resume callback, and
+  the core does not rebind after a runtime resume. Without
+  "Bluetooth: btusb: Recover after a runtime reset-resume" such a
+  device stays bound but is never resumed, and Bluetooth stays dead.
+  This patch depends on that one.
+
+Seen with an emulated QCA9377 (13d3:3503) in a QEMU guest: the credit
+came back within a few milliseconds instead of after 5.4 s; a command
+whose event was dropped, with the device autosuspended before the
+timeout, was still reset, and so was a controller that stayed silent
+until it was reset; with the dependency above missing, a device that
+answered again after the reset-resume stayed dead in 3 of 3 runs.
+---
+ drivers/bluetooth/btusb_main.c | 50 ++++++++++++++++++++++++++++++----
+ 1 file changed, 45 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index aefee17e9b431..879461fb606f4 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1016,6 +1016,7 @@ struct btqca_data {
+ #define BTUSB_HW_SSR_ACTIVE	17
+ #define BTUSB_WAKEUP_BROKEN	18
+ #define BTUSB_RESET		19
++#define BTUSB_CMD_DEFERRED	20
+ 
+ #define BTUSB_PROTO_LEGACY	0x00
+ #define BTUSB_PROTO_H4		0x01
+@@ -1034,6 +1035,7 @@ struct btusb_data {
+ 	int intr_interval;
+ 	struct work_struct  work;
+ 	struct work_struct  waker;
++	struct work_struct  reset_work;
+ 	struct delayed_work rx_work;
+ 
+ 	struct sk_buff_head acl_q;
+@@ -1092,12 +1094,13 @@ struct btusb_data {
+ 	struct dentry *force_poll_sync_dentry;
+ };
+ 
+-static void btusb_reset(struct hci_dev *hdev)
++static void btusb_reset_work(struct work_struct *work)
+ {
+-	struct btusb_data *data;
++	struct btusb_data *data = container_of(work, struct btusb_data,
++					       reset_work);
++	struct hci_dev *hdev = data->hdev;
+ 	int err;
+ 
+-	data = hci_get_drvdata(hdev);
+ 	err = usb_autopm_get_interface(data->intf);
+ 	if (err) {
+ 		bt_dev_err(hdev, "Failed usb_autopm_get_interface: %d", err);
+@@ -1111,6 +1114,28 @@ static void btusb_reset(struct hci_dev *hdev)
+ 	usb_queue_reset_device(data->intf);
+ }
+ 
++static void btusb_reset(struct hci_dev *hdev)
++{
++	struct btusb_data *data = hci_get_drvdata(hdev);
++	unsigned long flags;
++	bool deferred;
++
++	/* A command that is still deferred never reached the device, which
++	 * is being resumed. The USB core owns that failure, and waiting for
++	 * the resume here would block the HCI workqueue.
++	 */
++	spin_lock_irqsave(&data->txlock, flags);
++	deferred = test_bit(BTUSB_CMD_DEFERRED, &data->flags);
++	spin_unlock_irqrestore(&data->txlock, flags);
++
++	if (deferred) {
++		bt_dev_warn(hdev, "Command not sent; not resetting");
++		return;
++	}
++
++	schedule_work(&data->reset_work);
++}
++
+ static void btusb_intel_reset(struct hci_dev *hdev)
+ {
+ 	struct btusb_data *data = hci_get_drvdata(hdev);
+@@ -2236,6 +2261,9 @@ static int btusb_close(struct hci_dev *hdev)
+ 
+ failed:
+ 	usb_scuttle_anchored_urbs(&data->deferred);
++	spin_lock_irq(&data->txlock);
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
++	spin_unlock_irq(&data->txlock);
+ 	return 0;
+ }
+ 
+@@ -2397,10 +2425,13 @@ static int submit_or_queue_tx_urb(struct hci_dev *hdev, struct urb *urb)
+ 	 */
+ 	spin_lock_irqsave(&data->txlock, flags);
+ 	suspending = test_bit(BTUSB_SUSPENDING, &data->flags);
+-	if (!suspending)
++	if (!suspending) {
+ 		data->tx_in_flight++;
+-	else
++	} else {
+ 		usb_anchor_urb(urb, &data->deferred);
++		if (hci_skb_pkt_type((struct sk_buff *)urb->context) == HCI_COMMAND_PKT)
++			set_bit(BTUSB_CMD_DEFERRED, &data->flags);
++	}
+ 	spin_unlock_irqrestore(&data->txlock, flags);
+ 
+ 	if (!suspending)
+@@ -4485,6 +4516,7 @@ static int btusb_probe(struct usb_interface *intf,
+ 
+ 	INIT_WORK(&data->work, btusb_work);
+ 	INIT_WORK(&data->waker, btusb_waker);
++	INIT_WORK(&data->reset_work, btusb_reset_work);
+ 	INIT_DELAYED_WORK(&data->rx_work, btusb_rx_work);
+ 
+ 	skb_queue_head_init(&data->acl_q);
+@@ -4892,6 +4924,11 @@ static void btusb_disconnect(struct usb_interface *intf)
+ 
+ 	hci_unregister_dev(hdev);
+ 
++	/* No new reset can be scheduled once the HCI workqueues are gone; wait
++	 * for a pending one before BTUSB_RESET is examined and data is freed.
++	 */
++	cancel_work_sync(&data->reset_work);
++
+ 	if (data->oob_wake_irq) {
+ 		device_init_wakeup(&data->udev->dev, false);
+ 		free_irq(data->oob_wake_irq, data);
+@@ -5024,6 +5061,8 @@ static void play_deferred(struct btusb_data *data)
+ 		kfree(urb->setup_packet);
+ 		usb_free_urb(urb);
+ 	}
++
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ }
+ 
+ static int btusb_resume(struct usb_interface *intf)
+@@ -5086,6 +5125,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 	usb_scuttle_anchored_urbs(&data->deferred);
+ done:
+ 	spin_lock_irq(&data->txlock);
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+ 
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114/0003-Bluetooth-btusb-Recover-after-a-runtime-reset-resume.patch`** (SHA-256 `e87b5ac3870013b3b66a71e17909831d0d3fa0462ef34cce27af1b1526772727`)
+
+```diff
+From c3ab199341d6fcf4b045fa99a9d42c45a48a35d7 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 01:49:17 +0100
+Subject: [PATCH 3/5] Bluetooth: btusb: Recover after a runtime reset-resume
+
+When a runtime resume fails and USB persist is enabled, the USB core
+resets the device (a reset-resume). btusb has no reset_resume
+callback, so usb_resume_interface() only marks its interfaces for
+rebinding. Marked interfaces are rebound after a system resume
+(usb_resume_complete()) and after usb_reset_device(), but not after a
+runtime resume. btusb therefore stays bound without ever being
+resumed: BTUSB_SUSPENDING stays set, its suspend count is off by one,
+and every URB it sends from then on is parked on the deferred anchor.
+The controller answers USB requests, but Bluetooth is dead until the
+device is unplugged or the machine rebooted.
+
+With an emulated QCA9377 (13d3:3503) that answered again only after
+the USB reset, closing hci0 (which runtime-resumes the device) left it
+in that state: the next power-on failed with HCI Reset timeouts that
+never reached the device.
+
+Add a reset_resume callback that resumes as usual and, after a runtime
+resume, queues a USB reset. btusb has no pre_reset and post_reset
+callbacks, so the core then unbinds and rebinds it, and the controller,
+which the reset may have cleared, is set up again.
+
+The reset is queued even if btusb_resume() failed, because
+usb_resume_both() ignores its result. usb_lock_device_for_reset()
+refuses a device that is suspended, and the work then drops the
+request without a message, so take the runtime PM reference that
+btusb_reset() takes, guarded by BTUSB_RESET; btusb_disconnect()
+releases it after the rebinding.
+
+The system resume path is meant to stay as it is: the callback queues
+the reset only while the device's runtime PM status is RPM_RESUMING.
+The PM core sets that status in rpm_resume() before it calls the
+runtime_resume callback, and during a system sleep runtime PM is
+disabled from device_suspend() on; the USB core sets the status to
+active only after usb_resume_both() has returned. That path was not
+tested, as the emulated device cannot take part in a system sleep.
+---
+ drivers/bluetooth/btusb_main.c | 49 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 49 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 879461fb606f4..15c705584ec4a 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5132,6 +5132,54 @@ static int btusb_resume(struct usb_interface *intf)
+ 	return err;
+ }
+ 
++/* True while the USB core runs a runtime resume of the device. A system resume
++ * cannot be told from the callback's arguments, but the PM core sets the
++ * status to RPM_RESUMING only in rpm_resume(), before the runtime_resume
++ * callback, and the USB core sets it to active only after a system resume.
++ */
++static bool btusb_runtime_resuming(struct usb_device *udev)
++{
++#ifdef CONFIG_PM
++	return udev->dev.power.runtime_status == RPM_RESUMING;
++#else
++	return false;
++#endif
++}
++
++static int btusb_reset_resume(struct usb_interface *intf)
++{
++	struct btusb_data *data = usb_get_intfdata(intf);
++	int err;
++
++	BT_DBG("intf %p", intf);
++
++	err = btusb_resume(intf);
++
++	/* The USB core reset the device to resume it. Without this callback it
++	 * only marks the interfaces for rebinding, which it does after a
++	 * system resume but not after a runtime resume: then btusb stays bound
++	 * and is never resumed, with BTUSB_SUSPENDING set and every later URB
++	 * parked on the deferred anchor.
++	 *
++	 * After a runtime resume, queue a USB reset: btusb has no pre_reset
++	 * and post_reset callbacks, so the core unbinds and rebinds it, and
++	 * the controller, whose state the reset may have cleared, is set up
++	 * again. Keep a runtime PM reference until then, as btusb_reset() does:
++	 * the core drops a queued reset for a device that has suspended again.
++	 * btusb_disconnect() releases it.
++	 *
++	 * Do this even if btusb_resume() failed: usb_resume_both() ignores its
++	 * result, so this is the only recovery left.
++	 */
++	if (intf == data->intf && btusb_runtime_resuming(data->udev) &&
++	    !test_and_set_bit(BTUSB_RESET, &data->flags)) {
++		usb_autopm_get_interface_no_resume(intf);
++		usb_queue_reset_device(intf);
++	}
++
++	return err;
++}
++
+ #ifdef CONFIG_DEV_COREDUMP
+ static void btusb_coredump(struct device *dev)
+ {
+@@ -5149,6 +5197,7 @@ static struct usb_driver btusb_driver = {
+ 	.disconnect	= btusb_disconnect,
+ 	.suspend	= pm_ptr(btusb_suspend),
+ 	.resume		= pm_ptr(btusb_resume),
++	.reset_resume	= pm_ptr(btusb_reset_resume),
+ 	.id_table	= btusb_table,
+ 	.supports_autosuspend = 1,
+ 	.disable_hub_initiated_lpm = 1,
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114/0004-Bluetooth-btusb-Drop-deferred-URBs-under-txlock-on-a.patch`** (SHA-256 `b3d77d13f6a9621dd5ea334dec3dfe9d0f0faa90f1f6e9e5e87c2d3df9e07369`)
+
+```diff
+From b9e27960ea89b5f74c49ce1c713afdc8bfd9e94c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:40:50 +0100
+Subject: [PATCH 4/5] Bluetooth: btusb: Drop deferred URBs under txlock on a
+ failed resume
+
+When btusb_resume() cannot submit the interrupt or bulk URB, it
+scuttles the deferred anchor without txlock and only then clears
+BTUSB_SUSPENDING under it. A sender that takes txlock in between still
+sees the flag, anchors its URB on data->deferred and schedules the
+waker, which finds an active device and does nothing. The URB stays
+parked until the next suspend and resume, and an HCI command in it
+times out.
+
+Do both under txlock, so that a sender either anchors its URB before
+the scuttle, and the URB is dropped with the others, or sees the flag
+cleared and submits it. btusb_resume() already takes the anchor's lock
+inside txlock, so the lock order does not change.
+
+The two failure branches now share the label that ends a resume with
+HCI closed, and scuttle only when an error was returned.
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+---
+ drivers/bluetooth/btusb_main.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 15c705584ec4a..3ae266821cca9 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5089,7 +5089,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		err = btusb_submit_intr_urb(hdev, GFP_NOIO);
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 	}
+ 
+@@ -5097,7 +5097,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		err = btusb_submit_bulk_urb(hdev, GFP_NOIO);
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_BULK_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 
+ 		btusb_submit_bulk_urb(hdev, GFP_NOIO);
+@@ -5121,10 +5121,14 @@ static int btusb_resume(struct usb_interface *intf)
+ 
+ 	return 0;
+ 
+-failed:
+-	usb_scuttle_anchored_urbs(&data->deferred);
+ done:
+ 	spin_lock_irq(&data->txlock);
++	/* Drop the deferred URBs and clear BTUSB_SUSPENDING in one critical
++	 * section: a sender that anchored a URB after the scuttle but before
++	 * the flag was cleared would leave it parked until the next resume.
++	 */
++	if (err)
++		usb_scuttle_anchored_urbs(&data->deferred);
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114/0005-Bluetooth-btusb-Free-the-skb-of-a-deferred-URB-that-.patch`** (SHA-256 `9e5bd839faab1d8cdf19ffaa8000b1fa5b44aeb5d8c2f74c3690f2fa54eac943`)
+
+```diff
+From a2fda18e5f156d765b0e396f8e457916b97ee0ae Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:41:13 +0100
+Subject: [PATCH 5/5] Bluetooth: btusb: Free the skb of a deferred URB that is
+ discarded
+
+A URB parked on data->deferred owns the skb it carries (urb->context)
+and, for an HCI command, its setup packet. Both are freed by
+btusb_tx_complete(), which does not run for a URB that is discarded
+instead of sent. The four places that discard one free neither, or
+only the setup packet:
+
+- btusb_close() and the failure path of btusb_resume() call
+  usb_scuttle_anchored_urbs(), which only unanchors the URBs;
+- play_deferred() frees the URB and the setup packet when a submission
+  fails and for the URBs left after that, but not the skb.
+
+With an emulated device that stopped answering, a command deferred
+across a close or a failed resume left a skb and an 8-byte setup packet
+reported by kmemleak each time.
+
+Free the skb and the setup packet with the URB at all four places.
+This runs under txlock with interrupts off in two of them, so use
+dev_kfree_skb_any().
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+Fixes: 19cfe912c37b ("Bluetooth: btusb: Fix memory leak in play_deferred")
+---
+ drivers/bluetooth/btusb_main.c | 32 ++++++++++++++++++++++++--------
+ 1 file changed, 24 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 3ae266821cca9..f8843ea96faf0 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2125,6 +2125,26 @@ static void btusb_tx_complete(struct urb *urb)
+ 	kfree_skb(skb);
+ }
+ 
++/* Free a deferred URB that will not be sent. btusb_tx_complete() would free
++ * the setup packet and the skb, but it does not run for such a URB. This can
++ * be called with txlock held and interrupts off.
++ */
++static void btusb_free_deferred_urb(struct urb *urb)
++{
++	kfree(urb->setup_packet);
++	dev_kfree_skb_any(urb->context);
++	usb_free_urb(urb);
++}
++
++/* Free all deferred URBs without sending them. */
++static void btusb_discard_deferred(struct btusb_data *data)
++{
++	struct urb *urb;
++
++	while ((urb = usb_get_from_anchor(&data->deferred)))
++		btusb_free_deferred_urb(urb);
++}
++
+ static void btusb_isoc_tx_complete(struct urb *urb)
+ {
+ 	struct sk_buff *skb = urb->context;
+@@ -2260,7 +2280,7 @@ static int btusb_close(struct hci_dev *hdev)
+ 	usb_autopm_put_interface(data->intf);
+ 
+ failed:
+-	usb_scuttle_anchored_urbs(&data->deferred);
++	btusb_discard_deferred(data);
+ 	spin_lock_irq(&data->txlock);
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+@@ -5046,9 +5066,8 @@ static void play_deferred(struct btusb_data *data)
+ 			if (err != -EPERM && err != -ENODEV)
+ 				BT_ERR("%s urb %p submission failed (%d)",
+ 				       data->hdev->name, urb, -err);
+-			kfree(urb->setup_packet);
+ 			usb_unanchor_urb(urb);
+-			usb_free_urb(urb);
++			btusb_free_deferred_urb(urb);
+ 			break;
+ 		}
+ 
+@@ -5057,10 +5076,7 @@ static void play_deferred(struct btusb_data *data)
+ 	}
+ 
+ 	/* Cleanup the rest deferred urbs. */
+-	while ((urb = usb_get_from_anchor(&data->deferred))) {
+-		kfree(urb->setup_packet);
+-		usb_free_urb(urb);
+-	}
++	btusb_discard_deferred(data);
+ 
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ }
+@@ -5128,7 +5144,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 	 * the flag was cleared would leave it parked until the next resume.
+ 	 */
+ 	if (err)
+-		usb_scuttle_anchored_urbs(&data->deferred);
++		btusb_discard_deferred(data);
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
 -- 
 2.43.0
 

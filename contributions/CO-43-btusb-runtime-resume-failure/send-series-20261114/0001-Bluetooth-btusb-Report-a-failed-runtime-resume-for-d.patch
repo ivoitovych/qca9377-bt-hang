@@ -1,0 +1,42 @@
+From c06200ba028099b4c27527a1c819be6727842b67 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:24:55 +0100
+Subject: [PATCH 1/5] Bluetooth: btusb: Report a failed runtime resume for
+ deferred data
+
+When data is sent while the device is runtime suspended,
+submit_or_queue_tx_urb() anchors the URB on data->deferred and
+btusb_waker() resumes the device with usb_autopm_get_interface(). If
+that fails, the waker returns without a message and the URB stays on
+the anchor. An HCI command in it then ends in a command timeout two
+seconds later, which points at the controller rather than at the
+failed resume.
+
+Log the error in the waker. Leave out -EACCES, which is returned while
+runtime PM is disabled, for example during a system sleep transition.
+---
+ drivers/bluetooth/btusb_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 5f6d90d43d977..aefee17e9b431 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2664,8 +2664,13 @@ static void btusb_waker(struct work_struct *work)
+ 	int err;
+ 
+ 	err = usb_autopm_get_interface(data->intf);
+-	if (err < 0)
++	if (err < 0) {
++		/* -EACCES: runtime PM is disabled, e.g. during system sleep */
++		if (err != -EACCES)
++			bt_dev_err(data->hdev, "Failed to resume device for deferred data: %d",
++				   err);
+ 		return;
++	}
+ 
+ 	usb_autopm_put_interface(data->intf);
+ }
+-- 
+2.43.0
+

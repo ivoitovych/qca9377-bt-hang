@@ -1,0 +1,143 @@
+start 2026-11-14 03:40:07 kernel base label c21-msbc-two-links-first-2 args msbc-two-links-first cpus 4
+b6026653cba5c8bed45b3520e0fc4931a5e154abb8fb03c8930ab4659e207217  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base
+ae43e778258c779e68efa114c5ac01cf6fc7edf5680fcc23bf582d2ad67da5dc  /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba12c4
+input_len: 0x000000000103a0bc
+output: 0x0000000001000000
+output_len: 0x000000000382e53c
+kernel_total_size: 0x0000000004c1e000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030a82d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Fri Nov 13 04:19:39 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py msbc-two-links-first'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py msbc-two-links-first
+Changing into directory /root/exp
+New process 58 created
+random: crng init done
+  0.012 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.447 SET_CONFIGURATION 1
+  0.492 HCI cmd 0x0c03 
+  0.501 HCI cmd 0x1003 
+  0.514 HCI cmd 0x1001 
+  0.526 HCI cmd 0x1009 
+  0.542 HCI cmd 0x1002 
+  0.550 hci0 present; btusb bound
+  0.574 HCI cmd 0x0c45 01
+  0.580 HCI command 0x0c45 (01): generic Command Complete
+  0.586 HCI cmd 0x1005 
+  0.600 HCI cmd 0x0c23 
+  0.608 HCI cmd 0x0c14 
+  0.646 HCI cmd 0x0c25 
+  0.649 HCI cmd 0x0c38 
+  0.651 HCI cmd 0x0c39 
+  0.659 HCI cmd 0x0c16 007d
+  0.661 HCI command 0x0c16 (007d): generic Command Complete
+  0.667 HCI cmd 0x0c01 fffffbff03180000
+  0.673 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.676 hci0 already up
+  1.212 HCI cmd 0x0405 01443322110018cc0200000001
+  1.262 HCI cmd 0x041b 0001
+  1.275 HCI cmd 0x0428 0001401f0000401f00000800030002c803
+  1.284 HCI cmd 0x0419 01443322110002000000
+  1.285 HCI command 0x0419 (01443322110002000000): generic Command Complete
+  1.333 SCO link handle 0x0101 up on ACL 0x0100, voice 0x0003, air mode 3
+  1.345 SET_INTERFACE interface 1 alt 1
+  1.361 isoc IN URB #1 submitted (10 packets, alt 1)
+  1.364 isoc IN URB #2 submitted (10 packets, alt 1)
+  1.381 isoc IN URB #3 submitted (10 packets, alt 1)
+  1.760 STATE link 1 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  1.763 HCI cmd 0x0405 02443322110018cc0200000001
+  1.803 HCI cmd 0x041b 0201
+  1.807 HCI cmd 0x0428 0201401f0000401f00000800030002c803
+  1.818 HCI cmd 0x0419 02443322110002000000
+  1.869 SCO link handle 0x0103 up on ACL 0x0102, voice 0x0003, air mode 3
+  2.284 STATE link 2 up                                      alt(sysfs)=1 alt(emu)=1 expect=1  ok
+  2.292 HCI cmd 0x0406 010113
+  2.332 SET_INTERFACE interface 1 alt 0
+Bluetooth: hci0: urb ffff888001b7c000 submission failed (90)
+  2.692 STATE link 1 hung up, the other stays                alt(sysfs)=0 alt(emu)=0 expect=1  WRONG
+  2.697 HCI cmd 0x0406 030113
+  3.100 STATE last link hung up                              alt(sysfs)=0 alt(emu)=0 expect=0  ok
+  3.112 SET_INTERFACE sequence: [1, 0]
+  3.119 unhandled-opcode list: ['0x0419', '0x0c01', '0x0c16', '0x0c45']
+  3.122 RESULT msbc-two-links-first FAIL
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py msbc-two-links-first'
+[    0.052904] Kernel command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py msbc-two-links-first'
+[    0.053216] Unknown kernel command line parameters "-I msbc-two-links-first' TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3", will be passed to user space.
+[    0.719608] Bluetooth: Core ver 2.22
+[    0.719721] NET: Registered PF_BLUETOOTH protocol family
+[    0.719728] Bluetooth: HCI device and connection manager initialized
+[    0.719774] Bluetooth: HCI socket layer initialized
+[    0.719790] Bluetooth: L2CAP socket layer initialized
+[    0.719892] Bluetooth: SCO socket layer initialized
+[    1.557695] Bluetooth: HCI UART driver ver 2.3
+[    1.557712] Bluetooth: HCI UART protocol H4 registered
+[    1.557718] Bluetooth: HCI UART protocol BCSP registered
+[    1.557830] Bluetooth: HCI UART protocol LL registered
+[    1.557835] Bluetooth: HCI UART protocol ATH3K registered
+[    1.557935] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    1.558040] Bluetooth: HCI UART protocol QCA registered
+[    1.558046] Bluetooth: HCI UART protocol AG6XX registered
+[    1.558153] Bluetooth: HCI UART protocol Marvell registered
+[    1.558269] Bluetooth: HCI UART protocol AML registered
+[    1.559214] usbcore: registered new interface driver btusb
+[    1.566140] Bluetooth: RFCOMM socket layer initialized
+[    1.566193] Bluetooth: RFCOMM ver 1.11
+[    1.566233] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    1.566267] Bluetooth: BNEP socket layer initialized
+[    1.566273] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    1.566289] Bluetooth: HIDP socket layer initialized
+[   10.327444] Bluetooth: hci0: urb ffff888001b7c000 submission failed (90)
+  3.678 BT17-EXIT 1
+Process 58 exited with status 1
+exit=0 end 2026-11-14 03:40:20

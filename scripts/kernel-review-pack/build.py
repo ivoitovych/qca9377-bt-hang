@@ -24,7 +24,9 @@ C05 = "contributions/CO-05-mesh-adv-list-lock-i12/patch"
 C35 = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail"
 C35R = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114"
 C22R = "contributions/research-2026-11-01/qca-ids/refresh-20261114"
-C21 = "contributions/CO-21-btusb-sco-alt-setting/patches-20261101"
+C21 = "contributions/CO-21-btusb-sco-alt-setting/send-20261114"
+C20 = "contributions/CO-20-sco-unknown-handle-messages/send-20261114"
+C43S = "contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114"
 
 SECTIONS = [
     ("1. CO-44 — MGMT: a timed-out command reported as Authentication Failed", """
@@ -199,27 +201,82 @@ stable rules allow), and its wording.
         (f"{C22R}/mail/stable-request-asus-rome-v3.eml", "text"),
         (f"{C22R}/CHECKS.md", "markdown"),
     ]),
-    ("9. CO-21 (close to ready) — btusb picks alternate setting 0 while a SCO link is up", """
+    ("9. CO-21 — btusb picks alternate setting 0 while a SCO link is up", """
 **The defect** (`Fixes: baac6276c0a9`). `btusb_notify()` takes the air mode from the one link
 whose state changed and picks the USB alternate setting from it. With two SCO links, one going
 down switches the other to alt 0, and a single-link race does the same (seen twice on the laptop,
-2026-09-02). **The design** (two patches on bluetooth-next `42b8c2d72926`): the core keeps the air
+2026-09-02). **The design** (two patches, now on bluetooth-next `da3cc02587c6`): the core keeps the air
 mode of each SCO link that came up (from its Synchronous Connection Complete event), and btusb's
 worker derives the setting from the links that are up; notify only schedules it. An earlier
 single-patch candidate was judged not ready by an outside review (a failed second setup still
 sends the link-up notification); this design answers that.
 
-**Tested** (2026-11-11): real btusb in a QEMU guest against an emulated controller through usbip:
-the base kernel fails 5 of 5 scenarios, the patches pass 5 of 5; a 20-scenario model of the
-worker. The bot's checks on current bluetooth-next: no new findings except GitLint (patch 2's
-title is 81 characters; it will be shortened). Patch 1 changes `struct hci_conn`, so `bluetooth.ko`
-and btusb must be rebuilt together.
+**Tested** (2026-11-14, on the rebased pair): real btusb in a QEMU guest against an emulated
+controller through usbip, five scenarios (two links, either one going down first; mSBC and CVSD;
+the single-link race), two runs each: unpatched 0 of 10, patched 10 of 10; a 20-scenario model of
+the worker (11-01). The bot's checks: builds and all 11 testers pass, tester results identical to
+the base side; only the three Signed-off-by checks fail. Patch 2's subject is now 65 characters.
+Patch 1 changes `struct hci_conn`, so `bluetooth.ko` and btusb must be rebuilt together.
 
 **Questions for you.** The design itself: is a per-link air mode in the core acceptable, or should
-btusb track it alone? The counting helper's locking.
+btusb track it alone? The counting helper's locking. `Cc: stable`: patch 2 cannot build without
+patch 1, so a stable tag would have to cover both.
 """, [
+        (f"{C21}/cover-letter.txt", "text"),
         (f"{C21}/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch", "diff"),
-        (f"{C21}/0002-Bluetooth-btusb-Pick-the-SCO-alternate-setting-from-.patch", "diff"),
+        (f"{C21}/0002-Bluetooth-btusb-Pick-the-SCO-alt-setting-from-links-.patch", "diff"),
+        (f"{C21}/CHECKS.md", "markdown"),
+    ]),
+    ("10. CO-20 — btusb logs the data of a just-closed SCO link as corruption", """
+**The defect.** After a SCO link's Disconnection Complete, the controller can still deliver a few
+packets for its handle. btusb drops them, but logs "corrupted SCO packet" and counts them in
+`err_rx`, the same message and counter as real corruption and allocation failure, so every hung-up
+call looks like a link error (on the laptop, 25 of 32 such lines fell within 0.5 s of a
+disconnect). Patch 1 reports receive failures by cause; patch 2 logs data for a just-closed link at
+debug level and does not count it as an error. No `Fixes:`. Mainline's separate newline fix for the
+same message is `f51ee3bb5fbe`.
+
+**Tested** (2026-11-14, real btusb in a QEMU guest, emulated controller): 20 calls hung up with
+data in flight, 3 runs: unpatched 17, 19 and 24 "corrupted SCO packet" lines, patched none (the
+residue at debug level). Five packets for a handle that never was a link: unpatched counted as
+corrupted, patched reported as an unknown handle and not as corrupted. Limitation (in patch 2's
+message): with two links up, data of the closed link that follows a packet of the remaining one is
+still reported. The bot's checks: only the Signed-off-by checks fail; it selects no tester for a
+btusb-only change.
+
+**Questions for you.** Whether the classification belongs in btusb or in the core's SCO receive
+path; whether the debug-level line is worth keeping at all.
+""", [
+        (f"{C20}/cover-letter.txt", "text"),
+        (f"{C20}/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch", "diff"),
+        (f"{C20}/0002-Bluetooth-btusb-Log-SCO-data-for-a-just-closed-link-.patch", "diff"),
+        (f"{C20}/CHECKS.md", "markdown"),
+    ]),
+    ("11. CO-43, the rest (for review, not yet to send) — btusb when a resume fails", """
+**What it is.** The other btusb fixes from BT-17's emulation, as one series on top of item 2 (E):
+A (item 3), then B2 (the HCI command timeout no longer waits 5 s on a resume that never comes,
+and still resets a wedged controller), D v2 (after a runtime reset-resume, queue a reset so btusb
+is rebound; BT-18), BT-24's fix (a failed resume drops the deferred URBs under `txlock`) and BT-25's
+fix (the skb of a dropped deferred URB is freed). B2 needs D: alone it leaves a recovering device
+dead.
+
+**Tested** (QEMU, emulated `13d3:3503` that fails its resume): with the whole series, the runtime
+matrix (dead device, recovering device, power-off-started resume, dropped command, wedged
+controller, 30 healthy cycles; 3 runs each) 18 of 18; unpatched, the recovering-after-power-off
+case is dead 3 of 3 and the dead device blocks the HCI workqueue for 5.4 s. BT-25: kmemleak finds
+leaked HCI command skbs in 11 of 12 fault runs without the fix, none with it. **Not tested:** the
+system-suspend path, which `vhci_hcd` cannot exercise; D v2 queues its reset only inside a runtime
+resume, and that the system path is unchanged rests on reading `drivers/usb/core/driver.c`.
+
+**Questions for you.** D v2's `RPM_RESUMING` test as the way to tell a runtime reset-resume from a
+system one; whether D belongs in btusb at all, or BT-18 is the USB core's to fix (a question to
+linux-usb is drafted); B2's handling of the command credit.
+""", [
+        (f"{C43S}/0000-cover-letter.patch", "diff"),
+        (f"{C43S}/0002-Bluetooth-btusb-Don-t-wait-for-a-resume-in-the-HCI-c.patch", "diff"),
+        (f"{C43S}/0003-Bluetooth-btusb-Recover-after-a-runtime-reset-resume.patch", "diff"),
+        (f"{C43S}/0004-Bluetooth-btusb-Drop-deferred-URBs-under-txlock-on-a.patch", "diff"),
+        (f"{C43S}/0005-Bluetooth-btusb-Free-the-skb-of-a-deferred-URB-that-.patch", "diff"),
     ]),
 ]
 

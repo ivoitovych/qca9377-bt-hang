@@ -1,0 +1,26 @@
+Bluetooth: btusb: Log SCO data for a just closed link at debug level
+
+When a SCO or eSCO link is disconnected, the controller can still
+deliver data that it queued before the Disconnection Complete. Once
+hci_conn_del() has removed the connection from the hash, and until the
+notification that stops the isochronous URBs has been handled, such data
+reaches btusb_recv_isoc() with a handle that btusb_validate_sco_handle()
+no longer finds. It is then logged as an unknown handle and counted in
+err_rx, at the end of most calls.
+
+Remember the handle of the last SCO header that validated. A header
+whose handle is no longer live but equals that handle is data for the
+link that has just closed: log it at debug level and do not count it in
+err_rx. Any other unknown handle, most likely a continuation fragment
+taken for a header after a lost isochronous frame, stays an error and is
+counted.
+
+The remembered handle is protected by rxlock, like the reassembly
+state. It is forgotten when the reassembly state is, on an alternate
+setting change and in btusb_free_frags(), and when the last SCO link is
+gone and the isochronous URBs have been killed, so that it cannot match
+a later misaligned fragment. Only a misaligned fragment in the short
+window after its own link closed, whose first two bytes give that
+link's handle, is still taken for residue. With two links up, data of
+the closed link that comes after a packet of the remaining one is still
+reported as an unknown handle.

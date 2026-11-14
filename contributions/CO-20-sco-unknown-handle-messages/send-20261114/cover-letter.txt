@@ -1,0 +1,28 @@
+Subject: [PATCH 0/2] Bluetooth: btusb: Do not report the end of a SCO call as corruption
+
+At the end of most SCO and eSCO calls the controller still delivers
+data it queued before the Disconnection Complete. btusb rejects it,
+because the connection is gone, with the same "corrupted SCO packet"
+error as for real corruption, and counts it in err_rx. On one laptop
+155 of 181 closed links had receive data after the Disconnection
+Complete (up to 33.6 ms), and 25 of 32 "corrupted SCO packet" lines
+fell within 0.5 s of one.
+
+ 1: btusb_recv_isoc() returns a distinct error for an allocation
+    failure, a header whose length does not fit, and a header whose
+    handle is not a live connection; each gets its own message, the
+    last naming the handle, and the two new ones are rate limited.
+ 2: data for the handle of the link that has just closed is logged at
+    debug level and not counted in err_rx. Any other unknown handle,
+    which is how a misaligned fragment after a lost isochronous frame
+    shows, stays an error and is counted.
+
+Tested with a userspace controller attached over usbip to a QEMU guest
+(the real btusb and core). In three runs of 20 calls with data in flight
+at the hang-up, the unpatched kernel logged "corrupted SCO packet" 17,
+19 and 24 times and the series none, with 15 to 18 debug lines. With
+two links up and five packets injected for a handle that never was a
+link, the unpatched kernel logged 6 or 7 "corrupted SCO packet" and the
+series 5 to 7 "unknown handle dropped" and none of the former; the
+excess over five is data of the link that closed first, which patch 2
+documents as still reported.

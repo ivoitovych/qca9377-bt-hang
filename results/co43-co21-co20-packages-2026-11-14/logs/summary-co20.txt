@@ -1,0 +1,13 @@
+base c20-rx-cycles-1 exit=0 PASS RESULT rx-cycles PASS
+co20 c20-rx-cycles-1 exit=0 PASS RESULT rx-cycles PASS
+base c20-rx-unknown-1 exit=0 PASS RESULT rx-unknown PASS
+co20 c20-rx-unknown-1 exit=0 PASS RESULT rx-unknown PASS
+base c20-rx-cycles-2 exit=3 FAIL 
+co20 c20-rx-cycles-2 exit=0 PASS RESULT rx-cycles PASS
+base c20-rx-unknown-2 exit=0 PASS RESULT rx-unknown PASS
+co20 c20-rx-unknown-2 exit=1 FAIL RESULT rx-unknown FAIL
+base c20-rx-cycles-3 exit=0 PASS RESULT rx-cycles PASS
+co20 c20-rx-cycles-3 exit=0 PASS RESULT rx-cycles PASS
+base c20-rx-unknown-3 exit=0 PASS RESULT rx-unknown PASS
+co20 c20-rx-unknown-3 exit=1 FAIL RESULT rx-unknown FAIL
+batch: 12 runs, 3 FAIL

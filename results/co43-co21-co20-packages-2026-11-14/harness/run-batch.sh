@@ -1,0 +1,29 @@
+#!/bin/bash
+# run-batch.sh <spec file> <summary file>   (task 2 copy)
+# Spec: "<kernel tag> <label> <scenario and emulator args...>" per line. One guest at a time.
+# Summary line per run: "<tag> <label> exit=<n> <PASS|FAIL> <last RESULT line>"; last line
+# "batch: <runs> runs, <failed> FAIL"; exit 1 if any run failed.
+set -u
+w=/root/exp/agent-work/lane1-btusb-20261114/task3
+spec=${1:?usage}
+out=${2:?usage}
+: >"$out"
+runs=0
+failed=0
+while read -r tag label rest; do
+	case "$tag" in
+	'' | '#'*) continue ;;
+	esac
+	runs=$((runs + 1))
+	# shellcheck disable=SC2086
+	"$w/harness/run-guest.sh" "$tag" "$label" $rest >/dev/null </dev/null
+	rc=$?
+	verdict=PASS
+	if [ $rc -ne 0 ]; then
+		verdict=FAIL
+		failed=$((failed + 1))
+	fi
+	echo "$tag $label exit=$rc $verdict $(grep -a -h -o 'RESULT .*' "$w/logs/runs/$tag-$label.log" | tail -n 1)" >>"$out"
+done <"$spec"
+echo "batch: $runs runs, $failed FAIL" >>"$out"
+[ "$failed" -eq 0 ]

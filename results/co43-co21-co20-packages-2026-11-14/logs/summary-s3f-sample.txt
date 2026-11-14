@@ -1,0 +1,7 @@
+s3f f-dead-1 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s3f f-recover-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s3f f-close-1 exit=0 PASS RESULT close-recover bluetooth_works_after=True
+s3f f-dropcmd-1 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=8.541501 transfer_done=8.549756 autosuspended=9.064659 tx_timeout=10.595 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s3f f-wedge-1 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=9.200959 transfer_done=9.211116 autosuspended=9.749598 class-write-status=0x05 reset_seen=11.650532 tx_timeouts=1 (11.229) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=11.482237,11.635046 kernel_reset_line=11.482
+s3f f-cycles-1 exit=0 PASS RESULT cycles n=30 failures=0
+batch: 6 runs, 0 FAIL

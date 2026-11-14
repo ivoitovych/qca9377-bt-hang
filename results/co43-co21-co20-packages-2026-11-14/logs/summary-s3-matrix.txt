@@ -1,0 +1,19 @@
+s3 s-dead-1 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s3 s-recover-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s3 s-close-1 exit=0 PASS RESULT close-recover bluetooth_works_after=True
+s3 s-dropcmd-1 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=7.927908 transfer_done=7.939536 autosuspended=8.464677 tx_timeout=9.957 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s3 s-wedge-1 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=8.281217 transfer_done=8.293134 autosuspended=8.818121 class-write-status=0x05 reset_seen=10.711966 tx_timeouts=1 (10.307) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=10.551088,10.696517 kernel_reset_line=10.553
+s3 s-cycles-1 exit=0 PASS RESULT cycles n=30 failures=0
+s3 s-dead-2 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s3 s-recover-2 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s3 s-close-2 exit=0 PASS RESULT close-recover bluetooth_works_after=True
+s3 s-dropcmd-2 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=8.335867 transfer_done=8.351111 autosuspended=8.870750 tx_timeout=10.435 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s3 s-wedge-2 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=8.043817 transfer_done=8.054563 autosuspended=8.609236 class-write-status=0x05 reset_seen=10.547741 tx_timeouts=1 (10.094) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=10.360663,10.520014 kernel_reset_line=10.361
+s3 s-cycles-2 exit=0 PASS RESULT cycles n=30 failures=0
+s3 s-dead-3 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s3 s-recover-3 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s3 s-close-3 exit=0 PASS RESULT close-recover bluetooth_works_after=True
+s3 s-dropcmd-3 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=11.629864 transfer_done=11.649491 autosuspended=12.165633 tx_timeout=13.701 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s3 s-wedge-3 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=13.185055 transfer_done=13.202665 autosuspended=13.703908 class-write-status=0x05 reset_seen=15.670592 tx_timeouts=1 (15.195) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=15.508238,15.649617 kernel_reset_line=15.510
+s3 s-cycles-3 exit=0 PASS RESULT cycles n=30 failures=0
+batch: 18 runs, 0 FAIL

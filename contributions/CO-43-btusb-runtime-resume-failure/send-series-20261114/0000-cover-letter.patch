@@ -1,0 +1,76 @@
+From a2fda18e5f156d765b0e396f8e457916b97ee0ae Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:50:00 +0100
+Subject: [PATCH 0/5] Bluetooth: btusb: A device that does not resume
+
+This series applies on top of "Bluetooth: btusb: Anchor a deferred URB
+under txlock" (bluetooth-next da3cc02587c6 plus that patch).
+
+A QCA9377 (13d3:3503) that is runtime-suspended and does not answer
+when it is resumed leaves the HCI workqueue blocked for more than five
+seconds, logs nothing about the failed resume, and, when the USB
+core's reset-resume brings the device back, leaves Bluetooth dead.
+Two more problems sit on the failure path of btusb_resume() and in the
+code that discards deferred URBs. Reproduced with an emulated
+controller attached over usbip in a QEMU guest (KASAN, lockdep, four
+CPUs); why the controller stopped answering (firmware, platform power
+or the host's xHCI) is not addressed here.
+
+ 1: log the failed resume of the waker.
+ 2: do not block the HCI workqueue in the command timeout while the
+    device resumes, and keep the reset for a command that did reach
+    the controller.
+ 3: add a reset_resume callback that rebinds btusb after a runtime
+    reset-resume.
+ 4: drop the deferred URBs and clear BTUSB_SUSPENDING under txlock on
+    a failed resume, so that no URB stays parked.
+ 5: free the skb and the setup packet of a deferred URB that is
+    discarded instead of sent.
+
+Patch 2 depends on patch 3. Without the rebinding that patch 3 adds,
+a device that answers after the core's reset-resume stays bound and
+is never resumed (0 of 3 runs recovered with patch 2 alone; unpatched,
+the reset that btusb_reset() queued after the wait is what rebound
+it). Please apply them together. Patches 4 and 5 are independent of
+2 and 3 in effect; 4 can only be exercised once 2 is applied, because
+without it the command credit does not return before the failed
+resume's path has ended.
+
+Emulation, three runs of each; the unpatched kernel, then the series:
+
+  dead device (core disconnects it): command credit restored after
+    5.38 s, then 0.001 s
+  device that answers after the reset-resume: back and usable 3 of 3,
+    then 3 of 3
+  resume started by powering hci0 off: 0 of 3 (the dead state above),
+    then 3 of 3
+  command whose event is dropped, device autosuspended before the
+    timeout: reset, then reset; also for a controller that stays
+    silent until it is reset
+  30 healthy suspend and resume cycles: no failure, no failure
+  failed resume or discard with a command deferred (fault injected
+    in the driver for the test): 1 to 4 kmemleak objects per run
+    (skbs and setup packets), then none in 12 of 12 runs
+  deferred anchor after a failed resume with a second sender in the
+    window (injected delay): parked URB in 3 of 3, then none in 3
+    of 3
+
+No kernel report in any run. Not tested: the system suspend and resume
+path (the emulated device cannot take part in a system sleep); patch 3
+queues the reset only while the device's runtime PM status is
+RPM_RESUMING, which the PM core sets only in rpm_resume(), before the
+runtime_resume callback; this was checked in the source only.
+
+Iaroslav Voitovych (5):
+  Bluetooth: btusb: Report a failed runtime resume for deferred data
+  Bluetooth: btusb: Don't wait for a resume in the HCI command timeout
+  Bluetooth: btusb: Recover after a runtime reset-resume
+  Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+  Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+
+ drivers/bluetooth/btusb_main.c | 148 +++++++++++++++++++++++++++++-----
+ 1 file changed, 131 insertions(+), 17 deletions(-)
+
+--
+2.43.0
+

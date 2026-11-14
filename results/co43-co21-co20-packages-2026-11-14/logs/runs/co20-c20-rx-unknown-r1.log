@@ -1,0 +1,150 @@
+start 2026-11-14 06:46:27 kernel co20 label c20-rx-unknown-r1 args rx-unknown --expect clean cpus 4
+67e5413b281edb430feeab351320346e14c568ae2d1046b1aadf58d0a0b1548a  /root/exp/agent-work/lane1-btusb-20261114/task3/../img/bzImage-co20
+dc6d0ec60faac47153f7decaa22fc77292dbbd3226c3c059deef7e7ce2fb1d75  /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba32c4
+input_len: 0x000000000103bfe0
+output: 0x0000000001000000
+output_len: 0x0000000003833164
+kernel_total_size: 0x0000000004c22000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ab2d0).
+Linux version 7.3.0-gb40e722f699e (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #11 SMP PREEMPT_DYNAMIC Sat Nov 14 03:34:08 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py rx-unknown --expect clean'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py rx-unknown --expect clean
+Changing into directory /root/exp
+New process 59 created
+random: crng init done
+  0.009 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.417 SET_CONFIGURATION 1
+  0.444 HCI cmd 0x0c03 
+  0.448 hci0 present; btusb bound
+  0.453 HCI cmd 0x1003 
+  0.471 HCI cmd 0x1001 
+  0.476 HCI cmd 0x1009 
+  0.478 HCI cmd 0x1002 
+  0.483 HCI cmd 0x0c45 01
+  0.483 HCI command 0x0c45 (01): generic Command Complete
+  0.486 HCI cmd 0x1005 
+  0.496 HCI cmd 0x0c23 
+  0.505 HCI cmd 0x0c14 
+  0.529 HCI cmd 0x0c25 
+  0.533 HCI cmd 0x0c38 
+  0.535 HCI cmd 0x0c39 
+  0.542 HCI cmd 0x0c16 007d
+  0.543 HCI command 0x0c16 (007d): generic Command Complete
+  0.546 HCI cmd 0x0c01 fffffbff03180000
+  0.549 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.554 hci0 already up
+  1.093 HCI cmd 0x0405 01443322110018cc0200000001
+  1.133 HCI cmd 0x041b 0001
+  1.138 HCI cmd 0x0428 0001401f0000401f00000800030002c803
+  1.146 HCI cmd 0x0419 01443322110002000000
+  1.148 HCI command 0x0419 (01443322110002000000): generic Command Complete
+  1.193 SCO link handle 0x0101 up on ACL 0x0100, voice 0x0003, air mode 3
+  1.198 SET_INTERFACE interface 1 alt 1
+  1.201 HCI cmd 0x0405 02443322110018cc0200000001
+  1.226 isoc IN URB #1 submitted (10 packets, alt 1)
+  1.232 isoc IN URB #2 submitted (10 packets, alt 1)
+  1.239 HCI cmd 0x041b 0201
+  1.243 HCI cmd 0x0428 0201401f0000401f00000800030002c803
+  1.249 isoc IN URB #3 submitted (10 packets, alt 1)
+  1.254 HCI cmd 0x0419 02443322110002000000
+  1.296 SCO link handle 0x0103 up on ACL 0x0102, voice 0x0003, air mode 3
+Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+  2.372 HCI cmd 0x0406 010113
+Bluetooth: hci0: SCO packet for unknown connection handle 257
+  2.409 SET_INTERFACE interface 1 alt 0
+Bluetooth: hci0: urb ffff888002cfb800 submission failed (90)
+  2.778 HCI cmd 0x0406 030113
+  3.858 COUNTS corrupted SCO packet: 0 | unknown handle dropped: 5 | no memory: 0 | closed handle (debug): 0 | core: unknown connection handle: 1 | set USB alt failed: 0
+  3.859 JUDGE rx-unknown expect=clean corrupted=0 unknown_dropped=5 closed_debug=0 -> ok
+  3.861 SET_INTERFACE sequence: [1, 0]
+  3.861 unhandled-opcode list: ['0x0419', '0x0c01', '0x0c16', '0x0c45']
+  3.861 RESULT rx-unknown PASS
+[    0.785455] NET: Registered PF_BLUETOOTH protocol family
+[    0.785465] Bluetooth: HCI device and connection manager initialized
+[    0.785518] Bluetooth: HCI socket layer initialized
+[    0.785538] Bluetooth: L2CAP socket layer initialized
+[    0.785612] Bluetooth: SCO socket layer initialized
+[    1.610809] Bluetooth: HCI UART driver ver 2.3
+[    1.610829] Bluetooth: HCI UART protocol H4 registered
+[    1.610835] Bluetooth: HCI UART protocol BCSP registered
+[    1.610970] Bluetooth: HCI UART protocol LL registered
+[    1.610976] Bluetooth: HCI UART protocol ATH3K registered
+[    1.611082] Bluetooth: HCI UART protocol Three-wire (H5) registered
+[    1.611174] Bluetooth: HCI UART protocol QCA registered
+[    1.611180] Bluetooth: HCI UART protocol AG6XX registered
+[    1.611286] Bluetooth: HCI UART protocol Marvell registered
+[    1.611380] Bluetooth: HCI UART protocol AML registered
+[    1.611996] usbcore: registered new interface driver btusb
+[    1.621863] Bluetooth: RFCOMM socket layer initialized
+[    1.621939] Bluetooth: RFCOMM ver 1.11
+[    1.621993] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    1.622025] Bluetooth: BNEP socket layer initialized
+[    1.622035] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    1.622063] Bluetooth: HIDP socket layer initialized
+[    2.168978]     rx-unknown
+[    7.241097] Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+[    7.389438] Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+[    7.541213] Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+[    7.701071] Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+[    7.849047] Bluetooth: hci0: SCO packet for unknown handle 1911 dropped
+[    8.033599] Bluetooth: hci0: SCO packet for unknown connection handle 257
+[    8.047081] Bluetooth: hci0: urb ffff888002cfb800 submission failed (90)
+  4.224 BT17-EXIT 0
+Process 59 exited with status 0
+exit=0 end 2026-11-14 06:46:38

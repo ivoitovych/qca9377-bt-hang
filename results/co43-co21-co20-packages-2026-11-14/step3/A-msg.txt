@@ -1,0 +1,24 @@
+Bluetooth: btusb: Report SCO receive failures by cause
+
+btusb_isoc_complete() logs "corrupted SCO packet" whenever
+btusb_recv_isoc() fails, but btusb_recv_isoc() fails in three different
+cases: no memory for a new packet, a header whose length does not fit
+the buffer, and a header whose handle is not a live SCO or eSCO
+connection. The last one is the common case. It is how a continuation
+fragment taken for a header after a lost isochronous frame is caught,
+but it also catches the data that controllers deliver for a link the
+host has just deleted, which happens at the end of most calls. All
+three print the same line, so the log cannot tell a hang-up from data
+loss, and the rejected handle is not shown.
+
+Return a distinct error for each case. Keep "corrupted SCO packet" for
+the length check, and give allocation failure and the unknown handle
+messages of their own, the latter naming the handle. Rate-limit the two
+new messages: an isochronous URB completes every millisecond.
+
+All three still count in err_rx. Allocation failures count there on the
+interrupt and bulk paths too. An unknown handle cannot be told apart
+from a misaligned fragment here, and it is the check that catches one:
+bt_skb_alloc(HCI_MAX_SCO_SIZE) leaves at least 252 bytes of tailroom
+after the header, so the length check can reject only a dlen of 253 to
+255.

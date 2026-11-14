@@ -1,0 +1,145 @@
+From 0e82931d12ef189a89537516fc9763b762898808 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 2/2] Bluetooth: btusb: Log SCO data for a just closed link at
+ debug level
+
+When a SCO or eSCO link is disconnected, the controller can still
+deliver data that it queued before the Disconnection Complete. Once
+hci_conn_del() has removed the connection from the hash, and until the
+notification that stops the isochronous URBs has been handled, such data
+reaches btusb_recv_isoc() with a handle that btusb_validate_sco_handle()
+no longer finds. It is then logged as an unknown handle and counted in
+err_rx, at the end of most calls.
+
+Remember the handle of the last SCO header that validated. A header
+whose handle is no longer live but equals that handle is data for the
+link that has just closed: log it at debug level and do not count it in
+err_rx. Any other unknown handle, most likely a continuation fragment
+taken for a header after a lost isochronous frame, stays an error and is
+counted.
+
+The remembered handle is protected by rxlock, like the reassembly
+state. It is forgotten when the reassembly state is, on an alternate
+setting change and in btusb_free_frags(), and when the last SCO link is
+gone and the isochronous URBs have been killed, so that it cannot match
+a later misaligned fragment. Only a misaligned fragment in the short
+window after its own link closed, whose first two bytes give that
+link's handle, is still taken for residue. With two links up, data of
+the closed link that comes after a packet of the remaining one is still
+reported as an unknown handle.
+
+---
+ drivers/bluetooth/btusb_main.c | 42 ++++++++++++++++++++++++++++++----
+ 1 file changed, 38 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 86de8a0e98f31..5e32053ea6f62 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1055,6 +1055,10 @@ struct btusb_data {
+ 	struct sk_buff *sco_skb;
+ 	struct sk_buff *rx_skb;
+ 
++	/* Handle of the last SCO header that validated, under rxlock */
++	u16 sco_last_handle;
++	bool sco_last_valid;
++
+ 	struct usb_endpoint_descriptor *intr_ep;
+ 	struct usb_endpoint_descriptor *bulk_tx_ep;
+ 	struct usb_endpoint_descriptor *bulk_rx_ep;
+@@ -1297,6 +1301,7 @@ static inline void btusb_free_frags(struct btusb_data *data)
+ 
+ 	dev_kfree_skb_irq(data->sco_skb);
+ 	data->sco_skb = NULL;
++	data->sco_last_valid = false;
+ 
+ 	/* rx_skb may hold an ERR_PTR from a previous h4_recv_skb() call */
+ 	if (!IS_ERR(data->rx_skb))
+@@ -1544,14 +1549,18 @@ static bool btusb_validate_sco_handle(struct hci_dev *hdev,
+ }
+ 
+ /* Returns 0, -ENOMEM when no buffer could be allocated, -EILSEQ for a header
+- * whose length does not fit, or -ENOENT for a header whose handle is not a
+- * live SCO or eSCO connection; the rejected handle is then stored in *handle.
++ * whose length does not fit, -ENOTCONN for a header whose handle is no longer
++ * live but is the handle of the last header that validated, which is data
++ * for a link that has just been deleted, or -ENOENT for any other header
++ * whose handle is not a live SCO or eSCO connection. For -ENOTCONN and
++ * -ENOENT the rejected handle is stored in *handle.
+  */
+ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
+ 			   u16 *handle)
+ {
+ 	struct sk_buff *skb;
+ 	unsigned long flags;
++	u16 h;
+ 	int err = 0;
+ 
+ 	spin_lock_irqsave(&data->rxlock, flags);
+@@ -1592,14 +1601,23 @@ static int btusb_recv_isoc(struct btusb_data *data, void *buffer, int count,
+ 				break;
+ 			}
+ 
++			h = hci_handle(__le16_to_cpu(hdr->handle));
++
+ 			if (!btusb_validate_sco_handle(data->hdev, hdr)) {
+-				*handle = hci_handle(__le16_to_cpu(hdr->handle));
++				*handle = h;
+ 				kfree_skb(skb);
+ 				skb = NULL;
+ 
+-				err = -ENOENT;
++				if (data->sco_last_valid &&
++				    h == data->sco_last_handle)
++					err = -ENOTCONN;
++				else
++					err = -ENOENT;
+ 				break;
+ 			}
++
++			data->sco_last_handle = h;
++			data->sco_last_valid = true;
+ 		}
+ 
+ 		if (!hci_skb_expect(skb)) {
+@@ -1856,6 +1874,12 @@ static void btusb_isoc_complete(struct urb *urb)
+ 			if (!err)
+ 				continue;
+ 
++			if (err == -ENOTCONN) {
++				bt_dev_dbg(hdev, "SCO packet for closed handle %u dropped",
++					   handle);
++				continue;
++			}
++
+ 			if (err == -ENOMEM)
+ 				bt_dev_err_ratelimited(hdev, "no memory for SCO packet");
+ 			else if (err == -ENOENT)
+@@ -2568,6 +2592,7 @@ static int btusb_switch_alt_setting(struct hci_dev *hdev, int new_alts)
+ 		spin_lock_irqsave(&data->rxlock, flags);
+ 		dev_kfree_skb_irq(data->sco_skb);
+ 		data->sco_skb = NULL;
++		data->sco_last_valid = false;
+ 		spin_unlock_irqrestore(&data->rxlock, flags);
+ 
+ 		err = __set_isoc_interface(hdev, new_alts);
+@@ -2663,8 +2688,17 @@ static void btusb_work(struct work_struct *work)
+ 		if (btusb_switch_alt_setting(hdev, new_alts) < 0)
+ 			bt_dev_err(hdev, "set USB alt:(%d) failed!", new_alts);
+ 	} else {
++		unsigned long flags;
++
+ 		usb_kill_anchored_urbs(&data->isoc_anchor);
+ 
++		/* No more SCO data can arrive: forget the last handle so that
++		 * a later misaligned fragment is not taken for its data.
++		 */
++		spin_lock_irqsave(&data->rxlock, flags);
++		data->sco_last_valid = false;
++		spin_unlock_irqrestore(&data->rxlock, flags);
++
+ 		if (test_and_clear_bit(BTUSB_ISOC_RUNNING, &data->flags))
+ 			__set_isoc_interface(hdev, 0);
+ 
+-- 
+2.43.0
+

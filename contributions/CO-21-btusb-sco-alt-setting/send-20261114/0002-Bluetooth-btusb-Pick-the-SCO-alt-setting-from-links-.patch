@@ -1,0 +1,112 @@
+From 18500f5259e29f7114e4cb63a5762ee7cc90c53e Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 18:33:58 +0100
+Subject: [PATCH 2/2] Bluetooth: btusb: Pick the SCO alt setting from links
+ that are up
+
+btusb_notify() takes the air mode from whichever notification changed
+the number of SCO connections, and btusb_work() selects alternate
+setting 0, which has no isochronous bandwidth, for anything that is
+neither CVSD nor transparent:
+
+- When one of two SCO links goes down, HCI_NOTIFY_DISABLE_SCO becomes
+  the air mode, and the link that stays up is moved to alternate
+  setting 0.
+- A SCO connection is counted from the start of its setup. When another
+  connection is added or removed meanwhile, HCI_NOTIFY_CONN_ADD or
+  HCI_NOTIFY_CONN_DEL becomes the air mode, and the notification of the
+  link coming up is ignored, as the count does not change.
+- The link-up notification is also sent for a setup that failed, so a
+  failed transparent setup can move a CVSD link that is up to the
+  transparent setting.
+- With a CVSD and a transparent link up, the setting is that of the
+  last notification.
+
+Select the alternate setting in btusb_work() from the SCO links that
+are up when it runs: the CVSD table for CVSD links, the transparent
+setting when a transparent link is up, and no isochronous transfers
+when no link is up. The notifications only schedule the work, so
+notifications that come before it runs are all taken into account.
+
+Fixes: baac6276c0a9 ("Bluetooth: btusb: handle mSBC audio over USB Endpoints")
+---
+ drivers/bluetooth/btusb_main.c | 26 ++++++++++++++++----------
+ 1 file changed, 16 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca098e..4e017a9cd9555 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1069,8 +1069,6 @@ struct btusb_data {
+ 	__u8 cmdreq;
+ 	__u8 proto;
+ 
+-	unsigned int sco_num;
+-	unsigned int air_mode;
+ 	bool usb_alt6_packet_flow;
+ 	int isoc_altsetting;
+ 	int suspend_count;
+@@ -2475,10 +2473,13 @@ static void btusb_notify(struct hci_dev *hdev, unsigned int evt)
+ 
+ 	BT_DBG("%s evt %d", hdev->name, evt);
+ 
+-	if (hci_conn_num(hdev, SCO_LINK) != data->sco_num) {
+-		data->sco_num = hci_conn_num(hdev, SCO_LINK);
+-		data->air_mode = evt;
++	/* btusb_work() reads the SCO links that are up when it runs */
++	switch (evt) {
++	case HCI_NOTIFY_ENABLE_SCO_CVSD:
++	case HCI_NOTIFY_ENABLE_SCO_TRANSP:
++	case HCI_NOTIFY_DISABLE_SCO:
+ 		schedule_work(&data->work);
++		break;
+ 	}
+ }
+ 
+@@ -2587,6 +2588,7 @@ static void btusb_work(struct work_struct *work)
+ {
+ 	struct btusb_data *data = container_of(work, struct btusb_data, work);
+ 	struct hci_dev *hdev = data->hdev;
++	unsigned int cvsd, transp;
+ 	int new_alts = 0;
+ 	int err;
+ 
+@@ -2597,7 +2599,11 @@ static void btusb_work(struct work_struct *work)
+ 	if (data->proto == BTUSB_PROTO_H4)
+ 		return;
+ 
+-	if (data->sco_num > 0) {
++	/* Pick the alternate setting from the SCO links that are up */
++	cvsd = hci_conn_sco_up_num(hdev, HCI_AIR_MODE_CVSD);
++	transp = hci_conn_sco_up_num(hdev, HCI_AIR_MODE_TRANSP);
++
++	if (cvsd || transp) {
+ 		if (!test_bit(BTUSB_DID_ISO_RESUME, &data->flags)) {
+ 			err = usb_autopm_get_interface(data->isoc ? data->isoc : data->intf);
+ 			if (err < 0) {
+@@ -2609,18 +2615,18 @@ static void btusb_work(struct work_struct *work)
+ 			set_bit(BTUSB_DID_ISO_RESUME, &data->flags);
+ 		}
+ 
+-		if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_CVSD) {
++		if (!transp) {
+ 			if (hdev->voice_setting & 0x0020) {
+ 				static const int alts[3] = { 2, 4, 5 };
+ 				unsigned int sco_idx;
+ 
+-				sco_idx = min_t(unsigned int, data->sco_num - 1,
++				sco_idx = min_t(unsigned int, cvsd - 1,
+ 						ARRAY_SIZE(alts) - 1);
+ 				new_alts = alts[sco_idx];
+ 			} else {
+-				new_alts = data->sco_num;
++				new_alts = cvsd;
+ 			}
+-		} else if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP) {
++		} else {
+ 			/* Bluetooth USB spec recommends alt 6 (63 bytes), but
+ 			 * many adapters do not support it.  Alt 1 appears to
+ 			 * work for all adapters that do not have alt 6, and
+-- 
+2.43.0
+

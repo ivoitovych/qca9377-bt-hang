@@ -1,0 +1,242 @@
+start 2026-11-14 05:20:32 kernel base label c20-rx-cycles-2 args rx-cycles --expect noisy cpus 4
+b6026653cba5c8bed45b3520e0fc4931a5e154abb8fb03c8930ab4659e207217  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base
+ae43e778258c779e68efa114c5ac01cf6fc7edf5680fcc23bf582d2ad67da5dc  /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba12c4
+input_len: 0x000000000103a0bc
+output: 0x0000000001000000
+output_len: 0x000000000382e53c
+kernel_total_size: 0x0000000004c1e000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030a82d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Fri Nov 13 04:19:39 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py rx-cycles --expect noisy'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task3/harness/usbip-bt-emu.py rx-cycles --expect noisy
+Changing into directory /root/exp
+New process 60 created
+random: crng init done
+  0.017 attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  0.405 SET_CONFIGURATION 1
+  0.437 HCI cmd 0x0c03 
+  0.443 HCI cmd 0x1003 
+  0.452 hci0 present; btusb bound
+  0.458 HCI cmd 0x1001 
+  0.481 HCI cmd 0x1009 
+  0.499 HCI cmd 0x1002 
+  0.521 HCI cmd 0x0c45 01
+  0.522 HCI command 0x0c45 (01): generic Command Complete
+  0.526 HCI cmd 0x1005 
+  0.528 HCI cmd 0x0c23 
+  0.529 HCI cmd 0x0c14 
+  0.557 HCI cmd 0x0c25 
+  0.562 HCI cmd 0x0c38 
+  0.569 HCI cmd 0x0c39 
+  0.573 HCI cmd 0x0c16 007d
+  0.573 HCI command 0x0c16 (007d): generic Command Complete
+  0.578 HCI cmd 0x0c01 fffffbff03180000
+  0.579 HCI command 0x0c01 (fffffbff03180000): generic Command Complete
+  0.585 hci0 already up
+  1.113 HCI cmd 0x0405 01443322110018cc0200000001
+  1.145 HCI cmd 0x041b 0001
+  1.156 HCI cmd 0x0428 0001401f0000401f00000800030002c803
+  1.165 HCI cmd 0x0419 01443322110002000000
+  1.170 HCI command 0x0419 (01443322110002000000): generic Command Complete
+  1.217 SCO link handle 0x0101 up on ACL 0x0100, voice 0x0003, air mode 3
+  1.231 SET_INTERFACE interface 1 alt 1
+  1.244 isoc IN URB #1 submitted (10 packets, alt 1)
+  1.245 isoc IN URB #2 submitted (10 packets, alt 1)
+  1.261 isoc IN URB #3 submitted (10 packets, alt 1)
+  1.637 HCI cmd 0x0406 010113
+Bluetooth: hci0: corrupted SCO packet
+Bluetooth: hci0: corrupted SCO packet
+  1.676 SET_INTERFACE interface 1 alt 0
+  1.940 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  1.997 SCO link handle 0x0102 up on ACL 0x0100, voice 0x0003, air mode 3
+  2.009 SET_INTERFACE interface 1 alt 1
+  2.423 HCI cmd 0x0406 020113
+Bluetooth: hci0: corrupted SCO packet
+  2.462 SET_INTERFACE interface 1 alt 0
+  2.728 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  2.789 SCO link handle 0x0103 up on ACL 0x0100, voice 0x0003, air mode 3
+  2.817 SET_INTERFACE interface 1 alt 1
+  3.207 HCI cmd 0x0406 030113
+Bluetooth: hci0: corrupted SCO packet
+Bluetooth: hci0: SCO packet for unknown connection handle 259
+  3.264 SET_INTERFACE interface 1 alt 0
+  3.515 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  3.573 SCO link handle 0x0104 up on ACL 0x0100, voice 0x0003, air mode 3
+  3.587 SET_INTERFACE interface 1 alt 1
+  3.985 HCI cmd 0x0406 040113
+Bluetooth: hci0: corrupted SCO packet
+  4.023 SET_INTERFACE interface 1 alt 0
+  4.289 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  4.345 SCO link handle 0x0105 up on ACL 0x0100, voice 0x0003, air mode 3
+  4.361 SET_INTERFACE interface 1 alt 1
+  4.765 HCI cmd 0x0406 050113
+Bluetooth: hci0: corrupted SCO packet
+  4.807 SET_INTERFACE interface 1 alt 0
+  5.065 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  5.126 SCO link handle 0x0106 up on ACL 0x0100, voice 0x0003, air mode 3
+  5.131 SET_INTERFACE interface 1 alt 1
+  5.549 HCI cmd 0x0406 060113
+Bluetooth: hci0: SCO packet for unknown connection handle 262
+Bluetooth: hci0: SCO packet for unknown connection handle 262
+  5.619 SET_INTERFACE interface 1 alt 0
+  5.853 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  5.906 SCO link handle 0x0107 up on ACL 0x0100, voice 0x0003, air mode 3
+  5.917 SET_INTERFACE interface 1 alt 1
+  6.319 HCI cmd 0x0406 070113
+Bluetooth: hci0: SCO packet for unknown connection handle 263
+  6.363 SET_INTERFACE interface 1 alt 0
+  6.622 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  6.677 SCO link handle 0x0108 up on ACL 0x0100, voice 0x0003, air mode 3
+  6.685 SET_INTERFACE interface 1 alt 1
+  7.088 HCI cmd 0x0406 080113
+Bluetooth: hci0: SCO packet for unknown connection handle 264
+  7.131 SET_INTERFACE interface 1 alt 0
+  7.395 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  7.453 SCO link handle 0x0109 up on ACL 0x0100, voice 0x0003, air mode 3
+  7.465 SET_INTERFACE interface 1 alt 1
+  7.874 HCI cmd 0x0406 090113
+Bluetooth: hci0: SCO packet for unknown connection handle 265
+  7.930 SET_INTERFACE interface 1 alt 0
+  8.173 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  8.229 SCO link handle 0x010a up on ACL 0x0100, voice 0x0003, air mode 3
+  8.242 SET_INTERFACE interface 1 alt 1
+  8.642 HCI cmd 0x0406 0a0113
+Bluetooth: hci0: corrupted SCO packet
+  8.689 SET_INTERFACE interface 1 alt 0
+  8.951 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  9.008 SCO link handle 0x010b up on ACL 0x0100, voice 0x0003, air mode 3
+  9.019 SET_INTERFACE interface 1 alt 1
+  9.042 isoc IN URB #500 submitted (10 packets, alt 1)
+  9.428 HCI cmd 0x0406 0b0113
+Bluetooth: hci0: SCO packet for unknown connection handle 267
+  9.479 SET_INTERFACE interface 1 alt 0
+  9.729 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+  9.792 SCO link handle 0x010c up on ACL 0x0100, voice 0x0003, air mode 3
+  9.803 SET_INTERFACE interface 1 alt 1
+ 10.209 HCI cmd 0x0406 0c0113
+Bluetooth: hci0: corrupted SCO packet
+Bluetooth: hci0: corrupted SCO packet
+ 10.246 SET_INTERFACE interface 1 alt 0
+ 10.506 HCI cmd 0x0428 0001401f0000401f00000d000300028003
+ 10.562 SCO link handle 0x010d up on ACL 0x0100, voice 0x0003, air mode 3
+ 10.571 SET_INTERFACE interface 1 alt 1
+ 10.981 HCI cmd 0x0406 0d0113
+Bluetooth: hci0: SCO packet for unknown connection handle 269
+ 11.019 SET_INTERFACE interface 1 alt 0
+vhci_hcd: cannot find a urb of seqnum 864 max seqnum 866
+ 11.040 usbip socket ended: EOFError()
+ 11.281 scenario raised OSError(77, 'File descriptor in bad state')
+[   10.397473] vhci_hcd: urb->status -104
+[   10.403367] vhci_hcd: unlink->seqnum 250
+[   10.403400] vhci_hcd: urb->status -104
+[   11.152006] Bluetooth: hci0: corrupted SCO packet
+[   11.162801] vhci_hcd: unlink->seqnum 304
+[   11.162828] vhci_hcd: urb->status -104
+[   11.163287] vhci_hcd: unlink->seqnum 305
+[   11.163306] vhci_hcd: urb->status -104
+[   11.929199] Bluetooth: hci0: corrupted SCO packet
+[   11.936279] vhci_hcd: unlink->seqnum 362
+[   11.936299] vhci_hcd: urb->status -104
+[   11.944516] vhci_hcd: unlink->seqnum 363
+[   11.944542] vhci_hcd: urb->status -104
+[   12.725560] Bluetooth: hci0: SCO packet for unknown connection handle 262
+[   12.739650] Bluetooth: hci0: SCO packet for unknown connection handle 262
+[   12.748879] vhci_hcd: unlink->seqnum 424
+[   12.750220] vhci_hcd: urb->status -104
+[   12.755120] vhci_hcd: unlink->seqnum 426
+[   12.755149] vhci_hcd: urb->status -104
+[   13.495712] Bluetooth: hci0: SCO packet for unknown connection handle 263
+[   13.497971] vhci_hcd: unlink->seqnum 488
+[   13.497991] vhci_hcd: urb->status -104
+[   13.503453] vhci_hcd: unlink->seqnum 489
+[   13.503474] vhci_hcd: the urb (seqnum 489) was already given back
+[   14.262305] Bluetooth: hci0: SCO packet for unknown connection handle 264
+[   14.269047] vhci_hcd: unlink->seqnum 547
+[   14.269068] vhci_hcd: the urb (seqnum 547) was already given back
+[   14.269808] vhci_hcd: unlink->seqnum 549
+[   14.269828] vhci_hcd: urb->status -104
+[   15.054122] Bluetooth: hci0: SCO packet for unknown connection handle 265
+[   15.064149] vhci_hcd: unlink->seqnum 610
+[   15.064178] vhci_hcd: urb->status -104
+[   15.068796] vhci_hcd: unlink->seqnum 611
+[   15.068827] vhci_hcd: urb->status -104
+[   15.809266] Bluetooth: hci0: corrupted SCO packet
+[   15.821398] vhci_hcd: unlink->seqnum 672
+[   15.821429] vhci_hcd: urb->status -104
+[   15.828499] vhci_hcd: unlink->seqnum 673
+[   15.828526] vhci_hcd: urb->status -104
+[   16.605462] Bluetooth: hci0: SCO packet for unknown connection handle 267
+[   16.614317] vhci_hcd: unlink->seqnum 735
+[   16.614345] vhci_hcd: urb->status -104
+[   16.618146] vhci_hcd: unlink->seqnum 736
+[   16.618172] vhci_hcd: urb->status -104
+[   17.365707] Bluetooth: hci0: corrupted SCO packet
+[   17.366530] Bluetooth: hci0: corrupted SCO packet
+[   17.384272] vhci_hcd: unlink->seqnum 797
+[   17.384300] vhci_hcd: urb->status -104
+[   17.385120] vhci_hcd: unlink->seqnum 799
+[   17.385140] vhci_hcd: urb->status -104
+[   18.157517] Bluetooth: hci0: SCO packet for unknown connection handle 269
+[   18.158901] vhci_hcd: unlink->seqnum 863
+[   18.158915] vhci_hcd: the urb (seqnum 863) was already given back
+[   18.158944] vhci_hcd: unlink->seqnum 865
+[   18.158956] vhci_hcd: urb->status 0
+[   18.173639] vhci_hcd: cannot find a urb of seqnum 864 max seqnum 866
+[   18.179238] vhci_hcd vhci_hcd.0: stop threads
+[   18.179263] vhci_hcd vhci_hcd.0: release socket
+[   18.179405] vhci_hcd vhci_hcd.0: disconnect device
+[   18.180042] usb 2-1: USB disconnect, device number 2
+Process 60 exited with status 3
+exit=0 end 2026-11-14 05:20:52

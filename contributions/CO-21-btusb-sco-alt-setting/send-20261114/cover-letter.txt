@@ -1,0 +1,25 @@
+Subject: [PATCH 0/2] Bluetooth: btusb: Pick the SCO alternate setting from the links that are up
+
+btusb chooses the isochronous alternate setting from the last SCO
+notification, not from the SCO links that exist. When one of two SCO
+links goes down, the remaining link is moved to alternate setting 0,
+which has no isochronous bandwidth. A SCO connection is also counted
+from the start of its setup: if another connection is added or removed
+while it is being set up, the notification of the link coming up is
+ignored.
+
+ 1: keep the air mode of a SCO link that came up in the connection and
+    add a helper that counts the links that are up by air mode.
+ 2: let btusb_work() select the alternate setting from those counts.
+
+Patch 2 needs patch 1.
+
+Tested with a userspace controller attached over usbip to a QEMU guest
+(the real btusb and core): five scenarios (two mSBC links with either
+one hung up first, two CVSD links, and a single link set up while another
+connection is added and removed, for mSBC and for CVSD). Unpatched, the
+setting is wrong at some point in all five; with the series all five
+pass, in two runs each.
+
+The series applies on bluetooth-next without conflicts. The existing
+sco-tester results are the same with and without it.
