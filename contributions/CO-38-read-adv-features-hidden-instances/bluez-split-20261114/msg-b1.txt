@@ -1,0 +1,13 @@
+mgmt-tester: Add extended advertising timeout tests
+
+On an extended advertising controller the kernel passes the instance
+timeout as the Duration of LE Set Extended Advertising Enable, in units
+of 10 ms, and removes the instance when the controller ends the set.
+
+Check the Duration for timeouts of 0, 1, 65, 66 and 655 s and for
+timeouts above the 655.35 s the field can hold, which are expected at
+0xffff; check that an instance is still present before its timeout and
+that a 1 s instance is removed after 1 s, through Add Advertising and
+through Add Extended Advertising Parameters. Also cover an instance
+added again with another timeout before the first expires, and two
+instances with different timeouts.

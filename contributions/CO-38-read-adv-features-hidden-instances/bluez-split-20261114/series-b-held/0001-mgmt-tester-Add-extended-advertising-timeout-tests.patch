@@ -1,0 +1,187 @@
+From a7136d12374b9a4630feb2dc46fc32ed5d7603ff Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 14:04:48 +0100
+Subject: [PATCH BlueZ 1/2] mgmt-tester: Add extended advertising timeout tests
+
+On an extended advertising controller the kernel passes the instance
+timeout as the Duration of LE Set Extended Advertising Enable, in units
+of 10 ms, and removes the instance when the controller ends the set.
+
+Check the Duration for timeouts of 0, 1, 65, 66 and 655 s and for
+timeouts above the 655.35 s the field can hold, which are expected at
+0xffff; check that an instance is still present before its timeout and
+that a 1 s instance is removed after 1 s, through Add Advertising and
+through Add Extended Advertising Parameters. Also cover an instance
+added again with another timeout before the first expires, and two
+instances with different timeouts.
+---
+ tools/mgmt-tester.c | 142 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 140 insertions(+), 2 deletions(-)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index a52f1188e..c02fab65a 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -14490,12 +14490,104 @@ static const struct generic_data eks_oppt_connect_encrypt_test = {
+ 
+ /* An extended advertising controller is given the instance timeout as the
+  * Duration of LE Set Extended Advertising Enable (N * 10 ms) and ends the
+- * set itself, after which the kernel removes the instance. Removal is
+- * expected Duration * 10 ms after the enable.
++ * set itself, after which the kernel removes the instance. The field holds
++ * at most 0xffff (655.35 s), so longer timeouts are expected at that limit.
++ * Removal is expected Duration * 10 ms after the enable.
+  */
+ #define ADV_TIMEOUT_EARLY_MS	50
+ #define ADV_TIMEOUT_LATE_MS	1000
+ 
++#define ADV_TIMEOUT_TEST(_name, _timeout, _duration, _expire, _check) \
++	static const struct adv_timeout_test adv_timeout_##_name = { \
++		.inst = { { 0x01, _timeout, _duration, _expire } }, \
++		.num_inst = 1, \
++		.check_ms = _check, \
++	}; \
++	static const struct generic_data add_ext_adv_timeout_##_name = { \
++		.setup_settings = settings_powered_le, \
++		.adv_timeout = &adv_timeout_##_name, \
++	}
++
++ADV_TIMEOUT_TEST(1, 1, 100, true, 2500);
++ADV_TIMEOUT_TEST(0, 0, 0, false, 2000);
++ADV_TIMEOUT_TEST(65, 65, 6500, false, 2000);
++ADV_TIMEOUT_TEST(66, 66, 6600, false, 2000);
++ADV_TIMEOUT_TEST(655, 655, 65500, false, 2000);
++ADV_TIMEOUT_TEST(656, 656, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(6357, 6357, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(8192, 8192, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(65535, 65535, 0xffff, false, 2000);
++
++static const struct adv_timeout_test adv_timeout_params_1 = {
++	.inst = { { 0x01, 1, 100, true } },
++	.num_inst = 1,
++	.ext_params = true,
++	.check_ms = 2500,
++};
++
++static const struct generic_data add_ext_adv_timeout_params_1 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_params_1,
++};
++
++static const struct adv_timeout_test adv_timeout_params_66 = {
++	.inst = { { 0x01, 66, 6600, false } },
++	.num_inst = 1,
++	.ext_params = true,
++	.check_ms = 2000,
++};
++
++static const struct generic_data add_ext_adv_timeout_params_66 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_params_66,
++};
++
++/* Instance 1 is added again with another timeout before its first one
++ * expires: only the second timeout applies.
++ */
++static const struct adv_timeout_test adv_timeout_replace = {
++	.inst = {
++		{ 0x01, 2, 200, false },
++		{ 0x01, 3, 300, true },
++	},
++	.num_inst = 2,
++	.replace_ms = 1000,
++	.check_ms = 5500,
++};
++
++static const struct generic_data add_ext_adv_timeout_replace = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_replace,
++};
++
++static const struct adv_timeout_test adv_timeout_two_1_2 = {
++	.inst = {
++		{ 0x01, 1, 100, true },
++		{ 0x02, 2, 200, true },
++	},
++	.num_inst = 2,
++	.check_ms = 3500,
++};
++
++static const struct generic_data add_ext_adv_timeout_two_1_2 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_two_1_2,
++};
++
++static const struct adv_timeout_test adv_timeout_two_66_1 = {
++	.inst = {
++		{ 0x01, 66, 6600, false },
++		{ 0x02, 1, 100, true },
++	},
++	.num_inst = 2,
++	.check_ms = 2500,
++};
++
++static const struct generic_data add_ext_adv_timeout_two_66_1 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_two_66_1,
++};
++
+ /* Once instance 1 has expired, instance 2 is the only instance left and
+  * Read Advertising Features still has to list it.
+  */
+@@ -16192,6 +16284,52 @@ int main(int argc, char *argv[])
+ 					setup_add_advertising_timeout,
+ 					test_command_generic, 3);
+ 
++	/* The timeout is passed to the controller as the Duration of the
++	 * advertising set, in units of 10 ms and at most 655.35 s, and the
++	 * instance is removed when the set ends.
++	 */
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (expires)",
++					&add_ext_adv_timeout_1, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 0 s (none)",
++					&add_ext_adv_timeout_0, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 65 s",
++					&add_ext_adv_timeout_65, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s",
++					&add_ext_adv_timeout_66, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 655 s",
++					&add_ext_adv_timeout_655, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 656 s (limit)",
++					&add_ext_adv_timeout_656, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 6357 s (limit)",
++					&add_ext_adv_timeout_6357, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 8192 s (limit)",
++					&add_ext_adv_timeout_8192, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 65535 s (limit)",
++					&add_ext_adv_timeout_65535, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (Params)",
++					&add_ext_adv_timeout_params_1, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s (Params)",
++					&add_ext_adv_timeout_params_66, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout replaced",
++					&add_ext_adv_timeout_replace, NULL,
++					test_add_adv_timeout, 9);
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s and 2 s",
++					&add_ext_adv_timeout_two_1_2, NULL,
++					test_add_adv_timeout, 6);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
++					&add_ext_adv_timeout_two_66_1, NULL,
++					test_add_adv_timeout, 5);
+ 	test_bredrle50_full("Add Ext Advertising - Instance 2 listed alone",
+ 					&add_ext_adv_timeout_list_2, NULL,
+ 					test_add_adv_timeout, 5);
+-- 
+2.43.0
+

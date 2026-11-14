@@ -23,6 +23,9 @@ C38 = C38R + "/patch"
 C04R = "contributions/CO-04-mesh-test-14888791/send-20261114"
 C04 = C04R + "/patch"
 C05 = "contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch"
+C38S = "contributions/CO-38-read-adv-features-hidden-instances/bluez-split-20261114"
+C04F = "contributions/CO-04-mesh-test-14888791/review-fixes-20261114"
+C05F = "contributions/CO-05-mesh-adv-list-lock-i12/review-fixes-20261114"
 C35 = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail"
 C35R = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114"
 C22R = "contributions/research-2026-11-01/qca-ids/refresh-20261114"
@@ -109,12 +112,16 @@ results. On the BlueZ side the bot's TestFunctional is flaky in two BAP cases on
 across all runs, patched failed 2 of 8 and base 1 of 7, the same BAP case on base as on patched,
 and the series touches only two tester sources. A newer patch, "mgmt: drop advertising instances
 the controller cannot carry" (patchwork 14976301), fixes a different bug.
+
+**Changed after the outside review (2026-11-14).** The BlueZ tests are split. Series A is the
+helpers plus the instance-2 case, to send with the kernel fix: mgmt-tester `-p Add`, 3 runs
+each, gives 113/114 on `da3cc02587c6` (the new case fails) and 114/114 with CO-38. The
+bot's checks show no base/patched difference. Series B (the duration cases) is held for
+CO-12, which is not posted (`bluez-split-20261114/`).
 """, [
         (f"{C38}/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch", "diff"),
-        (f"{C38}/bluez/0000-cover-letter.patch", "diff"),
-        (f"{C38}/bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch", "diff"),
-        (f"{C38}/bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch", "diff"),
-        (f"{C38}/bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch", "diff"),
+        (f"{C38S}/series-a/0001-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch", "diff"),
+        (f"{C38S}/README.md", "markdown"),
         (f"{C38R}/CHECKS.md", "markdown"),
     ]),
     ("5. CO-04 — MGMT: a use-after-free in `mesh_send_sync()`", """
@@ -139,13 +146,26 @@ earlier boots it showed a lock-order inversion in 8 of 12.
 **Questions for you.** Whether the hand-over closes every path the syzbot trace shows; whether the
 lockdep finding belongs in the commit message rather than below the `---`; whether "not
 reproduced" needs saying.
+
+**Changed after the outside review (2026-11-14):**
+- The message no longer says "as before" for the `-ECANCELED` path: the flag now stays set
+  there, and the message says why that is harmless at unregister.
+- The "handed over by" comment is reworded.
+- Reviewer 7's test (cancel the on-air request while another is queued) behaves the same on
+  base and patched, 20 of 20: the queued request is completed without being sent. That is
+  pre-existing, a separate follow-up.
+- KCSAN at removal: 80 boots, nothing in mesh or advertising code.
+- The code is unchanged (`review-fixes-20261114/`).
 """, [
-        (f"{C04}/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch", "diff"),
+        (f"{C04F}/patch/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch", "diff"),
+        (f"{C04F}/README.md", "markdown"),
         (f"{C04R}/CHECKS.md", "markdown"),
     ]),
     ("6. CO-05 + CO-26 — `mesh_send_sync()` and the advertising list", """
-**The defects.** (1) `mesh_send_sync()` adds and removes an advertising instance without
-`hdev->lock`, while other paths walk the list under it (lockdep and KCSAN warnings). (2) When the
+**The defects.** (1) `mesh_send_sync()` calls `hci_add_adv_instance()`, cancels the advertising
+timeout and selects the next instance without `hdev->lock`, while other paths walk and change
+the list under it (lockdep and KCSAN warnings). Corrected 2026-11-14: this said "adds and
+removes", but the function removes nothing (reviewer 7). (2) When the
 add fails, it loses the error and schedules an instance that does not exist (`Fixes:
 b338d91703fa`).
 
@@ -160,9 +180,10 @@ in `mesh_send_sync()`, among many other changes; it no longer applies to bluetoo
 **Questions for you.** The series order relative to item 5 (they touch the same function, and
 apply in either order), and whether patch 2 belongs in the same series or alone.
 """, [
-        (f"{C05}/0000-cover-letter.patch", "diff"),
-        (f"{C05}/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch", "diff"),
-        (f"{C05}/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch", "diff"),
+        (f"{C05F}/variant-A-with-fixes/0000-cover-letter.patch", "diff"),
+        (f"{C05F}/variant-A-with-fixes/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch", "diff"),
+        (f"{C05F}/variant-A-with-fixes/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch", "diff"),
+        (f"{C05F}/README.md", "markdown"),
     ]),
     ("7. CO-35 — the L2CAP ECRED deferred-accept hang, for stable", """
 **The defect.** With a deferred ECRED accept, the socket lock is taken twice on the same path, a

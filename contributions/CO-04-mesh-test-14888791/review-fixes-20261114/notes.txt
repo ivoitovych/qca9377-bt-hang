@@ -1,0 +1,43 @@
+An earlier proposal for this report,
+https://lore.kernel.org/all/20261014160504.42527-1-igorpetindev@gmail.com/
+takes hdev->lock in mesh_next() and mesh_send_start_complete(), which
+hci_cmd_sync_clear() calls with cmd_sync_work_lock held, while MGMT
+holds hdev->lock when it calls hci_cmd_sync_queue(); lockdep reports
+that order inversion. Here hdev->lock is taken only where
+cmd_sync_work_lock is not held.
+
+This conflicts textually with the pending "Bluetooth: MGMT: protect
+hdev->mesh_pending with hdev->lock",
+https://lore.kernel.org/all/20260807101529.17348-3-baul.lee@xbow.com/
+which uses the same -ECANCELED rule but still clears the flag before
+the hand-over and no longer applies to bluetooth-next, and with
+"Bluetooth: mgmt: handle mesh send completion queue failure",
+https://lore.kernel.org/all/20261003081205.433725-1-yaojiale02@163.com/
+which calls mesh_next() with its old arguments.
+
+Without this patch, lockdep also reports a circular dependency at
+controller removal: hci_cmd_sync_clear() holds cmd_sync_work_lock and
+calls mesh_next() as the destroy callback of mesh_send_done_sync(),
+which calls hci_cmd_sync_submit() and takes hdev->unregister_lock, the
+reverse of the order set_powered() establishes. It was reported in 2 of
+35 boots of a mesh test that removes the controller while a
+transmission is running, on bluetooth-next; with this patch in 0 of 35,
+as mesh_send_done_sync() has no destroy callback any more.
+
+Not changed here: after Mesh Send Cancel of a transmission that is on
+air, mesh_send_done_sync() completes the oldest pending request, which
+is then the next one and has not been sent. In a test with request 1
+on air, request 2 queued and request 1 cancelled, request 2 gets its
+completion when request 1's air time ends and is never started, with
+and without this patch (20 of 20 runs each).
+
+Not tested with syzbot's reproducer; the analysis is from the report
+and the source. Tested on bluetooth-next da3cc02587c6 in a 4 CPU QEMU
+guest with BlueZ's emulated controller, KASAN and lockdep:
+mgmt-tester (526 cases) and mesh-tester (10) pass with the patch, and
+a set of mesh transmit tests (queueing, cancel, power off, socket
+close, controller removal; 12 to 35 boots per kernel) gives the same
+results with and without it, apart from one timing-dependent case that
+also varies between unpatched runs. No KASAN or WARNING report, so the
+new lockdep_assert_held() did not fire; KCSAN, 45 boots, reported
+nothing in the changed functions.

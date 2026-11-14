@@ -1,0 +1,57 @@
+Bluetooth: MGMT: Fix use-after-free in mesh_send_sync()
+
+mesh_send() tests HCI_MESH_SENDING under hdev->lock and, when it is
+clear, queues mesh_send_sync() for the request it has just added.
+mesh_send_start_complete(), after a failed start, and
+mesh_send_done_sync() clear the flag without hdev->lock and only then
+complete the finished request and call mesh_next(), which queues
+mesh_send_sync() for the head of hdev->mesh_pending. A Mesh Send that
+runs in between sees the flag clear and queues a start for its new
+request. When that request is the head, mesh_next() queues a second
+start for the same mgmt_mesh_tx, as hci_cmd_sync_queue() does not
+check for duplicates. If the first start fails,
+mesh_send_start_complete() frees the request and the second start
+reads it:
+
+  BUG: KASAN: slab-use-after-free in mesh_send_sync+0x3de/0x440
+  Read of size 1 at addr ffff88804e2ea83b by task kworker/u34:4/5875
+  Workqueue: hci0 hci_cmd_sync_work
+  ...
+  Freed by task 5875:
+   kfree+0x22b/0x6d0 mm/slub.c:6802
+   mesh_send_complete net/bluetooth/mgmt.c:1090 [inline]
+   mesh_send_start_complete+0x1a1/0x210 net/bluetooth/mgmt.c:2314
+   hci_cmd_sync_work+0x20a/0x4c0 net/bluetooth/hci_sync.c:338
+
+The byte read, 59 bytes into the 96-byte object, is send->cnt. When
+the first start succeeds instead, the same packet is started twice.
+
+Keep the flag set until the decision to start the next request or to
+go idle has been made, and make that decision under hdev->lock, the
+lock mesh_send() tests the flag under. mesh_next() now runs with
+hdev->lock held and either queues the start of the head or clears the
+flag when nothing is pending. It is called from mesh_send_done_sync()
+itself, after a failed start, and from send_cancel(), which also takes
+hdev->lock and hands over when it dequeued the queued start or found
+mesh sending idle.
+
+hdev->lock is not taken under cmd_sync_work_lock: hci_cmd_sync_dequeue()
+and hci_cmd_sync_clear() call mesh_send_start_complete() with
+-ECANCELED while holding it, and MGMT calls hci_cmd_sync_queue(), which
+takes it, with hdev->lock held. On -ECANCELED the callback therefore
+only completes the request. Unlike before, it no longer clears
+HCI_MESH_SENDING, which now stays set until mesh_next() decides under
+hdev->lock. That is harmless in hci_cmd_sync_clear(), which runs after
+HCI_UNREGISTER is set: hci_cmd_sync_queue() then refuses new work, so
+no start can be queued, and the flag is only read by mesh_send() and by
+mesh_send_done(), which mgmt_index_removed() cancels. In send_cancel()
+hdev->lock is already held and the hand-over follows the dequeue.
+mesh_send_done_sync() has no destroy callback any more, so
+hci_cmd_sync_clear() no longer calls hci_cmd_sync_queue() through
+mesh_next() at unregister. hdev->lock is not held across any HCI
+command.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Reported-by: syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=f20755f37da70df33a16
+Cc: stable@vger.kernel.org

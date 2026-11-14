@@ -42,7 +42,8 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
 - **[verified] The BlueZ mail carries the literal `@KERNEL_PATCH_LINK@`**, as do
   `send-commands.txt` and `NOTES-FOR-OPERATOR.md`. It is a deliberate placeholder for the kernel
   mail's lore link, which exists only once that mail is posted. The send steps must fill it.
-  Keep it, and make the step explicit in `send-commands.txt`.
+  Keep it, and make the step explicit in `send-commands.txt`. **Done 11-14:** STEP 2a
+  replaces the line and checks with `grep -c` that none is left.
 - **`Cc: stable`:** R1, R3 and R7 are for it; R2 says it is not needed. It is the operator's call;
   `cc-stable-variant.txt` is ready.
 - **`Link:`:** R6 says drop it, R2 and R7 call it optional, R1 calls it useful. Operator.
@@ -70,6 +71,10 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
   - Patch 1/3 brings in duration cases that fail until CO-12, which is not posted.
   - The instance-2 test needs helpers from patch 1.
   - Send the helpers and the instance-2 case now; hold the eight duration cases with CO-12.
+  - **Done 11-14** (`contributions/CO-38-…/bluez-split-20261114/`):
+    - series A is the helpers plus the case. mgmt-tester `-p Add` gives 113/114 on base, where
+      the new case fails, and 114/114 with CO-38, 3 runs each. The bot shows no difference.
+    - series B (the duration cases) is held.
 
 ### 5. CO-04
 - **[verified] "only completes the request, as before"** (message line 45): before the patch that
@@ -77,12 +82,23 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
 - **The patch comment "is handed over by mesh_send_done_sync()"** (patch line 250): R6 and R7
   independently say that after an on-air cancel, the list head is the next, unsent request. It
   then gets its completion without being sent. Both say the behaviour is pre-existing.
-  - **[open]** Fix or reword.
-  - R7's test: A running, B queued, cancel A; B must start and get its own completion.
+  - **Done 11-14: reworded** (`contributions/CO-04-…/review-fixes-20261114/`). R7's test, 5 boots
+    per kernel, legacy and extended:
+    - base and base + CO-04 behave the same, 20 of 20: B is never started and is completed
+      when A's air time ends;
+    - the behaviour is pre-existing, and fixing it would change completion timing, so it is a
+      separate follow-up;
+    - the message's "as before" is corrected too.
 - **R2's point:** the `-ECANCELED` completion from `hci_cmd_sync_clear()` removes and frees a list
   entry without `hdev->lock`, and `mesh_send_done_sync()` reads `adv_instances` before the lock.
   - Both are pre-existing.
-  - **[open]** An audit on the unregister path, the same ground as CO-14 (M-4) and M-5.
+  - **Audited 11-14.** The unlocked `-ECANCELED` free leaves a window in principle at
+    unregister: a Mesh Send that already holds a device reference can still add under the lock.
+    - KCSAN, 80 boots at removal on the tip and the tip + CO-04: nothing in mesh, advertising or
+      pending-command code. The reports that do appear are in the test machinery, on both
+      sides.
+    - The unlocked `adv_instances` read is next to CO-05's area but not covered by it.
+    - M-5 is removed by CO-04; M-4 is CO-14's.
 - **A syzbot `#syz test`** is wanted by R2, R3, R6 and R7. That is a mail to an outside service,
   so it is the operator's decision.
 - **[verified] Stable size:** the patch has 156 changed or context lines against stable's limit of
@@ -93,13 +109,17 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
   default.
 
 ### 6. CO-05 + CO-26
-- **[wrong] R7's "adds and removes"** is about the cover's description of a *test*: "a test that
-  adds and removes an advertising instance on one socket". It is not about `mesh_send_sync()`. No
-  change.
+- **R7's "adds and removes": right about the review document, not the mails.** Corrected
+  11-14; the first check here marked it wrong after reading the cover only.
+  - The cover's phrase describes a test.
+  - But item 6 of the review document said `mesh_send_sync()` "adds and removes an advertising
+    instance". The function removes nothing. That text is corrected in `build.py`.
 - **Narrow the wording** (R2, R7): it fixes the mesh insertion and capacity-check race, not the
   lifetime of every advertising instance. The cover already names `hci_schedule_adv_instance_sync()`.
 - **[verified] CO-26 says it is "a cleanup of the error path"** and carries `Fixes:`, which
   invites an automatic stable backport (R6). Either drop `Fixes:` or reword. Operator.
+  - Both variants are ready (`contributions/CO-05-…/review-fixes-20261114/`).
+  - The cover is narrowed as asked.
 - **Order:** R3 says after CO-04 is merged; R6 says one series with CO-04; R7 says separate with a
   cross-reference, or a series with CO-04 first. Operator; the default is to send after CO-04.
 

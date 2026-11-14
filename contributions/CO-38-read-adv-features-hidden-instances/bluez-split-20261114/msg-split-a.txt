@@ -1,0 +1,12 @@
+mgmt-tester: Add test for listing a remaining instance 2
+
+Add instances 1 and 2 on an extended advertising controller, let
+instance 1 expire after 1 s, and check that Read Advertising Features
+still lists instance 2. The test fails on kernels that compare the
+instance number with the number of instances instead of the number of
+advertising sets in read_adv_features(), and passes with
+"Bluetooth: MGMT: Fix Read Advertising Features hiding instances".
+
+The test is driven by the HCI LE Set Extended Advertising Enable
+Duration seen by the emulator and by the Advertising Removed event; the
+helpers that do that are added with it.

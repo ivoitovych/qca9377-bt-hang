@@ -1049,6 +1049,12 @@ across all runs, patched failed 2 of 8 and base 1 of 7, the same BAP case on bas
 and the series touches only two tester sources. A newer patch, "mgmt: drop advertising instances
 the controller cannot carry" (patchwork 14976301), fixes a different bug.
 
+**Changed after the outside review (2026-11-14).** The BlueZ tests are split. Series A is the
+helpers plus the instance-2 case, to send with the kernel fix: mgmt-tester `-p Add`, 3 runs
+each, gives 113/114 on `da3cc02587c6` (the new case fails) and 114/114 with CO-38. The
+bot's checks show no base/patched difference. Series B (the duration cases) is held for
+CO-12, which is not posted (`bluez-split-20261114/`).
+
 **`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch`** (SHA-256 `abe944ee82213c5954bbd3314d0c2578e78e7823585b374471a69bc15f154aa4`)
 
 ```diff
@@ -1092,77 +1098,31 @@ base-commit: da3cc02587c629420603df4395179ec82955c941
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0000-cover-letter.patch`** (SHA-256 `849bcb76cf4ded6835aa25ed6d9b9f1071a137aa95ee2f5aae15f5e1b888aef9`)
+**`contributions/CO-38-read-adv-features-hidden-instances/bluez-split-20261114/series-a/0001-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch`** (SHA-256 `ae6579d59e061751ff387585ff4d67be162df0d7a3c1eba22072f1e53161c26c`)
 
 ```diff
+From 4d7b0bd704530c68fc0bd815415070b4ae525b52 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Subject: [PATCH BlueZ 0/3] mgmt-tester, mesh-tester: Add advertising timeout tests
+Date: Sat, 14 Nov 2026 14:04:21 +0100
+Subject: [PATCH BlueZ] mgmt-tester: Add test for listing a remaining instance
+ 2
 
-This series adds 16 test cases: 15 to mgmt-tester (14 in 1/3, one in
-2/3) and one to mesh-tester (3/3).
+Add instances 1 and 2 on an extended advertising controller, let
+instance 1 expire after 1 s, and check that Read Advertising Features
+still lists instance 2. The test fails on kernels that compare the
+instance number with the number of instances instead of the number of
+advertising sets in read_adv_features(), and passes with
+"Bluetooth: MGMT: Fix Read Advertising Features hiding instances".
 
-On an extended advertising controller the kernel passes the timeout of
-an advertising instance to the controller as the Duration of LE Set
-Extended Advertising Enable (units of 10 ms) and removes the instance
-when the controller ends the set. The new cases check the Duration for
-timeouts from 0 s to 65535 s, that an instance is still present before
-its timeout and removed after it, and that Read Advertising Features
-lists the instances that are left.
-
-Results on bluetooth-next da3cc02587c6 (BlueZ master 20ffd285b58f), in
-QEMU with doc/tester.config, three runs each:
-
- - "Add Ext Advertising - Instance 2 listed alone" (2/3) fails on
-   current kernels until "Bluetooth: MGMT: Fix Read Advertising Features
-   hiding instances" is applied; it passes with that patch.
-
- - "Timeout 66 s", "655 s", "656 s (limit)", "6357 s (limit)",
-   "8192 s (limit)", "65535 s (limit)", "66 s (Params)" and
-   "66 s and 1 s" of 1/3 fail on current kernels until the separate fix
-   for the extended advertising duration overflow in hci_sync.c lands.
-
- - All other new cases, including "Mesh - Send (Ext Adv Duration)", pass
-   on current kernels. No existing case changes its result.
-
-Iaroslav Voitovych (3):
-  mgmt-tester: Add extended advertising timeout tests
-  mgmt-tester: Add test for listing a remaining instance 2
-  mesh-tester: Add Mesh Send test with extended advertising
-
- tools/mesh-tester.c |  32 ++++
- tools/mgmt-tester.c | 526 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 558 insertions(+)
-
-base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
---
-2.43.0
-```
-
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch`** (SHA-256 `ca929ad871df1fa9b6f4cc3f608337e8d5d7a3c80ea2f509aa28283628103404`)
-
-```diff
-From e01b4cc8f050821b05ef4210fc5a4e888e02c2c5 Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sun, 1 Nov 2026 18:46:34 +0100
-Subject: [PATCH BlueZ 1/3] mgmt-tester: Add extended advertising timeout tests
-
-On an extended advertising controller the kernel passes the instance
-timeout as the Duration of LE Set Extended Advertising Enable, in units
-of 10 ms, and removes the instance when the controller ends the set.
-
-Check the Duration for timeouts of 0, 1, 65, 66 and 655 s and for
-timeouts above the 655.35 s the field can hold, which are expected at
-0xffff; check that an instance is still present before its timeout and
-that a 1 s instance is removed after 1 s, through Add Advertising and
-through Add Extended Advertising Parameters. Also cover an instance
-added again with another timeout before the first expires, and two
-instances with different timeouts.
+The test is driven by the HCI LE Set Extended Advertising Enable
+Duration seen by the emulator and by the Advertising Removed event; the
+helpers that do that are added with it.
 ---
- tools/mgmt-tester.c | 506 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 506 insertions(+)
+ tools/mgmt-tester.c | 388 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 388 insertions(+)
 
 diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index b7126dc36..7af5013ae 100644
+index b7126dc36..a52f1188e 100644
 --- a/tools/mgmt-tester.c
 +++ b/tools/mgmt-tester.c
 @@ -20,6 +20,7 @@
@@ -1259,108 +1219,33 @@ index b7126dc36..7af5013ae 100644
  };
  
  static const uint8_t set_exp_feat_param_debug[] = {
-@@ -14441,6 +14488,418 @@ static const struct generic_data eks_oppt_connect_encrypt_test = {
+@@ -14441,6 +14488,343 @@ static const struct generic_data eks_oppt_connect_encrypt_test = {
  	.expect_hci_param_check_func = check_encrypt_v2_opportunistic,
  };
  
 +/* An extended advertising controller is given the instance timeout as the
 + * Duration of LE Set Extended Advertising Enable (N * 10 ms) and ends the
-+ * set itself, after which the kernel removes the instance. The field holds
-+ * at most 0xffff (655.35 s), so longer timeouts are expected at that limit.
-+ * Removal is expected Duration * 10 ms after the enable.
++ * set itself, after which the kernel removes the instance. Removal is
++ * expected Duration * 10 ms after the enable.
 + */
 +#define ADV_TIMEOUT_EARLY_MS	50
 +#define ADV_TIMEOUT_LATE_MS	1000
 +
-+#define ADV_TIMEOUT_TEST(_name, _timeout, _duration, _expire, _check) \
-+	static const struct adv_timeout_test adv_timeout_##_name = { \
-+		.inst = { { 0x01, _timeout, _duration, _expire } }, \
-+		.num_inst = 1, \
-+		.check_ms = _check, \
-+	}; \
-+	static const struct generic_data add_ext_adv_timeout_##_name = { \
-+		.setup_settings = settings_powered_le, \
-+		.adv_timeout = &adv_timeout_##_name, \
-+	}
-+
-+ADV_TIMEOUT_TEST(1, 1, 100, true, 2500);
-+ADV_TIMEOUT_TEST(0, 0, 0, false, 2000);
-+ADV_TIMEOUT_TEST(65, 65, 6500, false, 2000);
-+ADV_TIMEOUT_TEST(66, 66, 6600, false, 2000);
-+ADV_TIMEOUT_TEST(655, 655, 65500, false, 2000);
-+ADV_TIMEOUT_TEST(656, 656, 0xffff, false, 2000);
-+ADV_TIMEOUT_TEST(6357, 6357, 0xffff, false, 2000);
-+ADV_TIMEOUT_TEST(8192, 8192, 0xffff, false, 2000);
-+ADV_TIMEOUT_TEST(65535, 65535, 0xffff, false, 2000);
-+
-+static const struct adv_timeout_test adv_timeout_params_1 = {
-+	.inst = { { 0x01, 1, 100, true } },
-+	.num_inst = 1,
-+	.ext_params = true,
-+	.check_ms = 2500,
-+};
-+
-+static const struct generic_data add_ext_adv_timeout_params_1 = {
-+	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_params_1,
-+};
-+
-+static const struct adv_timeout_test adv_timeout_params_66 = {
-+	.inst = { { 0x01, 66, 6600, false } },
-+	.num_inst = 1,
-+	.ext_params = true,
-+	.check_ms = 2000,
-+};
-+
-+static const struct generic_data add_ext_adv_timeout_params_66 = {
-+	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_params_66,
-+};
-+
-+/* Instance 1 is added again with another timeout before its first one
-+ * expires: only the second timeout applies.
++/* Once instance 1 has expired, instance 2 is the only instance left and
++ * Read Advertising Features still has to list it.
 + */
-+static const struct adv_timeout_test adv_timeout_replace = {
-+	.inst = {
-+		{ 0x01, 2, 200, false },
-+		{ 0x01, 3, 300, true },
-+	},
-+	.num_inst = 2,
-+	.replace_ms = 1000,
-+	.check_ms = 5500,
-+};
-+
-+static const struct generic_data add_ext_adv_timeout_replace = {
-+	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_replace,
-+};
-+
-+static const struct adv_timeout_test adv_timeout_two_1_2 = {
++static const struct adv_timeout_test adv_timeout_list_2 = {
 +	.inst = {
 +		{ 0x01, 1, 100, true },
-+		{ 0x02, 2, 200, true },
-+	},
-+	.num_inst = 2,
-+	.check_ms = 3500,
-+};
-+
-+static const struct generic_data add_ext_adv_timeout_two_1_2 = {
-+	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_two_1_2,
-+};
-+
-+static const struct adv_timeout_test adv_timeout_two_66_1 = {
-+	.inst = {
-+		{ 0x01, 66, 6600, false },
-+		{ 0x02, 1, 100, true },
++		{ 0x02, 0, 0, false },
 +	},
 +	.num_inst = 2,
 +	.check_ms = 2500,
 +};
 +
-+static const struct generic_data add_ext_adv_timeout_two_66_1 = {
++static const struct generic_data add_ext_adv_timeout_list_2 = {
 +	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_two_66_1,
++	.adv_timeout = &adv_timeout_list_2,
 +};
 +
 +static uint64_t adv_timeout_now_ms(void)
@@ -1678,55 +1563,12 @@ index b7126dc36..7af5013ae 100644
  int main(int argc, char *argv[])
  {
  	tester_init(&argc, &argv);
-@@ -15808,6 +16267,53 @@ int main(int argc, char *argv[])
+@@ -15808,6 +16192,10 @@ int main(int argc, char *argv[])
  					setup_add_advertising_timeout,
  					test_command_generic, 3);
  
-+	/* The timeout is passed to the controller as the Duration of the
-+	 * advertising set, in units of 10 ms and at most 655.35 s, and the
-+	 * instance is removed when the set ends.
-+	 */
-+	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (expires)",
-+					&add_ext_adv_timeout_1, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 0 s (none)",
-+					&add_ext_adv_timeout_0, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 65 s",
-+					&add_ext_adv_timeout_65, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 66 s",
-+					&add_ext_adv_timeout_66, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 655 s",
-+					&add_ext_adv_timeout_655, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 656 s (limit)",
-+					&add_ext_adv_timeout_656, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 6357 s (limit)",
-+					&add_ext_adv_timeout_6357, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 8192 s (limit)",
-+					&add_ext_adv_timeout_8192, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 65535 s (limit)",
-+					&add_ext_adv_timeout_65535, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (Params)",
-+					&add_ext_adv_timeout_params_1, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 66 s (Params)",
-+					&add_ext_adv_timeout_params_66, NULL,
-+					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Timeout replaced",
-+					&add_ext_adv_timeout_replace, NULL,
-+					test_add_adv_timeout, 9);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 1 s and 2 s",
-+					&add_ext_adv_timeout_two_1_2, NULL,
-+					test_add_adv_timeout, 6);
-+	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
-+					&add_ext_adv_timeout_two_66_1, NULL,
++	test_bredrle50_full("Add Ext Advertising - Instance 2 listed alone",
++					&add_ext_adv_timeout_list_2, NULL,
 +					test_add_adv_timeout, 5);
 +
  	/* LE off will clear (remove) all instances. */
@@ -1739,134 +1581,35 @@ base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch`** (SHA-256 `7aea9f20c5b16ffa18c403009e5c6dc6f3c3c30ef47c8a46d50d21868b86f307`)
+**`contributions/CO-38-read-adv-features-hidden-instances/bluez-split-20261114/README.md`** (SHA-256 `633ec03ba61d6ff37ea4f37cc9e68dbfa469d0911b8d2ecdf2f09d5186f4fa3b`)
 
-```diff
-From 68f9ca4549e2466f708af69ce5e30a3ce533670b Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Mon, 2 Nov 2026 14:37:37 +0100
-Subject: [PATCH BlueZ 2/3] mgmt-tester: Add test for listing a remaining
- instance 2
+```markdown
+# CO-38: the BlueZ test split, after the 2026-11-14 outside review
 
-Add instances 1 and 2 on an extended advertising controller, let
-instance 1 expire after 1 s, and check that Read Advertising Features
-still lists instance 2.
----
- tools/mgmt-tester.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+Four of five reviewers asked for this (`../../../reviews/2026-11-14T1400Z-kernel-patches-review-answers-checks.md`
+§4): the old `[PATCH BlueZ 0/3]` installed duration cases that fail until CO-12, which is not
+posted.
 
-diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index 7af5013ae..c02fab65a 100644
---- a/tools/mgmt-tester.c
-+++ b/tools/mgmt-tester.c
-@@ -14588,6 +14588,23 @@ static const struct generic_data add_ext_adv_timeout_two_66_1 = {
- 	.adv_timeout = &adv_timeout_two_66_1,
- };
- 
-+/* Once instance 1 has expired, instance 2 is the only instance left and
-+ * Read Advertising Features still has to list it.
-+ */
-+static const struct adv_timeout_test adv_timeout_list_2 = {
-+	.inst = {
-+		{ 0x01, 1, 100, true },
-+		{ 0x02, 0, 0, false },
-+	},
-+	.num_inst = 2,
-+	.check_ms = 2500,
-+};
-+
-+static const struct generic_data add_ext_adv_timeout_list_2 = {
-+	.setup_settings = settings_powered_le,
-+	.adv_timeout = &adv_timeout_list_2,
-+};
-+
- static uint64_t adv_timeout_now_ms(void)
- {
- 	struct timespec ts;
-@@ -16313,6 +16330,9 @@ int main(int argc, char *argv[])
- 	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
- 					&add_ext_adv_timeout_two_66_1, NULL,
- 					test_add_adv_timeout, 5);
-+	test_bredrle50_full("Add Ext Advertising - Instance 2 listed alone",
-+					&add_ext_adv_timeout_list_2, NULL,
-+					test_add_adv_timeout, 5);
- 
- 	/* LE off will clear (remove) all instances. */
- 	test_bredrle50("Add Ext Advertising - Success 22 (LE -> off, Remove)",
--- 
-2.43.0
+- **`series-a/`** holds one BlueZ patch on master `20ffd285b58f`: the helpers, plus the case "Add
+  Ext Advertising - Instance 2 listed alone". It builds without warnings.
+  - The helpers still carry the `ext_params` and `replace_ms` paths, which this case does not use.
+    Whether to strip them is the operator's choice.
+- **`series-b-held/`** holds the fourteen duration cases and the mesh-tester case, on top of
+  series A. They wait for CO-12. With both series applied, the tree is identical to the old
+  three-patch series.
 
-```
+| mgmt-tester `-p Add`, 114 cases, 3 runs each | result |
+|---|---|
+| bluetooth-next `da3cc02587c6` | 113 of 114 every run; the failure is "Instance 2 listed alone" |
+| `da3cc02587c6` + CO-38 | 114 of 114 every run |
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch`** (SHA-256 `e84deb541745b78238c811d9e163e1177880a237da0c67b93dc379aed478219b`)
-
-```diff
-From 2dcef42fbeef7fd26f36af805fd010bb6737f4fe Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sun, 1 Nov 2026 18:46:36 +0100
-Subject: [PATCH BlueZ 3/3] mesh-tester: Add Mesh Send test with extended
- advertising
-
-The mesh advertising instance timeout is in milliseconds. Check that an
-extended advertising controller gets a Duration of 100 (1000 ms) for
-it.
----
- tools/mesh-tester.c | 32 ++++++++++++++++++++++++++++++++
- 1 file changed, 32 insertions(+)
-
-diff --git a/tools/mesh-tester.c b/tools/mesh-tester.c
-index 896cfd1f2..febcb91c4 100644
---- a/tools/mesh-tester.c
-+++ b/tools/mesh-tester.c
-@@ -1294,6 +1294,33 @@ static const struct generic_data mesh_send_mesh_1 = {
- 	.expect_hci_len = sizeof(mesh_send_rsp_param_mesh),
- };
- 
-+/* The mesh instance timeout is 1000 ms, handed to the controller as a
-+ * Duration of 100 (N * 10 ms). The instance is the one past the
-+ * controller's three advertising sets.
-+ */
-+static const uint8_t mesh_send_ext_adv_enable[] = {
-+	0x01,				/* Enable */
-+	0x01,				/* Number of sets */
-+	0x04,				/* Handle */
-+	0x64, 0x00,			/* Duration */
-+	0x00,				/* Max events */
-+};
-+
-+static const struct generic_data mesh_send_mesh_ext_adv = {
-+	.send_opcode = MGMT_OP_MESH_SEND,
-+	.send_param = send_mesh_1,
-+	.send_len = sizeof(send_mesh_1),
-+	.expect_param = mesh_send_rsp_param_mesh,
-+	.expect_len = sizeof(mesh_send_rsp_param_mesh),
-+	.expect_status = MGMT_STATUS_SUCCESS,
-+	.expect_alt_ev = MGMT_EV_MESH_PACKET_CMPLT,
-+	.expect_alt_ev_param = mesh_send_rsp_param_mesh,
-+	.expect_alt_ev_len = sizeof(mesh_send_rsp_param_mesh),
-+	.expect_hci_command = BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE,
-+	.expect_hci_param = mesh_send_ext_adv_enable,
-+	.expect_hci_len = sizeof(mesh_send_ext_adv_enable),
-+};
-+
- static const struct generic_data mesh_send_mesh_too_short = {
- 	.send_opcode = MGMT_OP_MESH_SEND,
- 	.send_param = send_mesh_1,
-@@ -1434,6 +1461,11 @@ int main(int argc, char *argv[])
- 			setup_enable_mesh,
- 			test_command_generic);
- 
-+	test_bredrle50("Mesh - Send (Ext Adv Duration)",
-+			&mesh_send_mesh_ext_adv,
-+			setup_enable_mesh,
-+			test_command_generic);
-+
- 	test_bredrle("Mesh - Send - too short",
- 			&mesh_send_mesh_too_short,
- 			setup_enable_mesh,
--- 
-2.43.0
-
+- **The bot's checks** (`scripts/bot-ci-local.sh --space user`) on series A: exit 0, with no
+  difference between base and patched. CheckPatch and GitLint pass.
+- **Checked on copy:** the six totals (`logs/mgmt-tester-add-totals.txt`, taken from the raw logs)
+  and the bot summary and reports.
+- **Left in the work area:** the raw tester logs, which print emulated addresses, and the bot's
+  per-check logs.
+- **Changed on copy:** nothing.
 ```
 
 **`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/CHECKS.md`** (SHA-256 `931b6006ee8bc83fed211cebbc8576ab12ff5f4736b033ea01b615aae0ff5712`)
@@ -1960,10 +1703,20 @@ earlier boots it showed a lock-order inversion in 8 of 12.
 lockdep finding belongs in the commit message rather than below the `---`; whether "not
 reproduced" needs saying.
 
-**`contributions/CO-04-mesh-test-14888791/send-20261114/patch/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch`** (SHA-256 `bd83b587c313ad4143afcf61fcb578f1761a43c4918f9710eb361848e09a0222`)
+**Changed after the outside review (2026-11-14):**
+- The message no longer says "as before" for the `-ECANCELED` path: the flag now stays set
+  there, and the message says why that is harmless at unregister.
+- The "handed over by" comment is reworded.
+- Reviewer 7's test (cancel the on-air request while another is queued) behaves the same on
+  base and patched, 20 of 20: the queued request is completed without being sent. That is
+  pre-existing, a separate follow-up.
+- KCSAN at removal: 80 boots, nothing in mesh or advertising code.
+- The code is unchanged (`review-fixes-20261114/`).
+
+**`contributions/CO-04-mesh-test-14888791/review-fixes-20261114/patch/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch`** (SHA-256 `d6e6f463c54b338b9b4b032f655c96b1aefb6156b08325a71345f061914c4772`)
 
 ```diff
-From 29b49e119d4b08a00e38166901c6a30ac24d5157 Mon Sep 17 00:00:00 2001
+From 3737b1235865e18565c9bd7abbe647a7d32e92bd Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sat, 14 Nov 2026 01:55:42 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix use-after-free in mesh_send_sync()
@@ -2007,11 +1760,17 @@ hdev->lock is not taken under cmd_sync_work_lock: hci_cmd_sync_dequeue()
 and hci_cmd_sync_clear() call mesh_send_start_complete() with
 -ECANCELED while holding it, and MGMT calls hci_cmd_sync_queue(), which
 takes it, with hdev->lock held. On -ECANCELED the callback therefore
-only completes the request, as before; from send_cancel() hdev->lock
-is already held. mesh_send_done_sync() no longer has a destroy
-callback, so hci_cmd_sync_clear() no longer calls hci_cmd_sync_queue()
-through mesh_next() at unregister. hdev->lock is not held across any
-HCI command.
+only completes the request. Unlike before, it no longer clears
+HCI_MESH_SENDING, which now stays set until mesh_next() decides under
+hdev->lock. That is harmless in hci_cmd_sync_clear(), which runs after
+HCI_UNREGISTER is set: hci_cmd_sync_queue() then refuses new work, so
+no start can be queued, and the flag is only read by mesh_send() and by
+mesh_send_done(), which mgmt_index_removed() cancels. In send_cancel()
+hdev->lock is already held and the hand-over follows the dequeue.
+mesh_send_done_sync() has no destroy callback any more, so
+hci_cmd_sync_clear() no longer calls hci_cmd_sync_queue() through
+mesh_next() at unregister. hdev->lock is not held across any HCI
+command.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Reported-by: syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com
@@ -2044,6 +1803,13 @@ reverse of the order set_powered() establishes. It was reported in 2 of
 transmission is running, on bluetooth-next; with this patch in 0 of 35,
 as mesh_send_done_sync() has no destroy callback any more.
 
+Not changed here: after Mesh Send Cancel of a transmission that is on
+air, mesh_send_done_sync() completes the oldest pending request, which
+is then the next one and has not been sent. In a test with request 1
+on air, request 2 queued and request 1 cancelled, request 2 gets its
+completion when request 1's air time ends and is never started, with
+and without this patch (20 of 20 runs each).
+
 Not tested with syzbot's reproducer; the analysis is from the report
 and the source. Tested on bluetooth-next da3cc02587c6 in a 4 CPU QEMU
 guest with BlueZ's emulated controller, KASAN and lockdep:
@@ -2055,11 +1821,11 @@ also varies between unpatched runs. No KASAN or WARNING report, so the
 new lockdep_assert_held() did not fire; KCSAN, 45 boots, reported
 nothing in the changed functions.
 
- net/bluetooth/mgmt.c | 96 +++++++++++++++++++++++++++++++-------------
- 1 file changed, 68 insertions(+), 28 deletions(-)
+ net/bluetooth/mgmt.c | 97 +++++++++++++++++++++++++++++++-------------
+ 1 file changed, 69 insertions(+), 28 deletions(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 6ed3bf6f17385..922bc28bc1c67 100644
+index 6ed3bf6f17385..fe0d2b1cc5d60 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
 @@ -1101,37 +1101,53 @@ static void mesh_send_complete(struct hci_dev *hdev,
@@ -2204,15 +1970,16 @@ index 6ed3bf6f17385..922bc28bc1c67 100644
  				mesh_send_complete(hdev, mesh_tx, false);
  		}
  	}
-@@ -2453,8 +2487,14 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+@@ -2453,8 +2487,15 @@ static int send_cancel(struct hci_dev *hdev, void *data)
  	mgmt_cmd_complete(cmd->sk, hdev->id, MGMT_OP_MESH_SEND_CANCEL,
  			  0, NULL, 0);
  
 -	if (!hci_dev_test_flag(hdev, HCI_MESH_SENDING))
 -		mesh_next(hdev, NULL, 0);
 +	/* A dequeued start was the next transmission and nobody else will
-+	 * hand over for it. A cancelled transmission that is already on air
-+	 * is handed over by mesh_send_done_sync().
++	 * hand over for it. A transmission that is already on air was
++	 * completed above, but its mesh_send_done() work is still pending
++	 * and ends the air time and hands over when it runs.
 +	 */
 +	if (dequeued || !hci_dev_test_flag(hdev, HCI_MESH_SENDING))
 +		mesh_next(hdev);
@@ -2226,6 +1993,57 @@ base-commit: da3cc02587c629420603df4395179ec82955c941
 -- 
 2.43.0
 
+```
+
+**`contributions/CO-04-mesh-test-14888791/review-fixes-20261114/README.md`** (SHA-256 `cb3326774a43e1a35f4c1fe7bbf92c707f1d582ba8e49e0dfbbaf094108c919b`)
+
+```markdown
+# CO-04: the 2026-11-14 outside review answered
+
+`../../../reviews/2026-11-14T1400Z-kernel-patches-review-answers-checks.md` §5 holds the review
+points. `patch/` (mail form) and `patch-bare/` replace `../send-20261114/patch/` for the send.
+Their code is unchanged: only the message, one comment and the notes below `---` differ.
+
+- **The message:** "only completes the request, as before" now says that the callback no longer
+  clears `HCI_MESH_SENDING` on that path, and why that is harmless at unregister:
+  - `HCI_UNREGISTER` is already set;
+  - `hci_cmd_sync_queue()` returns `-ENODEV`;
+  - the flag is read only by `mesh_send()` and `mesh_send_done()`;
+  - `mgmt_index_removed()` cancels `mesh_send_done()`.
+- **The comment:** "handed over by mesh_send_done_sync()" is replaced by a description of what
+  happens. The on-air request has already been completed, and its pending `mesh_send_done()` work
+  ends the air time and hands over.
+- **Reviewer 7's test** (A on air, B queued, cancel A), 5 boots per kernel, legacy and extended
+  advertising:
+  - The 20 case runs behave the same on base and on base + CO-04: B never gets a start, and gets
+    its completion when A's air time ends, 82 to 102 ms later (`logs/cancel-active-summary.txt`).
+  - This is pre-existing, and the patch's notes say "not changed here".
+  - A fix would need to track which request is on air and end its air time on cancel. That changes
+    the completion timing a client sees, so it is not part of CO-04. It is recorded as a separate
+    follow-up.
+- **Reviewer 2's audit:**
+  - **The `-ECANCELED` free.** It frees the request without `hdev->lock`, and at unregister a race
+    window exists in principle: a Mesh Send that already holds a device reference can still add
+    under the lock.
+  - **KCSAN:** 80 boots (UnregSweep and unregister, 20 each, on the tip and on tip + CO-04) gave no
+    report in mesh, advertising or pending-command code.
+    - The reports that do appear are in the test machinery, on both sides: `vhci_poll` /
+      `skb_queue_tail`, `hvc_write`, `ps2` (`logs/kcsan-report-titles.txt`).
+    - The code is the same before CO-04, so this is pre-existing.
+  - **The unlocked `list_empty(&hdev->adv_instances)`:** pre-existing, next to CO-05's area. CO-05
+    does not cover this site.
+  - **M-5:** removed by CO-04.
+  - **M-4:** the other half of removal, which CO-14 fixes.
+- **checkpatch:** clean apart from the missing Signed-off-by (`checkpatch.log`).
+
+**Checked on copy:**
+- the code-line diff against `../send-20261114/patch/`: only the comment differs;
+- the 20 cancel-test lines;
+- the KCSAN titles of every boot.
+
+**Left in the work area:**
+- the raw guest logs, which print emulated addresses;
+- one first run that used a wrong test filter. It is not used for any result.
 ```
 
 **`contributions/CO-04-mesh-test-14888791/send-20261114/CHECKS.md`** (SHA-256 `da1238dd03bfbd438778b337c46aa80574796a9e609e81cce945ad7b456dbc80`)
@@ -2281,8 +2099,10 @@ The 10-29 GitLint failure (89-column quoted line) does not recur: the message is
 
 ## 6. CO-05 + CO-26 — `mesh_send_sync()` and the advertising list
 
-**The defects.** (1) `mesh_send_sync()` adds and removes an advertising instance without
-`hdev->lock`, while other paths walk the list under it (lockdep and KCSAN warnings). (2) When the
+**The defects.** (1) `mesh_send_sync()` calls `hci_add_adv_instance()`, cancels the advertising
+timeout and selects the next instance without `hdev->lock`, while other paths walk and change
+the list under it (lockdep and KCSAN warnings). Corrected 2026-11-14: this said "adds and
+removes", but the function removes nothing (reviewer 7). (2) When the
 add fails, it loses the error and schedules an instance that does not exist (`Fixes:
 b338d91703fa`).
 
@@ -2297,25 +2117,29 @@ in `mesh_send_sync()`, among many other changes; it no longer applies to bluetoo
 **Questions for you.** The series order relative to item 5 (they touch the same function, and
 apply in either order), and whether patch 2 belongs in the same series or alone.
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0000-cover-letter.patch`** (SHA-256 `6d229f225bbec61238440eef7f5b5f88ee36af9b294b43b992997070351b0414`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/review-fixes-20261114/variant-A-with-fixes/0000-cover-letter.patch`** (SHA-256 `ab09f83a73ce604ffa4c8d8573700d08ac1e14eb76c2a6255ea293da360c6a06`)
 
 ```diff
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Subject: [PATCH 0/2] Bluetooth: MGMT: mesh_send_sync() and the advertising list
 
-mesh_send_sync() adds the mesh packet's advertising instance with
-hci_add_adv_instance() without hdev->lock, which that function
-requires, and reads the instance count and walks the instance list
-unlocked while Add Advertising changes them under the lock (1/2). When
-the add fails, it carries on and schedules an instance that was never
-added (2/2).
+mesh_send_sync() checks the instance count and adds the mesh packet's
+advertising instance with hci_add_adv_instance(), which requires
+hdev->lock, without holding it, while Add Advertising changes the
+instance list and count under that lock. The capacity check and the
+insertion can therefore race with it (1/2). When the add fails, it
+carries on and schedules an instance that was never added (2/2).
+
+This fixes that insertion and capacity-check path only. It does not make
+the lifetime of every advertising instance safe: for example
+hci_schedule_adv_instance_sync(), which 1/2 calls after dropping the
+lock, still looks the instance up without it.
 
 Notes:
 - 1/2 takes hdev->lock after req_lock, as hci_clear_adv_sync() and
   hci_remove_adv_sync() do, and drops it before
   hci_schedule_adv_instance_sync(), which sends HCI commands. That
-  function still looks the instance up without the lock; it is shared
-  with other callers and is left alone here.
+  function is shared with other callers and is left alone here.
 - The same lock was part of an earlier patch that was withdrawn:
   https://lore.kernel.org/all/20260919112517.3871992-1-benquike@gmail.com/
 - "Bluetooth: hci_sync: Fix remaining advertising instance UAFs",
@@ -2358,7 +2182,7 @@ base-commit: da3cc02587c629420603df4395179ec82955c941
 2.43.0
 ```
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch`** (SHA-256 `38369638340929752b3eb64680acfb291a8304a06fb4c88fb7f4fe13d738295d`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/review-fixes-20261114/variant-A-with-fixes/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch`** (SHA-256 `38369638340929752b3eb64680acfb291a8304a06fb4c88fb7f4fe13d738295d`)
 
 ```diff
 From cbcac8bc062331e81c64206dc107a47300fd2c33 Mon Sep 17 00:00:00 2001
@@ -2440,12 +2264,12 @@ base-commit: da3cc02587c629420603df4395179ec82955c941
 
 ```
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch`** (SHA-256 `320278a8c1695832f4f1a44f3827e144b7a0efc4e34cc2ba30b74dcc95e9228e`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/review-fixes-20261114/variant-A-with-fixes/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch`** (SHA-256 `103f973c7426d2430f9d003b7758fb5458b6c1935bd2a3c5ebeae2bc837041bc`)
 
 ```diff
-From 53e616272f860498cf6799c1f1543f7d5e960e4a Mon Sep 17 00:00:00 2001
+From 4fdbf112f25766794851156f2d3e9a139bc6c118 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sat, 14 Nov 2026 01:56:29 +0100
+Date: Sat, 14 Nov 2026 14:17:46 +0100
 Subject: [PATCH 2/2] Bluetooth: MGMT: Stop mesh_send_sync() when it cannot add
  the instance
 
@@ -2460,7 +2284,7 @@ gets the real error.
 
 With a failing allocation injected into hci_add_adv_instance() for the
 first Mesh Send, as seen in a kprobe trace of bluetooth-next
-1081a6ef8f1e0:
+da3cc02587c6:
 
   before: hci_add_adv_instance -> -ENOMEM, then
           hci_schedule_adv_instance_sync(instance 6) -> -ENOENT,
@@ -2518,6 +2342,30 @@ index 4d4bae34e4f08..308c7e0e76e3c 100644
 -- 
 2.43.0
 
+```
+
+**`contributions/CO-05-mesh-adv-list-lock-i12/review-fixes-20261114/README.md`** (SHA-256 `bc3d59dde7d6757301d9681d7ecafffac28c054b9a3505f7bf4ace07ee3a205e`)
+
+```markdown
+# CO-05 + CO-26: the 2026-11-14 outside review answered
+
+`../../../reviews/2026-11-14T1400Z-kernel-patches-review-answers-checks.md` §6 holds the review
+points.
+
+- **The cover** (`cover-body.txt` and both variants' `0000`) now says the series fixes the mesh
+  insertion and capacity-check race, not the lifetime of every advertising instance.
+- **CO-26 (patch 0002)** calls itself "a cleanup of the error path", and reviewer 6 notes that its
+  `Fixes:` tag invites an automatic stable backport. There are two variants, with identical code;
+  0001 and the cover are the same in both:
+  - `variant-A-with-fixes/` keeps `Fixes: b338d91703fa`;
+  - `variant-B-without-fixes/` drops it.
+  
+  The operator chooses.
+- The test trace in the message is refreshed to `da3cc02587c6`. checkpatch is clean apart from the
+  missing Signed-off-by.
+
+**Changed on copy:** `mk-variant.py`, the one-off script that made the variants, stays in the work
+area: it carries a placeholder address.
 ```
 
 ---
@@ -3927,7 +3775,7 @@ carries its own `Cc: stable`.
 **Questions for you.** Whether the request reads as justified for device-ID additions (which
 stable rules allow), and its wording.
 
-**`contributions/research-2026-11-01/qca-ids/refresh-20261114/mail/stable-request-asus-rome-v3.eml`** (SHA-256 `f390ba39ffa577d99cfd22aa1a62028fb282ecbad597362e3dde29f31eece06e`)
+**`contributions/research-2026-11-01/qca-ids/refresh-20261114/mail/stable-request-asus-rome-v3.eml`** (SHA-256 `601891d8661004192dd3947eb64ff8232dc85e7877f040c843fd500ad393654b`)
 
 ```text
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
@@ -3965,8 +3813,9 @@ qca/nvm_usb_00000302.bin. I do not have these devices; the runtime
 results are the authors'.
 
 None of the seven trees has either ID, and neither commit is in a
-stable release or in the stable queue (checked 2026-11-14). On each
-tree's current tip (7.3.4, 6.18.63, 6.12.117, 6.6.162, 6.1.192,
+stable release, in the stable queue or in a stable-rc branch of any of
+the seven lines (checked 2026-11-14 between 13:08 and 13:42 UTC). On
+each tree's current tip (7.3.4, 6.18.63, 6.12.117, 6.6.162, 6.1.192,
 5.15.225, 5.10.274) both commits cherry-pick cleanly with -x, and
 btusb.o builds with them (x86_64 defconfig, BT=m, BT_HCIBTUSB=m, W=1)
 with no new warning. In mainline the driver was split in 7.4 and these

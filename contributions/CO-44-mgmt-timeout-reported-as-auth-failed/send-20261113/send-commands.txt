@@ -50,11 +50,21 @@ RCPT TO, as observed in the dry runs of 2026-11-14 (below):
 
 No Signed-off-by: BlueZ rejects it (HACKING, rule 1; doc/maintainer-guidelines.rst, rule 2).
 
-In bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch replace the line
-  @KERNEL_PATCH_LINK@
-with
-  https://lore.kernel.org/linux-bluetooth/<the kernel mail's Message-ID>/
-and open that link once lore shows the patch.
+STEP 2a, BEFORE the BlueZ send: put the kernel mail's lore link into the BlueZ patch.
+  - The BlueZ patch file bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch contains
+    the placeholder line
+      @KERNEL_PATCH_LINK@
+    and it must not be sent with that placeholder in it.
+  - Take the Message-ID that git send-email printed for the kernel mail in step 1 and replace the
+    whole placeholder line with
+      https://lore.kernel.org/linux-bluetooth/<the kernel mail's Message-ID>/
+    (without the angle brackets).
+  - Open that link once and check that lore shows the kernel patch.
+  - Check that the placeholder is gone: this must print 0
+      grep -c @KERNEL_PATCH_LINK@ bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch
+  Only when it prints 0 go on to step 2b.
+
+STEP 2b: send the BlueZ mail.
 
 git send-email --confirm=always --suppress-cc=self \
 	--from "Iaroslav Voitovych <yaroslav.voytovych@gmail.com>" \

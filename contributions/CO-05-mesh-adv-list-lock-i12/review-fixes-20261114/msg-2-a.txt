@@ -1,0 +1,26 @@
+Bluetooth: MGMT: Stop mesh_send_sync() when it cannot add the instance
+
+When hci_add_adv_instance() fails, mesh_send_sync() keeps the error in
+err and carries on. It then returns the result of
+hci_schedule_adv_instance_sync() for an instance that was never added,
+and the original error is lost.
+
+Return the error at once instead. hci_schedule_adv_instance_sync() is no
+longer called for a missing instance and mesh_send_start_complete()
+gets the real error.
+
+With a failing allocation injected into hci_add_adv_instance() for the
+first Mesh Send, as seen in a kprobe trace of bluetooth-next
+da3cc02587c6:
+
+  before: hci_add_adv_instance -> -ENOMEM, then
+          hci_schedule_adv_instance_sync(instance 6) -> -ENOENT,
+          mesh_send_sync -> -2, mesh_send_start_complete(err=-2)
+  after:  hci_add_adv_instance -> -ENOMEM,
+          mesh_send_sync -> -12, mesh_send_start_complete(err=-12)
+
+User space gets the same Mesh Packet Complete event in both cases, so
+this is a cleanup of the error path and not a change in what a client
+sees.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
