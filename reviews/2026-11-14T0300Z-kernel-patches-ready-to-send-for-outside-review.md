@@ -4,8 +4,9 @@
 the Linux Bluetooth stack found on a laptop with a QCA9377 controller, USB `13d3:3503`). Nothing
 in this document has been sent. Every patch is reproduced verbatim from the file named above it,
 with that file's SHA-256, so the text you review is the text that would be mailed. Most items carry
-no Signed-off-by yet: the author adds it when sending. Items 4 to 7 were prepared earlier and
-already carry it; please ignore that line.*
+no Signed-off-by yet: the author adds it when sending. Item 7's stable backports carry the
+author's Signed-off-by from their earlier preparation (with the original authors' and the
+maintainer's above it); please ignore that line.*
 
 ## A. What we ask of you
 
@@ -1038,18 +1039,22 @@ instead of the controller's number of sets. After instance 1 is removed, instanc
 listed, though it still advertises. Found by the tests of another item (CO-12, the
 advertising-duration clamp, not in this document).
 
-**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-11-02): the one-line fix passes all 128 mgmt-tester
-"Add" cases and a new case that lists a remaining instance (BlueZ tests reproduced after the
-patch). **Being refreshed today on the current tip**, and checked against a newer patch on the
-list, "mgmt: drop advertising instances the controller cannot carry" (patchwork 14976301), which
-may touch the same function.
+**Tested again on today's tip** (bluetooth-next `da3cc02587c6`, 2026-11-14; KASAN and lockdep,
+4 CPUs): mgmt-tester's "Add" cases, 3 runs each, 119/128 unpatched → 120/128 patched; the only
+change is the new case "Add Ext Advertising - Instance 2 listed alone", Failed → Passed 3 of 3
+(the other 8 not-passed are the duration cases of the separate CO-12 fix, failing on both kernels);
+mesh-tester 8/10 on both. The bot's kernel checks pass on both sides with identical tester
+results. On the BlueZ side the bot's TestFunctional failed 2 of 3 patched runs (two different BAP
+cases) and passed 2 of 2 base runs; the series touches only two tester sources, so it looks like a
+flake on a loaded host, but that is not shown. A newer patch, "mgmt: drop advertising instances
+the controller cannot carry" (patchwork 14976301), fixes a different bug.
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch`** (SHA-256 `51af5c3f85e0e14118f3af83b914b066296f1d26f819ffde1bc219da2780a470`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch`** (SHA-256 `abe944ee82213c5954bbd3314d0c2578e78e7823585b374471a69bc15f154aa4`)
 
 ```diff
-From e3379d40f6f1eeb7f1703d5387869daf6f55f93e Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <AUTHOR-EMAIL>
-Date: Mon, 2 Nov 2026 14:37:08 +0100
+From 1fb5fb3351f9a4a9c2417452156eaf6140c4ef8d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 01:47:30 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
  instances
 
@@ -1063,16 +1068,15 @@ example after its timeout, instance 2 is no longer reported.
 Compare with le_num_of_adv_sets, as the comment says.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index cf5256f4a89e6..f948ebb657df6 100644
+index 6ed3bf6f17385..5c92618a0867f 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -8866,7 +8866,7 @@ static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
+@@ -8889,7 +8889,7 @@ static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
  	instance = rp->instance;
  	list_for_each_entry(adv_instance, &hdev->adv_instances, list) {
  		/* Only instances 1-le_num_of_adv_sets are externally visible */
@@ -1082,16 +1086,16 @@ index cf5256f4a89e6..f948ebb657df6 100644
  			instance++;
  		} else {
 
-base-commit: 42b8c2d729268a65a2d98064e8dc59ff53646b14
+base-commit: da3cc02587c629420603df4395179ec82955c941
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/bluez/0000-cover-letter.patch`** (SHA-256 `0a2a6e7d2d6e8bcf9b25e2bd80f4433e931c774c212f8e5c5a49f352a7bb3cdf`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0000-cover-letter.patch`** (SHA-256 `849bcb76cf4ded6835aa25ed6d9b9f1071a137aa95ee2f5aae15f5e1b888aef9`)
 
 ```diff
-From: Iaroslav Voitovych <AUTHOR-EMAIL>
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Subject: [PATCH BlueZ 0/3] mgmt-tester, mesh-tester: Add advertising timeout tests
 
 This series adds 16 test cases: 15 to mgmt-tester (14 in 1/3, one in
@@ -1105,7 +1109,7 @@ timeouts from 0 s to 65535 s, that an instance is still present before
 its timeout and removed after it, and that Read Advertising Features
 lists the instances that are left.
 
-Results on bluetooth-next 42b8c2d72926 (BlueZ master 14bd6ab65f4a), in
+Results on bluetooth-next da3cc02587c6 (BlueZ master 20ffd285b58f), in
 QEMU with doc/tester.config, three runs each:
 
  - "Add Ext Advertising - Instance 2 listed alone" (2/3) fails on
@@ -1125,20 +1129,20 @@ Iaroslav Voitovych (3):
   mgmt-tester: Add test for listing a remaining instance 2
   mesh-tester: Add Mesh Send test with extended advertising
 
- tools/mesh-tester.c |  32 +++
- tools/mgmt-tester.c | 526 ++++++++++++++++++++++++++++++++++++++++++++
+ tools/mesh-tester.c |  32 ++++
+ tools/mgmt-tester.c | 526 ++++++++++++++++++++++++++++++++++++++++++++++++++++
  2 files changed, 558 insertions(+)
 
-base-commit: 14bd6ab65f4a647302edbd6df27f6faa91bee8a8
+base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
 --
 2.43.0
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch`** (SHA-256 `3f796506f9db57d0906986ea0f28586c7c29c3f6cfc46bcfc1b8bf3a4d33f3cd`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch`** (SHA-256 `ca929ad871df1fa9b6f4cc3f608337e8d5d7a3c80ea2f509aa28283628103404`)
 
 ```diff
-From e3cc46981c3494cf43a16abcbb19ef80179e166b Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <AUTHOR-EMAIL>
+From e01b4cc8f050821b05ef4210fc5a4e888e02c2c5 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sun, 1 Nov 2026 18:46:34 +0100
 Subject: [PATCH BlueZ 1/3] mgmt-tester: Add extended advertising timeout tests
 
@@ -1158,7 +1162,7 @@ instances with different timeouts.
  1 file changed, 506 insertions(+)
 
 diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index 201bd4396..6450b2ba5 100644
+index b7126dc36..7af5013ae 100644
 --- a/tools/mgmt-tester.c
 +++ b/tools/mgmt-tester.c
 @@ -20,6 +20,7 @@
@@ -1255,9 +1259,9 @@ index 201bd4396..6450b2ba5 100644
  };
  
  static const uint8_t set_exp_feat_param_debug[] = {
-@@ -14253,6 +14300,418 @@ static void test_hci_devcd(const void *test_data)
- 	tester_wait(test->dump_data->timeout + 1, verify_devcd, NULL);
- }
+@@ -14441,6 +14488,418 @@ static const struct generic_data eks_oppt_connect_encrypt_test = {
+ 	.expect_hci_param_check_func = check_encrypt_v2_opportunistic,
+ };
  
 +/* An extended advertising controller is given the instance timeout as the
 + * Duration of LE Set Extended Advertising Enable (N * 10 ms) and ends the
@@ -1674,7 +1678,7 @@ index 201bd4396..6450b2ba5 100644
  int main(int argc, char *argv[])
  {
  	tester_init(&argc, &argv);
-@@ -15613,6 +16072,53 @@ int main(int argc, char *argv[])
+@@ -15808,6 +16267,53 @@ int main(int argc, char *argv[])
  					setup_add_advertising_timeout,
  					test_command_generic, 3);
  
@@ -1728,16 +1732,18 @@ index 201bd4396..6450b2ba5 100644
  	/* LE off will clear (remove) all instances. */
  	test_bredrle50("Add Ext Advertising - Success 22 (LE -> off, Remove)",
  					&add_ext_advertising_le_off,
+
+base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch`** (SHA-256 `7e7b5e2c54d4373912bf30c992c53c4e3937129a25f0eae42b244f441d36e859`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch`** (SHA-256 `7aea9f20c5b16ffa18c403009e5c6dc6f3c3c30ef47c8a46d50d21868b86f307`)
 
 ```diff
-From 57f697bc0491595a99f94bcb7fee54c03b9d7d02 Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <AUTHOR-EMAIL>
+From 68f9ca4549e2466f708af69ce5e30a3ce533670b Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Mon, 2 Nov 2026 14:37:37 +0100
 Subject: [PATCH BlueZ 2/3] mgmt-tester: Add test for listing a remaining
  instance 2
@@ -1750,10 +1756,10 @@ still lists instance 2.
  1 file changed, 20 insertions(+)
 
 diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index 6450b2ba5..45b7109e8 100644
+index 7af5013ae..c02fab65a 100644
 --- a/tools/mgmt-tester.c
 +++ b/tools/mgmt-tester.c
-@@ -14400,6 +14400,23 @@ static const struct generic_data add_ext_adv_timeout_two_66_1 = {
+@@ -14588,6 +14588,23 @@ static const struct generic_data add_ext_adv_timeout_two_66_1 = {
  	.adv_timeout = &adv_timeout_two_66_1,
  };
  
@@ -1777,7 +1783,7 @@ index 6450b2ba5..45b7109e8 100644
  static uint64_t adv_timeout_now_ms(void)
  {
  	struct timespec ts;
-@@ -16118,6 +16135,9 @@ int main(int argc, char *argv[])
+@@ -16313,6 +16330,9 @@ int main(int argc, char *argv[])
  	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
  					&add_ext_adv_timeout_two_66_1, NULL,
  					test_add_adv_timeout, 5);
@@ -1792,11 +1798,11 @@ index 6450b2ba5..45b7109e8 100644
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch`** (SHA-256 `cf70b35dfbc8a010d8b58baa0e9e4d85e6f219fdd3ec436c7a7711a4609437da`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch`** (SHA-256 `e84deb541745b78238c811d9e163e1177880a237da0c67b93dc379aed478219b`)
 
 ```diff
-From 8affb456c44aee70deabeeb4156c141e13181b73 Mon Sep 17 00:00:00 2001
-From: Iaroslav Voitovych <AUTHOR-EMAIL>
+From 2dcef42fbeef7fd26f36af805fd010bb6737f4fe Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sun, 1 Nov 2026 18:46:36 +0100
 Subject: [PATCH BlueZ 3/3] mesh-tester: Add Mesh Send test with extended
  advertising
@@ -1863,139 +1869,55 @@ index 896cfd1f2..febcb91c4 100644
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261102/RESULTS.md`** (SHA-256 `1dcff0a6362bef149e8186e99418152ba863f0ab2857b638cdfca37e19d84c8b`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/CHECKS.md`** (SHA-256 `809a5d3295970c09af5ad841c9af9c1f146ac932697efa86d15c328558c1e29f`)
 
 ```markdown
-# CO-38 kernel fix and BlueZ test series: results (2026-11-02)
+# CO-38 refresh, 2026-11-14: checks
 
-Nothing was sent. Area: /root/exp/agent-work/co38-ready-20261102/ (below "area"). Claims are marked
-[measured] (a command's output, logs listed in SHA256SUMS), [source] (read from a file) or [inferred].
+Nothing was sent. Marks: [measured] output of a command, logs in `logs/` (SHA256SUMS), [quoted], [inferred].
+Times in the bot summaries are UTC; the host's clock is UTC+1 (progress.log, 2026-11-14 02:17 to 05:04 local).
 
-## Bases [measured: git log of the fetched tips]
+## Trees [measured: git log of the fetched refs]
+- bluetooth-next master `da3cc02587c629420603df4395179ec82955c941` (2026-11-12 14:37 -0500, "Bluetooth: hci_vhci: Report write readiness with queued input"). The old package was on `42b8c2d729268`.
+- bluetooth master `3b069de8a5d688c7e8381b99d6cdb7467fcae0de` (2026-11-12, "Bluetooth: L2CAP: Fix size check for receive buffer space").
+- BlueZ master `20ffd285b58facfd1f2478d159a5f941b09d5be1` (2026-11-12, "shared/gatt-client: Track pending discovery Database Hash reads"). Old: `14bd6ab65f4a`.
 
-- bluetooth-next master 42b8c2d729268a65a2d98064e8dc59ff53646b14, committer date 2026-10-30 09:55:58 -0400,
-  "Merge branch 'bluetooth' into bluetooth-next". Fetched 2026-11-02 into cache/linux-bt-next
-  (`git fetch bluetooth-next master`); the tip is the same as on 2026-11-01.
-- BlueZ master 14bd6ab65f4a647302edbd6df27f6faa91bee8a8, committer date 2026-10-29 14:37:49 -0400,
-  "doc/virtio: Update measurements of the testers". Fetched 2026-11-02 into cache/bluez-upstream; unchanged.
+## 1. Upstream state
+- Kernel: `git diff -U0 42b8c2d729268 bluetooth-next/master -- net/bluetooth/mgmt.c` [measured]: four hunks (HDT settings, stop_discovery_complete); none in `read_adv_features()`. `adv_instance->instance <= hdev->adv_instance_cnt` is still at `mgmt.c:8892` of the tip [measured: grep]. Not superseded.
+- lore search (`s:"Read Advertising Features"`, `adv_instance_cnt le_num_of_adv_sets`, 2026-11-14): nothing newer than 2023 and nothing about this bug [measured, `logs` not kept: atom files in `/root/exp/agent-work/lane3-mgmt-20261114/CO-38/lore-search-*.xml`].
+- patchwork since 2026-10-28 (`scripts/patchwork-recent.py`): no patch on this. Nearest: Piyus Kedia 14976301 "mgmt: drop advertising instances the controller cannot carry" (other bug, `pw-14976301.txt`); Weihong Guan BlueZ 14974678/14974679 (emulator advertising-set count, "single advertising set tests"; new, not merged; may conflict textually with our `mgmt-tester.c` additions) [measured].
+- CO-12 duration fix (the BlueZ series' 8 expected failures): the tip's `hci_enable_ext_advertising_sync()` still has `u16 duration = adv->mesh ? adv->timeout : adv->timeout * MSEC_PER_SEC;` [measured: grep hci_sync.c:1747]. Not fixed upstream.
 
-## Kernel patch (final/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch)
+## 2. Rebase and regeneration
+- Kernel: `git apply --check` of the old patch on bluetooth-next and on bluetooth/master: applies [measured]. Regenerated with `git format-patch -1 --base=da3cc025...`: `patch/0001-...patch`. Code identical to the old diff (one line); no Signed-off-by (operator adds); author line `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` as in the old package. A copy made on bluetooth/master: `patch-btmaster/` (placeholder author, test copy).
+- checkpatch `--strict` (`logs`: `checkpatch-next.log`, `checkpatch-btmaster.log`): `total: 1 errors, 0 warnings, 0 checks, 8 lines checked`, the one error `Missing Signed-off-by` [measured]. Fixes tag resolves.
+- BlueZ: the three old patches applied with `git am --3way` on `20ffd285b58f`: one conflict in `tools/mgmt-tester.c` (both sides append a block before `main()`: the HDT tests and ours), resolved by keeping both. `git range-diff old..new`: patches 2 and 3 unchanged, patch 1 changed only in the context lines of that hunk [measured]. Diffstat 558 insertions (32 + 526), as before. Cover letter regenerated with the new tips (`patch/bluez/0000-cover-letter.patch`); the claims in it are the measurements below. No Signed-off-by (BlueZ takes none).
+- Subject widths unchanged: 51, 56 and 57 columns (decision D9 of 11-02 still open).
 
-- Commit e3379d40f6f1e on 42b8c2d72926 in area/linux (worktree of the bt-next cache; sparse checkout
-  disabled in that worktree only, a full tree is needed to build). Message = commit-msg-listfix.txt unchanged;
-  author and Signed-off-by exactly as in the old patch; no Cc: stable.
-- `git format-patch -1 --base=42b8c2d729268a65a2d98064e8dc59ff53646b14`: trailer
-  `base-commit: 42b8c2d729268a65a2d98064e8dc59ff53646b14`. Diff blob ids (cf5256f4a89e6..f948ebb657df6)
-  are identical to the old patch's. In the final copy From: is `Iaroslav Voitovych <AUTHOR-EMAIL>`; the
-  Signed-off-by line keeps the address, as the old patch has it. Subject: 63 columns.
-- checkpatch.pl --strict (scripts/checkpatch.pl of the tree at the fix, so Fixes: is checked in history),
-  log logs/checkpatch-kernel.log [measured]:
-  - on the patch with the real From: `total: 0 errors, 0 warnings, 0 checks, 8 lines checked`
-  - on the final copy with the placeholder: `ERROR: Missing Signed-off-by: line by nominal patch author ''`.
-    This is only the placeholder From: not matching the Signed-off-by; it goes away with the real address.
-  - Note: the host's isolation hook blocks a direct call of checkpatch.pl (it contains the word "reboot");
-    it was run through scripts/checkpatch-kernel.sh, as the earlier area did.
+## 3. QEMU (KASAN + lockdep, 4 CPUs, 2 GB; test-runner, tester binaries from the regenerated series HEAD)
+Kernels: plain = bluetooth-next `da3cc02587c6` (bzImage sha256 `32ef4682e250...`), fix = plain + the patch (`a2a9e731ecd5...`); config = the 11-02 config (doc/tester.config + SMP/kprobe fragment + KASAN + lockdep). The CO-12 clamp is in neither. Commands `mgmt-tester-series -p Add` (128 cases) and `mesh-tester-series -p Mesh` (10), 3 runs each (`logs/mgmt-*`, `logs/mesh-*`, `logs/compare-all.txt`) [measured].
 
-## BlueZ series (final/bluez/0000-cover-letter.patch ... 0003-*.patch), on 14bd6ab65f4a
-
-| # | subject | columns | new cases |
-|---|---|---|---|
-| 1/3 | mgmt-tester: Add extended advertising timeout tests | 51 | 14 |
-| 2/3 | mgmt-tester: Add test for listing a remaining instance 2 | 56 | 1 |
-| 3/3 | mesh-tester: Add Mesh Send test with extended advertising | 57 | 1 |
-
-- Subjects over 50 columns, not changed: all three (51, 56, 57).
-- Prefix `[PATCH BlueZ n/3]` (`git format-patch --subject-prefix="PATCH BlueZ" --cover-letter`), no
-  Signed-off-by, bodies wrapped at 72 or less. From: placeholder `<AUTHOR-EMAIL>` as for the kernel patch.
-- No "Research only", "LongAdv" or "not for submission" text anywhere (`grep -c` = 0 on the tester sources
-  and on all four files); the four long-running cases of the old patch 3 are not in the series.
-  The listing case was re-made on the clean 1/3 by hand (not from the old 4/4, whose context was the research code).
-- New cases, counted from the final series [measured: `grep -c -E '^\+\s+test_bredrle(50)?(_full)?\('` on
-  each patch: 14, 1, 1]: **16 new cases = 15 in mgmt-tester (14 + the listing case) + 1 in mesh-tester**.
-  The earlier "15 new mgmt cases" in the CO-12 log was 14 mgmt + 1 mesh before the listing case; with it the
-  series has 16, of which 15 are mgmt. The old final table's 15 rows (mgmt only) match the 15 mgmt cases; the
-  number to quote is 16 in total (15 mgmt + 1 mesh).
-
-## QEMU runs [measured]
-
-Kernels (config = doc/tester.config + SMP/kprobe fragment + KASAN + lockdep, the CO-12 config-A-base,
-`CONFIG_KASAN=y` and `CONFIG_PROVE_LOCKING=y` confirmed in img/config-*):
-- plain: 42b8c2d72926 (bzImage sha256 3d7eb69e16af79260869f75cb9a51ec6ef903ef76a6786602c3235e544a8810f), 7.3.0-rc6-01714-g42b8c2d72926
-- fix: plain + e3379d40f6f1 alone (bzImage sha256 3087e66253c673118d6a2015273cb39546d27085f5516c3084fe99102ed90745), 7.3.0-rc6-01715-ge3379d40f6f1
-- The CO-12 clamp is in neither.
-
-Tester: tools/mgmt-tester and tools/mesh-tester built from the series HEAD (area/bluez, 8affb456c); test-runner
-from the same tree, 4 CPUs, 2 GB per guest (scripts/run-vm.sh, scripts/run-matrix.sh).
-Commands: `mgmt-tester-series -p Add` (all 128 "Add" cases: Add UUID, Add Device, Add Advertising, Add Ext
-Advertising) and `mesh-tester-series -p Mesh` (10 cases), 3 runs per kernel: logs/mgmt-{plain,fix}-{1,2,3}.log,
-logs/mesh-{plain,fix}-{1,2,3}.log; tables logs/table-mgmt.md, logs/table-mesh.md.
-
-mgmt-tester, 128 cases per run:
-- plain: Passed 119, Failed 9 in all three runs (identical sets).
-- fix: Passed 120, Failed 8 in all three runs (identical sets).
-- The only case that changes verdict: "Add Ext Advertising - Instance 2 listed alone": Failed (3 of 3) on plain,
-  Passed (3 of 3) with the fix. Every other of the 127 cases has the same verdict on both kernels in all runs.
-- Expected failures on both kernels (need the separate CO-12 duration fix; 8 cases, 3 of 3 runs each):
-  "Add Ext Advertising - Timeout 66 s", "- Timeout 655 s", "- Timeout 656 s (limit)",
-  "- Timeout 6357 s (limit)", "- Timeout 8192 s (limit)", "- Timeout 65535 s (limit)",
-  "- Timeout 66 s (Params)", "- Timeout 66 s and 1 s".
-- Pass on both kernels: "Timeout 1 s (expires)", "Timeout 0 s (none)", "Timeout 65 s", "Timeout 1 s (Params)",
-  "Timeout replaced", "Timeout 1 s and 2 s" (6 cases). Of the 15 new mgmt cases: 6 pass on both kernels,
-  8 fail on both (CO-12), 1 fails on plain only (CO-38). 6 + 8 = the 14 cases of 1/3.
-- No unexpected verdict change.
-
-mesh-tester, 10 cases per run: 8 Passed, 2 Failed on both kernels in all runs; the failures are
-"Mesh - Send cancel - 1" and "- 2" (existing cases, not touched by the series, same on both kernels).
-The new "Mesh - Send (Ext Adv Duration)" passes on both kernels (a 1000 ms mesh timeout needs no clamp).
-
-Guest log scan [measured]: python3 -I scripts/kernel-report-scan.py over all 12 guest logs: all "clean"
-(logs/kernel-report-scan.txt, exit 0); additionally `grep -c -a -E "KASAN|lockdep|WARNING|BUG"` = 0 in each of
-the 12 logs.
-
-## BlueZ CI bot checks, run locally [measured]
-
-Tool: botroot/scripts/bot-ci-local.sh (a copy of the project's scripts/ directory, because the script needs its
-output and mails inside its own root; the project checkout was not written), image bluez-action-ci:60348956fc7b
-(bluez/action-ci main 60348956fc7b), `--space user --base 14bd6ab65f4a647302edbd6df27f6faa91bee8a8`,
-`--kernel-image` = bzImage-plain, mails = the three patches with the real From: (the placeholder cannot be
-applied by git am as an identity).
-
-Run 1 (botroot/out-bluez2, patched side and base side; --tree = the area's BlueZ worktree):
-
-| check | patched | base |
+| | plain | fix |
 |---|---|---|
-| CheckPatch | PASS (0 errors, 0 warnings, 559 + 32 + 44 lines) | not run on base |
-| GitLint | PASS | not run on base |
-| BuildEll | PASS | PASS |
-| BluezMake | PASS | PASS |
-| CheckSmatch | PASS | PASS |
-| bluezmakeextell | PASS | PASS |
-| TestFunctional | FAIL (test_bluetoothctl_pair_bredr, pexpect timeout "Changing pairable on succeeded") | PASS |
-| IncrementalBuild | FAIL "Failed to reset to base commit" | not run on base |
-| ScanBuild | FAIL "Setup failed" / "Failed to checkout to patched branch" | FAIL "Setup failed" |
+| mgmt-tester "Add", 3 runs | Passed 119, Failed 9 (identical sets) | Passed 120, Failed 8 (identical sets) |
+| mesh-tester, 3 runs | 8/10 ("Send cancel - 1" and "- 2" fail) | 8/10, the same |
 
-The IncrementalBuild and ScanBuild failures are a local setup defect, not findings: the shared clone made from a
-worktree has an alternates path into cache/bluez-upstream/.git/objects, which the container does not mount
-("unable to normalize alternate object path", harness.log). The same failure hits the base side's ScanBuild.
+- The only case whose verdict changes: "Add Ext Advertising - Instance 2 listed alone", Failed 3/3 to Passed 3/3. The 8 duration cases fail on both (need CO-12) [measured: compare-tester-verdicts.py]. Same as the 11-02 result.
+- kernel-report-scan over the 12 guest logs: all clean [measured].
 
-Run 2 (botroot/out-bluez3, patched side only, `--only TestFunctional,IncrementalBuild,ScanBuild`,
---tree /root/exp/qca9377-bt-hang/cache/bluez-upstream, read only): TestFunctional PASS (531 s),
-IncrementalBuild PASS (258 s), ScanBuild PASS (846 s); exit 0.
+## 4. The bot's checks (`scripts/bot-ci-local.sh`, image bluez-action-ci:60348956fc7b)
+Run from my clone of the project. The kernel mail used for the full run is the regenerated patch with a placeholder `Signed-off-by: Iaroslav Voitovych <author@example.com>` added (as run, the domain was `example.invalid`) (test copy `project/tmp/mail-co38-sob/`; never for sending), because the S-o-b dependent checks otherwise fail for that reason alone.
+- Without any S-o-b (`logs/bot-co38-k-msg2`): CheckPatch FAIL (Missing Signed-off-by only), VerifySignedoff FAIL, GitLint FAIL (CC1 no Signed-off-by), VerifyFixes FAIL ("empty lines surround the Fixes tag": that tag is the last line of the message), SubjectPrefix PASS [measured].
+- With the placeholder S-o-b, kernel, both sides, `--history-since 2022-06-01` (`logs/bot-co38-k-full`, ALL DONE, exit 0):
+  patched: CheckPatch, VerifyFixes, VerifySignedoff, GitLint, SubjectPrefix, BuildKernel, CheckAllWarning, CheckSparse, BuildKernel32, CheckKernelLLVM, TestRunnerSetup, TestRunner_mgmt-tester, TestRunner_mesh-tester, IncrementalBuild: all PASS. base: BuildKernel ... TestRunner_mesh-tester: all PASS. Tester pairs: "not-passed sets identical: True (A 0, B 0)" for both; kernel-report-scan exit 0 [measured].
+- BlueZ (`--space user`, 3 patches, `logs/bot-co38-bluez`, both sides; kernel image = the plain image):
+  patched: CheckPatch PASS, GitLint PASS, BuildEll PASS, BluezMake PASS, CheckSmatch PASS, bluezmakeextell PASS, ScanBuild PASS, **TestFunctional FAIL** (`test_bap.py::test_bass_past_transport_acquire[hosts9-vm2]`: "Failed to acquire: org.bluez.Error.Failed"), IncrementalBuild FAIL "Failed to reset to base commit" (the local setup defect of 11-02: the shared clone's alternates path is not mounted in the container).
+  base: BuildEll, BluezMake, CheckSmatch, bluezmakeextell, TestFunctional PASS; ScanBuild FAIL (same setup defect on the base side; the bot's ScanBuild does not check out the base anyway).
+  Re-runs on a tree without alternates (repacked clone; `logs/bot-co38-bluez-rerun`, `-rerun2`): patched `IncrementalBuild` PASS (843 s). patched `TestFunctional`: FAIL in rerun 1 (`test_bap.py::test_bass_past_earbuds_transport_acquire[hosts11-vm3]`, "Failed to acquire: org.bluez.Error.Failed", a different BAP test than the first failure), PASS in rerun 2; base `TestFunctional` PASS in both bot runs. So patched: 2 FAIL (different BAP tests) of 3, base: 0 of 2 [measured]. Judged a flaky BAP/BASS test under a heavily loaded host (load average 20 to 30 during these runs) and unrelated to the series [inferred]; not proven, the failing runs are in the logs. ScanBuild base side still FAILs on the first run for the setup defect only.
+  The series changes only `tools/mgmt-tester.c` and `tools/mesh-tester.c`, which that test does not use [inferred]; the unrelated flake of 11-02 was `test_bluetoothctl_pair_bredr`.
 
-Judgement: no check differs from base once the setup defect is removed. The single TestFunctional failure of
-run 1 did not repeat in run 2, on the same patched tree. The series changes only tools/mgmt-tester.c and
-tools/mesh-tester.c, which test_bluetoothctl_pair_bredr does not use [inferred], so it is judged flaky; it was
-re-run once only (scripts/functional-repeat.sh not used). Run 1's patched TestFunctional took 934 s against
-522 s on base and 531 s in run 2 (slow run, pexpect timeout).
-ScanBuild in this bot compares the patched tree with itself (known, tooling-index), so its PASS is weak.
-
-## Not done / caveats
-
-- The whole `bot-ci-local.sh --space kernel` check set for the kernel patch was not run (task asked only for
-  checkpatch on it). The fix compiled in the QEMU kernel build; img/build-fix.log has no "warning:" or "error:" line.
-- The 16 cases were run on the plain tip and the fix tip only; the CO-12 clamp kernel was not rebuilt here.
-- Problem 5 of the brief: see the count above; problem 2: the fix was now tested alone; problem 1: base-commit is
-  the public bluetooth-next tip; problems 3 and 4: renumbered, rebuilt on public master.
+## Surprises
+- The kernel fix compiled without change; nothing in the touched function moved.
 ```
 
 ---
@@ -2009,21 +1931,27 @@ same request; if the first start fails and frees it, the second reads freed memo
 message has the KASAN trace). The patch keeps the flag set until the next-or-idle decision is made
 under `hdev->lock`, and takes `hdev->lock` nowhere under `cmd_sync_work_lock`.
 
-**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-10-29): no lockdep or KASAN report in 48 boots
-per image of the mesh tests, verdicts unchanged; the bot's checks pass. The use-after-free itself
-was not reproduced. A different fix for the same report is pending on the list (patchwork
-14888791, now archived); in the same boots it showed a lock-order inversion in 8 of 12. **Being
-refreshed today on the current tip.**
+**Tested again on today's tip** (bluetooth-next `da3cc02587c6`, 2026-11-14; the code is unchanged
+since 10-29): mesh tests (power 12, unregister 12, cancel 5, close 5, an unregister sweep 35 boots
+per image), no KASAN, BUG or hung-task report, verdicts unchanged; the bot's checks pass
+(mgmt-tester 526/526, mesh-tester 10/10). The use-after-free itself was not reproduced. **New on
+the tip:** in the unregister sweep, lockdep reports a circular dependency between
+`cmd_sync_work_lock` and `unregister_lock` (`hci_cmd_sync_clear()` runs `mesh_next()`, the destroy
+callback of `mesh_send_done_sync()`, which calls `hci_cmd_sync_submit()`), 2 of 35 boots
+unpatched and 0 of 35 with this patch, which removes that callback; the notes below `---` say so.
+A different fix for the same report is pending on the list (patchwork 14888791, now archived); in
+earlier boots it showed a lock-order inversion in 8 of 12.
 
-**Questions for you.** Whether the hand-over closes every path the syzbot trace shows, and
-whether "not reproduced" needs saying below the `---`.
+**Questions for you.** Whether the hand-over closes every path the syzbot trace shows; whether the
+lockdep finding belongs in the commit message rather than below the `---`; whether "not
+reproduced" needs saying.
 
-**`contributions/CO-04-mesh-test-14888791/patch/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch`** (SHA-256 `f0ee05e2b1b1de932523f40e0766a67bdc0d77ad1abc8ac2a480044445a288c8`)
+**`contributions/CO-04-mesh-test-14888791/send-20261114/patch/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch`** (SHA-256 `bd83b587c313ad4143afcf61fcb578f1761a43c4918f9710eb361848e09a0222`)
 
 ```diff
-From 6d7ae083f6165f1d3e90508edb1c8ecf0f1af74c Mon Sep 17 00:00:00 2001
+From 29b49e119d4b08a00e38166901c6a30ac24d5157 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Thu, 29 Oct 2026 11:51:17 +0100
+Date: Sat, 14 Nov 2026 01:55:42 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix use-after-free in mesh_send_sync()
 
 mesh_send() tests HCI_MESH_SENDING under hdev->lock and, when it is
@@ -2075,7 +2003,6 @@ Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Reported-by: syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com
 Closes: https://syzkaller.appspot.com/bug?extid=f20755f37da70df33a16
 Cc: stable@vger.kernel.org
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
 An earlier proposal for this report,
 https://lore.kernel.org/all/20261014160504.42527-1-igorpetindev@gmail.com/
@@ -2094,25 +2021,34 @@ the hand-over and no longer applies to bluetooth-next, and with
 https://lore.kernel.org/all/20261003081205.433725-1-yaojiale02@163.com/
 which calls mesh_next() with its old arguments.
 
+Without this patch, lockdep also reports a circular dependency at
+controller removal: hci_cmd_sync_clear() holds cmd_sync_work_lock and
+calls mesh_next() as the destroy callback of mesh_send_done_sync(),
+which calls hci_cmd_sync_submit() and takes hdev->unregister_lock, the
+reverse of the order set_powered() establishes. It was reported in 2 of
+35 boots of a mesh test that removes the controller while a
+transmission is running, on bluetooth-next; with this patch in 0 of 35,
+as mesh_send_done_sync() has no destroy callback any more.
+
 Not tested with syzbot's reproducer; the analysis is from the report
-and the source. Tested on bluetooth-next 1081a6ef8f1e0 in a 4 CPU QEMU
+and the source. Tested on bluetooth-next da3cc02587c6 in a 4 CPU QEMU
 guest with BlueZ's emulated controller, KASAN and lockdep:
-mgmt-tester (515 cases) and mesh-tester (10) pass with the patch, and
+mgmt-tester (526 cases) and mesh-tester (10) pass with the patch, and
 a set of mesh transmit tests (queueing, cancel, power off, socket
-close, controller removal; 48 boots per kernel) gives the same results
-with and without it, apart from timing-dependent cases that also vary
-between unpatched runs. No lockdep, KASAN or WARNING report, so the
-new lockdep_assert_held() did not fire; KCSAN, 20 boots, reported
+close, controller removal; 12 to 35 boots per kernel) gives the same
+results with and without it, apart from one timing-dependent case that
+also varies between unpatched runs. No KASAN or WARNING report, so the
+new lockdep_assert_held() did not fire; KCSAN, 45 boots, reported
 nothing in the changed functions.
 
  net/bluetooth/mgmt.c | 96 +++++++++++++++++++++++++++++++-------------
  1 file changed, 68 insertions(+), 28 deletions(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 3cb4f9ece83cb..0d78bd65f2239 100644
+index 6ed3bf6f17385..922bc28bc1c67 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -1095,37 +1095,53 @@ static void mesh_send_complete(struct hci_dev *hdev,
+@@ -1101,37 +1101,53 @@ static void mesh_send_complete(struct hci_dev *hdev,
  	mgmt_mesh_remove(mesh_tx);
  }
  
@@ -2184,7 +2120,7 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  }
  
  static void mesh_send_done(struct work_struct *work)
-@@ -1136,7 +1152,7 @@ static void mesh_send_done(struct work_struct *work)
+@@ -1142,7 +1158,7 @@ static void mesh_send_done(struct work_struct *work)
  	if (!hci_dev_test_flag(hdev, HCI_MESH_SENDING))
  		return;
  
@@ -2193,7 +2129,7 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  }
  
  static void mgmt_init_hdev(struct sock *sk, struct hci_dev *hdev)
-@@ -2314,11 +2330,22 @@ static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err)
+@@ -2320,11 +2336,22 @@ static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err)
  	/* Report any errors here, but don't report completion */
  
  	if (mgmt_err) {
@@ -2219,7 +2155,7 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  		return;
  	}
  
-@@ -2423,14 +2450,19 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+@@ -2429,14 +2456,19 @@ static int send_cancel(struct hci_dev *hdev, void *data)
  	struct mgmt_pending_cmd *cmd = data;
  	struct mgmt_cp_mesh_send_cancel *cancel = (void *)cmd->param;
  	struct mgmt_mesh_tx *mesh_tx;
@@ -2241,7 +2177,7 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  					mesh_send_complete(hdev, mesh_tx, false);
  			}
  		} while (mesh_tx);
-@@ -2438,8 +2470,10 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+@@ -2444,8 +2476,10 @@ static int send_cancel(struct hci_dev *hdev, void *data)
  		mesh_tx = mgmt_mesh_find(hdev, cancel->handle);
  
  		if (mesh_tx && mesh_tx->sk == cmd->sk) {
@@ -2254,7 +2190,7 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  				mesh_send_complete(hdev, mesh_tx, false);
  		}
  	}
-@@ -2447,8 +2481,14 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+@@ -2453,8 +2487,14 @@ static int send_cancel(struct hci_dev *hdev, void *data)
  	mgmt_cmd_complete(cmd->sk, hdev->id, MGMT_OP_MESH_SEND_CANCEL,
  			  0, NULL, 0);
  
@@ -2272,10 +2208,59 @@ index 3cb4f9ece83cb..0d78bd65f2239 100644
  	return 0;
  }
 
-base-commit: 1081a6ef8f1e0661fd52eb3f878691b0b96cdff9
+base-commit: da3cc02587c629420603df4395179ec82955c941
 -- 
 2.43.0
 
+```
+
+**`contributions/CO-04-mesh-test-14888791/send-20261114/CHECKS.md`** (SHA-256 `da1238dd03bfbd438778b337c46aa80574796a9e609e81cce945ad7b456dbc80`)
+
+```markdown
+# CO-04 refresh, 2026-11-14: checks
+
+Nothing was sent. [measured] = command output, logs in `logs/` (SHA256SUMS). Bot times are UTC (host clock UTC+1).
+
+## Trees
+bluetooth-next `da3cc02587c629420603df4395179ec82955c941` (was `1081a6ef8f1e0`), bluetooth/master `3b069de8a5d688c7e8381b99d6cdb7467fcae0de`, BlueZ master `20ffd285b58facfd1f2478d159a5f941b09d5be1`.
+
+## 1. Upstream state
+- `mesh_next()`, `mesh_send_done_sync()`, `mesh_send_start_complete()`, `send_cancel()` on the tip: unchanged (`mesh_next(struct hci_dev *hdev, void *data, int err)` still the destroy callback) [measured: grep mgmt.c]. `git diff 42b8c2d729268 bluetooth-next/master -- net/bluetooth/mgmt.c` touches none of them.
+- lore (`mesh_send_sync`, 2026-11-14) and patchwork (`patchwork-recent.py 2026-09-10 mesh`): no merged or posted equivalent. Still `new`: Igor Putko 14888791 (the other proposal, not used), Hui Peng 14831256 / 14831271, Jiale Yao 14864878, Cen Zhang 14880941 and 14927631, Wentao Liang 14942650 (answered by a maintainer-side reviewer with objections, 11-04). syzbot's report is not closed.
+- `git apply --check` of every pending diff on tip, tip+CO-04, tip+CO-05/26, tip+both (`logs/pending-apply-check.txt`) [measured]: with CO-04, 14864878 and 14888791 do not apply (same hunks as in the old notes); 14831256 and 14927631 do not apply even to the bare tip; 14942650, 14831271, 14880941 apply.
+
+## 2. Rebase
+- Applies with `git am --3way` to bluetooth-next and to bluetooth/master [measured]. Code identical to the 10-29 patch: `scripts/change-code-compare.sh` "files IDENTICAL, patch-id IDENTICAL 265c0fa30837ba22, changed lines IDENTICAL (96 lines)".
+- Applies with CO-05/26 in either order: `git diff --stat both-co05-co04 both-co04-co05` empty [measured].
+- checkpatch `--strict` (`checkpatch-bare.log`): only `Missing Signed-off-by`, `153 lines checked`.
+- Regenerated: `patch/0001-...patch` = format-patch with `--base=da3cc025...`, author `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>`, no Signed-off-by, commit message unchanged from 10-29, notes below `---` updated (tested-on tip, counts, the new lockdep paragraph, 526 cases).
+
+## 3. QEMU, KASAN + lockdep, 4 CPUs (images: plain = tip; co04; co05; both = CO-05/26 then CO-04; same config, built incrementally from the plain image's build directory; `images/` sha256 in logs)
+Master mesh-tester = the 4dc15be8 binary of 10-29; research mesh-tester = `ab927447` (`tmp/co05-w4/bin/`, read-only), through the ASAN-quarantine wrapper; one guest at a time, interleaved by boot (`mesh-logs/<set>-<image>-<n>.log`).
+
+| set (counts are boots per image; the 10-29 counts in brackets) | plain | co04 | co05 | both |
+|---|---|---|---|---|
+| master mesh-tester, 3 (3) | 8/10 | 8/10 | 8/10 | 8/10 |
+| `-s power`, 12 (12) | 0 reports | 0 | 0 | 0 |
+| `-s unregister`, 12 (12) | 72/72 | 72/72 | 72/72 | 72/72 |
+| `-s cancel`, 5 (5) | 0/100 | 1/100 | 0/100 | 0/100 |
+| `-s close`, 5 (5) | 20/20 | 20/20 | 20/20 | 20/20 |
+| `-s UnregSweep`, 35 (5) | 2 lockdep reports | 0 | 2 | 0 |
+
+- 215 of 216 pairwise verdict comparisons (plain vs each other image, same boot number, `mesh-compare.txt`) show no verdict difference. The exception: `cancel` boot 1, plain vs co04: "Mesh - PwrCmp cancel queued then off" passed on co04 (a timing sweep case, which the 10-29 dossier already noted varies).
+- kernel-report-scan over all non-assert guest logs: only the four lockdep logs below [measured]. No KASAN, BUG, hung task, oops anywhere. `WARNING` count 0 on co04 and both, so the new `lockdep_assert_held()` in `mesh_next()` did not fire.
+- **New on the tip: a lockdep circular report at controller removal** (`circular-count.txt`, `lockdep-base-UnregSweep-plain-17.log`): plain 2 of 35 boots (`UnregSweep-plain-17`, `-28`), co05 2 of 35 (`UnregSweep-co05-3`, `-16`), co04 0 of 35, both 0 of 35; 0 reports in every other set. All four are the same chain [measured]:
+  `mesh-tester-gat/60 is trying to acquire lock: (&hdev->unregister_lock), at: hci_cmd_sync_submit+0x36/0x2b0` / `but task is already holding lock: (&hdev->cmd_sync_work_lock), at: hci_cmd_sync_clear+0xdc/0x360`; stack `hci_cmd_sync_submit <- mesh_next+0x84 <- hci_cmd_sync_clear+0x184 <- hci_unregister_dev <- vhci_release`; the opposite dependency from `set_powered -> hci_cmd_sync_submit`. The full splat is in `lockdep-base-UnregSweep-plain-17.log` (from "WARNING: possible circular locking dependency detected", line 751 on, about 100 lines). 2/35 vs 0/35 is not statistically strong on its own [inferred]; the cause is read from the code: `mesh_send_done()` queues `mesh_send_done_sync` with `mesh_next` as destroy callback, `hci_cmd_sync_clear()` runs the callback under `cmd_sync_work_lock`, and `mesh_next()` calls `hci_cmd_sync_queue()`. CO-04 removes that destroy callback.
+- **CO-05 lock-assertion images** (test-only assertion in `hci_add_adv_instance()`/`hci_remove_adv_instance()`; `assert-*` logs, 2 boots): master mesh-tester `WARNING` 3 per boot on assert-base, 0 on assert-co05 and assert-both; mgmt-tester `-s Advertising`: 4 per boot on all three (the other callers, outside CO-05) [measured].
+- **KCSAN**, research `-s race`, 45 boots per image (`kcsan-logs`, `kcsan-count.txt`): any KCSAN report in 4 (base), 3 (co04), 6 (co05), 7 (both) boots; reports naming advertising or mesh code: 0 in all four. The reports present are `data-race in skb_queue_tail / vhci_poll`. The 10-29 run saw adv/mesh reports on the unpatched kernel in 4 of 45 boots; this run did not reproduce them on the new tip, so it shows no before/after [measured]. "both race cases passed": 45/45 on three images, 43/45 on both.
+
+## 4. The bot's checks (kernel, patched side; base side = the CO-38 run's base side, same tip and BlueZ commit)
+Mail = the regenerated patch plus a placeholder Signed-off-by in a test copy (`mail-co04-sob`); `logs/bot-co04-k`: CheckPatch, VerifyFixes, VerifySignedoff, GitLint, SubjectPrefix, BuildKernel, CheckAllWarning, CheckSparse, BuildKernel32, CheckKernelLLVM, TestRunnerSetup, TestRunner_mgmt-tester (`Total: 526, Passed: 526`), TestRunner_mesh-tester (`Total: 10, Passed: 10`), IncrementalBuild: all PASS [measured]. Base side (`CO-38/logs/bot-co38-k-full`): all PASS, mgmt/mesh testers identical. Not re-run on the base side again: same base commit, same BlueZ commit.
+The 10-29 GitLint failure (89-column quoted line) does not recur: the message is unchanged since the fix.
+
+## Not done
+- No syzbot reproducer and no use-after-free reproduction (operator's decision of 10-29).
+- The mesh `PwrCmp` timing sweeps were not repeated.
 ```
 
 ---
@@ -2287,19 +2272,21 @@ base-commit: 1081a6ef8f1e0661fd52eb3f878691b0b96cdff9
 add fails, it loses the error and schedules an instance that does not exist (`Fixes:
 b338d91703fa`).
 
-**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-10-29): warnings 3 → 0; KCSAN reports in
-`mesh_send_sync()` 1 → 0 of 45 boots; a fault-injection trace for (2); the bot's checks pass.
-**Being refreshed today on the current tip.**
+**Tested again on today's tip** (bluetooth-next `da3cc02587c6`, 2026-11-14; code unchanged since
+10-29): with a test-only lock assertion, mesh-tester's warnings 3 per boot → 0; the fault
+injection for (2): unpatched schedules the never-added instance, patched returns the add's error
+and schedules nothing; KCSAN, 45 boots per image, showed no report in advertising or mesh code on
+any kernel this time (on 10-29 the unpatched kernel had some), so there is no KCSAN before/after
+today; the bot's checks pass. Another author's patch (patchwork 14927631) also takes `hdev->lock`
+in `mesh_send_sync()`, among many other changes; it no longer applies to bluetooth-next.
 
-**Questions for you.** The series order relative to item 5 (they touch the same function), and
-whether patch 2 belongs in the same series or alone.
+**Questions for you.** The series order relative to item 5 (they touch the same function, and
+apply in either order), and whether patch 2 belongs in the same series or alone.
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/patch/0000-cover-letter.patch`** (SHA-256 `547b8dd91b515d1ddff7405ded03cd9adeb35c60f73647963c53807ed1f8cb21`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0000-cover-letter.patch`** (SHA-256 `6d229f225bbec61238440eef7f5b5f88ee36af9b294b43b992997070351b0414`)
 
 ```diff
-From 0e1fa9ca43d972e9ae92a97a9e79066ac4be2bb1 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Thu, 29 Oct 2026 13:36:21 +0100
 Subject: [PATCH 0/2] Bluetooth: MGMT: mesh_send_sync() and the advertising list
 
 mesh_send_sync() adds the mesh packet's advertising instance with
@@ -2317,6 +2304,10 @@ Notes:
   with other callers and is left alone here.
 - The same lock was part of an earlier patch that was withdrawn:
   https://lore.kernel.org/all/20260919112517.3871992-1-benquike@gmail.com/
+- "Bluetooth: hci_sync: Fix remaining advertising instance UAFs",
+  https://lore.kernel.org/all/pm-bluetooth-objects-candidate-0245-v9-6b34bc036455ad3dd4ea-1@gmail.com/
+  also takes hdev->lock in mesh_send_sync(), together with many other
+  functions; it no longer applies to bluetooth-next.
 - Three other callers change the advertising list without hdev->lock
   (ISO broadcast, Set LE off and the advertising timeout); they are
   not part of this series.
@@ -2324,19 +2315,21 @@ Notes:
   separate fix, "Bluetooth: MGMT: Fix use-after-free in
   mesh_send_sync()"; the two apply in either order.
 
-Tested on bluetooth-next 1081a6ef8f1e0 in a 4 CPU QEMU guest with
+Tested on bluetooth-next da3cc02587c6 in a 4 CPU QEMU guest with
 BlueZ's emulated controller, KASAN and lockdep. With
-lockdep_assert_held(&hdev->lock) added to hci_add_adv_instance() for
-the test only, mesh-tester warned three times from mesh_send_sync()
-without the series and not with it. KCSAN, 45 boots each, of a test
-that adds and removes an advertising instance on one socket while
-another socket sends mesh packets: without the series, one boot
-reported races in mesh_send_sync() itself and three in
-hci_schedule_adv_instance_sync() called from it; with the series, none
-in mesh_send_sync(), and one boot reported a race below
-hci_start_adv_sync(), which the series does not change. mgmt-tester
-(515 cases) and mesh-tester (10) pass with the series; no lockdep,
-KASAN or WARNING report.
+lockdep_assert_held(&hdev->lock) added to hci_add_adv_instance() and
+hci_remove_adv_instance() for the test only, mesh-tester warned three
+times from mesh_send_sync() in each of 2 boots without the series and
+not with it. With the first mesh add made to fail (test-only module
+parameter), mesh_send_sync() returned -ENOENT without 2/2 and -ENOMEM
+with it; the Mesh Send results are the same. KCSAN, 45 boots each, of a
+test that adds and removes an advertising instance on one socket while
+another socket sends mesh packets: no report in advertising or mesh
+code with or without the series, so this run does not show the race.
+mgmt-tester (526 cases) and mesh-tester (10) pass with the series; no
+KASAN or WARNING report, and the only lockdep report (a circular
+dependency at controller removal, 2 of 35 boots of a removal test) is
+also seen without the series.
 
 Iaroslav Voitovych (2):
   Bluetooth: MGMT: Take hdev->lock in mesh_send_sync()
@@ -2346,18 +2339,17 @@ Iaroslav Voitovych (2):
  1 file changed, 14 insertions(+), 7 deletions(-)
 
 
-base-commit: 1081a6ef8f1e0661fd52eb3f878691b0b96cdff9
--- 
+base-commit: da3cc02587c629420603df4395179ec82955c941
+--
 2.43.0
-
 ```
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/patch/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch`** (SHA-256 `774db32af7abecf338c20bb49c09aa54a608864b4f241e120ec07ac821733761`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch`** (SHA-256 `38369638340929752b3eb64680acfb291a8304a06fb4c88fb7f4fe13d738295d`)
 
 ```diff
-From 30e3424fba50ca927af513fdb6a6775af5c39ae7 Mon Sep 17 00:00:00 2001
+From cbcac8bc062331e81c64206dc107a47300fd2c33 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Wed, 21 Oct 2026 07:43:46 +0200
+Date: Sat, 14 Nov 2026 01:56:28 +0100
 Subject: [PATCH 1/2] Bluetooth: MGMT: Take hdev->lock in mesh_send_sync()
 
 mesh_send_sync() runs on the cmd_sync worker, which holds req_lock but
@@ -2396,16 +2388,15 @@ hci_schedule_adv_instance_sync() looks the instance up without the lock
 itself. It is shared with other callers and is not changed here.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  net/bluetooth/mgmt.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 3cb4f9ece83cb..8f7f3cdb2eebc 100644
+index 6ed3bf6f17385..4d4bae34e4f08 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -2336,8 +2336,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+@@ -2342,8 +2342,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
  	u16 timeout, duration;
  	int err = 0;
  
@@ -2419,7 +2410,7 @@ index 3cb4f9ece83cb..8f7f3cdb2eebc 100644
  
  	timeout = 1000;
  	duration = send->cnt * INTERVAL_TO_MS(hdev->le_adv_max_interval);
-@@ -2375,6 +2379,8 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+@@ -2381,6 +2385,8 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
  		instance = 0;
  	}
  
@@ -2428,17 +2419,19 @@ index 3cb4f9ece83cb..8f7f3cdb2eebc 100644
  	if (instance)
  		return hci_schedule_adv_instance_sync(hdev, instance, true);
  
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-05-mesh-adv-list-lock-i12/patch/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch`** (SHA-256 `8326c8dab14d0bbe5434b2270c10a7d1797e07e10d036b56c4b98a3ef0c86176`)
+**`contributions/CO-05-mesh-adv-list-lock-i12/send-20261114/patch/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch`** (SHA-256 `320278a8c1695832f4f1a44f3827e144b7a0efc4e34cc2ba30b74dcc95e9228e`)
 
 ```diff
-From 0e1fa9ca43d972e9ae92a97a9e79066ac4be2bb1 Mon Sep 17 00:00:00 2001
+From 53e616272f860498cf6799c1f1543f7d5e960e4a Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Wed, 21 Oct 2026 07:43:50 +0200
+Date: Sat, 14 Nov 2026 01:56:29 +0100
 Subject: [PATCH 2/2] Bluetooth: MGMT: Stop mesh_send_sync() when it cannot add
  the instance
 
@@ -2466,16 +2459,15 @@ this is a cleanup of the error path and not a change in what a client
 sees.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  net/bluetooth/mgmt.c | 13 +++++++------
  1 file changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 8f7f3cdb2eebc..e11925b707d5f 100644
+index 4d4bae34e4f08..308c7e0e76e3c 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -2334,7 +2334,6 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+@@ -2340,7 +2340,6 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
  	struct adv_info *adv, *next_instance;
  	u8 instance = hdev->le_num_of_adv_sets + 1;
  	u16 timeout, duration;
@@ -2483,7 +2475,7 @@ index 8f7f3cdb2eebc..e11925b707d5f 100644
  
  	hci_dev_lock(hdev);
  
-@@ -2354,10 +2353,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+@@ -2360,10 +2359,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
  				   hdev->le_adv_max_interval,
  				   mesh_tx->handle);
  
@@ -2500,7 +2492,7 @@ index 8f7f3cdb2eebc..e11925b707d5f 100644
  
  	if (hdev->cur_adv_instance == instance) {
  		/* If the currently advertised instance is being changed then
-@@ -2384,7 +2385,7 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+@@ -2390,7 +2391,7 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
  	if (instance)
  		return hci_schedule_adv_instance_sync(hdev, instance, true);
  

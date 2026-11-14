@@ -4,8 +4,9 @@
 the Linux Bluetooth stack found on a laptop with a QCA9377 controller, USB `13d3:3503`). Nothing
 in this document has been sent. Every patch is reproduced verbatim from the file named above it,
 with that file's SHA-256, so the text you review is the text that would be mailed. Most items carry
-no Signed-off-by yet: the author adds it when sending. Items 4 to 7 were prepared earlier and
-already carry it; please ignore that line.*
+no Signed-off-by yet: the author adds it when sending. Item 7's stable backports carry the
+author's Signed-off-by from their earlier preparation (with the original authors' and the
+maintainer's above it); please ignore that line.*
 
 ## A. What we ask of you
 

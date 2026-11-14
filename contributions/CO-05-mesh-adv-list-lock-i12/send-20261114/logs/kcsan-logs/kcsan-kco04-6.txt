@@ -1,0 +1,9 @@
+== /root/exp/agent-work/lane3-mgmt-20261114/kcsan-logs/race-kco04-6.log: 2 reports
+   line 168 [Mesh - Adv race - Add/Remove vs Mesh Send - Ext] BUG: KCSAN: data-race in skb_queue_tail / vhci_poll
+      write (marked): skb_queue_tail <- vhci_send_frame <- hci_send_frame <- hci_cmd_work
+      read: vhci_poll <- do_sys_poll <- __x64_sys_poll <- x64_sys_call
+   line 196 [Mesh - Adv race - Add/Remove vs Mesh Send - Ext] BUG: KCSAN: data-race in skb_queue_tail / vhci_poll
+      write (marked): skb_queue_tail <- vhci_send_frame <- hci_send_frame <- hci_cmd_work
+      read: vhci_poll <- do_sys_poll <- __x64_sys_poll <- x64_sys_call
+== distinct headers over 1 logs
+     2  BUG: KCSAN: data-race in skb_queue_tail / vhci_poll

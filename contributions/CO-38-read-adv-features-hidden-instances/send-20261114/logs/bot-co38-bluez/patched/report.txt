@@ -1,0 +1,22 @@
+Test Summary:
+CheckPatch                    PASS      2.70 seconds
+GitLint                       PASS      1.19 seconds
+BuildEll                      PASS      69.21 seconds
+BluezMake                     PASS      610.47 seconds
+CheckSmatch                   PASS      765.60 seconds
+bluezmakeextell               PASS      174.70 seconds
+TestFunctional                FAIL      1377.76 seconds
+IncrementalBuild              FAIL      0.02 seconds
+ScanBuild                     PASS      2968.20 seconds
+
+Details
+##############################
+Test: TestFunctional - FAIL
+Desc: Run test-functional
+Output:
+FAIL functional.test_bap::test_bass_past_transport_acquire[hosts9-vm2]: AssertionError: Failed to acquire: org.bluez.Error.Failed
+##############################
+Test: IncrementalBuild - FAIL
+Desc: Incremental build with the patches in the series
+Output:
+Failed to reset to base commit

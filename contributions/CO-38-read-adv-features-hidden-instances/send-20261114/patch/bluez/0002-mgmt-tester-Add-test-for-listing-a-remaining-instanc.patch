@@ -1,0 +1,54 @@
+From 68f9ca4549e2466f708af69ce5e30a3ce533670b Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 2 Nov 2026 14:37:37 +0100
+Subject: [PATCH BlueZ 2/3] mgmt-tester: Add test for listing a remaining
+ instance 2
+
+Add instances 1 and 2 on an extended advertising controller, let
+instance 1 expire after 1 s, and check that Read Advertising Features
+still lists instance 2.
+---
+ tools/mgmt-tester.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index 7af5013ae..c02fab65a 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -14588,6 +14588,23 @@ static const struct generic_data add_ext_adv_timeout_two_66_1 = {
+ 	.adv_timeout = &adv_timeout_two_66_1,
+ };
+ 
++/* Once instance 1 has expired, instance 2 is the only instance left and
++ * Read Advertising Features still has to list it.
++ */
++static const struct adv_timeout_test adv_timeout_list_2 = {
++	.inst = {
++		{ 0x01, 1, 100, true },
++		{ 0x02, 0, 0, false },
++	},
++	.num_inst = 2,
++	.check_ms = 2500,
++};
++
++static const struct generic_data add_ext_adv_timeout_list_2 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_list_2,
++};
++
+ static uint64_t adv_timeout_now_ms(void)
+ {
+ 	struct timespec ts;
+@@ -16313,6 +16330,9 @@ int main(int argc, char *argv[])
+ 	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
+ 					&add_ext_adv_timeout_two_66_1, NULL,
+ 					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Instance 2 listed alone",
++					&add_ext_adv_timeout_list_2, NULL,
++					test_add_adv_timeout, 5);
+ 
+ 	/* LE off will clear (remove) all instances. */
+ 	test_bredrle50("Add Ext Advertising - Success 22 (LE -> off, Remove)",
+-- 
+2.43.0
+

@@ -1,0 +1,211 @@
+#ci ## CI: CheckAllWarning
+#ci CI: CheckAllWarning: Run
+#ci CI: CheckAllWarning: GenericKernelBuild: Run
+#ci CI: CheckAllWarning: GenericKernelBuild: Copying /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/bluez/doc/ci.config
+#ci CI: CheckAllWarning: GenericKernelBuild: Run make olddefconfig
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', 'olddefconfig', 'W=1']
+#ci PROC args: ['make', 'olddefconfig', 'W=1']
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/confdata.o
+  HOSTCC  scripts/kconfig/expr.o
+  LEX     scripts/kconfig/lexer.lex.c
+  YACC    scripts/kconfig/parser.tab.[ch]
+  HOSTCC  scripts/kconfig/lexer.lex.o
+  HOSTCC  scripts/kconfig/menu.o
+  HOSTCC  scripts/kconfig/parser.tab.o
+  HOSTCC  scripts/kconfig/preprocess.o
+  HOSTCC  scripts/kconfig/symbol.o
+  HOSTCC  scripts/kconfig/util.o
+  HOSTLD  scripts/kconfig/conf
+#
+# configuration written to .config
+#
+#ci RET: 0
+#ci ------------- CMD_RUN END (15.86 s) -------------
+#ci CI: CheckAllWarning: Run make
+#ci CI: CheckAllWarning: GenericKernelBuild: Base Command: ['make', '-j4', 'W=1']
+#ci CI: CheckAllWarning: GenericKernelBuild: Simple build - Bluetooth only
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', '-j4', 'W=1', 'net/bluetooth/', 'drivers/bluetooth/']
+#ci PROC args: ['make', '-j4', 'W=1', 'net/bluetooth/', 'drivers/bluetooth/']
+  SYNC    include/config/auto.conf
+  GEN     arch/x86/include/generated/asm/orc_hash.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_32.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_64.h
+  SYSHDR  arch/x86/include/generated/uapi/asm/unistd_x32.h
+  SYSTBL  arch/x86/include/generated/asm/syscalls_32.h
+  SYSHDR  arch/x86/include/generated/asm/unistd_32_ia32.h
+  SYSHDR  arch/x86/include/generated/asm/unistd_64_x32.h
+  SYSTBL  arch/x86/include/generated/asm/syscalls_64.h
+  HOSTCC  arch/x86/tools/relocs_32.o
+  HOSTCC  scripts/dtc/dtc.o
+  DESCEND objtool
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  arch/x86/tools/relocs_64.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  arch/x86/tools/relocs_common.o
+  HOSTCC  arch/x86/tools/vdso2c
+  HOSTLD  arch/x86/tools/relocs
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/exec-cmd.o
+  HOSTCC  scripts/dtc/srcpos.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/help.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/pager.o
+  HOSTCC  scripts/dtc/checks.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/parse-options.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/run-command.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/sigchain.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/subcmd-config.o
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/libfdt/fdt.o
+  HOSTCC  scripts/dtc/libfdt/fdt_ro.o
+  LD      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/libsubcmd-in.o
+  HOSTCC  scripts/dtc/libfdt/fdt_wip.o
+  AR      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libsubcmd/libsubcmd.a
+  GEN     /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/lib/inat-tables.c
+  HOSTCC  scripts/dtc/libfdt/fdt_sw.o
+  GEN     /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/lib/cpu-feature-names.c
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/orc.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/weak.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/decode.o
+  HOSTCC  scripts/dtc/libfdt/fdt_rw.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/special.o
+  HOSTCC  scripts/dtc/libfdt/fdt_strerror.o
+  HOSTCC  scripts/dtc/libfdt/fdt_empty_tree.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/check.o
+  HOSTCC  scripts/dtc/libfdt/fdt_addresses.o
+  HOSTCC  scripts/dtc/libfdt/fdt_overlay.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/special.o
+  HOSTCC  scripts/dtc/fdtoverlay.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/builtin-check.o
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/elf.o
+  LD      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/arch/x86/objtool-in.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/klp-symid.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/fdtoverlay
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/objtool.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/orc_gen.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/orc_dump.o
+  HOSTLD  scripts/dtc/dtc
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libstring.o
+  HOSTCC  scripts/kallsyms.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/libctype.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/str_error_r.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/librbtree.o
+  HOSTCC  scripts/kallsyms-sysmap.o
+  HOSTCC  scripts/elf-parse.o
+  CC      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/signal.o
+  HOSTCC  scripts/sorttable.o
+  HOSTLD  scripts/kallsyms
+  HOSTLD  scripts/sorttable
+  HOSTCC  scripts/mod/mk_elfconfig
+  CC      scripts/mod/empty.o
+  CC      scripts/mod/devicetable-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CHKSHA1 include/linux/atomic/atomic-arch-fallback.h
+  CHKSHA1 include/linux/atomic/atomic-instrumented.h
+  CHKSHA1 include/linux/atomic/atomic-long.h
+  CC      arch/x86/kernel/asm-offsets.s
+  CC      kernel/sched/rq-offsets.s
+  LD      /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/objtool-in.o
+  LINK    /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/base/src/tools/objtool/objtool
+  CALL    scripts/checksyscalls.sh 
+  CC      drivers/bluetooth/hci_vhci.o
+  CC      net/bluetooth/af_bluetooth.o
+  CC      drivers/bluetooth/hci_ldisc.o
+  CC      net/bluetooth/hci_core.o
+  CC      drivers/bluetooth/hci_serdev.o
+  CC      net/bluetooth/hci_conn.o
+  CC      net/bluetooth/hci_event.o
+  CC      drivers/bluetooth/hci_h4.o
+  CC      net/bluetooth/mgmt.o
+  CC      drivers/bluetooth/hci_bcsp.o
+  CC      net/bluetooth/hci_sock.o
+  CC      drivers/bluetooth/hci_ll.o
+  CC      net/bluetooth/hci_sysfs.o
+  CC      net/bluetooth/l2cap_core.o
+  CC      drivers/bluetooth/hci_ath.o
+  CC      net/bluetooth/l2cap_sock.o
+  CC      drivers/bluetooth/hci_h5.o
+  CC      drivers/bluetooth/hci_intel.o
+  CC      net/bluetooth/smp.o
+  CC      drivers/bluetooth/hci_bcm.o
+  CC      net/bluetooth/lib.o
+  CC      net/bluetooth/ecdh_helper.o
+  CC      net/bluetooth/mgmt_util.o
+  CC      drivers/bluetooth/hci_qca.o
+  CC      net/bluetooth/mgmt_config.o
+  CC      net/bluetooth/hci_codec.o
+  CC      drivers/bluetooth/hci_ag6xx.o
+  CC      net/bluetooth/eir.o
+  CC      net/bluetooth/hci_sync.o
+  CC      net/bluetooth/hci_drv.o
+  CC      drivers/bluetooth/hci_mrvl.o
+  CC      drivers/bluetooth/bcm203x.o
+  CC      drivers/bluetooth/bpa10x.o
+  CC      net/bluetooth/hci_h4.o
+  CC      drivers/bluetooth/bfusb.o
+  CC      net/bluetooth/coredump.o
+  CC      net/bluetooth/sco.o
+  CC      drivers/bluetooth/btusb_main.o
+  CC      net/bluetooth/iso.o
+  CC      drivers/bluetooth/btsdio.o
+  CC      drivers/bluetooth/btintel.o
+  CC      net/bluetooth/msft.o
+  CC      drivers/bluetooth/ath3k.o
+  CC      net/bluetooth/hci_debugfs.o
+  CC      net/bluetooth/rfcomm/core.o
+  CC      net/bluetooth/bnep/core.o
+  CC      drivers/bluetooth/btmrvl_main.o
+  CC      net/bluetooth/bnep/sock.o
+  CC      net/bluetooth/rfcomm/sock.o
+  CC      net/bluetooth/rfcomm/tty.o
+  CC      drivers/bluetooth/btmrvl_debugfs.o
+  CC      net/bluetooth/bnep/netdev.o
+  CC      net/bluetooth/hidp/core.o
+  AR      net/bluetooth/rfcomm/built-in.a
+  CC      net/bluetooth/6lowpan.o
+  CC      drivers/bluetooth/btmrvl_sdio.o
+  AR      net/bluetooth/bnep/built-in.a
+  CC      net/bluetooth/hidp/sock.o
+  CC      drivers/bluetooth/btmtksdio.o
+  CC      drivers/bluetooth/btmtkuart.o
+  CC      drivers/bluetooth/btbcm.o
+  AR      net/bluetooth/hidp/built-in.a
+  AR      net/bluetooth/built-in.a
+  CC      drivers/bluetooth/btrtl.o
+  CC      drivers/bluetooth/btqca.o
+  CC      drivers/bluetooth/btmtk.o
+  CC      drivers/bluetooth/virtio_bt.o
+  CC      drivers/bluetooth/hci_nokia.o
+  AR      drivers/bluetooth/built-in.a
+#ci RET: 0
+#ci ------------- CMD_RUN END (83.79 s) -------------
+#ci CI: CheckAllWarning: Test verdict: Verdict.PASS
+#ci CI: CheckAllWarning: Test Verdict: PASS
+#ci CI: CheckAllWarning: Empty output. Nothing to do
+#ci Submitting the result to PW: dry_run=True
+#ci CI: CheckAllWarning: Post Run...
+#ci CI: CheckAllWarning: Clean the source
+#ci CI: CheckAllWarning: GenericKernelBuild: Post Run...
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', 'clean']
+#ci PROC args: ['make', 'clean']
+  CLEAN   arch/x86/tools
+  CLEAN   .
+#ci RET: 0
+#ci ------------- CMD_RUN END (14.94 s) -------------
+#ci ## verdict: CheckAllWarning PASS

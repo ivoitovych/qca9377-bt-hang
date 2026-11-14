@@ -1,0 +1,48 @@
+2026-11-14 02:10:59 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 02:10:59 space user; base 20ffd285b58facfd1f2478d159a5f941b09d5be1 (shared/gatt-client: Track pending discovery Database Hash reads); ELL 002b32d7c091993c5036956bf92d2444aca1c799; kernel image tmp/bzImage-co38-plain
+2026-11-14 02:10:59 mail tmp/mail-co38-bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch
+2026-11-14 02:10:59 mail tmp/mail-co38-bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch
+2026-11-14 02:10:59 mail tmp/mail-co38-bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch
+2026-11-14 02:11:01 patched: start
+2026-11-14 03:51:26 patched: done, 2 test(s) not PASS
+Test Summary:
+CheckPatch                    PASS      2.70 seconds
+GitLint                       PASS      1.19 seconds
+BuildEll                      PASS      69.21 seconds
+BluezMake                     PASS      610.47 seconds
+CheckSmatch                   PASS      765.60 seconds
+bluezmakeextell               PASS      174.70 seconds
+TestFunctional                FAIL      1377.76 seconds
+IncrementalBuild              FAIL      0.02 seconds
+ScanBuild                     PASS      2968.20 seconds
+
+Details
+##############################
+Test: TestFunctional - FAIL
+Desc: Run test-functional
+Output:
+FAIL functional.test_bap::test_bass_past_transport_acquire[hosts9-vm2]: AssertionError: Failed to acquire: org.bluez.Error.Failed
+##############################
+Test: IncrementalBuild - FAIL
+Desc: Incremental build with the patches in the series
+Output:
+Failed to reset to base commit
+2026-11-14 03:51:29 base: start
+2026-11-14 04:49:09 base: done, 1 test(s) not PASS
+Test Summary:
+BuildEll                      PASS      73.23 seconds
+BluezMake                     PASS      901.12 seconds
+CheckSmatch                   PASS      855.56 seconds
+bluezmakeextell               PASS      256.05 seconds
+TestFunctional                PASS      1364.07 seconds
+ScanBuild                     FAIL      0.02 seconds
+
+Details
+##############################
+Test: ScanBuild - FAIL
+Desc: Run Scan Build
+Output:
+Setup failed
+2026-11-14 04:49:09 NOT CLEAN: patched: 2 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 04:49:09 NOT CLEAN: base: 1 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 04:49:09 ALL DONE, exit 1

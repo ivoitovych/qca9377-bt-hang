@@ -1,0 +1,684 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004b822c4
+input_len: 0x0000000000fcb91c
+output: 0x0000000001000000
+output_len: 0x000000000377db84
+kernel_total_size: 0x0000000004b90000
+needed_size: 0x0000000004c00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000003027270).
+Linux version 7.3.0-g941bf3956c6a (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #6 SMP PREEMPT_DYNAMIC Sat Nov 14 02:25:55 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/lane3-mgmt-20261114/CO-38/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-master-4dc15be8'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-master-4dc15be8
+Changing into directory /root/exp
+New process 59 created
+ASAN_OPTIONS=quarantine_size_mb=8
+guest CPUs online: 0-3
+guest CPUs possible: 0-3
+--- boot messages about CPUs ---
+[    0.000000] Linux version 7.3.0-g941bf3956c6a (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #6 SMP PREEMPT_DYNAMIC Sat Nov 14 02:25:55 CET 2026
+[    0.000000] APIC: Static calls initialized
+[    0.000045] tsc: Detected 1996.245 MHz processor
+[    0.005260] found SMP MP-table at [mem 0x000f5470-0x000f547f]
+[    0.006372] ACPI: APIC 0x000000007FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.006462] ACPI: Reserving APIC table memory at [mem 0x7ffe22aa-0x7ffe2339]
+[    0.084124] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[    0.084227] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+[    0.084285] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.084459] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[    0.126635] setup_percpu: NR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[    0.238638] APIC: Switch to symmetric I/O mode setup
+[    0.239147] x2apic enabled
+[    0.240107] APIC: Switched APIC routing to: physical x2apic
+[    0.243696] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.400507] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[    0.408974] smp: Bringing up secondary CPUs ...
+[    0.410625] smpboot: x86: Booting SMP configuration:
+[    0.451356] smp: Brought up 1 node, 4 CPUs
+[    0.451380] smpboot: Total of 4 processors activated (15969.96 BogoMIPS)
+[    0.529696] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    0.532264] ACPI: Added _OSI(Processor Device)
+[    0.532271] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.762581] ACPI: Using IOAPIC for interrupt routing
+--- end ---
+
+[1;39mController setup[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mController setup[0m - [0;34msetup[0m
+[1;39mController setup[0m - [0;34msetup complete[0m
+[1;39mController setup[0m - [0;30mrun[0m
+[1;39mController setup[0m - [0;32mtest passed[0m
+[1;39mController setup[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mController setup[0m - [0;35mteardown complete[0m
+[1;39mController setup[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mrun[0m
+  [0;37mSending Set Experimental Feature (0x004a)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSet Experimental Feature (0x004a): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Enable 1[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup complete[0m
+[1;39mMesh - Enable 2[0m - [0;30mrun[0m
+  [0;37mSending Set Mesh Receiver (0x0057)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mSet Mesh Receiver (0x0057): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Enable 2[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 2[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup complete[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mrun[0m
+  [0;37mSending Read Mesh Features (0x0058)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mRead Mesh Features (0x0058): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mrun[0m
+  [0;37mSending Read Mesh Features (0x0058)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRead Mesh Features (0x0058): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mdone[0m
+
+[1;39mMesh - Send[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send[0m - [0;34msetup complete[0m
+[1;39mMesh - Send[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+WARNING: net/bluetooth/hci_core.c:1792 at hci_add_adv_instance+0x7ce/0x9e0, CPU#2: kworker/u17:0/78
+CPU: 2 UID: 0 PID: 78 Comm: kworker/u17:0 Not tainted 7.3.0-g941bf3956c6a #6 PREEMPT(lazy) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Workqueue: hci0 hci_cmd_sync_work
+RIP: 0010:hci_add_adv_instance+0x7ce/0x9e0
+Code: e9 b8 f9 ff ff 49 8d bc 24 b8 00 00 00 be ff ff ff ff 44 88 54 24 20 e8 40 6e 23 00 44 0f b6 54 24 20 85 c0 0f 85 ca f8 ff ff <0f> 0b e9 c3 f8 ff ff 48 c7 c3 b5 ff ff ff e9 d3 fb ff ff 48 c7 c7
+RSP: 0018:ffff88800700fac8 EFLAGS: 00010246
+RAX: 0000000000000000 RBX: ffff888006bbc000 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: ffff888006bbc0b8 RDI: ffff888006b389a0
+RBP: ffff888001892280 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000006 R11: 0000000000000002 R12: ffff888006bbc000
+R13: 0000000000000f00 R14: 0000000000000006 R15: 0000000000000800
+FS:  0000000000000000(0000) GS:ffff8880e393b000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f93467aa3b0 CR3: 000000005f47a000 CR4: 00000000000006f0
+Call Trace:
+ <TASK>
+ mesh_send_sync+0x1ba/0x3b0
+ ? __pfx_mesh_send_sync+0x10/0x10
+ hci_cmd_sync_work+0x1d9/0x380
+ process_one_work+0x8b5/0x1ba0
+ ? __pfx_process_one_work+0x10/0x10
+ ? lock_acquire+0x10d/0x310
+ ? lock_is_held_type+0x8f/0x100
+ ? __pfx_hci_cmd_sync_work+0x10/0x10
+ worker_thread+0x630/0x1180
+ ? __pfx_worker_  [0;37mMesh Send (0x0059): Success (0x00)[0mthread+0x10/0x10
+ kthread+0x34f/0x480
+
+ ? __pfx_kthread  [0;37mTest condition complete, 2 left[0m+0x10/0x10
+ ret_from_fork+0x485/0x700
+ ? __pfx_ret_from_fork+0x10/0x10
+
+ ? __switch_to+0x986/0xf00
+ ? __switch_to_asm+0x33/0x70
+ ? __pfx_kthread+0x10/0x10
+ ret_from_fork_asm+0x1a/0x30
+ </TASK>
+irq event stamp: 1873
+hardirqs last  enabled at (1883): [<ffffffff86cd533d>] __up_console_sem+0x4d/0x60
+hardirqs last disabled at (1894): [<ffffffff86cd5322>] __up_console_sem+0x32/0x60
+softirqs last  enabled at (1778): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+softirqs last disabled at (1771): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+---[ end trace 0000000000000000 ]---
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send[0m - [0;32mtest passed[0m
+[1;39mMesh - Send[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too short[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup complete[0m
+[1;39mMesh - Send - too short[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send (0x0059): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send - too short[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too short[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too long[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup complete[0m
+[1;39mMesh - Send - too long[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send (0x0059): Rejected (0x0b)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send - too long[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too long[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+WARNING: net/bluetooth/hci_core.c:1792 at hci_add_adv_instance+0x7ce/0x9e0, CPU#2: kworker/u17:0/87
+CPU: 2 UID: 0 PID: 87 Comm: kworker/u17:0 Tainted: G        W            7.3.0-g941bf3956c6a #6 PREEMPT(lazy) 
+Tainted: [W]=WARN
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Workqueue: hci0 hci_cmd_sync_work
+RIP: 0010:hci_add_adv_instance+0x7ce/0x9e0
+Code: e9 b8 f9 ff ff 49 8d bc 24 b8 00 00 00 be ff ff ff ff 44 88 54 24 20 e8 40 6e 23 00 44 0f b6 54 24 20 85 c0 0f 85 ca f8 ff ff <0f> 0b e9 c3 f8 ff ff 48 c7 c3 b5 ff ff ff e9 d3 fb ff ff 48 c7 c7
+RSP: 0018:ffff888006b4fac8 EFLAGS: 00010246
+RAX: 0000000000000000 RBX: ffff88800706c000 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: ffff88800706c0b8 RDI: ffff888003a8eba0
+RBP: ffff888002e3f200 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000006 R11: 0000000000000002 R12: ffff88800706c000
+R13: 0000000000000f00 R14: 0000000000000006 R15: 0000000000000800
+FS:  0000000000000000(0000) GS:ffff8880e393b000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f2ea9997018 CR3: 0000000003d7f000 CR4: 00000000000006f0
+Call Trace:
+ <TASK>
+ mesh_send_sync+0x1ba/0x3b0
+ ? __pfx_mesh_send_sync+0x10/0x10
+ hci_cmd_sync_work+0x1d9/0x380
+ process_one_work+0x8b5/0x1ba0
+ ? __pfx_process_one_work+0x10/0x10
+ ? lock_acquire+0x10d/0x310
+ ? lock_is_held_type+0x8f/0x100
+ ? __pfx_hci_cmd_sync_work+0x10/0x10
+ worker_thread+0x630/0x1180
+ ? __pfx_worker_thread+0x10/0x10
+ kthread+0x34f/0x480
+ ? __pfx_kthread+0x10/0x10
+ ret_from_fork+0x485/0x700
+ ? __pfx_ret_from_fork+0x10/0x10
+ ? __switch_to+0x986/0xf00
+ ? __switch_to_asm+0x33/0x70
+ ? __pfx_kthread+0x10/0x10
+ ret_from_fork_asm+0x1a/0x30
+ </TASK>
+irq event stamp: 1773
+hardirqs last  enabled at (1783): [<ffffffff86cd533d>] __up_console_sem+0x4d/0x60
+hardirqs last disabled at (1792): [<ffffffff86cd5322>] __up_console_sem+0x32/0x60
+softirqs last  enabled at (1382): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+softirqs last disabled at (1373): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+---[ end trace 0000000000000000 ]---
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mUnexpected HCI command parameter value:[0m
+  [0;37m> 01                                               .               [0m
+  [0;37m! 00                                               .               [0m
+[1;39mMesh - Send cancel - 1[0m - [0;31mtest failed[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+WARNING: net/bluetooth/hci_core.c:1792 at hci_add_adv_instance+0x7ce/0x9e0, CPU#0: kworker/u17:0/90
+CPU: 0 UID: 0 PID: 90 Comm: kworker/u17:0 Tainted: G        W            7.3.0-g941bf3956c6a #6 PREEMPT(lazy) 
+Tainted: [W]=WARN
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Workqueue: hci0 hci_cmd_sync_work
+RIP: 0010:hci_add_adv_instance+0x7ce/0x9e0
+Code: e9 b8 f9 ff ff 49 8d bc 24 b8 00 00 00 be ff ff ff ff 44 88 54 24 20 e8 40 6e 23 00 44 0f b6 54 24 20 85 c0 0f 85 ca f8 ff ff <0f> 0b e9 c3 f8 ff ff 48 c7 c3 b5 ff ff ff e9 d3 fb ff ff 48 c7 c7
+RSP: 0018:ffff8880070d7ac8 EFLAGS: 00010246
+RAX: 0000000000000000 RBX: ffff888007178000 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: ffff8880071780b8 RDI: ffff8880070cbaa0
+RBP: ffff8880041cc800 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000006 R11: 0000000000000002 R12: ffff888007178000
+R13: 0000000000000f00 R14: 0000000000000006 R15: 0000000000000800
+FS:  0000000000000000(0000) GS:ffff8880e383b000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f2ea9975018 CR3: 0000000003d7f000 CR4: 00000000000006f0
+Call Trace:
+ <TASK>
+ mesh_send_sync+0x1ba/0x3b0
+ ? __pfx_mesh_send_sync+0x10/0x10
+ hci_cmd_sync_work+0x1d9/0x380
+ process_one_work+0x8b5/0x1ba0
+ ? __pfx_process_one_work+0x10/0x10
+ ? lock_acquire+0x10d/0x310
+ ? lock_is_held_type+0x8f/0x100
+ ? __pfx_hci_cmd_sync_work+0x10/0x10
+ worker_thread+0x630/0x1180
+ ? __pfx_worker_thread+0x10/0x10
+ kthread+0x34f/0x480
+ ? __pfx_kthread+0x10/0x10
+ ret_from_fork+0x485/0x700
+ ? __pfx_ret_from_fork+0x10/0x10
+ ? __switch_to+0x986/0xf00
+ ? __switch_to_asm+0x33/0x70
+ ? __pfx_kthread+0x10/0x10
+ ret_from_fork_asm+0x1a/0x30
+ </TASK>
+irq event stamp: 1959
+hardirqs last  enabled at (1967): [<ffffffff86cd533d>] __up_console_sem+0x4d/0x60
+hardirqs last disabled at (1976): [<ffffffff86cd5322>] __up_console_sem+0x32/0x60
+softirqs last  enabled at (1628): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+softirqs last disabled at (1621): [<ffffffff86b8806d>] irq_exit_rcu+0xbd/0x140
+---[ end trace 0000000000000000 ]---
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mUnexpected HCI command parameter value:[0m
+  [0;37m> 01                                               .               [0m
+  [0;37m! 00                                               .               [0m
+[1;39mMesh - Send cancel - 2[0m - [0;31mtest failed[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Controller setup                                     [0;32mPassed    [0m   0.206 seconds
+Mesh - Enable 1                                      [0;32mPassed    [0m   0.137 seconds
+Mesh - Enable 2                                      [0;32mPassed    [0m   0.150 seconds
+Mesh - Read Mesh Features                            [0;32mPassed    [0m   0.129 seconds
+Mesh - Read Mesh Features - Disabled                 [0;32mPassed    [0m   0.086 seconds
+Mesh - Send                                          [0;32mPassed    [0m   0.345 seconds
+Mesh - Send - too short                              [0;32mPassed    [0m   0.181 seconds
+Mesh - Send - too long                               [0;32mPassed    [0m   0.239 seconds
+Mesh - Send cancel - 1                               [0;31mFailed    [0m   0.227 seconds
+Mesh - Send cancel - 2                               [0;31mFailed    [0m   0.236 seconds
+Total: 10, [0;32mPassed: 8 (80.0%)[0m, [0;31mFailed: 2[0m, [0;33mNot Run: 0[0m
+Overall execution time: 2 seconds
+
+=================================================================
+[1m[31m==60==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 120 byte(s) in 3 object(s) allocated from:
+[1m[0m    #0 0x7f2eac57d9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+    #1 0x55efa00fb3e6 in util_malloc src/shared/util.c:46
+
+SUMMARY: AddressSanitizer: 120 byte(s) leaked in 3 allocation(s).
+Process 59 exited with status 1

@@ -1,0 +1,1676 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004b822c4
+input_len: 0x0000000000fcbaf9
+output: 0x0000000001000000
+output_len: 0x000000000377db78
+kernel_total_size: 0x0000000004b90000
+needed_size: 0x0000000004c00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000003027270).
+Linux version 7.3.0-g29b49e119d4b (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Sat Nov 14 02:23:33 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/lane3-mgmt-20261114/CO-38/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s cancel'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s cancel
+Changing into directory /root/exp
+New process 59 created
+ASAN_OPTIONS=quarantine_size_mb=8
+guest CPUs online: 0-3
+guest CPUs possible: 0-3
+--- boot messages about CPUs ---
+[    0.000000] Linux version 7.3.0-g29b49e119d4b (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Sat Nov 14 02:23:33 CET 2026
+[    0.000000] APIC: Static calls initialized
+[    0.000037] tsc: Detected 1996.245 MHz processor
+[    0.004950] found SMP MP-table at [mem 0x000f5470-0x000f547f]
+[    0.005997] ACPI: APIC 0x000000007FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.006078] ACPI: Reserving APIC table memory at [mem 0x7ffe22aa-0x7ffe2339]
+[    0.078579] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[    0.078663] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+[    0.078719] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.078875] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[    0.124836] setup_percpu: NR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[    0.224662] APIC: Switch to symmetric I/O mode setup
+[    0.225138] x2apic enabled
+[    0.226030] APIC: Switched APIC routing to: physical x2apic
+[    0.229343] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.382420] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[    0.389012] smp: Bringing up secondary CPUs ...
+[    0.390392] smpboot: x86: Booting SMP configuration:
+[    0.413487] smp: Brought up 1 node, 4 CPUs
+[    0.413513] smpboot: Total of 4 processors activated (15969.96 BogoMIPS)
+[    0.448698] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    0.457514] ACPI: Added _OSI(Processor Device)
+[    0.457514] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.612608] ACPI: Using IOAPIC for interrupt routing
+--- end ---
+
+[1;39mMesh - Send cancel - 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mUnexpected HCI command parameter value:[0m
+  [0;37m> 01                                               .               [0m
+  [0;37m! 00                                               .               [0m
+[1;39mMesh - Send cancel - 1[0m - [0;31mtest failed[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mUnexpected HCI command parameter value:[0m
+  [0;37m> 01                                               .               [0m
+  [0;37m! 00                                               .               [0m
+[1;39mMesh - Send cancel - 2[0m - [0;31mtest failed[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;31mtest timed out[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 1 - Ext Adv[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;31mtest timed out[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 2 - Ext Adv[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel active[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +6 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +10 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +15 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh Send 2 at +19 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 1 (1) at +26 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +26 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 1 at +29 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +30 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 2 at +105 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 2 completed after 0 tear-downs, expected 2[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel active[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel queued[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +1 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +2 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +6 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh Send 2 at +7 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 1 (1) at +9 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +10 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 2 at +11 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +11 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 1 at +87 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 1 completed after 0 tear-downs, expected 1[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel queued[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel all[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +2 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +3 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +6 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh Send 2 at +9 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 1 (1) at +57 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 0 at +58 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 1 at +60 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Packet Complete handle 2 at +60 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mMesh Send Cancel at +61 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh set started 1 times, torn down 0 times[0m
+  [0;37m  start 1: request 1[0m
+  [0;37m  request 1: handle 1, 1 starts, 1 completions[0m
+  [0;37m  request 2: handle 2, 0 starts, 1 completions[0m
+  [0;37mExpected 1 tear-downs of the mesh set[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel all[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +0 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +1 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +8 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh Send 2 at +10 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 1 (1) at +14 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +14 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 1 at +15 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +15 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 2 at +94 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 2 completed after 0 tear-downs, expected 2[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel active - Ext Adv[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +1 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +3 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +9 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh Send 2 at +11 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 1 (1) at +14 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +15 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 2 at +17 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +18 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 1 at +96 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 1 completed after 0 tear-downs, expected 1[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel queued - Ext Adv[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +2 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +2 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +13 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh Send 2 at +18 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 1 (1) at +26 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 0 at +27 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mMesh Packet Complete handle 1 at +29 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Packet Complete handle 2 at +30 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mMesh Send Cancel at +30 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh set started 1 times, torn down 0 times[0m
+  [0;37m  start 1: request 1[0m
+  [0;37m  request 1: handle 1, 1 starts, 1 completions[0m
+  [0;37m  request 2: handle 2, 0 starts, 1 completions[0m
+  [0;37mExpected 1 tear-downs of the mesh set[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel all - Ext Adv[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel held start[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mRegistering the hold hook[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +2 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +3 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +4 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh Send 2 at +6 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHolding start command 0x200a at +9 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +11 ms with the command held[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mBarrier answered at +17 ms with the command held: 2 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 2[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mReleasing the held command at +21 ms[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 1 (1) at +24 ms[0m
+  [0;37mMesh Packet Complete handle 1 at +25 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +27 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 2 at +111 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 2 completed after 0 tear-downs, expected 2[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel held start[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mRegistering the hold hook[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +4 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +5 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x0c6d length 2[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +10 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mMesh Send 2 at +16 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 1 (1) at +19 ms[0m
+  [0;37mMesh Packet Complete handle 1 at +99 ms, 0 tear-downs so far (1 of 3)[0m
+  [0;37mHandle 1 completed after 0 tear-downs, expected 1[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;31mtest failed[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHolding tear-down command 0x200a at +106 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +107 ms with the command held[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mBarrier answered at +109 ms with the command held: 1 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mReleasing the held command at +110 ms[0m
+  [0;37mHCI Command 0x200a length 1[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2005 failed: -19
+  [0;37mMesh Packet Complete handle 2 at +130 ms, 1 tear-downs so far (1 of 3)[0m
+  [0;37mExpected handle 1 (request 1)[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel held tear-down[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel other socket[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +4 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +5 ms on the second socket[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mMesh Send 2 at +7 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mMesh Send 1 at +12 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mMesh set started for request 2 (1) at +13 ms[0m
+  [0;37mRequest 2 started before the Cancel was issued[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel other socket[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mRegistering the hold hook[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +99 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +100 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +111 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh Send 2 at +112 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHolding start command 0x2039 at +114 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +115 ms with the command held[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mBarrier answered at +117 ms with the command held: 2 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 2[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mReleasing the held command at +120 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 1 (1) at +121 ms[0m
+  [0;37mMesh Packet Complete handle 1 at +121 ms, 0 tear-downs so far (1 of 2)[0m
+  [0;37mMesh Send Cancel at +122 ms: Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mMesh Packet Complete handle 2 at +201 ms, 0 tear-downs so far (2 of 2)[0m
+  [0;37mHandle 2 completed after 0 tear-downs, expected 2[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel held start - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mRegistering the hold hook[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +5 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +8 ms[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +17 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh Send 2 at +21 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 1 (1) at +26 ms[0m
+  [0;37mMesh Packet Complete handle 1 at +105 ms, 0 tear-downs so far (1 of 3)[0m
+  [0;37mHandle 1 completed after 0 tear-downs, expected 1[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;31mtest failed[0m
+  [0;37mHolding tear-down command 0x2039 at +111 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +111 ms with the command held[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mBarrier answered at +118 ms with the command held: 1 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mReleasing the held command at +121 ms[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2035 failed: -19
+  [0;37mMesh Packet Complete handle 2 at +148 ms, 0 tear-downs so far (1 of 3)[0m
+  [0;37mExpected handle 1 (request 1)[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel held tear-down - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Mesh Send 1 at +11 ms[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send 2 at +19 ms on the second socket[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mHCI Command 0x2037 length 7[0m
+  [0;37mMesh Send 2 at +23 ms: handle 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2038 length 4[0m
+  [0;37mHCI Command 0x2036 length 25[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send 1 at +31 ms: handle 2[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2037 length 28[0m
+  [0;37mHCI Command 0x2035 length 7[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mMesh set started for request 2 (1) at +38 ms[0m
+  [0;37mRequest 2 started before the Cancel was issued[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send queue - cancel other socket - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +1 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +4 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +14 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +17 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +20 ms[0m
+  [0;37mMesh Send of packet 1 at +21 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +23 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +26 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +30 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +31 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +32 ms[0m
+  [0;37mSending Set Powered off at +36 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +46 ms, powered off[0m
+  [0;37mMesh Send Cancel at +47 ms: Success (0x00)[0m
+  [0;37mAdvertising Removed for instance 6 at +49 ms (recorded)[0m
+  [0;37mSet Powered off at +73 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +377 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +384 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +388 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +391 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +394 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +402 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +409 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +413 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +419 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +423 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +425 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +425 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +427 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +427 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +429 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +430 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +431 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +437 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +441 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +442 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +443 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +445 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +446 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +448 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +449 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +450 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +453 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +454 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +456 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +458 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +459 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +462 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +463 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +467 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +468 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +471 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +472 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +474 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +476 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +477 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +479 ms[0m
+  [0;37mSet Powered on at +481 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +481 ms[0m
+  [0;37mRead Mesh Features after power on at +482 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +486 ms: handle 3[0m
+  [0;37mFinal check at +1993 ms[0m
+  [0;37mRead Mesh Features at the end at +1995 ms: 2 of 3 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (f) nothing pending at the end[0m
+  [0;37mRequest 2 (handle 2): 0 completions[0m
+  [0;37mViolates (a) every earlier request completed exactly once[0m
+  [0;37mNew request (handle 3): 0 starts, 0 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mPWRCMP request 1 started at +32 ms, off answered at +75 ms, on answered at +481 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +47 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 2 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: FAIL (1)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: FAIL (1)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel active then off[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +1 ms[0m
+  [0;37mHCI Command 0x2008 length 32 at +1 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +4 ms: handle 1[0m
+  [0;37mHCI Command 0x2008 length 32 at +5 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +6 ms[0m
+  [0;37mMesh Send of packet 1 at +7 ms: handle 2[0m
+  [0;37mHCI Command 0x2005 length 6 at +15 ms[0m
+  [0;37mHCI Command 0x2006 length 15 at +16 ms[0m
+  [0;37mHCI Command 0x200a length 1 at +17 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +17 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +18 ms[0m
+  [0;37mSending Set Powered off at +20 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +21 ms, powered off[0m
+  [0;37mMesh Send Cancel at +23 ms: Success (0x00)[0m
+  [0;37mAdvertising Removed for instance 6 at +24 ms (recorded)[0m
+  [0;37mSet Powered off at +41 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +346 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +351 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +357 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +362 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +363 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +367 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +381 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +382 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +383 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +385 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +386 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +390 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +394 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +406 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +415 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +421 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +423 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +427 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +429 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +433 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +438 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +443 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +445 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +447 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +449 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +450 ms[0m
+  [0;37mHCI Command 0x2007 length 0 at +451 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +453 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +454 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +455 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +458 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +459 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +462 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +463 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +464 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +465 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +466 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +467 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +467 ms[0m
+  [0;37mSet Powered on at +468 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +468 ms[0m
+  [0;37mRead Mesh Features after power on at +471 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +473 ms: handle 3[0m
+  [0;37mFinal check at +1978 ms[0m
+  [0;37mRead Mesh Features at the end at +1985 ms: 2 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (f) nothing pending at the end[0m
+  [0;37mRequest 1 (handle 1): 0 completions[0m
+  [0;37mViolates (a) every earlier request completed exactly once[0m
+  [0;37mNew request (handle 3): 0 starts, 0 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mPWRCMP request 1 started at +18 ms, off answered at +43 ms, on answered at +468 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +23 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 2 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 0, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: FAIL (1)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: FAIL (1)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel queued then off[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +2 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +4 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +7 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +12 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +14 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +17 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +20 ms: handle 1[0m
+  [0;37mHCI Command 0x2036 length 25 at +21 ms[0m
+  [0;37mMesh Send of packet 1 at +22 ms: handle 2[0m
+  [0;37mHCI Command 0x2037 length 28 at +25 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +27 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +33 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +35 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +36 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 1 at +36 ms[0m
+  [0;37mSending Set Powered off at +37 ms[0m
+  [0;37mMesh Packet Complete handle 1 (packet 0) at +39 ms, powered off[0m
+  [0;37mMesh Send Cancel at +42 ms: Success (0x00)[0m
+  [0;37mHCI Command 0x2039 length 2 at +45 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +49 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +53 ms (recorded)[0m
+  [0;37mSet Powered off at +76 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +383 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +384 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +385 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +385 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +387 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +390 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +392 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +393 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +394 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +394 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +395 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +397 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +398 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +398 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +399 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +401 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +402 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +403 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +404 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +405 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +405 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +406 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +406 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +406 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +408 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +409 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +410 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +412 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +414 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +415 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +416 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +418 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +420 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +422 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +422 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +424 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +426 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +428 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +432 ms[0m
+  [0;37mSet Powered on at +433 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +433 ms[0m
+  [0;37mRead Mesh Features after power on at +434 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +435 ms: handle 3[0m
+  [0;37mFinal check at +1939 ms[0m
+  [0;37mRead Mesh Features at the end at +1942 ms: 2 of 3 handles pending[0m
+  [0;37m  handle 2[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (f) nothing pending at the end[0m
+  [0;37mRequest 2 (handle 2): 0 completions[0m
+  [0;37mViolates (a) every earlier request completed exactly once[0m
+  [0;37mNew request (handle 3): 0 starts, 0 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mPWRCMP request 1 started at +36 ms, off answered at +80 ms, on answered at +433 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 1 completions (while off), first at +42 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 2 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: FAIL (1)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: FAIL (1)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel active then off - Ext[0m - [0;30mdone[0m
+
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;34msetup complete[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send of packet 0 at +0 ms[0m
+  [0;37mSending Mesh Send of packet 1 at +1 ms[0m
+  [0;37mHCI Command 0x2036 length 25 at +2 ms[0m
+  [0;37mHCI Command 0x2037 length 7 at +2 ms[0m
+  [0;37mHCI Command 0x2005 length 6 at +5 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +6 ms[0m
+  [0;37mHCI Command 0x2038 length 4 at +7 ms[0m
+  [0;37mMesh feature is enabled[0m
+  [0;37mMesh Send of packet 0 at +8 ms: handle 1[0m
+  [0;37mMesh Send of packet 1 at +9 ms: handle 2[0m
+  [0;37mHCI Command 0x2036 length 25 at +10 ms[0m
+  [0;37mHCI Command 0x2037 length 28 at +10 ms[0m
+  [0;37mPacket 0 loaded into the mesh set at +11 ms[0m
+  [0;37mHCI Command 0x2035 length 7 at +11 ms[0m
+  [0;37mHCI Command 0x2039 length 6 at +12 ms[0m
+  [0;37mMesh set started with packet 0 (1) at +12 ms[0m
+  [0;37mSending Mesh Send Cancel for handle 2 at +13 ms[0m
+  [0;37mSending Set Powered off at +13 ms[0m
+  [0;37mMesh Packet Complete handle 2 (packet 1) at +14 ms, powered off[0m
+  [0;37mMesh Send Cancel at +14 ms: Success (0x00)[0m
+  [0;37mHCI Command 0x2039 length 2 at +14 ms[0m
+  [0;37mHCI Command 0x203d length 0 at +16 ms[0m
+  [0;37mAdvertising Removed for instance 4 at +16 ms (recorded)[0m
+  [0;37mSet Powered off at +35 ms: Success (0x00)[0m
+  [0;37mSending Set Powered on at +340 ms[0m
+  [0;37mHCI Command 0x0c03 length 0 at +342 ms[0m
+  [0;37mHCI Command 0x1003 length 0 at +344 ms[0m
+  [0;37mHCI Command 0x1001 length 0 at +345 ms[0m
+  [0;37mHCI Command 0x1009 length 0 at +347 ms[0m
+  [0;37mHCI Command 0x1002 length 0 at +350 ms[0m
+  [0;37mHCI Command 0x0c52 length 241 at +352 ms[0m
+  [0;37mHCI Command 0x0c45 length 1 at +352 ms[0m
+  [0;37mHCI Command 0x0c58 length 0 at +355 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +356 ms[0m
+  [0;37mHCI Command 0x1005 length 0 at +358 ms[0m
+  [0;37mHCI Command 0x0c23 length 0 at +358 ms[0m
+  [0;37mHCI Command 0x0c14 length 0 at +359 ms[0m
+  [0;37mHCI Command 0x0c25 length 0 at +360 ms[0m
+  [0;37mHCI Command 0x0c38 length 0 at +361 ms[0m
+  [0;37mHCI Command 0x0c39 length 0 at +362 ms[0m
+  [0;37mHCI Command 0x0c16 length 2 at +363 ms[0m
+  [0;37mHCI Command 0x0c2f length 1 at +365 ms[0m
+  [0;37mHCI Command 0x2003 length 0 at +368 ms[0m
+  [0;37mHCI Command 0x2002 length 0 at +370 ms[0m
+  [0;37mHCI Command 0x201c length 0 at +372 ms[0m
+  [0;37mHCI Command 0x0c01 length 8 at +374 ms[0m
+  [0;37mHCI Command 0x0c0d length 7 at +379 ms[0m
+  [0;37mHCI Command 0x080f length 2 at +382 ms[0m
+  [0;37mHCI Command 0x0c1b length 0 at +383 ms[0m
+  [0;37mHCI Command 0x0c46 length 0 at +384 ms[0m
+  [0;37mHCI Command 0x1004 length 1 at +387 ms[0m
+  [0;37mHCI Command 0x2001 length 8 at +390 ms[0m
+  [0;37mHCI Command 0x204b length 0 at +392 ms[0m
+  [0;37mHCI Command 0x200f length 0 at +395 ms[0m
+  [0;37mHCI Command 0x2010 length 0 at +396 ms[0m
+  [0;37mHCI Command 0x202a length 0 at +399 ms[0m
+  [0;37mHCI Command 0x2029 length 0 at +400 ms[0m
+  [0;37mHCI Command 0x202e length 2 at +402 ms[0m
+  [0;37mHCI Command 0x203b length 0 at +404 ms[0m
+  [0;37mHCI Command 0x0c6d length 2 at +406 ms[0m
+  [0;37mHCI Command 0x0c12 length 7 at +409 ms[0m
+  [0;37mHCI Command 0x0c63 length 8 at +411 ms[0m
+  [0;37mHCI Command 0x100b length 0 at +417 ms[0m
+  [0;37mHCI Command 0x140c length 0 at +419 ms[0m
+  [0;37mHCI Command 0x0c77 length 0 at +421 ms[0m
+  [0;37mHCI Command 0x2031 length 3 at +422 ms[0m
+  [0;37mHCI Command 0x202d length 1 at +423 ms[0m
+  [0;37mHCI Command 0x0c13 length 248 at +425 ms[0m
+  [0;37mSet Powered on at +428 ms: Success (0x00)[0m
+  [0;37mSending Mesh Send of packet 3 at +428 ms[0m
+  [0;37mRead Mesh Features after power on at +429 ms: 1 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37mViolates (c) nothing pending right after power on[0m
+  [0;37mMesh Send of packet 3 at +432 ms: handle 3[0m
+  [0;37mFinal check at +1936 ms[0m
+  [0;37mRead Mesh Features at the end at +1942 ms: 2 of 3 handles pending[0m
+  [0;37m  handle 1[0m
+  [0;37m  handle 3[0m
+  [0;37mViolates (f) nothing pending at the end[0m
+  [0;37mRequest 1 (handle 1): 0 completions[0m
+  [0;37mViolates (a) every earlier request completed exactly once[0m
+  [0;37mNew request (handle 3): 0 starts, 0 completions[0m
+  [0;37mViolates (d) new request started once and completed once[0m
+  [0;37mPWRCMP request 1 started at +13 ms, off answered at +38 ms, on answered at +428 ms[0m
+  [0;37mPWRCMP packet 0: handle 1, 1 loads, 1 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP packet 1: handle 2, 0 loads, 0 starts (0 after power on), 1 completions (while off), first at +14 ms[0m
+  [0;37mPWRCMP packet 3: handle 3, 0 loads, 0 starts (0 after power on), 0 completions, first at +0 ms[0m
+  [0;37mPWRCMP read after on: 1 handles; at the end: 2 handles; new request answered Busy 0 times[0m
+  [0;37mPWRCMP tear-downs 2, unattributed enables 0, Advertising Removed 1, unknown completions 0, repeated 0[0m
+  [0;37mPWRCMP cancel: Success (0x00)[0m
+  [0;37mPWRCMP (a) every earlier request completed exactly once: FAIL (1)[0m
+  [0;37mPWRCMP (b) no unknown or repeated completion: PASS (0)[0m
+  [0;37mPWRCMP (c) nothing pending right after power on: FAIL (1)[0m
+  [0;37mPWRCMP (d) new request started once and completed once: FAIL (1)[0m
+  [0;37mPWRCMP (e) no packet started after its completion: PASS (0)[0m
+  [0;37mPWRCMP (f) nothing pending at the end: FAIL (1)[0m
+  [0;37mPWRCMP (g) Set Powered off and on succeeded: PASS (0)[0m
+  [0;37mPWRCMP (h) completions after power on only of started requests: PASS (0)[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;31mtest failed[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;35mteardown complete[0m
+[1;39mMesh - PwrCmp cancel queued then off - Ext[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Mesh - Send cancel - 1                               [0;31mFailed    [0m   0.227 seconds
+Mesh - Send cancel - 2                               [0;31mFailed    [0m   0.096 seconds
+Mesh - Send cancel - 1 - Ext Adv                     [0;31mTimed out [0m   2.137 seconds
+Mesh - Send cancel - 2 - Ext Adv                     [0;31mTimed out [0m   1.992 seconds
+Mesh - Send queue - cancel active                    [0;31mFailed    [0m   0.219 seconds
+Mesh - Send queue - cancel queued                    [0;31mFailed    [0m   0.173 seconds
+Mesh - Send queue - cancel all                       [0;31mFailed    [0m   0.549 seconds
+Mesh - Send queue - cancel active - Ext Adv          [0;31mFailed    [0m   0.168 seconds
+Mesh - Send queue - cancel queued - Ext Adv          [0;31mFailed    [0m   0.212 seconds
+Mesh - Send queue - cancel all - Ext Adv             [0;31mFailed    [0m   0.511 seconds
+Mesh - Send queue - cancel held start                [0;31mFailed    [0m   0.204 seconds
+Mesh - Send queue - cancel held tear-down            [0;31mFailed    [0m   0.195 seconds
+Mesh - Send queue - cancel other socket              [0;31mFailed    [0m   0.131 seconds
+Mesh - Send queue - cancel held start - Ext          [0;31mFailed    [0m   0.299 seconds
+Mesh - Send queue - cancel held tear-down - Ext      [0;31mFailed    [0m   0.212 seconds
+Mesh - Send queue - cancel other socket - Ext        [0;31mFailed    [0m   0.129 seconds
+Mesh - PwrCmp cancel active then off                 [0;31mFailed    [0m   2.170 seconds
+Mesh - PwrCmp cancel queued then off                 [0;31mFailed    [0m   2.163 seconds
+Mesh - PwrCmp cancel active then off - Ext           [0;31mFailed    [0m   2.123 seconds
+Mesh - PwrCmp cancel queued then off - Ext           [0;31mFailed    [0m   2.082 seconds
+Total: 20, [0;32mPassed: 0 (0.0%)[0m, [0;31mFailed: 20[0m, [0;33mNot Run: 0[0m
+Overall execution time: 16 seconds
+Process 59 exited with status 1

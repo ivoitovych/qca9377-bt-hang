@@ -1,0 +1,60 @@
+== inject-s-base-send-1 (Linux version 7.3.0-gf312b29b763a (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+02] .....     8.431833: add_ret: (mesh_send_sync+0x1ba/0x3b0 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+02] ..Zff     8.431847: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+02] .....     8.431852: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=-2
+02] .....     8.431855: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-2
+02] ..Zff     8.431860: start_cmpl: (mesh_send_start_complete+0x4/0x1d0) err=-2
+03] .....    12.590004: add_ret: (mesh_send_sync+0x1ba/0x3b0 <- hci_add_adv_instance) ret=0xffff8880033e4000
+== inject-s-base-send-2 (Linux version 7.3.0-gf312b29b763a (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+03] .....     7.094323: add_ret: (mesh_send_sync+0x1ba/0x3b0 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+03] ..Zff     7.094336: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+03] .....     7.094342: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=-2
+03] .....     7.094344: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-2
+03] ..Zff     7.094349: start_cmpl: (mesh_send_start_complete+0x4/0x1d0) err=-2
+02] .....     9.907412: add_ret: (mesh_send_sync+0x1ba/0x3b0 <- hci_add_adv_instance) ret=0xffff888002746000
+== inject-s-co05-send-1 (Linux version 7.3.0-g680fc6e0f6d0 (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+03] .....     6.874819: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+03] .....     6.874822: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-12
+03] ..Zff     6.874825: start_cmpl: (mesh_send_start_complete+0x4/0x1d0) err=-12
+00] .....     9.798849: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xffff888003c00000
+00] ..Zff     9.798854: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+00] .....     9.833868: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=0
+== inject-s-co05-send-2 (Linux version 7.3.0-g680fc6e0f6d0 (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+01] .....     7.360647: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+01] .....     7.360652: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-12
+01] ..Zff     7.360654: start_cmpl: (mesh_send_start_complete+0x4/0x1d0) err=-12
+00] .....    10.945778: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xffff88800117b800
+00] ..Zff    10.945786: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+00] .....    11.010866: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=0
+== inject-s-both-send-1 (Linux version 7.3.0-gf19e87520a97 (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+03] .....     7.110106: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+03] .....     7.110111: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-12
+03] ..Zff     7.110114: start_cmpl: (mesh_send_start_complete+0x4/0x220) err=-12
+00] .....    10.611381: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xffff888005d66000
+00] ..Zff    10.611386: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+00] .....    10.641011: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=0
+== inject-s-both-send-2 (Linux version 7.3.0-gf19e87520a97 (root@n) (gcc (Ubuntu 13.3)
+scratch_fail_mesh_add = 1
+Total: 5, Passed: 2 (40.0%), Failed: 3, Not Run: 0
+scratch_fail_mesh_add after the run = 0
+01] .....     6.972391: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xfffffffffffffff4
+01] .....     6.972395: send_sync_ret: (hci_cmd_sync_work+0x1d9/0x380 <- mesh_send_sync) ret=-12
+01] ..Zff     6.972399: start_cmpl: (mesh_send_start_complete+0x4/0x220) err=-12
+01] .....    10.148134: add_ret: (mesh_send_sync+0x1f4/0x460 <- hci_add_adv_instance) ret=0xffff888003b8a000
+01] ..Zff    10.148141: sched: (hci_schedule_adv_instance_sync+0x4/0x460) instance=6 force=1
+01] .....    10.190380: sched_ret: ([unknown/kretprobe'd] <- hci_schedule_adv_instance_sync) ret=0

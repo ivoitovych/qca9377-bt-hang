@@ -1,0 +1,12 @@
+Bluetooth: MGMT: Fix Read Advertising Features hiding instances
+
+read_adv_features() means to hide only the mesh instance, which is
+numbered one past the controller's advertising sets, but it compares
+each instance number with the number of instances instead of the number
+of sets. Whenever the instance numbers are not 1 to n, an instance is
+left out: with instances 1 and 2 added and instance 1 removed, for
+example after its timeout, instance 2 is no longer reported.
+
+Compare with le_num_of_adv_sets, as the comment says.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")

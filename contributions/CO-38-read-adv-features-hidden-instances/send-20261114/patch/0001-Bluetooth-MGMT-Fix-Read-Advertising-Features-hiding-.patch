@@ -1,0 +1,38 @@
+From 1fb5fb3351f9a4a9c2417452156eaf6140c4ef8d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 01:47:30 +0100
+Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
+ instances
+
+read_adv_features() means to hide only the mesh instance, which is
+numbered one past the controller's advertising sets, but it compares
+each instance number with the number of instances instead of the number
+of sets. Whenever the instance numbers are not 1 to n, an instance is
+left out: with instances 1 and 2 added and instance 1 removed, for
+example after its timeout, instance 2 is no longer reported.
+
+Compare with le_num_of_adv_sets, as the comment says.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+---
+ net/bluetooth/mgmt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 6ed3bf6f17385..5c92618a0867f 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -8889,7 +8889,7 @@ static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
+ 	instance = rp->instance;
+ 	list_for_each_entry(adv_instance, &hdev->adv_instances, list) {
+ 		/* Only instances 1-le_num_of_adv_sets are externally visible */
+-		if (adv_instance->instance <= hdev->adv_instance_cnt) {
++		if (adv_instance->instance <= hdev->le_num_of_adv_sets) {
+ 			*instance = adv_instance->instance;
+ 			instance++;
+ 		} else {
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

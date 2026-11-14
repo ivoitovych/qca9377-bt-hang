@@ -1,0 +1,596 @@
+From e01b4cc8f050821b05ef4210fc5a4e888e02c2c5 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 18:46:34 +0100
+Subject: [PATCH BlueZ 1/3] mgmt-tester: Add extended advertising timeout tests
+
+On an extended advertising controller the kernel passes the instance
+timeout as the Duration of LE Set Extended Advertising Enable, in units
+of 10 ms, and removes the instance when the controller ends the set.
+
+Check the Duration for timeouts of 0, 1, 65, 66 and 655 s and for
+timeouts above the 655.35 s the field can hold, which are expected at
+0xffff; check that an instance is still present before its timeout and
+that a 1 s instance is removed after 1 s, through Add Advertising and
+through Add Extended Advertising Parameters. Also cover an instance
+added again with another timeout before the first expires, and two
+instances with different timeouts.
+---
+ tools/mgmt-tester.c | 506 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 506 insertions(+)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index b7126dc36..7af5013ae 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -20,6 +20,7 @@
+ #include <sys/types.h>
+ #include <fcntl.h>
+ #include <errno.h>
++#include <time.h>
+ #include <unistd.h>
+ 
+ #include <linux/rfkill.h>
+@@ -54,6 +55,17 @@ struct simult_discovery {
+ 	unsigned int restart_id;
+ };
+ 
++#define ADV_TIMEOUT_MAX_INST	2
++
++struct adv_timeout_state {
++	uint64_t enabled_ms[ADV_TIMEOUT_MAX_INST];
++	bool removed[ADV_TIMEOUT_MAX_INST];
++	uint8_t added;
++	unsigned int replace_id;
++	unsigned int check_id;
++	bool done;
++};
++
+ struct test_data {
+ 	tester_data_func_t test_setup;
+ 	const void *test_data;
+@@ -80,6 +92,7 @@ struct test_data {
+ 	unsigned int settle_id;
+ 	int sk;
+ 	struct simult_discovery simult;
++	struct adv_timeout_state adv_timeout;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -115,11 +128,29 @@ static void simult_discovery_cleanup(struct test_data *data)
+ 	memset(simult, 0, sizeof(*simult));
+ }
+ 
++static void adv_timeout_cleanup(struct test_data *data)
++{
++	struct adv_timeout_state *state = &data->adv_timeout;
++
++	if (state->replace_id) {
++		timeout_remove(state->replace_id);
++		state->replace_id = 0;
++	}
++
++	if (state->check_id) {
++		timeout_remove(state->check_id);
++		state->check_id = 0;
++	}
++
++	state->done = true;
++}
++
+ static void test_post_teardown(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+ 
+ 	simult_discovery_cleanup(data);
++	adv_timeout_cleanup(data);
+ 
+ 	if (data->settle_id) {
+ 		timeout_remove(data->settle_id);
+@@ -363,6 +394,21 @@ struct hci_entry {
+ 	const struct hci_cmd_data *cmd_data;
+ };
+ 
++struct adv_timeout_inst {
++	uint8_t instance;
++	uint16_t timeout;		/* MGMT timeout in seconds */
++	uint16_t duration;		/* expected HCI Duration, N * 10 ms */
++	bool expire;			/* removal expected within the test */
++};
++
++struct adv_timeout_test {
++	struct adv_timeout_inst inst[ADV_TIMEOUT_MAX_INST];
++	uint8_t num_inst;
++	bool ext_params;		/* Add Ext Adv Params + Data */
++	unsigned int replace_ms;	/* inst[1] replaces inst[0] */
++	unsigned int check_ms;		/* final check after first enable */
++};
++
+ struct generic_data {
+ 	bdaddr_t *setup_bdaddr;
+ 	bool setup_le_states;
+@@ -429,6 +475,7 @@ struct generic_data {
+ 	uint8_t adv_data_len;
+ 	const struct devcoredump_test_data *dump_data;
+ 	const char (*expect_dump_data)[MAX_COREDUMP_LINE_LEN];
++	const struct adv_timeout_test *adv_timeout;
+ };
+ 
+ static const uint8_t set_exp_feat_param_debug[] = {
+@@ -14441,6 +14488,418 @@ static const struct generic_data eks_oppt_connect_encrypt_test = {
+ 	.expect_hci_param_check_func = check_encrypt_v2_opportunistic,
+ };
+ 
++/* An extended advertising controller is given the instance timeout as the
++ * Duration of LE Set Extended Advertising Enable (N * 10 ms) and ends the
++ * set itself, after which the kernel removes the instance. The field holds
++ * at most 0xffff (655.35 s), so longer timeouts are expected at that limit.
++ * Removal is expected Duration * 10 ms after the enable.
++ */
++#define ADV_TIMEOUT_EARLY_MS	50
++#define ADV_TIMEOUT_LATE_MS	1000
++
++#define ADV_TIMEOUT_TEST(_name, _timeout, _duration, _expire, _check) \
++	static const struct adv_timeout_test adv_timeout_##_name = { \
++		.inst = { { 0x01, _timeout, _duration, _expire } }, \
++		.num_inst = 1, \
++		.check_ms = _check, \
++	}; \
++	static const struct generic_data add_ext_adv_timeout_##_name = { \
++		.setup_settings = settings_powered_le, \
++		.adv_timeout = &adv_timeout_##_name, \
++	}
++
++ADV_TIMEOUT_TEST(1, 1, 100, true, 2500);
++ADV_TIMEOUT_TEST(0, 0, 0, false, 2000);
++ADV_TIMEOUT_TEST(65, 65, 6500, false, 2000);
++ADV_TIMEOUT_TEST(66, 66, 6600, false, 2000);
++ADV_TIMEOUT_TEST(655, 655, 65500, false, 2000);
++ADV_TIMEOUT_TEST(656, 656, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(6357, 6357, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(8192, 8192, 0xffff, false, 2000);
++ADV_TIMEOUT_TEST(65535, 65535, 0xffff, false, 2000);
++
++static const struct adv_timeout_test adv_timeout_params_1 = {
++	.inst = { { 0x01, 1, 100, true } },
++	.num_inst = 1,
++	.ext_params = true,
++	.check_ms = 2500,
++};
++
++static const struct generic_data add_ext_adv_timeout_params_1 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_params_1,
++};
++
++static const struct adv_timeout_test adv_timeout_params_66 = {
++	.inst = { { 0x01, 66, 6600, false } },
++	.num_inst = 1,
++	.ext_params = true,
++	.check_ms = 2000,
++};
++
++static const struct generic_data add_ext_adv_timeout_params_66 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_params_66,
++};
++
++/* Instance 1 is added again with another timeout before its first one
++ * expires: only the second timeout applies.
++ */
++static const struct adv_timeout_test adv_timeout_replace = {
++	.inst = {
++		{ 0x01, 2, 200, false },
++		{ 0x01, 3, 300, true },
++	},
++	.num_inst = 2,
++	.replace_ms = 1000,
++	.check_ms = 5500,
++};
++
++static const struct generic_data add_ext_adv_timeout_replace = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_replace,
++};
++
++static const struct adv_timeout_test adv_timeout_two_1_2 = {
++	.inst = {
++		{ 0x01, 1, 100, true },
++		{ 0x02, 2, 200, true },
++	},
++	.num_inst = 2,
++	.check_ms = 3500,
++};
++
++static const struct generic_data add_ext_adv_timeout_two_1_2 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_two_1_2,
++};
++
++static const struct adv_timeout_test adv_timeout_two_66_1 = {
++	.inst = {
++		{ 0x01, 66, 6600, false },
++		{ 0x02, 1, 100, true },
++	},
++	.num_inst = 2,
++	.check_ms = 2500,
++};
++
++static const struct generic_data add_ext_adv_timeout_two_66_1 = {
++	.setup_settings = settings_powered_le,
++	.adv_timeout = &adv_timeout_two_66_1,
++};
++
++static uint64_t adv_timeout_now_ms(void)
++{
++	struct timespec ts;
++
++	clock_gettime(CLOCK_MONOTONIC, &ts);
++
++	return (uint64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
++}
++
++static void adv_timeout_finish(struct test_data *data, bool passed)
++{
++	adv_timeout_cleanup(data);
++
++	if (passed)
++		tester_test_passed();
++	else
++		tester_test_failed();
++}
++
++/* The entry of inst[] that was added last for the instance */
++static int adv_timeout_slot(struct test_data *data, uint8_t instance)
++{
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	int i;
++
++	for (i = data->adv_timeout.added - 1; i >= 0; i--) {
++		if (t->inst[i].instance == instance)
++			return i;
++	}
++
++	return -1;
++}
++
++static void adv_timeout_add(struct test_data *data);
++
++static void adv_timeout_add_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	const struct mgmt_rp_add_advertising *rp = param;
++
++	if (data->adv_timeout.done)
++		return;
++
++	if (status != MGMT_STATUS_SUCCESS || length < sizeof(*rp)) {
++		tester_warn("Adding the instance failed: %s (0x%02x)",
++						mgmt_errstr(status), status);
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	tester_print("Instance %u added", rp->instance);
++
++	if (!t->replace_ms && data->adv_timeout.added < t->num_inst)
++		adv_timeout_add(data);
++}
++
++static void adv_timeout_params_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct mgmt_rp_add_ext_adv_params *rp = param;
++	struct mgmt_cp_add_ext_adv_data *cp;
++	uint8_t buf[sizeof(*cp) + TESTER_ADD_ADV_DATA_LEN];
++
++	if (data->adv_timeout.done)
++		return;
++
++	if (status != MGMT_STATUS_SUCCESS || length < sizeof(*rp)) {
++		tester_warn("Adding the parameters failed: %s (0x%02x)",
++						mgmt_errstr(status), status);
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	memset(buf, 0, sizeof(buf));
++	cp = (void *) buf;
++	cp->instance = rp->instance;
++	cp->adv_data_len = TESTER_ADD_ADV_DATA_LEN;
++	cp->data[0] = TESTER_ADD_ADV_DATA_LEN - 1;	/* AD len */
++	cp->data[1] = 0x08;		/* AD type: shortened local name */
++	memcpy(cp->data + 2, "test", 4);
++	cp->data[6] = '0' + rp->instance;
++
++	mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_DATA, data->mgmt_index,
++					sizeof(buf), buf,
++					adv_timeout_add_callback, NULL, NULL);
++}
++
++static void adv_timeout_add(struct test_data *data)
++{
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	const struct adv_timeout_inst *inst;
++	struct mgmt_cp_add_ext_adv_params params;
++	struct mgmt_cp_add_advertising *cp;
++	uint8_t buf[sizeof(*cp) + TESTER_ADD_ADV_DATA_LEN];
++
++	inst = &t->inst[data->adv_timeout.added++];
++
++	tester_print("Adding instance %u with timeout %u s", inst->instance,
++							inst->timeout);
++
++	if (t->ext_params) {
++		memset(&params, 0, sizeof(params));
++		params.instance = inst->instance;
++		put_le32(MGMT_ADV_PARAM_TIMEOUT, &params.flags);
++		put_le16(inst->timeout, &params.timeout);
++
++		mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_PARAMS,
++				data->mgmt_index, sizeof(params), &params,
++				adv_timeout_params_callback, NULL, NULL);
++		return;
++	}
++
++	cp = (void *) buf;
++	setup_add_adv_param(cp, inst->instance);
++	put_le16(inst->timeout, &cp->timeout);
++
++	mgmt_send(data->mgmt, MGMT_OP_ADD_ADVERTISING, data->mgmt_index,
++					sizeof(buf), buf,
++					adv_timeout_add_callback, NULL, NULL);
++}
++
++static void adv_timeout_features(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	struct adv_timeout_state *state = &data->adv_timeout;
++	const struct mgmt_rp_read_adv_features *rp = param;
++	int i;
++
++	if (state->done)
++		return;
++
++	if (status != MGMT_STATUS_SUCCESS || length < sizeof(*rp) ||
++				length < sizeof(*rp) + rp->num_instances) {
++		tester_warn("Read Advertising Features failed");
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	if (state->added < t->num_inst) {
++		tester_warn("Only %u of %u instances added", state->added,
++								t->num_inst);
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	for (i = 0; i < state->added; i++) {
++		const struct adv_timeout_inst *inst = &t->inst[i];
++		bool listed;
++
++		/* Replaced by a later entry */
++		if (adv_timeout_slot(data, inst->instance) != i)
++			continue;
++
++		listed = memchr(rp->instance, inst->instance,
++						rp->num_instances) != NULL;
++
++		if (inst->expire && (!state->removed[i] || listed)) {
++			tester_warn("Instance %u not removed after %u ms",
++					inst->instance, inst->duration * 10);
++			adv_timeout_finish(data, false);
++			return;
++		}
++
++		if (!inst->expire && !listed) {
++			tester_warn("Instance %u missing before its timeout",
++							inst->instance);
++			adv_timeout_finish(data, false);
++			return;
++		}
++	}
++
++	adv_timeout_finish(data, true);
++}
++
++static bool adv_timeout_check(void *user_data)
++{
++	struct test_data *data = user_data;
++
++	data->adv_timeout.check_id = 0;
++
++	mgmt_send(data->mgmt, MGMT_OP_READ_ADV_FEATURES, data->mgmt_index,
++				0, NULL, adv_timeout_features, NULL, NULL);
++
++	return false;
++}
++
++static bool adv_timeout_readd(void *user_data)
++{
++	struct test_data *data = user_data;
++
++	data->adv_timeout.replace_id = 0;
++	adv_timeout_add(data);
++
++	return false;
++}
++
++static void adv_timeout_hci(uint16_t opcode, const void *param,
++					uint8_t length, void *user_data)
++{
++	struct test_data *data = user_data;
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	struct adv_timeout_state *state = &data->adv_timeout;
++	const struct bt_hci_cmd_le_set_ext_adv_enable *cp = param;
++	const struct bt_hci_cmd_ext_adv_set *set;
++	uint8_t i;
++
++	if (opcode != BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE || state->done)
++		return;
++
++	if (length < sizeof(*cp) || !cp->enable ||
++			length < sizeof(*cp) + cp->num_of_sets * sizeof(*set))
++		return;
++
++	set = (const void *) (cp + 1);
++
++	for (i = 0; i < cp->num_of_sets; i++, set++) {
++		uint16_t duration = get_le16(&set->duration);
++		int slot = adv_timeout_slot(data, set->handle);
++
++		if (slot < 0)
++			continue;
++
++		tester_print("Instance %u enabled, Duration %u (%u ms)",
++					set->handle, duration, duration * 10);
++
++		if (duration != t->inst[slot].duration) {
++			tester_warn("Expected Duration %u",
++						t->inst[slot].duration);
++			adv_timeout_finish(data, false);
++			return;
++		}
++
++		state->enabled_ms[slot] = adv_timeout_now_ms();
++
++		if (slot || state->check_id)
++			continue;
++
++		state->check_id = timeout_add(t->check_ms, adv_timeout_check,
++								data, NULL);
++
++		if (t->replace_ms)
++			state->replace_id = timeout_add(t->replace_ms,
++							adv_timeout_readd,
++							data, NULL);
++	}
++}
++
++static void adv_timeout_removed(uint16_t index, uint16_t length,
++					const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const struct adv_timeout_test *t = test->adv_timeout;
++	struct adv_timeout_state *state = &data->adv_timeout;
++	const struct mgmt_ev_advertising_removed *ev = param;
++	const struct adv_timeout_inst *inst;
++	uint64_t elapsed, expected;
++	int slot;
++
++	if (state->done || length < sizeof(*ev))
++		return;
++
++	slot = adv_timeout_slot(data, ev->instance);
++	if (slot < 0 || !state->enabled_ms[slot]) {
++		tester_warn("Instance %u removed before it was enabled",
++								ev->instance);
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	inst = &t->inst[slot];
++	elapsed = adv_timeout_now_ms() - state->enabled_ms[slot];
++	expected = inst->duration * 10;
++
++	tester_print("Instance %u removed %llu ms after its enable",
++				ev->instance, (unsigned long long) elapsed);
++
++	if (!inst->expire || elapsed + ADV_TIMEOUT_EARLY_MS < expected ||
++				elapsed > expected + ADV_TIMEOUT_LATE_MS) {
++		tester_warn("Expected removal after %llu ms",
++					(unsigned long long) expected);
++		adv_timeout_finish(data, false);
++		return;
++	}
++
++	state->removed[slot] = true;
++}
++
++static void test_add_adv_timeout(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	hciemu_add_central_post_command_hook(data->hciemu, adv_timeout_hci,
++									data);
++
++	mgmt_register(data->mgmt_alt, MGMT_EV_ADVERTISING_REMOVED,
++				data->mgmt_index, adv_timeout_removed,
++				NULL, NULL);
++
++	adv_timeout_add(data);
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	tester_init(&argc, &argv);
+@@ -15808,6 +16267,53 @@ int main(int argc, char *argv[])
+ 					setup_add_advertising_timeout,
+ 					test_command_generic, 3);
+ 
++	/* The timeout is passed to the controller as the Duration of the
++	 * advertising set, in units of 10 ms and at most 655.35 s, and the
++	 * instance is removed when the set ends.
++	 */
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (expires)",
++					&add_ext_adv_timeout_1, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 0 s (none)",
++					&add_ext_adv_timeout_0, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 65 s",
++					&add_ext_adv_timeout_65, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s",
++					&add_ext_adv_timeout_66, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 655 s",
++					&add_ext_adv_timeout_655, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 656 s (limit)",
++					&add_ext_adv_timeout_656, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 6357 s (limit)",
++					&add_ext_adv_timeout_6357, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 8192 s (limit)",
++					&add_ext_adv_timeout_8192, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 65535 s (limit)",
++					&add_ext_adv_timeout_65535, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s (Params)",
++					&add_ext_adv_timeout_params_1, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s (Params)",
++					&add_ext_adv_timeout_params_66, NULL,
++					test_add_adv_timeout, 5);
++	test_bredrle50_full("Add Ext Advertising - Timeout replaced",
++					&add_ext_adv_timeout_replace, NULL,
++					test_add_adv_timeout, 9);
++	test_bredrle50_full("Add Ext Advertising - Timeout 1 s and 2 s",
++					&add_ext_adv_timeout_two_1_2, NULL,
++					test_add_adv_timeout, 6);
++	test_bredrle50_full("Add Ext Advertising - Timeout 66 s and 1 s",
++					&add_ext_adv_timeout_two_66_1, NULL,
++					test_add_adv_timeout, 5);
++
+ 	/* LE off will clear (remove) all instances. */
+ 	test_bredrle50("Add Ext Advertising - Success 22 (LE -> off, Remove)",
+ 					&add_ext_advertising_le_off,
+
+base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
+-- 
+2.43.0
+

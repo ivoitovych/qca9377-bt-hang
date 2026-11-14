@@ -1,0 +1,66 @@
+From 2dcef42fbeef7fd26f36af805fd010bb6737f4fe Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 18:46:36 +0100
+Subject: [PATCH BlueZ 3/3] mesh-tester: Add Mesh Send test with extended
+ advertising
+
+The mesh advertising instance timeout is in milliseconds. Check that an
+extended advertising controller gets a Duration of 100 (1000 ms) for
+it.
+---
+ tools/mesh-tester.c | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/tools/mesh-tester.c b/tools/mesh-tester.c
+index 896cfd1f2..febcb91c4 100644
+--- a/tools/mesh-tester.c
++++ b/tools/mesh-tester.c
+@@ -1294,6 +1294,33 @@ static const struct generic_data mesh_send_mesh_1 = {
+ 	.expect_hci_len = sizeof(mesh_send_rsp_param_mesh),
+ };
+ 
++/* The mesh instance timeout is 1000 ms, handed to the controller as a
++ * Duration of 100 (N * 10 ms). The instance is the one past the
++ * controller's three advertising sets.
++ */
++static const uint8_t mesh_send_ext_adv_enable[] = {
++	0x01,				/* Enable */
++	0x01,				/* Number of sets */
++	0x04,				/* Handle */
++	0x64, 0x00,			/* Duration */
++	0x00,				/* Max events */
++};
++
++static const struct generic_data mesh_send_mesh_ext_adv = {
++	.send_opcode = MGMT_OP_MESH_SEND,
++	.send_param = send_mesh_1,
++	.send_len = sizeof(send_mesh_1),
++	.expect_param = mesh_send_rsp_param_mesh,
++	.expect_len = sizeof(mesh_send_rsp_param_mesh),
++	.expect_status = MGMT_STATUS_SUCCESS,
++	.expect_alt_ev = MGMT_EV_MESH_PACKET_CMPLT,
++	.expect_alt_ev_param = mesh_send_rsp_param_mesh,
++	.expect_alt_ev_len = sizeof(mesh_send_rsp_param_mesh),
++	.expect_hci_command = BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE,
++	.expect_hci_param = mesh_send_ext_adv_enable,
++	.expect_hci_len = sizeof(mesh_send_ext_adv_enable),
++};
++
+ static const struct generic_data mesh_send_mesh_too_short = {
+ 	.send_opcode = MGMT_OP_MESH_SEND,
+ 	.send_param = send_mesh_1,
+@@ -1434,6 +1461,11 @@ int main(int argc, char *argv[])
+ 			setup_enable_mesh,
+ 			test_command_generic);
+ 
++	test_bredrle50("Mesh - Send (Ext Adv Duration)",
++			&mesh_send_mesh_ext_adv,
++			setup_enable_mesh,
++			test_command_generic);
++
+ 	test_bredrle("Mesh - Send - too short",
+ 			&mesh_send_mesh_too_short,
+ 			setup_enable_mesh,
+-- 
+2.43.0
+

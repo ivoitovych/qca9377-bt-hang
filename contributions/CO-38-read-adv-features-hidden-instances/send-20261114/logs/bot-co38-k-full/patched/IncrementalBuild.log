@@ -1,0 +1,158 @@
+#ci ## CI: IncrementalBuild
+#ci CI: IncrementalBuild: Run
+#ci CI: IncrementalBuild: Resetting source to origin/master (base commit)
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'reset', 'origin/master', '--hard']
+#ci PROC args: ['git', 'reset', 'origin/master', '--hard']
+HEAD is now at da3cc02587c Bluetooth: hci_vhci: Report write readiness with queued input
+#ci RET: 0
+#ci ------------- CMD_RUN END (3.04 s) -------------
+#ci CI: IncrementalBuild: Copying kernel config: /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/patched/bluez/doc/ci.config
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', 'olddefconfig']
+#ci PROC args: ['make', 'olddefconfig']
+#
+# configuration written to .config
+#
+#ci RET: 0
+#ci ------------- CMD_RUN END (8.46 s) -------------
+#ci CI: IncrementalBuild: Patch ID: 1001
+#ci CI: IncrementalBuild: Save patch: /root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/patched/patch/1001.patch
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'am', '/root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/patched/patch/1001.patch']
+#ci PROC args: ['git', 'am', '/root/exp/agent-work/lane3-mgmt-20261114/project/tmp/bot-co38-k-full/work/patched/patch/1001.patch']
+Applying: Bluetooth: MGMT: Fix Read Advertising Features hiding instances
+#ci RET: 0
+#ci ------------- CMD_RUN END (0.85 s) -------------
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', '-j4', 'net/bluetooth/', 'drivers/bluetooth/']
+#ci PROC args: ['make', '-j4', 'net/bluetooth/', 'drivers/bluetooth/']
+  SYNC    include/config/auto.conf
+  DESCEND objtool
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  UPD     include/config/kernel.release
+  UPD     include/generated/utsrelease.h
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/libfdt/fdt.o
+  HOSTCC  scripts/dtc/libfdt/fdt_ro.o
+  HOSTCC  scripts/dtc/libfdt/fdt_wip.o
+  HOSTCC  scripts/dtc/libfdt/fdt_sw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_rw.o
+  HOSTCC  scripts/dtc/libfdt/fdt_strerror.o
+  HOSTCC  scripts/dtc/libfdt/fdt_empty_tree.o
+  HOSTCC  scripts/dtc/libfdt/fdt_addresses.o
+  HOSTCC  scripts/dtc/libfdt/fdt_overlay.o
+  HOSTCC  scripts/dtc/fdtoverlay.o
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/fdtoverlay
+  HOSTLD  scripts/dtc/dtc
+  CC      scripts/mod/devicetable-offsets.s
+  CC      kernel/bounds.s
+  UPD     include/generated/bounds.h
+  CC      arch/x86/kernel/asm-offsets.s
+  UPD     include/generated/asm-offsets.h
+  CC      kernel/sched/rq-offsets.s
+  UPD     include/generated/rq-offsets.h
+  CALL    scripts/checksyscalls.sh 
+  CC      net/bluetooth/af_bluetooth.o
+  CC      net/bluetooth/hci_core.o
+  CC      net/bluetooth/hci_conn.o
+  CC      drivers/bluetooth/hci_vhci.o
+  CC      drivers/bluetooth/hci_ldisc.o
+  CC      drivers/bluetooth/hci_serdev.o
+  CC      net/bluetooth/hci_event.o
+  CC      drivers/bluetooth/hci_h4.o
+  CC      net/bluetooth/mgmt.o
+  CC      drivers/bluetooth/hci_bcsp.o
+  CC      net/bluetooth/hci_sock.o
+  CC      drivers/bluetooth/hci_ll.o
+  CC      net/bluetooth/hci_sysfs.o
+  CC      drivers/bluetooth/hci_ath.o
+  CC      net/bluetooth/l2cap_core.o
+  CC      drivers/bluetooth/hci_h5.o
+  CC      net/bluetooth/l2cap_sock.o
+  CC      drivers/bluetooth/hci_intel.o
+  CC      net/bluetooth/smp.o
+  CC      drivers/bluetooth/hci_bcm.o
+  CC      net/bluetooth/lib.o
+  CC      drivers/bluetooth/hci_qca.o
+  CC      net/bluetooth/ecdh_helper.o
+  CC      net/bluetooth/mgmt_util.o
+  CC      drivers/bluetooth/hci_ag6xx.o
+  CC      net/bluetooth/mgmt_config.o
+  CC      drivers/bluetooth/hci_mrvl.o
+  CC      net/bluetooth/hci_codec.o
+  CC      drivers/bluetooth/bcm203x.o
+  CC      net/bluetooth/eir.o
+  CC      drivers/bluetooth/bpa10x.o
+  CC      net/bluetooth/hci_sync.o
+  CC      drivers/bluetooth/bfusb.o
+  CC      net/bluetooth/hci_drv.o
+  CC      drivers/bluetooth/btusb_main.o
+  CC      net/bluetooth/hci_h4.o
+  CC      net/bluetooth/coredump.o
+  CC      drivers/bluetooth/btsdio.o
+  CC      net/bluetooth/sco.o
+  CC      drivers/bluetooth/btintel.o
+  CC      net/bluetooth/iso.o
+  CC      drivers/bluetooth/ath3k.o
+  CC      net/bluetooth/msft.o
+  CC      drivers/bluetooth/btmrvl_main.o
+  CC      drivers/bluetooth/btmrvl_debugfs.o
+  CC      drivers/bluetooth/btmrvl_sdio.o
+  CC      net/bluetooth/hci_debugfs.o
+  CC      drivers/bluetooth/btmtksdio.o
+  CC      net/bluetooth/rfcomm/core.o
+  CC      net/bluetooth/bnep/core.o
+  CC      net/bluetooth/hidp/core.o
+  CC      drivers/bluetooth/btmtkuart.o
+  CC      net/bluetooth/bnep/sock.o
+  CC      net/bluetooth/hidp/sock.o
+  CC      net/bluetooth/rfcomm/sock.o
+  CC      net/bluetooth/bnep/netdev.o
+  CC      drivers/bluetooth/btbcm.o
+  AR      net/bluetooth/hidp/built-in.a
+  CC      net/bluetooth/rfcomm/tty.o
+  AR      net/bluetooth/bnep/built-in.a
+  CC      drivers/bluetooth/btrtl.o
+  CC      net/bluetooth/6lowpan.o
+  CC      drivers/bluetooth/btqca.o
+  AR      net/bluetooth/rfcomm/built-in.a
+  CC      drivers/bluetooth/btmtk.o
+  CC      drivers/bluetooth/virtio_bt.o
+  CC      drivers/bluetooth/hci_nokia.o
+  AR      net/bluetooth/built-in.a
+  AR      drivers/bluetooth/built-in.a
+#ci RET: 0
+#ci ------------- CMD_RUN END (71.27 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci CI: IncrementalBuild: Post Run...
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', 'clean']
+#ci PROC args: ['make', 'clean']
+  CLEAN   arch/x86/boot/compressed
+  CLEAN   arch/x86/boot
+  CLEAN   arch/x86/entry/vdso/vdso64
+  CLEAN   arch/x86/kernel/cpu
+  CLEAN   arch/x86/kernel
+  CLEAN   arch/x86/realmode/rm
+  CLEAN   arch/x86/tools
+  CLEAN   arch/x86/lib
+  CLEAN   drivers/tty/vt
+  CLEAN   init
+  CLEAN   lib/crc
+  CLEAN   .
+  CLEAN   vmlinux.symvers modules.builtin modules.builtin.modinfo vmlinux.unstripped .vmlinux.export.c
+#ci RET: 0
+#ci ------------- CMD_RUN END (17.86 s) -------------
+#ci ## verdict: IncrementalBuild PASS

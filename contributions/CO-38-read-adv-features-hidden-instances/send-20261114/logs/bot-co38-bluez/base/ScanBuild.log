@@ -1,0 +1,15 @@
+#ci ## CI: ScanBuild
+#ci CI: ScanBuild: Run
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'checkout', '-b', 'patched']
+#ci PROC args: ['git', 'checkout', '-b', 'patched']
+#ci RET: 128
+#ci STDERR:
+error: unable to normalize alternate object path: /root/exp/qca9377-bt-hang/cache/bluez-upstream/.git/objects
+fatal: You are on a branch yet to be born
+#ci ------------- CMD_RUN END (0.02 s) -------------
+#ci CI: ScanBuild: Failed to create branch
+#ci Submitting the result to PW: dry_run=True
+#ci Test Ended(Failure): ScanBuild:FAIL
+#ci CI: ScanBuild: Post Run...
+#ci ## verdict: ScanBuild FAIL
