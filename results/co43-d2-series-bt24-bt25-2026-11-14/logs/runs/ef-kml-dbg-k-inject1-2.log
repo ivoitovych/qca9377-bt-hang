@@ -1,0 +1,663 @@
+start 2026-11-14 03:06:12 kernel ef-kml-dbg label k-inject1-2 args kml --mode healthy --inject 1 --expect-no-leak cpus 4
+69c885c5fc725dda5c963223968d35648e09852e9a190749e5c88424c804c461  /root/exp/agent-work/lane1-btusb-20261114/task2/../img/bzImage-ef-kml-dbg
+5d7fdce22b07795b41b57a8b234609cf8311b3a025e41ca1e621bb98ac484e92  /root/exp/agent-work/lane1-btusb-20261114/task2/harness/bt17-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x00000000070412c4
+input_len: 0x00000000010403e4
+output: 0x0000000001000000
+output_len: 0x0000000003836840
+kernel_total_size: 0x00000000070c4000
+needed_size: 0x0000000007200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ad2d0).
+Linux version 7.3.0-g8b370c404f80 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT_DYNAMIC Sat Nov 14 02:54:24 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task2/harness/bt17-emu.py kml --mode healthy --inject 1 --expect-no-leak'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task2/harness/bt17-emu.py kml --mode healthy --inject 1 --expect-no-leak
+Changing into directory /root/exp
+New process 59 created
+random: crng init done
+   0.017 [mono  11.019979] dyndbg: file drivers/usb/core/hub.c +p | file drivers/usb/core/driver.c +p | func btusb_suspend +p | func btusb_resume +p | func btusb_disconnect +p | func btusb_waker +p | func hci_cmd_work +p | func hci_cmd_timeout +p
+   0.072 [mono  11.073664] attached to vhci_hcd port 0
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+   0.503 [mono  11.504430] hci0 present
+Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+   0.546 [mono  11.546871] HCI cmd 0x0c03 
+   0.549 [mono  11.549779] HCI command 0x0c03: generic Command Complete
+   0.556 [mono  11.557068] HCI cmd 0x1003 
+   0.563 [mono  11.564687] HCI cmd 0x1001 
+   0.572 [mono  11.573423] HCI cmd 0x1009 
+   0.581 [mono  11.581999] HCI cmd 0x1002 
+   0.595 [mono  11.595826] HCI cmd 0x0c45 01
+   0.597 [mono  11.598559] HCI command 0x0c45: generic Command Complete
+   0.602 [mono  11.603729] HCI cmd 0x1005 
+   0.609 [mono  11.610460] HCI cmd 0x0c23 
+   0.612 [mono  11.613575] HCI cmd 0x0c14 
+   0.666 [mono  11.666983] HCI cmd 0x0c25 
+   0.674 [mono  11.675017] HCI cmd 0x0c38 
+   0.683 [mono  11.684037] HCI cmd 0x0c39 
+   0.690 [mono  11.691406] HCI cmd 0x0c16 007d
+   0.693 [mono  11.694641] HCI command 0x0c16: generic Command Complete
+   0.701 [mono  11.702403] HCI cmd 0x0c01 fffffbff03180000
+   0.704 [mono  11.704765] HCI command 0x0c01: generic Command Complete
+   0.708 [mono  11.709372] MGMT Index Added index 0 
+   0.718 [mono  11.719722] MGMT send opcode 0x0005 index 0 params 01
+   0.724 [mono  11.725594] HCI cmd 0x0c1c 00081200
+   0.728 [mono  11.729460] HCI command 0x0c1c: generic Command Complete
+   0.732 [mono  11.732790] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   0.733 [mono  11.733903] HCI command 0x0c13: generic Command Complete
+   0.737 [mono  11.738045] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+   0.747 [mono  11.748673] Set Powered reply: (11.738033785, 1, 5, 0, 0)
+   0.763 [mono  11.764241] usb device /sys/bus/usb/devices/2-1 power {'control': 'auto', 'runtime_status': 'active', 'autosuspend_delay_ms': '2000', 'persist': '1', 'wakeup': 'disabled'}
+   3.005 [mono  14.005981] EMU suspend #1 (SET_FEATURE remote wakeup)
+  12.726 [mono  23.727335] KMEMLEAK baseline before the scenario: 0 objects (cleared)
+  12.729 [mono  23.730303] runtime_status suspended after waiting (ok=True)
+  12.732 [mono  23.733520] bt_inject = 1
+bt17-emu: Set Device Class minor 12 sent at mono 23.737424
+  12.739 [mono  23.739818] MGMT send opcode 0x000e index 0 params 010c
+  12.813 [mono  23.814494] EMU resume #1: GET_STATUS answered
+btusb 2-1:1.1: resume error -12
+Bluetooth: hci0: command 0x0c24 tx timeout
+Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Bluetooth: hci0: Resetting usb device.
+  14.774 [mono  25.775559] MGMT Command Complete opcode 0x000e status 0x05 index 0
+  14.780 [mono  25.780938] class write after suspend: (25.775539728, 1, 14, 5, 0)
+  14.785 [mono  25.786313] MGMT send opcode 0x0005 index 0 params 00
+  14.795 [mono  25.796484] MGMT Command Status opcode 0x0005 status 0x11 index 0
+  14.812 [mono  25.812821] MGMT New Settings index 0 80000000
+  14.820 [mono  25.821133] MGMT Index Removed index 0 
+  14.824 [mono  25.825292] Set Powered off: (25.796458243, 2, 5, 17, 0)
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+  15.268 [mono  26.268985] HCI cmd 0x0c03 
+  15.289 [mono  26.289804] HCI cmd 0x1003 
+  15.312 [mono  26.313413] HCI cmd 0x1001 
+  15.326 [mono  26.327695] HCI cmd 0x1009 
+  15.349 [mono  26.350282] HCI cmd 0x1002 
+  15.434 [mono  26.435006] HCI cmd 0x0c45 01
+  15.465 [mono  26.466126] HCI cmd 0x1005 
+  15.492 [mono  26.492825] HCI cmd 0x0c23 
+  15.508 [mono  26.509683] HCI cmd 0x0c14 
+  15.710 [mono  26.710868] HCI cmd 0x0c25 
+  15.718 [mono  26.719010] HCI cmd 0x0c38 
+  15.736 [mono  26.737474] HCI cmd 0x0c39 
+  15.745 [mono  26.746030] HCI cmd 0x0c16 007d
+  15.753 [mono  26.754020] HCI cmd 0x0c01 fffffbff03180000
+  15.774 [mono  26.775060] MGMT Index Added index 0 
+  17.813 [mono  28.813840] HCI cmd 0x0c03 
+  17.834 [mono  28.835073] EMU HCI command transfers received during the scenario: 15: ['0x0c03', '0x1003', '0x1001', '0x1009', '0x1002', '0x0c45', '0x1005', '0x0c23', '0x0c14', '0x0c25', '0x0c38', '0x0c39', '0x0c16', '0x0c01', '0x0c03']
+  19.382 [mono  30.383452] kernel tx timeout lines: 1
+  30.977 [mono  41.978272] KMEMLEAK after healthy: 0 unreferenced objects
+  30.978 [mono  41.979371] RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+  30.979 [mono  41.980421] unhandled HCI opcodes: ['0x0c01', '0x0c03', '0x0c13', '0x0c16', '0x0c1c', '0x0c45']
+  30.980 [mono  41.981439] ---- kernel log ----
+[32m[    0.000000] [0mLinux version 7.3.0-g8b370c404f80 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT_DYNAMIC Sat Nov 14 02:54:24 CET 2026
+[32m[    0.000000] [0m[33mCommand line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task2/harness/bt17-emu.py kml --mode healthy --inject 1 --expect-no-leak'
+[32m[    0.000000] [0mBIOS-provided physical RAM map:
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000000a0000-0x00000000000effff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000010000000-0x00000000afffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000c0000000-0x00000000fed1bfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000fed20000-0x00000000feffbfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000ff000000-0x00000000fffbffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000100000000-0x000000fcffffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[32m[    0.000000] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] enabled
+[32m[    0.000000] [0mHash pointers mode set to never.
+[32m[    0.000000] [0m[33mNX (Execute Disable) protection: [0mactive
+[32m[    0.000000] [0m[33mAPIC: [0mStatic calls initialized
+[32m[    0.000000] [0m[33mDMI: [0mSMBIOS 3.0.0 present.
+[32m[    0.000000] [0m[33mDMI: [0mQEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[32m[    0.000000] [0m[33mDMI: [0mMemory slots populated: 1/1
+[32m[    0.000000] [0m[33mHypervisor detected: [0mKVM
+[32m[    0.000000] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.000000] [0m[33mkvm-clock: [0mUsing msrs 4b564d01 and 4b564d00
+[32m[    0.000006] [0m[33mkvm-clock: [0musing sched offset of 820975112 cycles
+[32m[    0.000018] [0m[33mclocksource: [0mkvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[32m[    0.000038] [0m[33mtsc: [0mDetected 1996.245 MHz processor
+[32m[    0.001187] [0m[33me820: [0mupdate [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[32m[    0.001212] [0m[33me820: [0mremove [mem 0x000a0000-0x000fffff] System RAM
+[32m[    0.001235] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.001338] [0m[33mMTRR map: [0m4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[32m[    0.001352] [0m[33mx86/PAT: [0mConfiguration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[32m[    0.005261] [0mfound SMP MP-table at [mem 0x000f5470-0x000f547f]
+[32m[    0.006075] [0m[33mACPI: [0mEarly table checksum verification disabled
+[32m[    0.006093] [0m[33mACPI: [0mRSDP 0x00000000000F52B0 000014 (v00 BOCHS )
+[32m[    0.006132] [0m[33mACPI: [0mRSDT 0x000000000FFE23D6 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006158] [0m[33mACPI: [0mFACP 0x000000000FFE21B6 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006183] [0m[33mACPI: [0mDSDT 0x000000000FFE0040 002176 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006199] [0m[33mACPI: [0mFACS 0x000000000FFE0000 000040
+[32m[    0.006213] [0m[33mACPI: [0mAPIC 0x000000000FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006230] [0m[33mACPI: [0mHPET 0x000000000FFE233A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006246] [0m[33mACPI: [0mMCFG 0x000000000FFE2372 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006262] [0m[33mACPI: [0mWAET 0x000000000FFE23AE 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.006279] [0m[33mACPI: [0mReserving FACP table memory at [mem 0xffe21b6-0xffe22a9]
+[32m[    0.006286] [0m[33mACPI: [0mReserving DSDT table memory at [mem 0xffe0040-0xffe21b5]
+[32m[    0.006293] [0m[33mACPI: [0mReserving FACS table memory at [mem 0xffe0000-0xffe003f]
+[32m[    0.006299] [0m[33mACPI: [0mReserving APIC table memory at [mem 0xffe22aa-0xffe2339]
+[32m[    0.006306] [0m[33mACPI: [0mReserving HPET table memory at [mem 0xffe233a-0xffe2371]
+[32m[    0.006312] [0m[33mACPI: [0mReserving MCFG table memory at [mem 0xffe2372-0xffe23ad]
+[32m[    0.006318] [0m[33mACPI: [0mReserving WAET table memory at [mem 0xffe23ae-0xffe23d5]
+[32m[    0.021152] [0mKernelAddressSanitizer initialized (generic)
+[32m[    0.022384] [0m[33mACPI: [0mPM-Timer IO Port: 0x608
+[32m[    0.022431] [0m[33mACPI: [0mLAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[32m[    0.022574] [0m[33mIOAPIC[0]: [0mapic_id 0, version 17, address 0xfec00000, GSI 0-23
+[32m[    0.022591] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[32m[    0.022600] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[32m[    0.022608] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[32m[    0.022614] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[32m[    0.022621] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[32m[    0.022633] [0m[33mACPI: [0mUsing ACPI (MADT) for SMP configuration information
+[32m[    0.022639] [0m[33mACPI: [0mHPET id: 0x8086a201 base: 0xfed00000
+[32m[    0.022664] [0m[33mCPU topo: [0mMax. logical packages:   1
+[32m[    0.022670] [0m[33mCPU topo: [0mMax. logical nodes:      1
+[32m[    0.022675] [0m[33mCPU topo: [0mNum. nodes per package:  1
+[32m[    0.022690] [0m[33mCPU topo: [0mMax. logical dies:       1
+[32m[    0.022696] [0m[33mCPU topo: [0mMax. dies per package:   1
+[32m[    0.022716] [0m[33mCPU topo: [0mMax. threads per core:   1
+[32m[    0.022723] [0m[33mCPU topo: [0mNum. cores per package:     4
+[32m[    0.022729] [0m[33mCPU topo: [0mNum. threads per package:   4
+[32m[    0.022735] [0m[33mCPU topo: [0mAllowing 4 present CPUs plus 0 hotplug CPUs
+[32m[    0.022811] [0m[33mkvm-guest: [0mAPIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[32m[    0.022883] [0m[gap 0x10000000-0xafffffff] available for PCI devices
+[32m[    0.022890] [0mBooting paravirtualized kernel on KVM
+[32m[    0.022899] [0m[33mclocksource: [0mrefined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[32m[    0.039447] [0mZone ranges:
+[32m[    0.039465] [0m  DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[32m[    0.039481] [0m  DMA32    [mem 0x0000000001000000-0x000000000ffdffff]
+[32m[    0.039493] [0m  Normal   empty
+[32m[    0.039502] [0mMovable zone start for each node
+[32m[    0.039507] [0mEarly memory node ranges
+[32m[    0.039512] [0m[33m  node   0: [0m[mem 0x0000000000001000-0x000000000009efff]
+[32m[    0.039519] [0m[33m  node   0: [0m[mem 0x0000000000100000-0x000000000ffdffff]
+[32m[    0.039543] [0mInitmem setup node 0 [mem 0x0000000000001000-0x000000000ffdffff]
+[32m[    0.039883] [0m[33mOn node 0, zone DMA: [0m1 pages in unavailable ranges
+[32m[    0.040081] [0m[33mOn node 0, zone DMA: [0m97 pages in unavailable ranges
+[32m[    0.044812] [0m[33mOn node 0, zone DMA32: [0m32 pages in unavailable ranges
+[32m[    0.044861] [0m[33msetup_percpu: [0mNR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[32m[    0.045604] [0m[33mpercpu: [0mEmbedded 62 pages/cpu s223120 r0 d30832 u524288
+[32m[    0.045630] [0m[33mpcpu-alloc: [0ms223120 r0 d30832 u524288 alloc=1*2097152
+[32m[    0.045645] [0m[33mpcpu-alloc: [0m[0] 0 1 2 3 
+[32m[    0.045771] [0m[33mKernel command line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task2/harness/bt17-emu.py kml --mode healthy --inject 1 --expect-no-leak'
+[32m[    0.046176] [0mUnknown kernel command line parameters "-I kml --mode healthy --inject 1 --expect-no-leak' TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3", will be passed to user space.
+[32m[    0.046201] [0m[33mprintk: [0mlog buffer data + meta data: 131072 + 458752 = 589824 bytes
+[32m[    0.046230] [0m[33mDentry cache hash table entries: [0m16384 (order: 5, 131072 bytes, linear)
+[32m[    0.046249] [0m[33mInode-cache hash table entries: [0m8192 (order: 4, 65536 bytes, linear)
+[32m[    0.046582] [0m[33mBuilt 1 zonelists, mobility grouping on.  Total pages: [0m65406
+[32m[    0.046596] [0m[33mmem auto-init: [0mstack:all(zero), heap alloc:off, heap free:off
+[32m[    0.046603] [0m[33mstackdepot: [0mallocating hash table via alloc_large_system_hash
+[32m[    0.046611] [0m[33mstackdepot hash table entries: [0m1048576 (order: 12, 16777216 bytes, linear)
+[32m[    0.053092] [0m[33mstackdepot: [0mallocating space for 8192 stack pools via memblock
+[32m[    0.057926] [0m[1m**********************************************************[0m
+[32m[    0.057945] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.057950] [0m[1m**                                                      **[0m
+[32m[    0.057956] [0m[1m** This system shows unhashed kernel memory addresses   **[0m
+[32m[    0.057961] [0m[1m** via the console, logs, and other interfaces. This    **[0m
+[32m[    0.057967] [0m[1m** might reduce the security of your system.            **[0m
+[32m[    0.057972] [0m[1m**                                                      **[0m
+[32m[    0.057978] [0m[1m** If you see this message and you are not debugging    **[0m
+[32m[    0.057983] [0m[1m** the kernel, report this immediately to your system   **[0m
+[32m[    0.057988] [0m[1m** administrator!                                       **[0m
+[32m[    0.057993] [0m[1m**                                                      **[0m
+[32m[    0.057999] [0m[1m** Use hash_pointers=always to force this mode off      **[0m
+[32m[    0.058004] [0m[1m**                                                      **[0m
+[32m[    0.058010] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.058015] [0m[1m**********************************************************[0m
+[32m[    0.060652] [0m[33mSLUB: [0mHWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[32m[    0.064403] [0m[33mDynamic Preempt: [0mlazy
+[32m[    0.071191] [0mRunning RCU self tests
+[32m[    0.071225] [0mRunning RCU synchronous self tests
+[32m[    0.071237] [0m[33mrcu: [0mPreemptible hierarchical RCU implementation.
+[32m[    0.071243] [0m[33mrcu: [0m	RCU event tracing is enabled.
+[32m[    0.071249] [0m[33mrcu: [0m	RCU lockdep checking is enabled.
+[32m[    0.071259] [0m	Trampoline variant of Tasks RCU enabled.
+[32m[    0.071264] [0m	Tracing variant of Tasks RCU enabled.
+[32m[    0.071270] [0m[33mrcu: [0mRCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[32m[    0.072463] [0mRunning RCU synchronous self tests
+[32m[    0.072503] [0m[33mRCU Tasks: [0mSetting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[32m[    0.148072] [0m[33mNR_IRQS: [0m4352, nr_irqs: 72, preallocated irqs: 16
+[32m[    0.149724] [0m[33mrcu: [0msrcu_init: Setting srcu_struct sizes based on contention.
+[32m[    0.149756] [0m[33mclocksource: [0mjiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[32m[    0.151940] [0m[33mConsole: [0mcolour *CGA 80x25
+[32m[    0.152130] [0m[33mLock dependency validator: [0mCopyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[32m[    0.152138] [0m[33m... MAX_LOCKDEP_SUBCLASSES: [0m 8
+[32m[    0.152144] [0m[33m... MAX_LOCK_DEPTH: [0m         48
+[32m[    0.152150] [0m[33m... MAX_LOCKDEP_KEYS: [0m       8192
+[32m[    0.152155] [0m[33m... CLASSHASH_SIZE: [0m         4096
+[32m[    0.152161] [0m[33m... MAX_LOCKDEP_ENTRIES: [0m    32768
+[32m[    0.152166] [0m[33m... MAX_LOCKDEP_CHAINS: [0m     65536
+[32m[    0.152172] [0m[33m... CHAINHASH_SIZE: [0m         32768
+[32m[    0.152177] [0m[33m memory used by lock dependency info: [0m6429 kB
+[32m[    0.152183] [0m[33m memory used for stack traces: [0m16896 kB
+[32m[    0.152189] [0m[33m per task-struct memory footprint: [0m1920 bytes
+[32m[    0.152288] [0m[33mACPI: [0mCore revision 20260408
+[32m[    0.155404] [0m[33mclocksource: [0mhpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[32m[    0.156168] [0m[33mAPIC: [0mSwitch to symmetric I/O mode setup
+[32m[    0.157037] [0mx2apic enabled
+[32m[    0.157984] [0m[33mAPIC: [0mSwitched APIC routing to: physical x2apic
+[32m[    0.162720] [0m[33m..TIMER: [0mvector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[32m[    0.162812] [0m[33mclocksource: [0mtsc-early: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+[32m[    0.162850] [0mCalibrating delay loop (skipped) preset value.. 3992.49 BogoMIPS (lpj=7984980)
+[32m[    0.163571] [0m[33mLast level iTLB entries: [0m4KB 512, 2MB 255, 4MB 127
+[32m[    0.163585] [0m[33mLast level dTLB entries: [0m4KB 512, 2MB 255, 4MB 127, 1GB 0
+[32m[    0.163604] [0m[33mmitigations: [0mEnabled attack vectors: user_kernel, user_user, SMT mitigations: auto
+[32m[    0.163629] [0m[33mSpectre V2 : [0mMitigation: Retpolines
+[32m[    0.163636] [0m[33mSpectre V1 : [0mMitigation: usercopy/swapgs barriers and __user pointer sanitization
+[32m[    0.163644] [0m[33mSpectre V2 : [0mSpectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+[32m[    0.163683] [0m[33mx86/fpu: [0mx87 FPU will use FXSAVE
+[32m[    0.211227] [0m[33mpid_max: [0mdefault: 32768 minimum: 301
+[32m[    0.216172] [0m[33mMount-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.216270] [0m[33mMountpoint-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.221097] [0m[33mVFS: [0mFinished mounting rootfs on nullfs
+[32m[    0.228598] [0mRunning RCU synchronous self tests
+[32m[    0.228640] [0mRunning RCU synchronous self tests
+[32m[    0.338605] [0m[33msmpboot: [0mCPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[32m[    0.339710] [0m[33mPerformance Events: [0mAMD PMU driver.
+[32m[    0.340057] [0m[33m... version: [0m                  0
+[32m[    0.340066] [0m[33m... bit width: [0m                48
+[32m[    0.340072] [0m[33m... generic counters: [0m         4
+[32m[    0.340079] [0m[33m... generic bitmap: [0m           000000000000000f
+[32m[    0.340085] [0m[33m... fixed-purpose counters: [0m   0
+[32m[    0.340090] [0m[33m... fixed-purpose bitmap: [0m     0000000000000000
+[32m[    0.340095] [0m[33m... value mask: [0m               0000ffffffffffff
+[32m[    0.340102] [0m[33m... max period: [0m               00007fffffffffff
+[32m[    0.340108] [0m[33m... global_ctrl mask: [0m         000000000000000f
+[32m[    0.340966] [0m[33msignal: [0mmax sigframe size: 1040
+[32m[    0.341555] [0m[33mrcu: [0mHierarchical SRCU implementation.
+[32m[    0.341563] [0m[33mrcu: [0m	Max phase no-delay instances is 1000.
+[32m[    0.349581] [0m[33msmp: [0mBringing up secondary CPUs ...
+[32m[    0.352662] [0m[33msmpboot: [0mx86: Booting SMP configuration:
+[32m[    0.352691] [0m[33m.... node  #0, CPUs: [0m     #1 #2 #3
+[32m[    0.384222] [0m[33msmp: [0mBrought up 1 node, 4 CPUs
+[32m[    0.384247] [0m[33msmpboot: [0mTotal of 4 processors activated (15969.96 BogoMIPS)
+[32m[    0.395611] [0m[33mMemory: [0m70508K/261624K available (29455K kernel code, 5838K rwdata, 6888K rodata, 4132K init, 61456K bss, 185208K reserved, 0K cma-reserved)
+[32m[    0.401086] [0m[33mdevtmpfs: [0minitialized
+[32m[    0.433364] [0mRunning RCU synchronous self tests
+[32m[    0.433762] [0mRunning RCU synchronous self tests
+[32m[    0.441317] [0mRunning RCU Tasks wait API self tests
+[32m[    0.448546] [0mRunning RCU Tasks Trace wait API self tests
+[32m[    0.451829] [0m[33mposixtimers hash table entries: [0m2048 (order: 6, 147456 bytes, linear)
+[32m[    0.452181] [0m[33mfutex hash table entries: [0m1024 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[32m[    0.460802] [0m[33mNET: [0mRegistered PF_NETLINK/PF_ROUTE protocol family
+[32m[    0.479007] [0m[33mthermal_sys: [0mRegistered thermal governor 'step_wise'
+[32m[    0.480931] [0m[33mcpuidle: [0musing governor ladder
+[32m[    0.486771] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff]
+[32m[    0.486997] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry
+[32m[    0.487195] [0m[33mPCI: [0mUsing configuration type 1 for base access
+[32m[    0.492060] [0mCallback from call_rcu_tasks_trace() invoked.
+[32m[    0.511617] [0m[33mACPI: [0mAdded _OSI(Module Device)
+[32m[    0.511650] [0m[33mACPI: [0mAdded _OSI(Processor Device)
+[32m[    0.511657] [0m[33mACPI: [0mAdded _OSI(Processor Aggregator Device)
+[32m[    0.942148] [0m[33mACPI: [0m1 ACPI AML tables successfully acquired and loaded
+[32m[    0.993940] [0m[33mACPI: [0m\_SB_: platform _OSC: OS support mask [000a7eee]
+[32m[    1.024541] [0m[33mACPI: [0mInterpreter enabled
+[32m[    1.034873] [0mCallback from call_rcu_tasks() invoked.
+[32m[    1.045629] [0m[33mACPI: [0mPM: (supports S0 S3 S5)
+[32m[    1.045667] [0m[33mACPI: [0mUsing IOAPIC for interrupt routing
+[32m[    1.047399] [0m[33mPCI: [0mUsing host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[32m[    1.047414] [0m[33mPCI: [0mUsing E820 reservations for host bridge windows
+[32m[    1.064014] [0m[33mACPI: [0mEnabled 2 GPEs in block 00 to 3F
+[32m[    1.582001] [0m[33mACPI: [0mPCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[32m[    1.582167] [0m[33macpi PNP0A08:00: [0m_OSC: OS supports [ExtendedConfig ASPM ClockPM Segments HPX-Type3]
+[32m[    1.582179] [0m[33macpi PNP0A08:00: [0mPCIe port services disabled; not requesting _OSC control
+[32m[    1.611987] [0mPCI host bridge to bus 0000:00
+[32m[    1.612707] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0000-0x0cf7 window]
+[32m[    1.612769] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0d00-0xffff window]
+[32m[    1.612820] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x000a0000-0x000bffff window]
+[32m[    1.612865] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x10000000-0xafffffff window]
+[32m[    1.612909] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0xc0000000-0xfebfffff window]
+[32m[    1.612953] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x100000000-0x8ffffffff window]
+[32m[    1.613004] [0m[33mpci_bus 0000:00: [0mroot bus resource [bus 00-ff]
+[32m[    1.613047] [0m[33macpi PNP0A08:00: [0mOS native features: SHPCHotplug- PCIeHotplug- PME- AER- DPC- LTR-
+[32m[    1.613535] [0m[33mpci 0000:00:00.0: [0m[8086:29c0] type 00 class 0x060000 conventional PCI endpoint
+[32m[    1.645242] [0m[33mpci 0000:00:01.0: [0m[1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+[32m[    1.648725] [0m[33mpci 0000:00:01.0: [0mBAR 0 [io  0xc000-0xc03f]
+[32m[    1.648780] [0m[33mpci 0000:00:01.0: [0mBAR 1 [mem 0xfebfd000-0xfebfdfff]
+[32m[    1.650546] [0m[33mpci 0000:00:01.0: [0mBAR 4 [mem 0xfebf4000-0xfebf7fff 64bit pref]
+[32m[    1.665097] [0m[33mpci 0000:00:02.0: [0m[1af4:1009] type 00 class 0x000200 conventional PCI endpoint
+[32m[    1.668913] [0m[33mpci 0000:00:02.0: [0mBAR 0 [io  0xc040-0xc07f]
+[32m[    1.668968] [0m[33mpci 0000:00:02.0: [0mBAR 1 [mem 0xfebfe000-0xfebfefff]
+[32m[    1.669106] [0m[33mpci 0000:00:02.0: [0mBAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]
+[32m[    1.689293] [0m[33mpci 0000:00:1f.0: [0m[8086:2918] type 00 class 0x060100 conventional PCI endpoint
+[32m[    1.691695] [0m[33mpci 0000:00:1f.0: [0mquirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO
+[32m[    1.705906] [0m[33mpci 0000:00:1f.2: [0m[8086:2922] type 00 class 0x010601 conventional PCI endpoint
+[32m[    1.708587] [0m[33mpci 0000:00:1f.2: [0mBAR 4 [io  0xc0c0-0xc0df]
+[32m[    1.708641] [0m[33mpci 0000:00:1f.2: [0mBAR 5 [mem 0xfebff000-0xfebfffff]
+[32m[    1.723473] [0m[33mpci 0000:00:1f.3: [0m[8086:2930] type 00 class 0x0c0500 conventional PCI endpoint
+[32m[    1.725700] [0m[33mpci 0000:00:1f.3: [0mBAR 4 [io  0x0700-0x073f]
+[32m[    1.737239] [0m[33mpci_bus 0000:00: [0mon NUMA node 0
+[32m[    1.775201] [0m[33mACPI: [0mPCI: Interrupt link LNKA configured for IRQ 10
+[32m[    1.789013] [0m[33mACPI: [0mPCI: Interrupt link LNKB configured for IRQ 10
+[32m[    1.801091] [0m[33mACPI: [0mPCI: Interrupt link LNKC configured for IRQ 11
+[32m[    1.816700] [0m[33mACPI: [0mPCI: Interrupt link LNKD configured for IRQ 11
+[32m[    1.839147] [0m[33mACPI: [0mPCI: Interrupt link LNKE configured for IRQ 10
+[32m[    1.853127] [0m[33mACPI: [0mPCI: Interrupt link LNKF configured for IRQ 10
+[32m[    1.869659] [0m[33mACPI: [0mPCI: Interrupt link LNKG configured for IRQ 11
+[32m[    1.885718] [0m[33mACPI: [0mPCI: Interrupt link LNKH configured for IRQ 11
+[32m[    1.888638] [0m[33mACPI: [0mPCI: Interrupt link GSIA configured for IRQ 16
+[32m[    1.890280] [0m[33mACPI: [0mPCI: Interrupt link GSIB configured for IRQ 17
+[32m[    1.892157] [0m[33mACPI: [0mPCI: Interrupt link GSIC configured for IRQ 18
+[32m[    1.893630] [0m[33mACPI: [0mPCI: Interrupt link GSID configured for IRQ 19
+[32m[    1.897108] [0m[33mACPI: [0mPCI: Interrupt link GSIE configured for IRQ 20
+[32m[    1.898876] [0m[33mACPI: [0mPCI: Interrupt link GSIF configured for IRQ 21
+[32m[    1.900520] [0m[33mACPI: [0mPCI: Interrupt link GSIG configured for IRQ 22
+[32m[    1.902190] [0m[33mACPI: [0mPCI: Interrupt link GSIH configured for IRQ 23
+[32m[    1.959587] [0m[33miommu: [0mDefault domain type: Translated
+[32m[    1.959607] [0m[33miommu: [0mDMA domain TLB invalidation policy: lazy mode
+[32m[    1.960659] [0m[33mACPI: [0mbus type USB registered
+[32m[    1.962028] [0m[33musbcore: [0mregistered new interface driver usbfs
+[32m[    1.962520] [0m[33musbcore: [0mregistered new interface driver hub
+[32m[    1.963977] [0m[33musbcore: [0mregistered new device driver usb
+[32m[    1.965428] [0m[33mpps_core: [0mLinuxPPS API ver. 1 registered
+[32m[    1.965441] [0m[33mpps_core: [0mSoftware ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[32m[    1.965737] [0mPTP clock support registered
+[32m[    1.975284] [0m[33mBluetooth: [0mCore ver 2.22
+[32m[    1.975652] [0m[33mNET: [0mRegistered PF_BLUETOOTH protocol family
+[32m[    1.975663] [0m[33mBluetooth: [0mHCI device and connection manager initialized
+[32m[    1.975768] [0m[33mBluetooth: [0mHCI socket layer initialized
+[32m[    1.975808] [0m[33mBluetooth: [0mL2CAP socket layer initialized
+[32m[    1.975970] [0m[33mBluetooth: [0mSCO socket layer initialized
+[32m[    1.978303] [0m[33mPCI: [0mUsing ACPI for IRQ routing
+[32m[    2.248393] [0m[33mPCI: [0mpci_cache_line_size set to 64 bytes
+[32m[    2.248783] [0m[33me820: [0mregister RAM buffer resource [mem 0x0009fc00-0x0009ffff]
+[32m[    2.248922] [0m[33me820: [0mregister RAM buffer resource [mem 0x0ffe0000-0x0fffffff]
+[32m[    2.254117] [0m[33mvgaarb: [0mloaded
+[32m[    2.266801] [0m[33mclocksource: [0mSwitched to clocksource kvm-clock
+[32m[    2.432832] [0m[33macpi PNP0C01:00: [0mReserved [mem 0xb0000000-0xbfffffff]
+[32m[    2.433630] [0m[33mpnp: [0mPnP ACPI init
+[32m[    2.476944] [0m[33mpnp: [0mPnP ACPI: found 3 devices
+[32m[    2.484319] [0m[33mclocksource: [0macpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[32m[    2.486851] [0m[33mNET: [0mRegistered PF_INET protocol family
+[32m[    2.487582] [0m[33mIP idents hash table entries: [0m2048 (order: 2, 16384 bytes, linear)
+[32m[    2.491423] [0m[33mtcp_listen_portaddr_hash hash table entries: [0m64 (order: 1, 4608 bytes, linear)
+[32m[    2.491478] [0m[33mTable-perturb hash table entries: [0m65536 (order: 6, 262144 bytes, linear)
+[32m[    2.491911] [0m[33mTCP established hash table entries: [0m1024 (order: 1, 8192 bytes, linear)
+[32m[    2.492028] [0m[33mTCP bind hash table entries: [0m1024 (order: 6, 147456 bytes, linear)
+[32m[    2.492113] [0m[33mTCP: [0mHash tables configured (established 1024 bind 1024)
+[32m[    2.492837] [0m[33mUDP hash table entries: [0m256 (order: 4, 65536 bytes, linear)
+[32m[    2.494429] [0m[33mNET: [0mRegistered PF_UNIX/PF_LOCAL protocol family
+[32m[    2.494720] [0m[33mpci_bus 0000:00: [0mresource 4 [io  0x0000-0x0cf7 window]
+[32m[    2.494736] [0m[33mpci_bus 0000:00: [0mresource 5 [io  0x0d00-0xffff window]
+[32m[    2.494746] [0m[33mpci_bus 0000:00: [0mresource 6 [mem 0x000a0000-0x000bffff window]
+[32m[    2.494756] [0m[33mpci_bus 0000:00: [0mresource 7 [mem 0x10000000-0xafffffff window]
+[32m[    2.494766] [0m[33mpci_bus 0000:00: [0mresource 8 [mem 0xc0000000-0xfebfffff window]
+[32m[    2.494776] [0m[33mpci_bus 0000:00: [0mresource 9 [mem 0x100000000-0x8ffffffff window]
+[32m[    2.495867] [0m[33mPCI: [0mCLS 0 bytes, default 64
+[32m[    2.497604] [0m[33mNET: [0mRegistered PF_INET6 protocol family
+[32m[    2.520035] [0mSegment Routing with IPv6
+[32m[    2.520608] [0mIn-situ OAM (IOAM) with IPv6
+[32m[    2.521911] [0m[33mclocksource: [0mtsc: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+[32m[    2.539549] [0m[33mworkingset: [0mtimestamp_bits=62 (anon: 57) max_order=15 bucket_order=0 (anon: 0)
+[32m[    2.542538] [0m[33mfuse: [0minit (API version 7.47)
+[32m[    2.544826] [0m[33m9p: [0mInstalling v9fs 9p2000 file system support
+[32m[    2.545440] [0m[33mNET: [0mRegistered PF_ALG protocol family
+[32m[    2.546036] [0mio scheduler mq-deadline registered
+[32m[    2.546049] [0mio scheduler kyber registered
+[32m[    2.550949] [0m[33minput: [0mPower Button as /devices/platform/LNXPWRBN:00/input/input0
+[32m[    2.553611] [0m[33mACPI: [0mbutton: Power Button [PWRF]
+[32m[    2.670540] [0m[33mACPI: [0m\_SB_.GSIF: Enabled at IRQ 21
+[32m[    2.778943] [0m[33mACPI: [0m\_SB_.GSIG: Enabled at IRQ 22
+[32m[    3.404098] [0m[33mSerial: [0m8250/16550 driver, 4 ports, IRQ sharing disabled
+[32m[    3.413406] [0m[33m00:02: [0mttyS0 I/O:0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[32m[    3.523657] [0m[33mdummy_hcd dummy_hcd.0: [0mUSB Host+Gadget Emulator, driver 02 May 2005
+[32m[    3.523840] [0m[33mdummy_hcd dummy_hcd.0: [0mDummy host controller
+[32m[    3.532499] [0m[33mdummy_hcd dummy_hcd.0: [0mnew USB bus registered, assigned bus number 1
+[32m[    3.536065] [0m[33mprintk: [0mlegacy console [hvc0] enabled
+[32m[    3.536079] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] disabled
+[32m[    3.536983] [0m[33musb usb1: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    3.539570] [0m[33musb usb1: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    3.539587] [0m[33musb usb1: [0mProduct: Dummy host controller
+[32m[    3.539595] [0m[33musb usb1: [0mManufacturer: Linux 7.3.0-g8b370c404f80 dummy_hcd
+[32m[    3.539602] [0m[33musb usb1: [0mSerialNumber: dummy_hcd.0
+[32m[    3.549870] [0m[33mhub 1-0:1.0: [0mUSB hub found
+[32m[    3.550656] [0m[33mhub 1-0:1.0: [0m1 port detected
+[32m[    3.569005] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    3.571442] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 2
+[32m[    3.572474] [0m[33mvhci_hcd vhci_hcd.0: [0mcreated sysfs vhci_hcd.0
+[32m[    3.572983] [0m[33musb usb2: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    3.576008] [0m[33musb usb2: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    3.576175] [0m[33musb usb2: [0mProduct: USB/IP Virtual Host Controller
+[32m[    3.576188] [0m[33musb usb2: [0mManufacturer: Linux 7.3.0-g8b370c404f80 vhci_hcd
+[32m[    3.576197] [0m[33musb usb2: [0mSerialNumber: vhci_hcd.0
+[32m[    3.584394] [0m[33mhub 2-0:1.0: [0mUSB hub found
+[32m[    3.585409] [0m[33mhub 2-0:1.0: [0m8 ports detected
+[32m[    3.613885] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    3.618465] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 3
+[32m[    3.619777] [0m[33musb usb3: [0mWe don't know the algorithms for LPM for this host, disabling LPM.
+[32m[    3.619790] [0m[33musb usb3: [0mNew USB device found: idVendor=1d6b, idProduct=0003, bcdDevice=7.03
+[32m[    3.622062] [0m[33musb usb3: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    3.622077] [0m[33musb usb3: [0mProduct: USB/IP Virtual Host Controller
+[32m[    3.622086] [0m[33musb usb3: [0mManufacturer: Linux 7.3.0-g8b370c404f80 vhci_hcd
+[32m[    3.622094] [0m[33musb usb3: [0mSerialNumber: vhci_hcd.0
+[32m[    3.629457] [0m[33mhub 3-0:1.0: [0mUSB hub found
+[32m[    3.630147] [0m[33mhub 3-0:1.0: [0m8 ports detected
+[32m[    3.668107] [0m[33mi8042: [0mPNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[32m[    3.679197] [0m[33mserio: [0mi8042 KBD port at 0x60,0x64 irq 1
+[32m[    3.679444] [0m[33mserio: [0mi8042 AUX port at 0x60,0x64 irq 12
+[32m[    3.684498] [0m[33mBluetooth: [0mHCI UART driver ver 2.3
+[32m[    3.684515] [0m[33mBluetooth: [0mHCI UART protocol H4 registered
+[32m[    3.684522] [0m[33mBluetooth: [0mHCI UART protocol BCSP registered
+[32m[    3.684805] [0m[33mBluetooth: [0mHCI UART protocol LL registered
+[32m[    3.684813] [0m[33mBluetooth: [0mHCI UART protocol ATH3K registered
+[32m[    3.685095] [0m[33mBluetooth: [0mHCI UART protocol Three-wire (H5) registered
+[32m[    3.685376] [0m[33mBluetooth: [0mHCI UART protocol QCA registered
+[32m[    3.685383] [0m[33mBluetooth: [0mHCI UART protocol AG6XX registered
+[32m[    3.685647] [0m[33mBluetooth: [0mHCI UART protocol Marvell registered
+[32m[    3.685905] [0m[33mBluetooth: [0mHCI UART protocol AML registered
+[32m[    3.686271] [0m[33musbcore: [0mregistered new interface driver bcm203x
+[32m[    3.690650] [0m[33musbcore: [0mregistered new interface driver bpa10x
+[32m[    3.691032] [0m[33musbcore: [0mregistered new interface driver bfusb
+[32m[    3.691354] [0m[33musbcore: [0mregistered new interface driver btusb
+[32m[    3.692390] [0m[33musbcore: [0mregistered new interface driver ath3k
+[32m[    3.693781] [0m[33mhid: [0mraw HID events driver (C) Jiri Kosina
+[32m[    3.695505] [0m[33mclocksource: [0mWatchdog remote CPU 1 read timed out
+[32m[    3.699930] [0m[33minput: [0mAT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+[32m[    3.701856] [0m[33musbcore: [0mregistered new interface driver usbhid
+[32m[    3.701870] [0m[33musbhid: [0mUSB HID core driver
+[32m[    3.702856] [0m[33msit: [0mIPv6, IPv4 and MPLS over IPv4 tunneling driver
+[32m[    3.715189] [0m[33mNET: [0mRegistered PF_PACKET protocol family
+[32m[    3.717562] [0m[33mBluetooth: [0mRFCOMM socket layer initialized
+[32m[    3.717673] [0m[33mBluetooth: [0mRFCOMM ver 1.11
+[32m[    3.717755] [0m[33mBluetooth: [0mBNEP (Ethernet Emulation) ver 1.3
+[32m[    3.717800] [0m[33mBluetooth: [0mBNEP socket layer initialized
+[32m[    3.717807] [0m[33mBluetooth: [0mHIDP (Human Interface Emulation) ver 1.2
+[32m[    3.717842] [0m[33mBluetooth: [0mHIDP socket layer initialized
+[32m[    3.718295] [0m[33m9pnet: [0mInstalling 9P2000 support
+[32m[    3.737450] [0m[33mIPI shorthand broadcast: [0menabled
+[32m[    3.903928] [0m[33msched_clock: [0mMarking stable (3892752923, 9093904)->(3917446254, -15599427)
+[32m[    4.117020] [0m[33mkmemleak: [0mKernel memory leak detector initialized (mem pool available: 158508)
+[32m[    4.350669] [0m[33minput: [0mImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[32m[    4.362529] [0m[33m9p: [0m[31mBad value for 'source'[0m
+[32m[    4.385486] [0m[33mVFS: [0mMounted root (9p filesystem) readonly on device 0:18.
+[32m[    4.390543] [0m[33mVFS: [0mPivoted into new rootfs
+[32m[    4.396137] [0m[33mFreeing unused kernel image (initmem) memory: [0m4132K
+[32m[    4.396167] [0m[33mWrite protecting the kernel read-only data: [0m38912k
+[32m[    4.400819] [0m[33mFreeing unused kernel image (text/rodata gap) memory: [0m1264K
+[32m[    4.405371] [0m[33mFreeing unused kernel image (rodata/data gap) memory: [0m1304K
+[32m[    4.496612] [0m[33mx86/mm: [0mChecked W+X mappings: passed, no W+X pages found.
+[32m[    4.496714] [0mRun /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+[32m[    4.496724] [0m  with arguments:
+[32m[    4.496731] [0m    /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+[32m[    4.496738] [0m    -I
+[32m[    4.496744] [0m    kml
+[32m[    4.496750] [0m    --mode
+[32m[    4.496756] [0m    healthy
+[32m[    4.496761] [0m    --inject
+[32m[    4.496767] [0m    1
+[32m[    4.496772] [0m    --expect-no-leak'
+[32m[    4.496779] [0m  with environment:
+[32m[    4.496784] [0m    HOME=/
+[32m[    4.496790] [0m    TERM=linux
+[32m[    4.496796] [0m    TESTHOME=/root/exp
+[32m[    4.496802] [0m    TESTDBUS=0
+[32m[    4.496808] [0m    TESTDAEMON=0
+[32m[    4.496813] [0m    TESTDBUSSESSION=0
+[32m[    4.497283] [0m    XDG_RUNTIME_DIR=/run/user/0
+[32m[    4.497293] [0m    TESTMONITOR=0
+[32m[    4.497300] [0m    TESTEMULATOR=0
+[32m[    4.497305] [0m    TESTDEVS=0
+[32m[    4.497311] [0m    TESTAUTO=0
+[32m[    4.497316] [0m    TESTAUDIO=''
+[32m[    4.497322] [0m    TESTARGS='python3
+[32m[    7.096168] [0m[33mrandom: [0mcrng init done
+[32m[   11.082327] [0m[33mvhci_hcd vhci_hcd.0: [0mpdev(0) rhport(0) sockfd(4)
+[32m[   11.082360] [0m[33mvhci_hcd vhci_hcd.0: [0mdevid(65538) speed(2) speed_str(full-speed)
+[32m[   11.082539] [0m[33mvhci_hcd vhci_hcd.0: [0mDevice attached
+[32m[   11.085070] [0m[33musb usb2: [0musb wakeup-resume
+[32m[   11.085196] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   11.088242] [0m[33musb usb2-port1: [0mstatus 0101 change 0001
+[32m[   11.192767] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0002 evt 0000
+[32m[   11.193313] [0m[33musb usb2-port1: [0mstatus 0101, change 0000, 12 Mb/s
+[32m[   11.256962] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[   11.319645] [0m[33musb 2-1: [0mnew full-speed USB device number 2 using vhci_hcd
+[32m[   11.395067] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[   11.450572] [0m[33musb 2-1: [0mSetAddress Request (2) to port 0
+[32m[   11.471284] [0m[33musb 2-1: [0mNew USB device found: idVendor=13d3, idProduct=3503, bcdDevice=0.01
+[32m[   11.476055] [0m[33musb 2-1: [0mudev 2, busnum 2, minor = 129
+[32m[   11.476079] [0m[33musb 2-1: [0mNew USB device strings: Mfr=0, Product=0, SerialNumber=0
+[32m[   11.486114] [0m[33musb 2-1: [0musb_probe_device
+[32m[   11.500925] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface
+[32m[   11.500963] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface - got id
+[32m[   11.532587] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   11.540191] [0m[33mBluetooth: [0m[1mhci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.[0m
+[32m[   11.550780] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.565244] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.569164] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.579034] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.586996] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.602496] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.611435] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.616864] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.622077] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.672182] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.679796] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.689986] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.696316] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.707689] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.730598] [0m[33mBluetooth: [0mMGMT ver 1.23
+[32m[   11.731755] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   11.740932] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   13.994024] [0mintf ffff8880034ab000
+[32m[   13.996594] [0m[33mvhci_hcd: [0munlink->seqnum 63
+[32m[   13.996665] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   14.005784] [0m[33mvhci_hcd: [0munlink->seqnum 64
+[32m[   14.005840] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   14.012352] [0m[33mvhci_hcd: [0munlink->seqnum 65
+[32m[   14.012409] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   14.012564] [0mintf ffff88800364a000
+[32m[   14.021660] [0m[33musb 2-1: [0musb auto-suspend, wakeup 1
+[32m[   14.045126] [0m[33mhub 2-0:1.0: [0mhub_suspend
+[32m[   23.746945] [0m[33mbt17-emu: [0m[1mSet Device Class minor 12 sent at mono 23.737424[0m
+[32m[   23.753333] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   23.753954] [0m[33mhub 2-0:1.0: [0mhub_resume
+[32m[   23.754493] [0m[33musb usb2-port1: [0mstatus 0107 change 0000
+[32m[   23.756636] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   23.757504] [0m[33musb 2-1: [0musb auto-resume
+[32m[   23.799520] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   23.817446] [0m[33musb 2-1: [0mWaited 0ms for CONNECT
+[32m[   23.817469] [0m[33musb 2-1: [0mfinish resume
+[32m[   23.845419] [0mintf ffff88800364a000
+[32m[   23.845445] [0mintf ffff8880034ab000
+[32m[   23.845685] [0m[33mBluetooth: [0mhci0: bt24-dbg: deferred anchor empty
+[32m[   23.845700] [0m[33mbtusb 2-1:1.1: [0m[31mresume error -12[0m
+[32m[   25.769462] [0m[33mBluetooth: [0m[31mhci0: command 0x0c24 tx timeout[0m
+[32m[   25.770686] [0m[33mBluetooth: [0m[31mhci0: Opcode 0x0c24 failed: -110[0m
+[32m[   25.771758] [0m[33mBluetooth: [0m[31mhci0: Resetting usb device.[0m
+[32m[   25.771948] [0mhci0 cmd_cnt 1 cmd queued 0
+[32m[   25.772073] [0m[33mbtusb 2-1:1.0: [0mforced unbind
+[32m[   25.772306] [0mintf ffff88800364a000
+[32m[   25.827548] [0mintf ffff8880034ab000
+[32m[   25.904167] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[   25.909537] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0002
+[32m[   25.969582] [0m[33musb 2-1: [0mreset full-speed USB device number 2 using vhci_hcd
+[32m[   26.051813] [0m[33mvhci_hcd vhci_hcd.0: [0m[31mvhci_device speed not set[0m
+[32m[   26.118815] [0m[33musb 2-1: [0mSetAddress Request (2) to port 0
+[32m[   26.191191] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface
+[32m[   26.191217] [0m[33mbtusb 2-1:1.0: [0musb_probe_interface - got id
+[32m[   26.195180] [0m[33mhub 2-0:1.0: [0mstate 7 ports 8 chg 0000 evt 0000
+[32m[   26.260267] [0m[33mBluetooth: [0m[1mhci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.[0m
+[32m[   26.277011] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.287686] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.312391] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.330169] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.350640] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.429957] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.457365] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.488522] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.514165] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.707899] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.726162] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.734939] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.753890] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   26.762131] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   28.811888] [0mhci0 cmd_cnt 1 cmd queued 1
+[32m[   28.875097] [0m[33mvhci_hcd: [0munlink->seqnum 128
+[32m[   28.875148] [0m[33mvhci_hcd: [0murb->status -104
+[32m[   28.900950] [0m[33mvhci_hcd: [0munlink->seqnum 129
+[32m[   28.901008] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   28.921069] [0m[33mvhci_hcd: [0munlink->seqnum 130
+[32m[   28.921125] [0m[33mvhci_hcd: [0murb->status 0
+[32m[   30.924964] [0mintf ffff8880034ab000
+[32m[   30.925000] [0mintf ffff88800364a000
+[32m[   30.926042] [0m[33musb 2-1: [0musb auto-suspend, wakeup 0
+[32m[   30.938718] [0m[33mhub 2-0:1.0: [0mhub_suspend
+  32.904 [mono  43.905211] FAIL kml
+  32.905 [mono  43.906117] BT17-EXIT 1
+Process 73 exited with status 0
+Process 59 exited with status 1
+exit=0 end 2026-11-14 03:06:58

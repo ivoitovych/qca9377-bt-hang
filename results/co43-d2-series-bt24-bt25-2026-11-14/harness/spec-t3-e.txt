@@ -1,0 +1,16 @@
+e-kml-dbg k-healthy-1 kml --mode healthy --expect-no-leak
+e-kml-dbg k-inject1-1 kml --mode healthy --inject 1 --expect-no-leak
+e-kml-dbg k-inject1-2 kml --mode healthy --inject 1 --expect-no-leak
+e-kml-dbg k-inject1-3 kml --mode healthy --inject 1 --expect-no-leak
+e-kml-dbg k-inject2-1 kml --mode healthy --inject 2 --expect-no-leak
+e-kml-dbg k-inject2-2 kml --mode healthy --inject 2 --expect-no-leak
+e-kml-dbg k-inject2-3 kml --mode healthy --inject 2 --expect-no-leak
+e-kml-dbg k-dead-1 kml --mode dead --fail-at 1 --expect-no-leak
+e-kml-dbg k-dead-2 kml --mode dead --fail-at 1 --expect-no-leak
+e-kml-dbg k-dead-3 kml --mode dead --fail-at 1 --expect-no-leak
+e-kml-dbg k-deadoff-1 kml --mode dead-off --fail-at 1 --expect-no-leak
+e-kml-dbg k-deadoff-2 kml --mode dead-off --fail-at 1 --expect-no-leak
+e-kml-dbg k-deadoff-3 kml --mode dead-off --fail-at 1 --expect-no-leak
+e-kml-dbg k-bt24-1 bt24 --delay 2500
+e-kml-dbg k-bt24-2 bt24 --delay 2500
+e-kml-dbg k-bt24-3 bt24 --delay 2500

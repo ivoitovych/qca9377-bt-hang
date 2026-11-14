@@ -1,0 +1,18 @@
+ab2dv2 v-dead-1 bt17 --fail-at 1
+ab2dv2 v-recover-1 bt17 --fail-at 1 --recover
+ab2dv2 v-close-1 close-recover --fail-at 1 --recover
+ab2dv2 v-dropcmd-1 dropcmd
+ab2dv2 v-wedge-1 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dv2 v-cycles-1 cycles --cycles 30
+ab2dv2 v-dead-2 bt17 --fail-at 1
+ab2dv2 v-recover-2 bt17 --fail-at 1 --recover
+ab2dv2 v-close-2 close-recover --fail-at 1 --recover
+ab2dv2 v-dropcmd-2 dropcmd
+ab2dv2 v-wedge-2 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dv2 v-cycles-2 cycles --cycles 30
+ab2dv2 v-dead-3 bt17 --fail-at 1
+ab2dv2 v-recover-3 bt17 --fail-at 1 --recover
+ab2dv2 v-close-3 close-recover --fail-at 1 --recover
+ab2dv2 v-dropcmd-3 dropcmd
+ab2dv2 v-wedge-3 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dv2 v-cycles-3 cycles --cycles 30

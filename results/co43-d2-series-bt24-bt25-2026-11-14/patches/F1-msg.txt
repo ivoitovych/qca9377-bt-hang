@@ -1,0 +1,19 @@
+Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+
+When btusb_resume() cannot submit the interrupt or bulk URB, it
+scuttles the deferred anchor without txlock and only then clears
+BTUSB_SUSPENDING under it. A sender that takes txlock in between still
+sees the flag, anchors its URB on data->deferred and schedules the
+waker, which finds an active device and does nothing. The URB stays
+parked until the next suspend and resume, and an HCI command in it
+times out.
+
+Do both under txlock, so that a sender either anchors its URB before
+the scuttle, and the URB is dropped with the others, or sees the flag
+cleared and submits it. btusb_resume() already takes the anchor's lock
+inside txlock, so the lock order does not change.
+
+The two failure branches now share the label that ends a resume with
+HCI closed, and scuttle only when an error was returned.
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")

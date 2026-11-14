@@ -1,0 +1,47 @@
+Bluetooth: btusb: Don't wait for a resume in the HCI command timeout
+
+hci_cmd_timeout() calls hdev->reset() on the ordered HCI workqueue and
+restores the command credit only when it returns. btusb_reset() first
+takes a runtime PM reference with usb_autopm_get_interface(). If the
+command timed out because the device is still resuming, that call
+waits for the resume to end. When the device does not answer, the USB
+core spends more than five seconds on it (the GET_STATUS timeout, then
+a reset-resume and its retries), and the HCI workqueue, including RX
+and TX work, is blocked all that time.
+
+A command that is parked on the deferred anchor never reached the
+controller, and the failed resume belongs to the USB core: it resets
+the device and disconnects it if that fails too. A command whose
+transfer completed is different: the controller did not answer it, and
+the reset is the recovery for that, even if the device has
+autosuspended since.
+
+Mark a command that is parked on the deferred anchor with
+BTUSB_CMD_DEFERRED, set and cleared under txlock where the anchor is
+filled and drained. btusb_reset() then returns at once when the flag
+is set. Otherwise it queues a work item, which takes the runtime PM
+reference, where waiting is harmless, and resets the device as before.
+The work is cancelled in btusb_disconnect() once hci_unregister_dev()
+has stopped the HCI workqueues, before BTUSB_RESET is examined and the
+data is freed.
+
+Two things change for the device:
+
+- The command credit is restored at once, so each command queued while
+  the device resumes times out on its own, about two seconds apart,
+  instead of one timeout blocking the queue.
+
+- btusb_reset() no longer resets a device that is resuming. When the
+  USB core's reset-resume succeeds, that second reset used to be what
+  unbound and rebound btusb: btusb has no reset_resume callback, and
+  the core does not rebind after a runtime resume. Without
+  "Bluetooth: btusb: Recover after a runtime reset-resume" such a
+  device stays bound but is never resumed, and Bluetooth stays dead.
+  This patch depends on that one.
+
+Seen with an emulated QCA9377 (13d3:3503) in a QEMU guest: the credit
+came back within a few milliseconds instead of after 5.4 s; a command
+whose event was dropped, with the device autosuspended before the
+timeout, was still reset, and so was a controller that stayed silent
+until it was reset; with the dependency above missing, a device that
+answered again after the reset-resume stayed dead in 3 of 3 runs.

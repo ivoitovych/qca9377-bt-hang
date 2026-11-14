@@ -70,5 +70,17 @@ D (not as a fix); a lane is working on the harness fixes, B2 and a narrowed D (`
 - **D narrowed** to a runtime suspend, with a PM reference held: runtime path 18/18; with the
   queued reset delayed past the autosuspend delay, wide D lost the reset 3/3 (Bluetooth still
   worked, without the reset and rebinding), narrowed D kept it 3/3.
+
+## 2026-11-14 — D v2, the series, BT-24 and BT-25 (`results/co43-d2-series-bt24-bt25-2026-11-14/`)
+
+- **D v2** queues its reset only inside a runtime resume (`RPM_RESUMING`); by the core's code a
+  system resume, and a device already runtime-suspended at system sleep, no longer queue it.
+  Runtime 18/18, delayed reset 3/3. System path: by reading only.
+- **Series A + B2 + D v2** exported with a cover letter stating that B2 needs D. B2 conflicts
+  with E: if E goes first, B2 is rebased.
+- **BT-25 fixed and shown:** kmemleak finds leaked HCI command skbs in 11 of 12 fault runs on E
+  alone, none with the fix (12/12).
+- **BT-24 fixed and shown on the B2 tree** (not reachable on E alone): a parked URB 3/3 unfixed,
+  none 3/3 fixed.
   Open: a device already runtime-suspended at system sleep still queues the reset at system
   resume (source reading), so the system path is not yet unchanged; untestable on `vhci_hcd`.

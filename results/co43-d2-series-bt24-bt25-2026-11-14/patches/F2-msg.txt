@@ -1,0 +1,23 @@
+Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+
+A URB parked on data->deferred owns the skb it carries (urb->context)
+and, for an HCI command, its setup packet. Both are freed by
+btusb_tx_complete(), which does not run for a URB that is discarded
+instead of sent. The four places that discard one free neither, or
+only the setup packet:
+
+- btusb_close() and the failure path of btusb_resume() call
+  usb_scuttle_anchored_urbs(), which only unanchors the URBs;
+- play_deferred() frees the URB and the setup packet when a submission
+  fails and for the URBs left after that, but not the skb.
+
+With an emulated device that stopped answering, a command deferred
+across a close or a failed resume left a skb and an 8-byte setup packet
+reported by kmemleak each time.
+
+Free the skb and the setup packet with the URB at all four places.
+This runs under txlock with interrupts off in two of them, so use
+dev_kfree_skb_any().
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+Fixes: 19cfe912c37b ("Bluetooth: btusb: Fix memory leak in play_deferred")
