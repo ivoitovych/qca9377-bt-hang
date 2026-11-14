@@ -1,0 +1,21 @@
+tag v5.15.225 = 29c6cdaac04a6989a7ed4ae4275ce4244e617f58  2026-11-14 01:51:17 UTC
+Auto-merging include/net/bluetooth/l2cap.h
+Auto-merging net/bluetooth/l2cap_core.c
+[detached HEAD 5c99a761f2] Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+ Author: Pauli Virtanen <pav@iki.fi>
+ Date: Sat Aug 29 17:19:57 2026 +0300
+ 2 files changed, 73 insertions(+), 5 deletions(-)
+cherry-pick of 608e0b7a675b2 rc=0
+Auto-merging net/bluetooth/l2cap_sock.c
+CONFLICT (content): Merge conflict in net/bluetooth/l2cap_sock.c
+error: could not apply 32d86e048d... Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+hint: After resolving the conflicts, mark them with
+hint: "git add/rm <pathspec>", then run
+hint: "git cherry-pick --continue".
+hint: You can instead skip this commit with "git cherry-pick --skip".
+hint: To abort and get back to the state before "git cherry-pick",
+hint: run "git cherry-pick --abort".
+cherry-pick of 32d86e048d8ef (after the first) rc=1
+UU net/bluetooth/l2cap_sock.c
+l2cap_chan_lock_conn in tree: 0
+l2cap_ecred_conn_rsp_defer in l2cap_core.c: 2

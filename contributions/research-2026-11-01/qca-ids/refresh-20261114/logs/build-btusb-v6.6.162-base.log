@@ -1,0 +1,27 @@
+  CC      scripts/mod/empty.o
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/modpost.o
+  CC      scripts/mod/devicetable-offsets.s
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/sumversion.o
+  HOSTCC  scripts/mod/symsearch.o
+  HOSTLD  scripts/mod/modpost
+  CC      kernel/bounds.s
+  CC      arch/x86/kernel/asm-offsets.s
+  CALL    scripts/checksyscalls.sh
+  DESCEND objtool
+  INSTALL libsubcmd_headers
+  CC [M]  drivers/bluetooth/btusb.o
+In file included from drivers/bluetooth/btusb.c:28:
+drivers/bluetooth/btmtk.h:232:13: warning: ‘btmtk_fw_get_filename’ defined but not used [-Wunused-function]
+  232 | static void btmtk_fw_get_filename(char *buf, size_t size, u32 dev_id,
+      |             ^~~~~~~~~~~~~~~~~~~~~
+drivers/bluetooth/btmtk.h:221:12: warning: ‘btmtk_register_coredump’ defined but not used [-Wunused-function]
+  221 | static int btmtk_register_coredump(struct hci_dev *hdev, const char *name,
+      |            ^~~~~~~~~~~~~~~~~~~~~~~
+drivers/bluetooth/btmtk.h:211:12: warning: ‘btmtk_setup_firmware’ defined but not used [-Wunused-function]
+  211 | static int btmtk_setup_firmware(struct hci_dev *hdev, const char *fwname,
+      |            ^~~~~~~~~~~~~~~~~~~~
+drivers/bluetooth/btmtk.h:205:12: warning: ‘btmtk_setup_firmware_79xx’ defined but not used [-Wunused-function]
+  205 | static int btmtk_setup_firmware_79xx(struct hci_dev *hdev, const char *fwname,
+      |            ^~~~~~~~~~~~~~~~~~~~~~~~~

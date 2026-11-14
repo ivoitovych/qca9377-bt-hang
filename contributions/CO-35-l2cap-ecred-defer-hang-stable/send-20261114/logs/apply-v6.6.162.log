@@ -1,0 +1,12 @@
+tag v6.6.162 = 5139929c698c273e07cb0635732f6a918a7b8e78  2026-11-14 01:27:54 UTC
+Applying: Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+Applying: Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+git am rc=0
+1125cef560 Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+7c1b9209eb Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+5139929c69 Linux 6.6.162
+ include/net/bluetooth/l2cap.h | 16 +++++++++++
+ net/bluetooth/l2cap_core.c    | 60 +++++++++++++++++++++++++++++++++++++----
+ net/bluetooth/l2cap_sock.c    | 62 +++++++++++++++++++++++++++++++------------
+ 3 files changed, 116 insertions(+), 22 deletions(-)
+APPLY-DONE v6.6.162

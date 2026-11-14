@@ -1,0 +1,33 @@
+tag v7.3.4 = 7595a62d45ee1a2297eafa5f2ef5d0a45142d84d  2026-11-14 01:27:15 UTC
+Auto-merging include/net/bluetooth/l2cap.h
+Auto-merging net/bluetooth/l2cap_core.c
+[detached HEAD 7601c5ce08] Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+ Author: Pauli Virtanen <pav@iki.fi>
+ Date: Sat Aug 29 17:19:57 2026 +0300
+ 2 files changed, 73 insertions(+), 5 deletions(-)
+Auto-merging net/bluetooth/l2cap_sock.c
+[detached HEAD 0fe07d390b] Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+ Author: Pauli Virtanen <pav@iki.fi>
+ Date: Sat Aug 29 17:20:02 2026 +0300
+ 1 file changed, 48 insertions(+), 20 deletions(-)
+cherry-pick rc=0
+0fe07d390b Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+7601c5ce08 Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+7595a62d45 Linux 7.3.4
+Auto-merging net/bluetooth/hci_event.c
+[detached HEAD c280936f3c] Bluetooth: Fix the LE Read Connection Interval response layout
+ Author: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+ Date: Tue Oct 13 09:58:32 2026 -0400
+ 2 files changed, 5 insertions(+), 12 deletions(-)
+sci cherry-pick rc=0
+c280936f3c Bluetooth: Fix the LE Read Connection Interval response layout
+0fe07d390b Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+7601c5ce08 Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+7595a62d45 Linux 7.3.4
+ include/net/bluetooth/hci.h   |  1 +
+ include/net/bluetooth/l2cap.h | 17 +++++++++++
+ net/bluetooth/hci_event.c     | 16 +++-------
+ net/bluetooth/l2cap_core.c    | 61 ++++++++++++++++++++++++++++++++++----
+ net/bluetooth/l2cap_sock.c    | 68 ++++++++++++++++++++++++++++++-------------
+ 5 files changed, 126 insertions(+), 37 deletions(-)
+APPLY-DONE v7.3.4

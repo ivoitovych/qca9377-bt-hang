@@ -1,0 +1,98 @@
+start 2026-11-14 02:00:40 UTC kernel /root/exp/agent-work/lane5-status-stable-20261114/co35/img/bzImage-v6.18.63-pair cpus 4 mode exact limit 180
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000003f862c4
+input_len: 0x0000000000e87569
+output: 0x0000000001000000
+output_len: 0x0000000003daf75c
+kernel_total_size: 0x0000000003a30000
+needed_size: 0x0000000003e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002b98ec0).
+Linux version 6.18.63-dirty (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Nov 14 03:00:19 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/qca9377-bt-hang/cache/co02-w2c-bluez/tools/test-runner TESTHOME=/root/exp/qca9377-bt-hang/cache/co02-w2c-bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/agent-work/lane5-status-stable-20261114/co35/case-accept2close1.sh'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff] usable
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff] reserved
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff] reserved
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff] reserved
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff] reserved
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9pnet_virtio: no channels available for device 
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/agent-work/lane5-status-stable-20261114/co35/case-accept2close1.sh
+Changing into directory /root/exp/qca9377-bt-hang/cache/co02-w2c-bluez
+New process 38 created
+
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+random: crng init done
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept deferred setup sk = 14[0m
+  [0;37mAccept deferred setup sk = 14[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+L2CAP Ext-Flowctl Server - Accept 2 Close 1          [0;32mPassed    [0m   1.242 seconds
+Total: 1, [0;32mPassed: 1 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 1.25 seconds
+Process 38 exited with status 0
+exit=0 end 2026-11-14 02:00:46 UTC

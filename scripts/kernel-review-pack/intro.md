@@ -51,8 +51,8 @@ Each item says which of these it had, and where the logs are in the repository.
 | 4 | CO-38: Read Advertising Features hides instances | bluetooth-next | 1 (+ BlueZ tests) |
 | 5 | CO-04: a use-after-free in `mesh_send_sync()` | bluetooth-next | 1 |
 | 6 | CO-05 + CO-26: `mesh_send_sync()` without `hdev->lock`, and a lost failed add | bluetooth-next | 2 + cover letter |
-| 7 | CO-35: the L2CAP ECRED deferred-accept hang, backported to stable | 6.18.y, 6.12.y, 6.6.y (and a request for 7.3.y) | 2 per line + covers |
-| 8 | CO-22: two ASUS QCA ROME device-table entries for stable | stable (request only) | — |
+| 7 | CO-35: the L2CAP ECRED deferred-accept hang, backported to stable (retested 2026-11-14) | 6.18.y, 6.12.y, 6.6.y (and a request for 7.3.y) | 2 per line + covers |
+| 8 | CO-22: two ASUS QCA ROME device-table entries for stable (rechecked 2026-11-14) | stable (request only) | — |
 | 9 | CO-21 (close to ready): btusb picks alternate setting 0 while a SCO link is up | bluetooth-next | 2 |
 
 Items 1 to 8 are ready to send. Item 9 passed its emulator test and the bot's checks except one

@@ -21,8 +21,9 @@ C43 = "contributions/CO-43-btusb-runtime-resume-failure/send-20261113"
 C38 = "contributions/CO-38-read-adv-features-hidden-instances/send-20261102"
 C04 = "contributions/CO-04-mesh-test-14888791/patch"
 C05 = "contributions/CO-05-mesh-adv-list-lock-i12/patch"
-C35 = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102"
-C22 = "contributions/research-2026-11-01/qca-ids/drafts"
+C35 = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail"
+C35R = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114"
+C22R = "contributions/research-2026-11-01/qca-ids/refresh-20261114"
 C21 = "contributions/CO-21-btusb-sco-alt-setting/patches-20261101"
 
 SECTIONS = [
@@ -152,39 +153,51 @@ release or queue (checked 2026-11-14).
 **This package:** a request that 7.3.y take the two commits as they are; backports of the pair for
 6.18.y, 6.12.y and 6.6.y as `[PATCH <line> 0/2]` series (code changed only where the older trees
 need it); and a separate request for 7.3.y to take `5874f8d03268`, without which plain v7.3 fails
-l2cap-tester's SCI cases for an unrelated reason. **Tested** (7.2.13 and v7.3, 2026-10-28): l2cap-
-tester 111/111 with the pair, the deferred-accept cases hang without it. 6.1.y, 5.15.y and 5.10.y
-also carry the bug and are not covered. **Being refreshed today on the current stable tips.**
+l2cap-tester's SCI cases for an unrelated reason (7.3.4 still lacks it). **Tested again on today's
+tips** (2026-11-14, QEMU, 4 CPUs, hung-task detector): "L2CAP Ext-Flowctl Server - Accept 2 Close
+1" hangs on unpatched v7.3.4, v6.18.63, v6.12.117 and v6.6.162 (7 hung-task reports each) and
+passes with the pair (1.0 to 1.2 s); the whole l2cap-tester with the pair: 7.3.4 111/111 with the
+SCI fix, and on the older lines the same non-passes as on 11-02 (18 "Set PHY" cases on 6.18.y;
+32 on 6.12.y and 6.6.y). An unpatched full run cannot finish there (it hangs), so that these are
+not the pair's rests on the pooled case verdicts of 11-01. No lockdep, KASAN or hung-task report
+patched. The
+backports are byte-identical to the 11-02 ones; only the covers' release numbers changed. 6.1.y,
+5.15.y and 5.10.y also carry the bug and are not covered (patch 2 conflicts there).
 
 **Questions for you.** The backports' changes against the mainline commits (the cover letters
 list them); whether the two requests should be one mail.
 """, [
-        (f"{C35}/request-v3.eml", "text"),
-        (f"{C35}/request-sci-7.3.y.eml", "text"),
-        (f"{C35}/6.18.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/request-v4-20261114.eml", "text"),
+        (f"{C35}/request-sci-7.3.y-20261114.eml", "text"),
+        (f"{C35}/6.18.y/0000-cover-letter-20261114.patch", "diff"),
         (f"{C35}/6.18.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
         (f"{C35}/6.18.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
-        (f"{C35}/6.12.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/6.12.y/0000-cover-letter-20261114.patch", "diff"),
         (f"{C35}/6.12.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
         (f"{C35}/6.12.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
-        (f"{C35}/6.6.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/6.6.y/0000-cover-letter-20261114.patch", "diff"),
         (f"{C35}/6.6.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
         (f"{C35}/6.6.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
-        (f"{C35}/results.md", "markdown"),
+        (f"{C35R}/CHECKS.md", "markdown"),
     ]),
     ("8. CO-22 — two ASUS QCA ROME entries for stable (a request, no patch)", """
 **The request.** Mainline has two btusb device-table entries for ASUS laptops with a QCA ROME
 controller, `d54601f21faf` and `cfa67a1dbfd9`; no stable branch has them (checked 2026-11-14).
 Without an entry btusb does no QCA setup, so the controller keeps its ROM firmware; that was the
 condition under which this project's own QCA9377 hung on wideband-speech calls until its entry
-(`dc16388d45ec`) reached stable. Whether these two models show the same hang is not known. Both cherry-pick cleanly to 7.3.y
-down to 6.1.y (checked 2026-11-01; being rechecked today). The mail asks the stable team to take
-them; it names the entries' authors in Cc.
+(`dc16388d45ec`) reached stable. Whether these two models show the same hang is not known. On
+today's tips (2026-11-14) both cherry-pick cleanly to 7.3.4, 6.18.63, 6.12.117, 6.6.162, 6.1.192,
+5.15.225 and 5.10.274 (into `btusb.c`: git follows mainline's 7.4 rename), and `btusb.o` builds
+with the same W=1 warnings as unpatched (none, except 6.6.y's known `btmtk.h` ones, present
+unpatched too). The mail asks the stable team to take them; it names the entries' authors in Cc.
+A related new ID patch posted on 2026-11-12 (0cf3:e303) is not mentioned: it is not merged and
+carries its own `Cc: stable`.
 
 **Questions for you.** Whether the request reads as justified for device-ID additions (which
 stable rules allow), and its wording.
 """, [
-        (f"{C22}/stable-request-asus-rome-v2.eml", "text"),
+        (f"{C22R}/mail/stable-request-asus-rome-v3.eml", "text"),
+        (f"{C22R}/CHECKS.md", "markdown"),
     ]),
     ("9. CO-21 (close to ready) — btusb picks alternate setting 0 while a SCO link is up", """
 **The defect** (`Fixes: baac6276c0a9`). `btusb_notify()` takes the air mode from the one link

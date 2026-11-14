@@ -51,8 +51,8 @@ Each item says which of these it had, and where the logs are in the repository.
 | 4 | CO-38: Read Advertising Features hides instances | bluetooth-next | 1 (+ BlueZ tests) |
 | 5 | CO-04: a use-after-free in `mesh_send_sync()` | bluetooth-next | 1 |
 | 6 | CO-05 + CO-26: `mesh_send_sync()` without `hdev->lock`, and a lost failed add | bluetooth-next | 2 + cover letter |
-| 7 | CO-35: the L2CAP ECRED deferred-accept hang, backported to stable | 6.18.y, 6.12.y, 6.6.y (and a request for 7.3.y) | 2 per line + covers |
-| 8 | CO-22: two ASUS QCA ROME device-table entries for stable | stable (request only) | — |
+| 7 | CO-35: the L2CAP ECRED deferred-accept hang, backported to stable (retested 2026-11-14) | 6.18.y, 6.12.y, 6.6.y (and a request for 7.3.y) | 2 per line + covers |
+| 8 | CO-22: two ASUS QCA ROME device-table entries for stable (rechecked 2026-11-14) | stable (request only) | — |
 | 9 | CO-21 (close to ready): btusb picks alternate setting 0 while a SCO link is up | bluetooth-next | 2 |
 
 Items 1 to 8 are ready to send. Item 9 passed its emulator test and the bot's checks except one
@@ -2524,14 +2524,21 @@ release or queue (checked 2026-11-14).
 **This package:** a request that 7.3.y take the two commits as they are; backports of the pair for
 6.18.y, 6.12.y and 6.6.y as `[PATCH <line> 0/2]` series (code changed only where the older trees
 need it); and a separate request for 7.3.y to take `5874f8d03268`, without which plain v7.3 fails
-l2cap-tester's SCI cases for an unrelated reason. **Tested** (7.2.13 and v7.3, 2026-10-28): l2cap-
-tester 111/111 with the pair, the deferred-accept cases hang without it. 6.1.y, 5.15.y and 5.10.y
-also carry the bug and are not covered. **Being refreshed today on the current stable tips.**
+l2cap-tester's SCI cases for an unrelated reason (7.3.4 still lacks it). **Tested again on today's
+tips** (2026-11-14, QEMU, 4 CPUs, hung-task detector): "L2CAP Ext-Flowctl Server - Accept 2 Close
+1" hangs on unpatched v7.3.4, v6.18.63, v6.12.117 and v6.6.162 (7 hung-task reports each) and
+passes with the pair (1.0 to 1.2 s); the whole l2cap-tester with the pair: 7.3.4 111/111 with the
+SCI fix, and on the older lines the same non-passes as on 11-02 (18 "Set PHY" cases on 6.18.y;
+32 on 6.12.y and 6.6.y). An unpatched full run cannot finish there (it hangs), so that these are
+not the pair's rests on the pooled case verdicts of 11-01. No lockdep, KASAN or hung-task report
+patched. The
+backports are byte-identical to the 11-02 ones; only the covers' release numbers changed. 6.1.y,
+5.15.y and 5.10.y also carry the bug and are not covered (patch 2 conflicts there).
 
 **Questions for you.** The backports' changes against the mainline commits (the cover letters
 list them); whether the two requests should be one mail.
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/request-v3.eml`** (SHA-256 `6fa282804b05f8a1336a7cceb85e0e44513d89ae5eeda9292be75f7c806a97f4`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/request-v4-20261114.eml`** (SHA-256 `43cb9c09cbd6d0f4a47891ff9636537662c1359af7566cc0345d03cafe39bea1`)
 
 ```text
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
@@ -2567,30 +2574,30 @@ stable tag. They are patches 2 and 7 of the series "Bluetooth: L2CAP:
 fix and annotate l2cap_conn::chan_l locking"; the other patches are not
 needed for the problem below and were not tested here. One of them,
 dc1ddc65f06d ("Bluetooth: L2CAP: take lock for l2cap_chan_del in
-l2cap_ecred_rsp_defer"), is not requested: in v7.3.1,
-l2cap_ecred_rsp_defer() calls l2cap_chan_del() on the sibling channels
-without their chan->lock only in its refusal branch, which is a lock
-context issue separate from the caller's own socket lock that hangs the
-case below; the case passes with and without it.
+l2cap_ecred_rsp_defer"), is not requested: l2cap_ecred_rsp_defer()
+calls l2cap_chan_del() on the sibling channels without their
+chan->lock only in its refusal branch, which is a lock context issue
+separate from the caller's own socket lock that hangs the case below;
+the case passes with and without it.
 
 Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
 Accept 2 Close 1" (a deferred ECRED accept of two channels, the first
-accepted and closed before the second) never finishes on v7.3.1: the
+accepted and closed before the second) never finishes on v7.3.4: the
 test stops after "Accept deferred setup". With CONFIG_DETECT_HUNG_TASK
-enabled on v7.3.1, the tester's task is reported blocked holding its
+enabled on v7.3.4, the tester's task is reported blocked holding its
 socket's lock from l2cap_sock_recvmsg() while waiting for the same lock
 in l2cap_sock_teardown_cb() (taken nested, so lockdep stays silent).
 32d86e048d8e releases the socket lock before
 __l2cap_ecred_conn_rsp_defer() is called.
 
-Both commits cherry-pick cleanly onto v7.3.1. Tested in QEMU/KVM
+Both commits cherry-pick cleanly onto v7.3.4. Tested in QEMU/KVM
 (4 vCPUs) with BlueZ's doc/tester.config: with the two commits the case
 passes; without them it never finishes. No lockdep or KASAN report.
 
-On v7.3.1 the whole l2cap-tester stalls earlier, in an SCI case that
+On v7.3.4 the whole l2cap-tester stalls earlier, in an SCI case that
 has nothing to do with these commits; I am asking for its fix in a
 separate mail. With that fix and these two commits the whole
-l2cap-tester passes 111 of 111 on v7.3.1.
+l2cap-tester passes 111 of 111 on v7.3.4.
 
 6.18.y, 6.12.y and 6.6.y hang on the same case and need small
 adjustments; backports for them follow as separate series.
@@ -2606,7 +2613,7 @@ Thanks,
 Iaroslav
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/request-sci-7.3.y.eml`** (SHA-256 `6cf9f3783ae2083ce072b7a61c12497fb595ea40dc8056c6a6a98c236f3e3fc5`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/request-sci-7.3.y-20261114.eml`** (SHA-256 `d2b125ede382e0d638269b1f5e0ae93248a9308fdf2190ee721ab24d698ac934`)
 
 ```text
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
@@ -2624,29 +2631,30 @@ please apply this mainline commit to 7.3.y:
   ("Bluetooth: Fix the LE Read Connection Interval response layout")
 
 It fixes 2f8784cfe8a9 ("Bluetooth: Add support for Shorter Connection
-Interval (SCI) feature"), which v7.3.1 has and v6.18.60 does not, so
+Interval (SCI) feature"), which v7.3.4 has and v6.18.63 does not, so
 7.3.y is the only stable line concerned. The commit is in mainline
 since the 7.4 merge window (v7.4-rc1), carries a Fixes: tag, and is not
-in queue-7.3 of the stable-queue tree (checked 2026-11-02 13:39 UTC).
+in queue-7.3 of the stable-queue tree (checked 2026-11-14 01:21 UTC);
+v7.3.4 does not have it.
 
-Without it, on v7.3.1 BlueZ's l2cap-tester stalls in the case "L2CAP LE
+Without it, on v7.3.4 BlueZ's l2cap-tester stalls in the case "L2CAP LE
 Client - SCI Fast Mode", which times out with "Invalid response length
 for 0x20a3" in the kernel log, and the run does not get past it. The
-commit cherry-picks cleanly onto v7.3.1. Tested in QEMU/KVM (4 vCPUs)
+commit cherry-picks cleanly onto v7.3.4. Tested in QEMU/KVM (4 vCPUs)
 with BlueZ's doc/tester.config: with it applied, the eight SCI cases
 pass, and with it and the two L2CAP commits from my other mail applied,
-the whole l2cap-tester passes 111 of 111 on v7.3.1.
+the whole l2cap-tester passes 111 of 111 on v7.3.4.
 
 Thanks,
 Iaroslav
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.18.y/0000-cover-letter.patch`** (SHA-256 `ea8ebd3da349920a5b6afdaeebff887382bc163586b9e32fec8178f0a5932e2b`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.18.y/0000-cover-letter-20261114.patch`** (SHA-256 `da40550b6510f686f58390860485cc6807401f0976dbab9a84e37a7b9feb3bc3`)
 
 ```diff
 From e514ee712fa454c91dbe9ff7b5ebed5d1dbf053b Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sun, 1 Nov 2026 10:42:49 +0100
+Date: Sat, 14 Nov 2026 12:00:00 +0100
 Subject: [PATCH 6.18.y 0/2] Bluetooth: L2CAP: fix the deferred ECRED accept hang
 
 Hello,
@@ -2670,13 +2678,13 @@ series "Bluetooth: L2CAP: fix and annotate l2cap_conn::chan_l
 locking"; the other patches are not needed for the problem below and
 were not tested here. One of them, dc1ddc65f06d ("Bluetooth: L2CAP:
 take lock for l2cap_chan_del in l2cap_ecred_rsp_defer"), is not
-requested: in v6.18.60, l2cap_ecred_rsp_defer() calls l2cap_chan_del()
+requested: in v6.18.63, l2cap_ecred_rsp_defer() calls l2cap_chan_del()
 on the sibling channels without their chan->lock only in its refusal
 branch, which is a lock context issue separate from the caller's own
 socket lock that hangs the case below.
 
 Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
-Accept 2 Close 1" never finishes on v6.18.60: the test stops after
+Accept 2 Close 1" never finishes on v6.18.63: the test stops after
 "Accept deferred setup". With CONFIG_DETECT_HUNG_TASK enabled, the
 tester's task is reported blocked holding its socket's lock from
 l2cap_sock_recvmsg() and waiting for the same lock in
@@ -2689,10 +2697,10 @@ The commits do not build on 6.18.y as they are. Deviations:
   __context_unsafe); the code is unchanged;
 - patch 2: none.
 
-Tested on v6.18.60 in QEMU/KVM (4 vCPUs) with BlueZ's
+Tested on v6.18.63 in QEMU/KVM (4 vCPUs) with BlueZ's
 doc/tester.config: with the series the case passes, and the whole
 l2cap-tester ends with 93 of 111 passed; all other non-passes are
-pre-existing on plain v6.18.60 (features the tree lacks). Without the
+pre-existing on plain v6.18.63 (features the tree lacks). Without the
 series the case never finishes. No lockdep or KASAN report with the
 series.
 
@@ -2712,13 +2720,13 @@ Pauli Virtanen (2):
  3 files changed, 119 insertions(+), 25 deletions(-)
 
 
-base-commit: f45ed76d6791cf72ff1265ee93511175bbbc2f18
+base-commit: 1cdda838e8475edf89b73ff0cc952005dd0b1fa7
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.18.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `edd7ebe755c695b55945f175f85264b0f3185f939c6bed899bfca5881d4e56dc`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.18.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `edd7ebe755c695b55945f175f85264b0f3185f939c6bed899bfca5881d4e56dc`)
 
 ```diff
 From 7413635ff762800d3f856de42cd0fc3727ad2bb0 Mon Sep 17 00:00:00 2001
@@ -2902,7 +2910,7 @@ index 462667a6e6ac2..4a92c6a7a08a9 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.18.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `e1971cb8a7b2e21d8cdce698fa249dd559ba94b4b6409fb5c0d1503d99d3e4f5`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.18.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `e1971cb8a7b2e21d8cdce698fa249dd559ba94b4b6409fb5c0d1503d99d3e4f5`)
 
 ```diff
 From e514ee712fa454c91dbe9ff7b5ebed5d1dbf053b Mon Sep 17 00:00:00 2001
@@ -3031,12 +3039,12 @@ index e78866e02bfc2..9dfd4d088a67b 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.12.y/0000-cover-letter.patch`** (SHA-256 `f2298f483234684b50e2279ba8874e58c7819741f620e7cb7cfbcddf13bead57`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.12.y/0000-cover-letter-20261114.patch`** (SHA-256 `9b6351aa1ffd4f9e070fc3185178d59c4efa5257b7d00ac8bc47a84f40a4aec8`)
 
 ```diff
 From 9794c6835f5fa6b23d057423e1849b39ed776600 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sun, 1 Nov 2026 10:33:53 +0100
+Date: Sat, 14 Nov 2026 12:00:00 +0100
 Subject: [PATCH 6.12.y 0/2] Bluetooth: L2CAP: fix the deferred ECRED accept hang
 
 Hello,
@@ -3060,14 +3068,14 @@ They are patches 2 and 7 of the series "Bluetooth: L2CAP: fix and
 annotate l2cap_conn::chan_l locking"; the other patches are not needed
 for the problem below and were not tested here. One of them,
 dc1ddc65f06d ("Bluetooth: L2CAP: take lock for l2cap_chan_del in
-l2cap_ecred_rsp_defer"), is not requested: in v6.12.115,
+l2cap_ecred_rsp_defer"), is not requested: in v6.12.117,
 l2cap_ecred_rsp_defer() calls l2cap_chan_del() on the sibling channels
 without their chan->lock only in its refusal branch, which is a lock
 context issue separate from the caller's own socket lock that hangs the
 case below.
 
 Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
-Accept 2 Close 1" never finishes on v6.12.115: the test stops after
+Accept 2 Close 1" never finishes on v6.12.117: the test stops after
 "Accept deferred setup". With CONFIG_DETECT_HUNG_TASK enabled, the
 tester's task is reported blocked holding its socket's lock from
 l2cap_sock_recvmsg() and waiting for the same lock in
@@ -3084,10 +3092,10 @@ are. Deviations:
   l2cap_sock_defer() call upstream are absent; l2cap_sock_defer() and
   its call are as upstream.
 
-Tested on v6.12.115 in QEMU/KVM (4 vCPUs) with BlueZ's
+Tested on v6.12.117 in QEMU/KVM (4 vCPUs) with BlueZ's
 doc/tester.config: with the series the case passes, and the whole
 l2cap-tester ends with 79 of 111 passed; all other non-passes are
-pre-existing on plain v6.12.115 (features the tree lacks). Without the
+pre-existing on plain v6.12.117 (features the tree lacks). Without the
 series the case never finishes. No lockdep or KASAN report with the
 series.
 
@@ -3107,13 +3115,13 @@ Pauli Virtanen (2):
  3 files changed, 116 insertions(+), 22 deletions(-)
 
 
-base-commit: 03bae623ec326c2738198739625832aab0eb120a
+base-commit: d3417611a3b40b7f04a29e558cebac2bf69889d7
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.12.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `4d7788dcac0cc33f8283d0d1aefe9c1334f803b9942654ca58a8b5ebc9e26c4d`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.12.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `4d7788dcac0cc33f8283d0d1aefe9c1334f803b9942654ca58a8b5ebc9e26c4d`)
 
 ```diff
 From f740f66b8116439e35aef67208a13dd6d10fd6d3 Mon Sep 17 00:00:00 2001
@@ -3297,7 +3305,7 @@ index 894fcd779bd03..02fb2bdb65689 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.12.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `9bf710210435402e667f9dd386350d1998ecb7339a7990670935c8ef6024d5a3`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.12.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `9bf710210435402e667f9dd386350d1998ecb7339a7990670935c8ef6024d5a3`)
 
 ```diff
 From 9794c6835f5fa6b23d057423e1849b39ed776600 Mon Sep 17 00:00:00 2001
@@ -3423,12 +3431,12 @@ index f08512a57ab58..9b4f0a3319aa1 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.6.y/0000-cover-letter.patch`** (SHA-256 `163ff2e48583e06e45275236c011e725de28cf0acd628bbb9fd7c3434183c627`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.6.y/0000-cover-letter-20261114.patch`** (SHA-256 `57c31c851e949855a2163c259cad9a974c75780596e9e1f73cdeea15ba80ef03`)
 
 ```diff
 From d7cbfc80bd814aa1953397ffd7129b0b940cff23 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sun, 1 Nov 2026 10:33:42 +0100
+Date: Sat, 14 Nov 2026 12:00:00 +0100
 Subject: [PATCH 6.6.y 0/2] Bluetooth: L2CAP: fix the deferred ECRED accept hang
 
 Hello,
@@ -3452,14 +3460,14 @@ They are patches 2 and 7 of the series "Bluetooth: L2CAP: fix and
 annotate l2cap_conn::chan_l locking"; the other patches are not needed
 for the problem below and were not tested here. One of them,
 dc1ddc65f06d ("Bluetooth: L2CAP: take lock for l2cap_chan_del in
-l2cap_ecred_rsp_defer"), is not requested: in v6.6.161,
+l2cap_ecred_rsp_defer"), is not requested: in v6.6.162,
 l2cap_ecred_rsp_defer() calls l2cap_chan_del() on the sibling channels
 without their chan->lock only in its refusal branch, which is a lock
 context issue separate from the caller's own socket lock that hangs the
 case below.
 
 Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
-Accept 2 Close 1" never finishes on v6.6.161: the test stops after
+Accept 2 Close 1" never finishes on v6.6.162: the test stops after
 "Accept deferred setup". With CONFIG_DETECT_HUNG_TASK enabled, the
 tester's task is reported blocked holding its socket's lock from
 l2cap_sock_recvmsg() and waiting for the same lock in
@@ -3476,10 +3484,10 @@ are. Deviations:
   l2cap_sock_defer() call upstream are absent; l2cap_sock_defer() and
   its call are as upstream.
 
-Tested on v6.6.161 in QEMU/KVM (4 vCPUs) with BlueZ's
+Tested on v6.6.162 in QEMU/KVM (4 vCPUs) with BlueZ's
 doc/tester.config: with the series the case passes, and the whole
 l2cap-tester ends with 79 of 111 passed; all other non-passes are
-pre-existing on plain v6.6.161 (features the tree lacks). Without the
+pre-existing on plain v6.6.162 (features the tree lacks). Without the
 series the case never finishes. No lockdep or KASAN report with the
 series.
 
@@ -3499,13 +3507,13 @@ Pauli Virtanen (2):
  3 files changed, 116 insertions(+), 22 deletions(-)
 
 
-base-commit: b5a1dc3ad4822c6edfb53429e9a3759c9b0ac2be
+base-commit: 5139929c698c273e07cb0635732f6a918a7b8e78
 -- 
 2.43.0
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.6.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `d4b0bcf067dce96df0cc958146a7500c8ca2fde4173571bbebdf4fcc9f9d94ac`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.6.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch`** (SHA-256 `d4b0bcf067dce96df0cc958146a7500c8ca2fde4173571bbebdf4fcc9f9d94ac`)
 
 ```diff
 From 8c6716dbd1ddce90551d0526cda80ca0187950ce Mon Sep 17 00:00:00 2001
@@ -3689,7 +3697,7 @@ index 94fddc456ac57..8ceb27abc125c 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/6.6.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `32d994abd4059c9d5508def1c174a20c5e843f01f164c305a53fbfad28e2a7ee`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/mail/6.6.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch`** (SHA-256 `32d994abd4059c9d5508def1c174a20c5e843f01f164c305a53fbfad28e2a7ee`)
 
 ```diff
 From d7cbfc80bd814aa1953397ffd7129b0b940cff23 Mon Sep 17 00:00:00 2001
@@ -3815,168 +3823,81 @@ index 7d2e59e97c2c1..a7531477a4521 100644
 
 ```
 
-**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102/results.md`** (SHA-256 `c16f6dce1c6071a30fd151e5cc5fc35e90104de08614c9defa16d78922780aea`)
+**`contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261114/CHECKS.md`** (SHA-256 `20ba77fb386f6871c5f149f112c8d4343ffeb6f4d440626f572af01561223d25`)
 
 ```markdown
-# CO-35 ready-to-send package: results, 2026-11-02
+# CO-35 refresh against today's stable tips, 2026-11-14 (UTC)
 
-Work area: /root/exp/agent-work/co35-ready-20261102/ (scripts at its top level, raw logs in logs/, images in img/).
-Every number below is MEASURED today unless marked "from source" or "inferred". Nothing was sent.
-Mail files: this directory (request-v3.eml, request-sci-7.3.y.eml, 6.18.y/, 6.12.y/, 6.6.y/); diffs against the
-2026-11-01 drafts in diffs/; draft copies in ../draft-orig/. SHA256SUMS lists logs and mails.
+Work area: `/root/exp/agent-work/lane5-status-stable-20261114/co35/` (scripts at the top level, logs in `logs/`, kernel images in `img/`, mails in `mail/`; hashes in `SHA256SUMS`). Nothing was sent. The project tree was not written to.
+"measured" = run today, log named; "from source" / "inferred" as marked. Tests: QEMU/KVM, 4 vCPUs, BlueZ `doc/tester.config` plus `CONFIG_DETECT_HUNG_TASK`, 20 s; one guest at a time; `make -j4`; scripts `build.sh`, `run-test.sh`, `run-all.sh`, `run-extra.sh` (the 2026-11-02 scripts, paths changed). Kernel trees: depth-1 fetches of the tags from the GitHub mirror (`k-fetch.sh`, log `logs/k-fetch.log`), because the project's `cache/linux` is a partial clone that cannot be cloned with `--shared`.
 
-## 1. Facts (logs/facts.log, logs/facts2.log, releases-20261102.json; commands: facts.sh, facts2.sh, releases.py)
+## 1. Facts (measured)
 
-kernel.org releases.json fetched 2026-11-02 (`curl -s -f https://www.kernel.org/releases.json`), `releases.py` output:
+| what | value | source |
+|---|---|---|
+| newest tags | v7.3.4 (2026-11-10), v6.18.63 (11-10), v6.12.117 (11-10), v6.6.162 (11-06), v6.1.192 (11-06); mainline v7.4-rc2 (11-09) | kernel.org `releases.json` 2026-11-14 00:40Z; `git ls-remote` tips equal the tags |
+| the pair in mainline | both in v7.4-rc1 and in master (commit dates 2026-10-14 17:24 and 17:25 UTC) | `gh api repos/torvalds/linux/commits/<sha>`; `l2cap_core.c` history of v7.4-rc2 and master |
+| the pair in a stable release or queue | not in v7.3.4, v6.18.63, v6.12.117, v6.6.162, v6.1.192; `stable-queue-check.sh` for `bluetooth-l2cap-hold-conn-lock-for` and `bluetooth-l2cap-add-l2cap_chan_close_unlocked`: "not in queue" for 7.3, 6.18, 6.12, 6.6, 6.1 (2026-11-14 01:05-01:06 UTC) | `raw/command-outputs.txt` of the status check |
+| `5874f8d03268` (SCI fix) on 7.3.y | **still not there**: not among the 100 newest `net/bluetooth` commits of v7.3.4 (`gh api`), not in queue-7.3 (`stable-queue-check.sh bluetooth-fix-the-le-read-connection-interval`, 01:21 UTC), and `git cherry-pick -x 5874f8d03268` onto v7.3.4 is not empty (5 insertions, 12 deletions in `hci_event.c`, `hci.h`) | `logs/apply-v7.3.4.log` |
+| 7.3.4 newly has nearby L2CAP commits | `d3afd7803f9b` "refuse __l2cap_chan_add if chan already has conn" (10-30), "Reject mode changes on connected channels", TxWindow fixes (11-10) | `gh api commits?sha=v7.3.4&path=net/bluetooth`; they did not disturb the pair (next row) |
 
-    mainline  7.4-rc1   2026-11-01
-    stable    7.3.1     2026-10-30  iseol=False   (latest_stable 7.3.1)
-    stable    7.2.15    2026-11-01  iseol=True    (7.2.y has ended)
-    longterm  6.18.60   2026-10-30  iseol=False
-    longterm  6.12.115  2026-10-30  iseol=False
-    longterm  6.6.161   2026-10-30  iseol=False
-    longterm  6.1.191, 5.15.224, 5.10.273  2026-10-30  iseol=False
+## 2. Does the pair apply today (measured, `logs/apply-<tag>.log`)
 
-No tag newer than the tested ones (v7.3.1, v6.18.60, v6.12.115, v6.6.161): checkpoint 3 "rerun only the case with the
-final files" applies. (The 6.1/5.15/5.10 tags are newer than the v6.1.190/v5.15.223/v5.10.272 named in the request's last
-paragraph; those lines are not requested and that paragraph describes the earlier tests with those tag names.)
+| tag | how | result |
+|---|---|---|
+| v7.3.4 | `git cherry-pick -x 608e0b7a675b2 32d86e048d8ef` (auto-merging `l2cap.h`, `l2cap_core.c`, `l2cap_sock.c`) | rc=0, clean; 5 files with the SCI fix added (`5874f8d03268` also clean) |
+| v6.18.63, v6.12.117, v6.6.162 | `git am` of the unchanged 2026-11-02 backports (strict, no fuzz, no 3-way) | rc=0 on all three; the six patch files are byte-identical to `send-20261102/` (`cmp`, `logs/mail-lint-new.log`), so nothing was regenerated |
+| v6.1.192, v5.15.225, v5.10.274 (not requested) | `git cherry-pick -x` of the pair (`logs/apply-old-*.log`) | patch 1 applies textually; **patch 2 conflicts in `net/bluetooth/l2cap_sock.c`** on all three. These lines have no `l2cap_chan_lock_conn()` and lack `ab4eedb790ca`; not built, not tested today. The 11-02 statement that the pair "does not apply" is confirmed for the pair as a whole |
 
-Mainline: `git -C cache/linux fetch origin tag v7.4-rc1 --no-tags` (new tag). Tag object bc71431221f5ba8bb33918399552636e059c2c45;
-the commit it points to is 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4 (`git rev-parse v7.4-rc1^{commit}`; the brief's
-"bc71431221f5" is the tag object, not the commit). `git ls-remote origin refs/tags/v7.4-rc1 refs/tags/v7.4-rc1^{}` agrees.
+## 3. Builds and tests (measured; times in `progress.log`)
 
-`git merge-base --is-ancestor <c> v7.4-rc1` (rc=0 means yes):
+Case "L2CAP Ext-Flowctl Server - Accept 2 Close 1" alone, 180 s limit (`logs/case-<tag>-<variant>.log`, `logs/summary-*.txt`):
 
-    608e0b7a675b2affbbf38167cad0fa63d8e064f7  rc=0  Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
-    32d86e048d8efedb7aa6cbbd3c36c3c435401c92  rc=0  Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
-    5874f8d03268d34189c6c12c56586b64d26a8bcc  rc=0  Bluetooth: Fix the LE Read Connection Interval response layout
-    d54601f21faf1ab5728e98e2102c3f738be0c177  rc=0  Bluetooth: btusb: add ASUS 0b05:1868 to QCA Rome quirks
-    cfa67a1dbfd9425044f6eef037a114b2d108f436  rc=0  Bluetooth: btusb: add ASUS 0b05:1825 to QCA Rome quirks
+| tag | plain (base) | with the pair | counts on 2026-11-02 |
+|---|---|---|---|
+| v7.3.4 | **HANG** (limit 180 s; hung-task reports: 7) | Passed 1.007 s; with the SCI fix too, 1.025 s; with the pair plus `dc1ddc65f06d`, 1.040 s | v7.3.1: hang; pass 1.034 / 1.040 s |
+| v6.18.63 | **HANG** (7) | Passed 1.242 s | v6.18.60: hang (7); 1.067 s |
+| v6.12.117 | **HANG** (7) | Passed 1.041 s | v6.12.115: hang (7); 1.074 s |
+| v6.6.162 | **HANG** (7) | Passed 1.113 s | v6.6.161: hang (7); 1.036 s |
 
-Stable queue (`/root/exp/qca9377-bt-hang/scripts/stable-queue-check.sh <stem> 7.3 6.18 6.12 6.6 6.1 5.15 5.10`, 2026-11-02 13:38-13:39 UTC,
-header read first: it greps the queue-<v>/ tree page of stable-queue.git for the stem). Stems used: close_unlocked,
-ecred_conn_rsp_defer, ecred-conn-rsp-defer, le-read-connection-interval, asus-0b05-1868, asus-0b05-1825. All five commits:
-"not in queue" on all seven lines. Positive control, stem "bluetooth": QUEUED on every line (e.g. 7.3:
-bluetooth-forget-a-peer-s-rpa-once-it-advertises-its-identity-address.patch), so the fetch and the grep work.
-Caveat (inferred): the script matches a stem in the file name; a differently named file would be missed, but the
-two spellings tried per commit cover the usual title-derived names.
+Whole l2cap-tester (`logs/full-*.log`):
 
-Also in no released tag: `is-ancestor` rc=1 for all five commits in v7.3.1, v6.18.60, v6.12.115, v6.6.161 (logs/facts2.log);
-no commit of the same subject in btusb.c history of those tags.
+| image | today | 2026-11-02 |
+|---|---|---|
+| v7.3.4 + pair + `5874f8d03268` | **111 of 111 passed** (all 8 SCI cases pass) | v7.3.1: 111 of 111 |
+| v7.3.4 + pair alone | stalls at "L2CAP LE Client - SCI Fast Mode" ("test timed out", kernel log "Invalid response length for 0x20a3" once), run killed at 300 s | v7.3.1: stalls in the same case |
+| v6.18.63 + pair | 93 passed, 18 failed (all "Set PHY") | 93 / 18 |
+| v6.12.117 + pair | 79 passed, 32 not passed (one of them timed out: "BR/EDR Client PIN Code Change Sec - Success") | 79 / 31 + 1 timed out |
+| v6.6.162 + pair | 79 passed, 32 not passed (same one timed out) | 79 / 31 + 1 |
 
-CO-22 facts: both ASUS commits (d54601f21faf 0b05:1868, cfa67a1dbfd9 0b05:1825) ARE in v7.4-rc1. They are NOT in
-any stable queue (7.3, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10 checked) and NOT in the released v7.3.1/v6.18.60/v6.12.115/v6.6.161.
-So CO-22's stable request can name both as mainline commits in v7.4-rc1. (6.1, 5.15, 5.10 releases not checked for presence,
-only their queues.)
+Kernel-report scan (`kernel-report-scan.py`): all patched runs "clean" (no lockdep, KASAN or hung-task report); base runs `hung-task=7`. Build warnings in `net/bluetooth`: `logs/btwarn-*.log` (empty = none). Not rerun today: the plain-tag whole-tester runs (they cannot finish: the case hangs), so "all other non-passes are pre-existing on the plain tag" still rests on the 2026-11-01 pooled verdicts; the tester config has hung-task detection only (no separate lockdep/KASAN build) - as before.
 
-## 2. Corrections applied (diffs/*.diff; other authors' patch bodies untouched)
+Answer to the open questions: 7.3.y, 6.18.y, 6.12.y and 6.6.y all have the bug today (hang without the pair on each tip). The pair applies as it is to 7.3.4; the three backports apply and pass on 6.18.63, 6.12.117 and 6.6.162. 6.1.y/5.15.y/5.10.y: the dossier's finding stands (hang with `enable_ecred`, since v6.3), the pair does not apply, not covered, not retested.
 
-1. 7.2.y removed from request-v3.eml, the SCI request and the three covers (`grep -n 7\.2` over final/ *.eml *.patch: no match).
-2. Identity claim: it was NOT in any mail or patch file of the draft (grep for patch-id/identical/"same as upstream" in the draft:
-   no match); it was only in the history docs: CO-35 README.md line 6, log.md lines 143 and 204, send/README.md line 114,
-   experiments/results-send-2026-10-28.md lines 43-45. Those are outside my write area and not changed; they need a
-   correction. Measured today (`git patch-id --stable`, logs/sizes.log):
-   - upstream 608e0b7a675b2 e... 70fa1c63fd06519b; 32d86e048d8ef cc164bd1e65c0b5b
-   - 6.18.y patch 1 e9f3fc9991400f98 (differs); patch 2 cc164bd1e65c0b5b (EQUAL to upstream)
-   - 6.12.y patch 1 e9f3fc9991400f98 (differs); patch 2 3f878ced940dad64 (differs)
-   - 6.6.y patch 1 07f7fad21c2c14e4 (differs); patch 2 3f878ced940dad64 (differs)
-   The `[ backport: ]` notes carry no identity claim; the covers list the deviations only (kept).
-3. Per-line non-pass breakdowns replaced by "all other non-passes are pre-existing on plain <tag> (features the tree lacks)".
-   The numbers are kept here (section 5).
-4. Request mail 1 subject: was "Please backport 608e0b7a675b and 32d86e048d8e (Bluetooth: L2CAP) to 7.3.y and 7.2.y" (95 columns
-   as stated); now "Please backport 608e0b7a675b and 32d86e048d8e to 7.3.y" (63 columns including "Subject: "). I also shortened the SCI
-   request's subject (it was about 100 columns) to "Please backport 5874f8d03268 (Bluetooth: SCI response fix) to 7.3.y"; that
-   one was not on your list; revert in diffs/request-sci-7.3.y.diff if unwanted.
-5. Size sentence added to the request and the three covers: "The first changes 78 lines (a 149-line diff), more than the 100 lines
-   the stable rules allow; I am asking for it whole, as merged, because that is the conservative choice compared with a smaller
-   locking patch written only for stable." Measured (logs/sizes.log): 608e0b7a675b2 = 17+56 added, 0+5 deleted = 78 changed lines in
-   2 files, 149 lines of `git show --format=` output (about 140 without file headers); 32d86e048d8ef = 68 changed, 93 lines. The
-   brief's "about 130" does not match any count I get; checkpatch counts "130 lines checked" for the backports' patch 1 (and 132 for
-   upstream's). I used the measured 78/149 and did not write "130". Say if you want the checkpatch figure instead.
-6. dc1ddc65f06d (from source, v7.3.1 net/bluetooth/l2cap_core.c lines 3894-3930, identical code at v6.18.60, v6.12.115, v6.6.161):
-   l2cap_ecred_rsp_defer() runs l2cap_chan_del(chan, ECONNRESET) on each channel of the same ident without taking that channel's
-   chan->lock, in the else branch taken only when rsp->pdu.rsp.result is non-zero (the refusal path set by
-   __l2cap_ecred_conn_rsp_defer() when l2cap_ecred_list_defer() finds a channel neither pending nor connected). dc1ddc65f06d adds
-   sibling locking there (plus lockdep asserts, a hold/put, and an early return); that is a lock-context issue separate from the
-   caller's own socket lock that hangs the case, which 32d86e048d8ef fixes. Measured: the case also passes with the pair alone and
-   with pair + dc1ddc65f06d (1.048 s, today). The text says: "...is not requested: in v7.3.1, l2cap_ecred_rsp_defer() calls
-   l2cap_chan_del() on the sibling channels without their chan->lock only in its refusal branch, which is a lock context issue
-   separate from the caller's own socket lock that hangs the case below; the case passes with and without it." (The covers say the
-   same minus the "passes" clause.) I did not establish whether the test case itself reaches that branch.
-7. One neutral sentence in the request only: "The deadlock path it removes predates ab4eedb790ca; it comes from 9aa9d9473f15 (v6.3)."
-   Fixes: trailers untouched (patch files byte-identical to the drafts; see section 3).
-Other edits needed by the above: v7.2.14 test statements removed from the request; the "111 of 111" claim now attached to
-v7.3.1 with the SCI fix (re-measured today, section 5); "in mainline since the 7.4 merge window (v7.4-rc1)"; SCI request: "v7.2.14 does
-not" became "v6.18.60 does not" (2f8784cfe8a9 is in v7.3.1: rc=0; in v6.18.60: rc=1) and the queue check time is today's.
+## 4. checkpatch and other local checks (measured, `logs/checks.log`)
 
-## 3. Code patches unchanged
+checkpatch.pl from the v7.3.4 tree: upstream `608e0b7a675b2`: 0 errors, 1 warning (commit message has "syzkaller", as before), 132 lines; `32d86e048d8ef`: 0 errors, 1 warning "Unknown commit id 'ab4eedb790ca'" (an artefact of the depth-1 tree; on 2026-11-02 in a full tree: 0 warnings), 88 lines; `5874f8d03268`: same artefact for `2f8784cfe8a9`. Each line's patch 1: 1 error (the `[ Upstream commit ... ]` line stable prescribes) + the syzkaller warning, 130 lines; patch 2: the same one error + the artefact, 88 (6.18.y) or 81 lines (6.12.y, 6.6.y). Same findings as 2026-11-02 and 2026-10-28. mail-lint: clean for both new requests and the three new covers (`logs/mail-lint-new.log`). Subjects: 63 and 76 columns including "Subject: ".
 
-`mkdiffs.sh` output: 6.18.y, 6.12.y, 6.6.y patches 0001 and 0002 byte-identical (cmp) to send-20261101-draft/.
-The builds below applied exactly these files from final/<line>/ (git apply).
+`ci-local.sh --kernel` was **not rerun**: it works in `cache/linux` (a worktree there), which this lane must not write to. What it checked on 2026-11-02 is covered here as far as possible: am on the tag (section 2, PASS), checkpatch (above), SubjectPrefix and VerifySignedoff are unchanged by the files (patches byte-identical); gitlint (title 82/82/81 > 80 with the stable-line prefix) and VerifyFixes (`ab4eedb790ca` present as a backport on 6.12.y and 6.6.y, not as ancestor) are properties of the unchanged files and are expected to repeat. Rerun it from the main session if the exact CI output is wanted.
 
-## 4. Local checks (logs/checks.log; script checks.sh)
+## 5. Follow-ups F-33 to F-39, F-85, F-91
 
-checkpatch.pl (v7.3.1 tree's, run inside it):
-- upstream 608e0b7a675b2: 0 errors, 1 warning ("The commit message has 'syzkaller', perhaps it also needs a 'Fixes:' tag?"), 132 lines.
-- upstream 32d86e048d8ef: 0 errors, 0 warnings, 88 lines.
-- each line's patch 1: 1 error + 1 warning, 130 lines. Error: `[ Upstream commit 608e0b7a675b2affbbf38167cad0fa63d8e064f7 ]`
-  ("Please use git commit description style 'commit <12+ chars of sha1> ..."): the expected `[ Upstream commit ]` line stable prescribes.
-  Warning: the same upstream syzkaller warning.
-- each line's patch 2: 1 error, the same `[ Upstream commit 32d86e048d8efedb7aa6cbbd3c36c3c435401c92 ]`; 88 lines (6.18.y), 81 lines (6.12.y, 6.6.y).
-  No other finding on any file.
+| id | status today |
+|---|---|
+| F-33 drop 7.2.y | done on 11-02; 7.2.y is EOL (7.2.15); the new mails name 7.3.y only |
+| F-34 both commits in v7.4-rc1, one batch, newest line first | commits in v7.4-rc1 re-verified today (section 1). The batch order (newest line first) is the sender's: nothing to write |
+| F-35 one sentence on `dc1ddc65f06d` | in the request and the covers; its "the case passes with and without it" is now re-measured on v7.3.4 (1.040 s) |
+| F-36 `Fixes:` origin sentence | decided on 11-02 (one neutral sentence kept); kept; operator may still delete it |
+| F-37 non-pass breakdown to one sentence | done on 11-02; unchanged |
+| F-38 shorten mail 1's subject | done (63 columns) |
+| F-39 recheck queues and newest tags on the send day | done for today (section 1); **must be repeated on the actual send day** |
+| F-85 rerun checkpatch and local CI | checkpatch rerun (section 4); local CI not rerun (reason above) |
+| F-91 drop the patch-id identity claim | no identity claim in the mails (grep over `mail/`: none); the history documents named on 11-02 (README line 6, log.md, send/README.md, experiments/results-send-2026-10-28.md) are outside this lane and still need it |
 
-mail-lint.sh: clean for both requests and, as format-patch-stripped copies (To: added, cut at "-- "), the three covers.
+## 6. New mail text (new files; the old ones are kept in `send-20261102/`)
 
-ci-local.sh --kernel (stable-backport mode, patches only, --base bluetooth-next/master 42b8c2d729268a65, checkpatch from v7.3.1 tree,
-targets v6.18.60 / v6.12.115 / v6.6.161; summaries ci-local-<line>/summary.txt):
-
-    check              6.18.y   6.12.y   6.6.y
-    am                 PASS     PASS     PASS     (git am onto the tag)
-    am-bluetooth-next  EXPECTED EXPECTED EXPECTED (upstream commit already there)
-    checkpatch         NEW      NEW      NEW      (the two [ Upstream commit ] errors + upstream's syzkaller warning)
-    gitlint            NEW      NEW      NEW      patch 1 title 82>80 / 82>80 / 81>80 with the "[<line>,1/2] " prefix; upstream's subject kept
-    subjectprefix      PASS     PASS     PASS
-    verifyfixes        PASS     NEW      NEW      6.12/6.6: ab4eedb790ca is present as its backport (f87271d21dd4, efc30877bd4b), not as an ancestor; upstream Fixes: kept
-    verifysignedoff    PASS     PASS     PASS
-
-Same findings as the 2026-10-28 run (results-send-2026-10-28.md section 3). Not run: --build (BuildKernel, W=1, C=1, 32-bit); the
-tester.config builds below stand in for BuildKernel only. Warnings from net/bluetooth in those builds: logs/btwarn-*.log
-(see file sizes in SHA256SUMS; empty files mean none).
-
-## 5. Tests (QEMU/KVM, 4 vCPUs, BlueZ doc/tester.config + CONFIG_DETECT_HUNG_TASK=y, 20 s; scripts build-final.sh, run-test.sh,
-## patched-runs.sh, base-runs.sh; times UTC in progress.log)
-
-Final patch files applied by git apply (6.x) or the upstream pair by cherry-pick --no-commit (7.3.1; same file contents as the
-commits requested). Case "L2CAP Ext-Flowctl Server - Accept 2 Close 1" alone, 180 s limit:
-
-    tag        base (plain, 2026-11-01 images, rerun today)   patched today (final files)
-    v6.6.161   HANG (hung-task reports: 7)                    Passed 1.036 s
-    v6.12.115  HANG (7)                                       Passed 1.074 s
-    v6.18.60   HANG (7)                                       Passed 1.067 s
-    v7.3.1     HANG (7)                                       Passed 1.034 s (pair); 1.040 s (pair + 5874f8d03268); 1.048 s (pair + dc1ddc65f06d, image of 2026-11-01)
-
-Full unfiltered l2cap-tester on the patched kernel (logs/full-*.log):
-
-    v6.18.60 pair          111 cases: 93 passed, 18 failed (all "Set PHY" cases)
-    v6.12.115 pair         111 cases: 79 passed, 31 failed, 1 timed out (BR/EDR PIN Code Change Sec)
-    v6.6.161 pair          111 cases: 79 passed, 31 failed, 1 timed out
-    v7.3.1 pair + 5874f8d03268   111 of 111 passed
-    v7.3.1 pair alone      not rerun (stalls in "SCI Fast Mode" as the plain tag does; 2026-11-01 result)
-
-Non-passes against the pooled plain-tag verdicts of 2026-11-01 (compare.py; logs/compare.log; base side = the earlier
-full-<tag>-base and word-*-<tag>-base logs in /root/exp/agent-work/co35/refresh-20261101/logs/, 102 cases pooled per tag, not rerun today):
-    v6.18.60: 0 regressions, 18 non-pass also non-pass on base
-    v6.12.115: 0 regressions, 32 also non-pass on base (26 PHY, 3 TX timestamping, 2 ethtool, 1 PIN-code timeout)
-    v6.6.161:  0 regressions, 32 also non-pass on base (same breakdown)
-Kernel-report scan (scripts/kernel-report-scan.py inside run-test.sh): patched runs "clean" (no lockdep or KASAN report; no
-hung-task); base runs "hung-task=7".
-The 6.12.115 and 6.6.161 breakdown (26/3/2/1) is the kept-out-of-the-mail number set; it matches the 2026-11-01 log.
-
-## 6. Not done / limits
-- 7.3.1 "pair alone" full run, and the base full runs: not rerun (the pooled base verdicts are from 2026-11-01).
-- The tester config enables hung-task detection only; no separate lockdep/KASAN-enabled build was made today (the "no lockdep or
-  KASAN report" statement rests on the scan of the patched runs, whose config is tester.config).
-- Nothing was committed or sent; the history docs listed in section 2 item 2 still carry the identity claim.
+`mail/request-v4-20261114.eml` (7.3.y request: v7.3.4 in place of v7.3.1), `mail/request-sci-7.3.y-20261114.eml` (v7.3.4, queue check time 2026-11-14 01:21 UTC), `mail/6.18.y|6.12.y|6.6.y/0000-cover-letter-20261114.patch` (tag names v6.18.63, v6.12.117, v6.6.162; `base-commit` of each tag; counts unchanged) and the unchanged patches 0001/0002 beside them. The old 6.1.y/5.15.y/5.10.y paragraph keeps the earlier test tags (v6.1.190, v5.15.223, v5.10.272) because those lines were not retested.
+Differences from the 11-02 text are only the release numbers and dates, plus the removal of "in v7.3.1" from the `dc1ddc65f06d` sentence in the request (it now reads as a general statement, which the 11-02 note said held at all four tags and today's v7.3.4 `l2cap_ecred_rsp_defer()` matches by source).
 ```
 
 ---
@@ -3987,14 +3908,18 @@ The 6.12.115 and 6.6.161 breakdown (26/3/2/1) is the kept-out-of-the-mail number
 controller, `d54601f21faf` and `cfa67a1dbfd9`; no stable branch has them (checked 2026-11-14).
 Without an entry btusb does no QCA setup, so the controller keeps its ROM firmware; that was the
 condition under which this project's own QCA9377 hung on wideband-speech calls until its entry
-(`dc16388d45ec`) reached stable. Whether these two models show the same hang is not known. Both cherry-pick cleanly to 7.3.y
-down to 6.1.y (checked 2026-11-01; being rechecked today). The mail asks the stable team to take
-them; it names the entries' authors in Cc.
+(`dc16388d45ec`) reached stable. Whether these two models show the same hang is not known. On
+today's tips (2026-11-14) both cherry-pick cleanly to 7.3.4, 6.18.63, 6.12.117, 6.6.162, 6.1.192,
+5.15.225 and 5.10.274 (into `btusb.c`: git follows mainline's 7.4 rename), and `btusb.o` builds
+with the same W=1 warnings as unpatched (none, except 6.6.y's known `btmtk.h` ones, present
+unpatched too). The mail asks the stable team to take them; it names the entries' authors in Cc.
+A related new ID patch posted on 2026-11-12 (0cf3:e303) is not mentioned: it is not merged and
+carries its own `Cc: stable`.
 
 **Questions for you.** Whether the request reads as justified for device-ID additions (which
 stable rules allow), and its wording.
 
-**`contributions/research-2026-11-01/qca-ids/drafts/stable-request-asus-rome-v2.eml`** (SHA-256 `28b544743bcc21498b80e990da5359daa99ce49a502a1cc0cfd889da885fba16`)
+**`contributions/research-2026-11-01/qca-ids/refresh-20261114/mail/stable-request-asus-rome-v3.eml`** (SHA-256 `f390ba39ffa577d99cfd22aa1a62028fb282ecbad597362e3dde29f31eece06e`)
 
 ```text
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
@@ -4031,11 +3956,17 @@ driver loading qca/rampatch_usb_00000302.bin and
 qca/nvm_usb_00000302.bin. I do not have these devices; the runtime
 results are the authors'.
 
-None of the seven trees has either ID. On each tree's current tip
-(7.3.1, 6.18.60, 6.12.115, 6.6.161, 6.1.191, 5.15.224, 5.10.273) both
-commits cherry-pick cleanly with -x into drivers/bluetooth/btusb.c,
-and btusb.o builds with them (x86_64 defconfig, BT=m, BT_HCIBTUSB=m,
-W=1) with no new warning.
+None of the seven trees has either ID, and neither commit is in a
+stable release or in the stable queue (checked 2026-11-14). On each
+tree's current tip (7.3.4, 6.18.63, 6.12.117, 6.6.162, 6.1.192,
+5.15.225, 5.10.274) both commits cherry-pick cleanly with -x, and
+btusb.o builds with them (x86_64 defconfig, BT=m, BT_HCIBTUSB=m, W=1)
+with no new warning. In mainline the driver was split in 7.4 and these
+two commits touch drivers/bluetooth/btusb_main.c; on the stable lines
+git's rename detection applies them to drivers/bluetooth/btusb.c. On
+6.6.162 the W=1 build of btusb.o stops on four unused-function errors
+from btmtk.h, with or without these commits; with -Werror off the
+warning set is identical.
 
 The same kind of entry, dc16388d45ec ("Bluetooth: btusb: Add IMC
 Networks QCA9377 to quirks table"), was queued for 7.2.y down to
@@ -4043,6 +3974,57 @@ Networks QCA9377 to quirks table"), was queued for 7.2.y down to
 
 Thank you,
 Iaroslav Voitovych
+```
+
+**`contributions/research-2026-11-01/qca-ids/refresh-20261114/CHECKS.md`** (SHA-256 `16d46882e219222fc1242ffcb58049af5e73b1174b34ddc2ef2626871f0e3482`)
+
+```markdown
+# CO-22 refresh: the ASUS ROME pair against today's stable tips, 2026-11-14 (UTC)
+
+Work area: `/root/exp/agent-work/lane5-status-stable-20261114/co22/` (scripts `asus.sh`, `run-all.sh`; logs in `logs/`; mail in `mail/`; hashes in `SHA256SUMS`). Nothing was sent; the project tree was not written to. Trees: depth-1 fetches of the stable tags and depth-2 fetches of the two mainline commits from the GitHub mirrors (`../k-fetch.sh`, `../k-fetch2.sh`).
+
+## 1. Facts
+
+| what | value | source |
+|---|---|---|
+| the pair | `d54601f21faf1ab5728e98e2102c3f738be0c177` "Bluetooth: btusb: add ASUS 0b05:1868 to QCA Rome quirks" (committed 2026-10-14 18:38:17 UTC), `cfa67a1dbfd9425044f6eef037a114b2d108f436` "... 0b05:1825 ..." (18:38:20 UTC); in v7.4-rc1 and master; in mainline they touch `drivers/bluetooth/btusb_main.c` (the 7.4 split) | `gh api`, 2026-11-14 |
+| in a stable release or queue | no: neither ID in the `btusb.c` history of v7.3.4, v6.18.63, v6.12.117, v6.6.162, v6.1.192 (newest 15 commits each, back to Aug/Sep); `grep -c` of both IDs in the tag's `btusb.c`: 0 and 0 for every tag (first line of each `logs/pick-<tag>.log`); `stable-queue-check.sh bluetooth-btusb-add-asus-0b05`: not in queue for 7.3, 6.18, 6.12, 6.6, 6.1 (2026-11-14 01:05 UTC). 5.15 and 5.10 queues were not checked today (11-02: not in queue) | status check files |
+| tips today | 7.3.4 (11-10), 6.18.63 (11-10), 6.12.117 (11-10), 6.6.162 (11-06), 6.1.192 (11-06), 5.15.225 (11-06), 5.10.274 (11-06) | kernel.org `releases.json`, 00:40Z |
+
+## 2. Cherry-pick and btusb.o (measured; `logs/pick-<tag>.log`, `logs/build-btusb-<tag>-{base,pair}.log`)
+
+`git cherry-pick -x d54601f21faf cfa67a1dbfd9` onto the tag, in that order, in its own worktree; `btusb.o` built before (base) and after (pair) with x86_64 defconfig + `BT=m`, `BT_HCIBTUSB=m` (+ `BT_BREDR`, `BT_LE`, `USB`, `NET`, `INET`, `RFKILL`), `make W=1 drivers/bluetooth/btusb.o`:
+
+| tag | cherry-pick | base btusb.o | pair btusb.o | warning sets |
+|---|---|---|---|---|
+| v7.3.4 | clean (rc=0; "Auto-merging drivers/bluetooth/btusb.c" - the rename is followed) | built, 0 warnings | built, 0 warnings | identical |
+| v6.18.63 | clean | built, 0 | built, 0 | identical |
+| v6.12.117 | clean | built, 0 | built, 0 | identical |
+| v6.6.162 | clean | **fails** with W=1 (rc=2): four `-Werror=unused-function` errors from `btmtk.h`, on the plain tag too (`logs/build-btusb-v6.6.162-base-with-werror.log`, `-pair-with-werror.log`) | same failure | with `CONFIG_WERROR` off (`NOWERROR=1`): both build, 4 warnings each, **identical** (`logs/pick-v6.6.162.log`) |
+| v6.1.192 | clean | built, 0 | built, 0 | identical |
+| v5.15.225 | clean | built, 0 | built, 0 | identical |
+| v5.10.274 | clean | built, 0 | built, 0 | identical |
+
+After the pick each `btusb.c` has both IDs once and the diffstat is 4 insertions in `btusb.c` (`logs/pick-<tag>.log`). The tool used: the host's gcc (as in the 2026-11-01 run, same tsv result "OK" for all lines). Results agree with `research-2026-11-01/qca-ids/stable-cherry-pick-asus.tsv` (7.3.1, 6.18.60, 6.12.115, 6.6.161, 6.1.191 clean); 5.15 and 5.10 are new in this table and also clean. The 6.6 W=1 failure is the known btmtk `-Werror` issue of that line (a separate report draft exists: `drafts/btmtk-6.6-werror-report.eml`); it does not come from the pair.
+
+## 3. Request v3 (`mail/stable-request-asus-rome-v3.eml`, new; v2 kept)
+
+Differences from v2: the seven tips named above (7.3.4 ... 5.10.274); "neither commit is in a stable release or in the stable queue (checked 2026-11-14)"; one sentence on the 7.4 file split and git's rename detection (the cherry-picks land in `btusb.c`); one sentence on the 6.6.162 W=1 failure being independent of the commits. mail-lint: clean. The send-day recheck of the queues is still owed (F-39 style): re-run `stable-queue-check.sh bluetooth-btusb-add-asus-0b05 7.3 6.18 6.12 6.6 6.1 5.15 5.10` and look at the tips.
+
+## 4. Daan Bouwman's patch, patchwork 14976888 (0cf3:e303, Surface Laptop 3 AMD)
+
+What it is (read from `raw/pw-14976888.json` of the status check): `[PATCH] Bluetooth: btusb: Add QCA Rome support for Surface Laptop 3 AMD (0cf3:e303)`, 2026-11-12 15:24 UTC, state `new` at 2026-11-14 ~03:06 UTC, only the CI bot has commented (21:23 UTC). One hunk in `drivers/bluetooth/btusb_main.c`, two lines: `0cf3:e303` with `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`, placed after `0cf3:e301`. The author reports the device as QCA6174, shows the `lsusb`-style device listing, the rampatch/NVM 0x302 files loading, and says he tested on v7.2.15: stock btusb shows "unexpected event for opcode 0x2005", patched shows none. It carries `Cc: stable@vger.kernel.org` itself. It is not in bluetooth-next (btusb history, 2026-11-14 01:10 UTC) or mainline.
+
+Answer: **ID survey only; not in the request.**
+- It is not merged; a stable request may only name mainline commits. Once it is merged it carries its own `Cc: stable`, so the stable team will take it without a request from us; adding it would only double the thread.
+- The ID is already in the survey as a candidate (`candidate-computers.tsv`: `0cf3:e303`, Surface Laptop 3; `linuxhw-bt-ids.tsv`; `dmesg-evidence.tsv`). The patch turns that candidate into a confirmed one by an independent author's device report. Record it in the survey with the patchwork ID.
+- The owners' call mail (`drafts/owners-call-qca-rome-ids.eml`, line 30) still lists `0cf3:e303`: that line should go (the patch exists), and the mail's count of open candidates drops by one. This is a draft edit for the main session to decide.
+- Not "nowhere": it supports the first paragraph of the request's argument (more ROME IDs missing from the table, the same symptom) and the survey's count; and it is a second 2026 patch of the same shape that the maintainers accepted without objection so far (the ASUS pair, merged 10-14), which suggests the owners' mail may get a quick answer. (inferred)
+- Its text carries a tool note in the "Notes" block; nothing of it is copied into our files.
+
+## 5. Not done / limits
+
+Only `btusb.o` was built (as asked); no module was loaded and no device test was possible (the devices are the authors'). The 6.6 W=1 failure needs `CONFIG_WERROR=n` to build the object. 5.15/5.10 queue state was last checked 2026-11-02. A send-day recheck is owed.
 ```
 
 ---
