@@ -1,0 +1,28 @@
+Description: adapter: clear discovery_found list before discovery_cleanup()
+ discovery_cleanup() tries to reset the RSSI of the devices in the
+ adapter->discovery_found list. When it is called from adapter_remove(), the
+ list holds only stale pointers because the devices are already freed, which
+ is a use-after-free when bluetoothd exits (seen with AddressSanitizer at
+ src/device.c, device_set_rssi_with_delta()). Free the list in
+ adapter_remove() before discovery_cleanup().
+Author: Pauli Virtanen <pav@iki.fi>
+Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=7e3212fa233edbdcfd69f93e2a7418819172c599
+Applied-Upstream: 5.88, commit:7e3212fa233edbdcfd69f93e2a7418819172c599
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-U24>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/src/adapter.c b/src/adapter.c
+index 022390f0d..a93d607de 100644
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -6959,6 +6959,9 @@ static void adapter_remove(struct btd_adapter *adapter)
+ 	g_slist_free(adapter->load_keys);
+ 	adapter->load_keys = NULL;
+ 
++	g_slist_free(adapter->discovery_found);
++	adapter->discovery_found = NULL;
++
+ 	discovery_cleanup(adapter, 0);
+ 
+ 	unload_drivers(adapter);

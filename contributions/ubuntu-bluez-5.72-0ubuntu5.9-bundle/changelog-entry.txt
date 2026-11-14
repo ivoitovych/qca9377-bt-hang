@@ -1,0 +1,32 @@
+bluez (5.72-0ubuntu5.9) noble; urgency=medium
+
+  * Fix A2DP being disconnected when Release() cancels a pending Acquire();
+    the cancelled Acquire() is now answered with an error (LP: #<LP-U12>).
+    Cherry-picked from upstream (BlueZ 5.80): 3d9900eb754d (helper part
+    only), a14d59725ef3 and 664a5d3785a1.
+    - d/p/transport-Add-transport_a2dp_get_stream-helper.patch
+    - d/p/transport-don-t-disconnect-A2DP-if-canceling-Acquire-with-Release.patch
+    - d/p/a2dp-don-t-change-setup-sep-when-it-is-reconfiguring.patch
+  * btmon: fix abort (buffer overflow detected) in print_packet() when the
+    computed line width is negative or larger than the line buffer
+    (LP: #<LP-BTMON>). Cherry-picked from upstream: fdbfe0018f6f (BlueZ 5.80)
+    and dca0f10fd560 (master).
+    - d/p/monitor-Fix-crash-due-to-negative-max_len.patch
+    - d/p/monitor-clamp-max_len-in-print_packet.patch
+  * Fix use-after-free in bluetoothd at exit with a streaming sound server
+    (LP: #<LP-U23>): endpoints are released before their applications are
+    freed. The unlink is backported from upstream 7482aceece70; the other
+    two patches are written for this update.
+    - d/p/media-Unlink-endpoints-from-their-application-on-removal.patch
+    - d/p/media-Fix-sending-Release-twice-to-A2DP-endpoints.patch
+    - d/p/media-Fix-use-after-free-releasing-endpoints-on-adapter-removal.patch
+  * Fix use-after-free in bluetoothd at exit in discovery_cleanup()
+    (LP: #<LP-U24>). Cherry-picked from upstream (BlueZ 5.88): 7e3212fa233e.
+    - d/p/adapter-clear-discovery_found-list-before-discovery_cleanup.patch
+  * Report a refused A2DP connection as br-connection-refused instead of
+    br-connection-unknown (LP: #<LP-REFUSED>). Cherry-picked from upstream
+    (BlueZ 5.78): a6ac17f0e393.
+    - d/p/a2dp-Fix-connection-error-message.patch
+
+ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Sat, 14 Nov 2026 12:00:00 +0000
+

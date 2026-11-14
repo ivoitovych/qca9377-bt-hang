@@ -32,6 +32,10 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 
 **Nothing in a dossier is sent anywhere without the operator's word.**
 
+**One Ubuntu 24.04 bluez update for CO-03, CO-11a, CO-37's backports and CO-40:**
+[`ubuntu-bluez-5.72-0ubuntu5.9-bundle/`](ubuntu-bluez-5.72-0ubuntu5.9-bundle/README.md)
+(2026-11-14; built and tested, not filed).
+
 **Remaining research and development per item, and the work lanes of 2026-11-14:**
 [`rd-2026-11-14.md`](rd-2026-11-14.md).
 

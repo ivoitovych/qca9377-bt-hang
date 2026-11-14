@@ -1,0 +1,24 @@
+Description: a2dp: Fix connection error message
+ When a headset has dropped the pairing, the A2DP connect fails with
+ ECONNREFUSED, which error_to_errno() turned into -EAGAIN, so the D-Bus error
+ was br-connection-unknown. Map ECONNREFUSED to itself so that the error is
+ br-connection-refused.
+Author: Frédéric Danis <frederic.danis@collabora.com>
+Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a6ac17f0e3932d6b07ced87e41fe7a108fe55149
+Applied-Upstream: 5.78, commit:a6ac17f0e3932d6b07ced87e41fe7a108fe55149
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-REFUSED>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 43da38051..a6489a763 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -326,6 +326,7 @@ static int error_to_errno(struct avdtp_error *err)
+ 	case EHOSTDOWN:
+ 	case ECONNABORTED:
+ 	case EBADE:
++	case ECONNREFUSED:
+ 		return -perr;
+ 	default:
+ 		/*

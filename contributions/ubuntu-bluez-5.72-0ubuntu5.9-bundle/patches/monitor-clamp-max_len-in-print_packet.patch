@@ -1,0 +1,48 @@
+Description: monitor: clamp max_len in print_packet
+ print_packet() derives the snprintf() bound from the terminal width and
+ never bounds it against the space left in line[]. max_len can stay negative
+ after the recovery added by the previous patch, or exceed the buffer. Clamp
+ max_len to the space remaining in line[] and only write the ellipsis when
+ there is room for it.
+Author: Chad Spensky <chad@allthenticate.com>
+Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=dca0f10fd560f8095493021ca2ac20236fde026e
+Bug: https://github.com/bluez/bluez/issues/1104
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-BTMON>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/monitor/packet.c b/monitor/packet.c
+index f0558b656..67837b8f0 100644
+--- a/monitor/packet.c
++++ b/monitor/packet.c
+@@ -605,13 +605,26 @@ static void print_packet(struct timeval *tv, struct ucred *cred, char ident,
+ 			max_len = col - len - ts_len - 3;
+ 		}
+ 
++		/* col comes from the terminal and len includes the optional
++		 * "comm[pid]: " prefix, so max_len can still be negative
++		 * here, or larger than the space left in line[]. Both
++		 * overflow the snprintf below, and a negative value also
++		 * indexes before line[].
++		 */
++		if (max_len > (int) sizeof(line) - pos - 1)
++			max_len = (int) sizeof(line) - pos - 1;
++		if (max_len < 0)
++			max_len = 0;
++
+ 		n = snprintf(line + pos, max_len + 1, "%s%s",
+ 						label ? ": " : "", text);
+ 		if (n > max_len) {
+-			line[pos + max_len - 1] = '.';
+-			line[pos + max_len - 2] = '.';
+-			if (line[pos + max_len - 3] == ' ')
+-				line[pos + max_len - 3] = '.';
++			if (max_len >= 3) {
++				line[pos + max_len - 1] = '.';
++				line[pos + max_len - 2] = '.';
++				if (line[pos + max_len - 3] == ' ')
++					line[pos + max_len - 3] = '.';
++			}
+ 
+ 			n = max_len;
+ 		}

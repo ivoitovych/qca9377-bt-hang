@@ -1,0 +1,46 @@
+Description: media: Fix use-after-free releasing endpoints on adapter removal
+ path_free() frees the applications before releasing the endpoints. Freeing
+ an application removes its endpoints, and removing an A2DP endpoint whose
+ stream is locked by an acquired transport is deferred by a2dp_remove_sep(),
+ so the endpoint stays in the adapter's list. release_endpoint() then clears
+ its transports, which unlocks the stream; the SEP is unregistered and its
+ destroy callback releases and frees the endpoint while clear_endpoint() is
+ still iterating over its transports (heap-use-after-free at
+ profiles/audio/media.c, clear_endpoint(), seen with AddressSanitizer when
+ bluetoothd exits while a sound server streams). Release the endpoints
+ first, so that their transports are cleared while their SEPs are still
+ registered and the removal is not deferred.
+Author: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Origin: other, written for this update; fixes ee0f3c03fb1d ("media: Fix UnregisterApplication")
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-U23>
+Forwarded: no
+Last-Update: 2026-11-14
+---
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index e0ee2bae7..ea2dec0bb 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -3280,8 +3280,12 @@ static void path_free(void *data)
+ 	struct media_adapter *adapter = data;
+ 	GSList *l;
+ 
+-	queue_destroy(adapter->apps, app_free);
+-
++	/* Release the endpoints before freeing the applications, which
++	 * removes them: the removal of an A2DP endpoint whose stream is
++	 * locked by a transport is deferred, and release_endpoint() would
++	 * then unlock it while clearing the transports, freeing the
++	 * endpoint it is still using.
++	 */
+ 	for (l = adapter->endpoints; l;) {
+ 		struct media_endpoint *endpoint	= l->data;
+ 
+@@ -3290,6 +3294,8 @@ static void path_free(void *data)
+ 		release_endpoint(endpoint);
+ 	}
+ 
++	queue_destroy(adapter->apps, app_free);
++
+ 	for (l = adapter->players; l;) {
+ 		struct media_player *mp = l->data;
+ 

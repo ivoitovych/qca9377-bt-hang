@@ -1,0 +1,50 @@
+From: Pauli Virtanen <pav@iki.fi>
+Date: Sat, 2 Nov 2024 22:29:46 +0200
+Subject: a2dp: don't change setup sep when it is reconfiguring
+
+If a2dp_resume/a2dp_suspend are called while setup is being
+reconfigured, they make the reconfiguration use wrong SEP.  This occurs
+if transport Acquire/Release are called while reconfiguration is waiting
+for CLOSE_RSP.
+
+Fix by failing a2dp_resume/suspend early without changing the setup, if
+it is reconfiguring.
+
+Such resume/suspend calls would in any case fail, because
+avdtp_close(stream) has been done, so avdtp_suspend/resume would return
+error.
+
+(backported from commit 664a5d3785a1a57989d236b6fd649321a39451f5)
+
+Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=664a5d3785a1a57989d236b6fd649321a39451f5
+Applied-Upstream: 5.80, commit:664a5d3785a1a57989d236b6fd649321a39451f5
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-U12>
+Last-Update: 2026-11-14
+---
+ profiles/audio/a2dp.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 0cb8e61..10b52d6 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -3124,6 +3124,9 @@ unsigned int a2dp_resume(struct avdtp *session, struct a2dp_sep *sep,
+ 	cb_data->resume_cb = cb;
+ 	cb_data->user_data = user_data;
+ 
++	if (setup->reconfigure)
++		goto failed;
++
+ 	setup->sep = sep;
+ 	setup->stream = sep->stream;
+ 
+@@ -3182,6 +3185,9 @@ unsigned int a2dp_suspend(struct avdtp *session, struct a2dp_sep *sep,
+ 	cb_data->suspend_cb = cb;
+ 	cb_data->user_data = user_data;
+ 
++	if (setup->reconfigure)
++		goto failed;
++
+ 	setup->sep = sep;
+ 	setup->stream = sep->stream;
+ 

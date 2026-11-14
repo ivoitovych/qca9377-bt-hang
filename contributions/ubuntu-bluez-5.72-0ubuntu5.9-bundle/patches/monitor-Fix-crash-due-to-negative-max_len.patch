@@ -1,0 +1,30 @@
+Description: monitor: Fix crash due to negative max_len
+ btmon aborts (buffer overflow detected, SIGABRT) in print_packet() when the
+ computed max_len is negative, for example when decoding a MGMT Open record
+ with a long label at 80 columns or fewer. Discard the extra text if there
+ is not enough space for the text and the label.
+Author: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Origin: upstream, https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=fdbfe0018f6f216ff089c0e1db848ec8ae16585e
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/bluez/+bug/<LP-BTMON>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/monitor/packet.c b/monitor/packet.c
+index 2eb50896b..b186431cf 100644
+--- a/monitor/packet.c
++++ b/monitor/packet.c
+@@ -490,6 +490,14 @@ static void print_packet(struct timeval *tv, struct ucred *cred, char ident,
+ 		int extra_len = extra ? strlen(extra) : 0;
+ 		int max_len = col - len - extra_len - ts_len - 3;
+ 
++		/* Check if there is enough space for the text and the label, if
++		 * there isn't then discard extra text since it won't fit.
++		 */
++		if (max_len <= 0) {
++			extra = NULL;
++			max_len = col - len - ts_len - 3;
++		}
++
+ 		n = snprintf(line + pos, max_len + 1, "%s%s",
+ 						label ? ": " : "", text);
+ 		if (n > max_len) {
