@@ -1,0 +1,241 @@
+scenario	opts	variant	width	run	exit	stderr_first	stdout_bytes	stdout_lines	prefixed7_lines	seconds	note	last_line
+real	-	resolute-stock	60	1	134	*** buffer overflow detected ***: terminated	10215	172	21	5.1		          hci0
+real	-	resolute-stock	80	1	0		111054	1764	87	5.2		hcitool[1000015]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.505499
+real	-	resolute-stock	100	1	0		116494	1764	87	5.3		hcitool[1000022]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.857580
+real	-	resolute-stock	120	1	0		121934	1764	87	5.3		hcitool[1000029]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.159798
+real	-	resolute-stock	200	1	0		143694	1764	87	5.1		hcitool[1000036]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-stock	piped	1	0		78719	1764	87	6.1		hcitool[1000043]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.395664
+real	-	resolute-patched	60	1	0		105660	1764	87	5.1		hcitool[1000050]: @ RAW Close:..   {0x0002} [hci0] 4.473288
+real	-	resolute-patched	80	1	0		111054	1764	87	5.1		hcitool[1000057]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.534646
+real	-	resolute-patched	100	1	0		116494	1764	87	5.1		hcitool[1000064]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.627092
+real	-	resolute-patched	120	1	0		121934	1764	87	5.1		hcitool[1000071]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.724641
+real	-	resolute-patched	200	1	0		143694	1764	87	5.3		hcitool[1000078]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-patched	piped	1	0		78719	1764	87	6.1		hcitool[1000085]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.070619
+real	-	stonking-stock	60	1	134	*** buffer overflow detected ***: terminated	677	8	2	5.2		bluetoothd[1000079]: = Terminating                 1.224718
+real	-	stonking-stock	80	1	0		114540	1807	87	5.3		hcitool[1000099]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.565057
+real	-	stonking-stock	100	1	0		119980	1807	87	5.3		hcitool[1000106]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.890576
+real	-	stonking-stock	120	1	0		125420	1807	87	5.7		hcitool[1000113]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.577081
+real	-	stonking-stock	200	1	0		147206	1807	87	5.4		hcitool[1000120]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-stock	piped	1	0		81529	1807	87	6.2		hcitool[1000127]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.150977
+real	-	stonking-patched	60	1	0		109146	1807	87	5.2		hcitool[1000134]: @ RAW Close:..   {0x0002} [hci0] 5.365736
+real	-	stonking-patched	80	1	0		114540	1807	87	5.1		hcitool[1000141]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.523340
+real	-	stonking-patched	100	1	0		119980	1807	87	5.2		hcitool[1000148]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.774922
+real	-	stonking-patched	120	1	0		125420	1807	87	5.1		hcitool[1000155]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.927183
+real	-	stonking-patched	200	1	0		147180	1807	87	5.2		hcitool[1000162]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-patched	piped	1	0		81529	1807	87	6.1		hcitool[1000169]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.327897
+long	-	resolute-stock	60	1	134	*** buffer overflow detected ***: terminated	10215	172	21	7.5		          hci0
+long	-	resolute-stock	80	1	0		114747	1812	95	6.7		hci-raw-sender1[1000186]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.191249
+long	-	resolute-stock	100	1	0		120487	1812	95	6.8		hci-raw-sender1[1000194]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.047256
+long	-	resolute-stock	120	1	0		126227	1812	95	7.2		hci-raw-sender1[1000202]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 7.235246
+long	-	resolute-stock	200	1	0		149187	1812	95	7.3		hci-raw-sender1[1000210]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-stock	piped	1	0		81239	1812	95	7.6		hci-raw-sender1[1000218]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.135622
+long	-	resolute-patched	60	1	0		109509	1812	95	6.6		hci-raw-sender1[1000226]: @ RAW Close    {0x0002} [hci0] 6.723409
+long	-	resolute-patched	80	1	0		114747	1812	95	6.3		hci-raw-sender1[1000234]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.079226
+long	-	resolute-patched	100	1	0		120487	1812	95	7.0		hci-raw-sender1[1000242]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 7.055315
+long	-	resolute-patched	120	1	0		126253	1812	95	6.6		hci-raw-sender1[1000250]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.675285
+long	-	resolute-patched	200	1	0		149187	1812	95	7.0		hci-raw-sender1[1000258]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-patched	piped	1	0		81239	1812	95	7.7		hci-raw-sender1[1000266]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.363279
+long	-	stonking-stock	60	1	134	*** buffer overflow detected ***: terminated	677	8	2	6.9		bluetoothd-long[1000259]: = Terminating            0.635886
+long	-	stonking-stock	80	1	0		118306	1856	95	7.0		hci-raw-sender1[1000282]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.275256
+long	-	stonking-stock	100	1	0		124046	1856	95	6.7		hci-raw-sender1[1000290]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 5.927259
+long	-	stonking-stock	120	1	0		129786	1856	95	6.3		hci-raw-sender1[1000298]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.327243
+long	-	stonking-stock	200	1	0		152746	1856	95	6.4		hci-raw-sender1[1000306]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-stock	piped	1	0		84106	1856	95	7.3		hci-raw-sender1[1000314]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.027326
+long	-	stonking-patched	60	1	0		113068	1856	95	6.5		hci-raw-sender1[1000322]: @ RAW Close    {0x0002} [hci0] 6.471239
+long	-	stonking-patched	80	1	0		118306	1856	95	6.6		hci-raw-sender1[1000330]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.079252
+long	-	stonking-patched	100	1	0		124046	1856	95	6.8		hci-raw-sender1[1000338]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.835264
+long	-	stonking-patched	120	1	0		129812	1856	95	6.8		hci-raw-sender1[1000346]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.719266
+long	-	stonking-patched	200	1	0		152746	1856	95	6.9		hci-raw-sender1[1000354]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-patched	piped	1	0		84132	1856	95	8.3		hci-raw-sender1[1000362]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.903265
+real	-	resolute-stock	60	2	134	*** buffer overflow detected ***: terminated	10215	172	21	5.3		          hci0
+real	-	resolute-stock	80	2	0		111054	1764	87	5.2		hcitool[1000377]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.213010
+real	-	resolute-stock	100	2	0		116494	1764	87	5.1		hcitool[1000384]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.333130
+real	-	resolute-stock	120	2	0		121934	1764	87	5.1		hcitool[1000391]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.431212
+real	-	resolute-stock	200	2	0		143694	1764	87	5.3		hcitool[1000398]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-stock	piped	2	0		78719	1764	87	6.1		hcitool[1000405]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.816240
+real	-	resolute-patched	60	2	0		105660	1764	87	5.4		hcitool[1000412]: @ RAW Close:..   {0x0002} [hci0] 5.129583
+real	-	resolute-patched	80	2	0		111080	1764	87	5.4		hcitool[1000419]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.544697
+real	-	resolute-patched	100	2	0		116494	1764	87	5.4		hcitool[1000426]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.039059
+real	-	resolute-patched	120	2	0		121960	1764	87	5.4		hcitool[1000433]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.340720
+real	-	resolute-patched	200	2	0		143694	1764	87	5.4		hcitool[1000440]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-patched	piped	2	0		78745	1764	87	6.8		hcitool[1000447]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.561951
+real	-	stonking-stock	60	2	134	*** buffer overflow detected ***: terminated	677	8	2	5.3		bluetoothd[1000441]: = Terminating                 0.836915
+real	-	stonking-stock	80	2	0		114540	1807	87	5.3		hcitool[1000461]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.219888
+real	-	stonking-stock	100	2	0		120006	1807	87	5.3		hcitool[1000468]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.548684
+real	-	stonking-stock	120	2	0		125420	1807	87	5.3		hcitool[1000475]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.861383
+real	-	stonking-stock	200	2	0		147180	1807	87	5.4		hcitool[1000482]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-stock	piped	2	0		81529	1807	87	6.3		hcitool[1000489]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.550451
+real	-	stonking-patched	60	2	0		109146	1807	87	5.3		hcitool[1000496]: @ RAW Close:..   {0x0002} [hci0] 4.834488
+real	-	stonking-patched	80	2	0		114540	1807	87	5.2		hcitool[1000503]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.057566
+real	-	stonking-patched	100	2	0		120006	1807	87	5.3		hcitool[1000510]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.368686
+real	-	stonking-patched	120	2	0		125446	1807	87	5.4		hcitool[1000517]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.749056
+real	-	stonking-patched	200	2	0		147206	1807	87	5.5		hcitool[1000524]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-patched	piped	2	0		81529	1807	87	6.2		hcitool[1000531]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.593328
+long	-	resolute-stock	60	2	134	*** buffer overflow detected ***: terminated	10215	172	21	6.6		          hci0
+long	-	resolute-stock	80	2	0		114747	1812	95	6.8		hci-raw-sender1[1000548]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.771252
+long	-	resolute-stock	100	2	0		120487	1812	95	6.3		hci-raw-sender1[1000556]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.143248
+long	-	resolute-stock	120	2	0		126227	1812	95	6.2		hci-raw-sender1[1000564]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.331255
+long	-	resolute-stock	200	2	0		149187	1812	95	6.2		hci-raw-sender1[1000572]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-stock	piped	2	0		81239	1812	95	7.5		hci-raw-sender1[1000580]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.067283
+long	-	resolute-patched	60	2	0		109509	1812	95	6.7		hci-raw-sender1[1000588]: @ RAW Close    {0x0002} [hci0] 6.759259
+long	-	resolute-patched	80	2	0		114747	1812	95	6.8		hci-raw-sender1[1000596]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.555268
+long	-	resolute-patched	100	2	0		120487	1812	95	6.6		hci-raw-sender1[1000604]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.191585
+long	-	resolute-patched	120	2	0		126227	1812	95	6.9		hci-raw-sender1[1000612]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.059254
+long	-	resolute-patched	200	2	0		149213	1812	95	7.5		hci-raw-sender1[1000620]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-patched	piped	2	0		81265	1812	95	8.2		hci-raw-sender1[1000628]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.703260
+long	-	stonking-stock	60	2	134	*** buffer overflow detected ***: terminated	677	8	2	7.3		bluetoothd-long[1000621]: = Terminating            0.956361
+long	-	stonking-stock	80	2	0		118306	1856	95	7.1		hci-raw-sender1[1000644]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.087263
+long	-	stonking-stock	100	2	0		124046	1856	95	7.3		hci-raw-sender1[1000652]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 7.403656
+long	-	stonking-stock	120	2	0		129786	1856	95	6.8		hci-raw-sender1[1000660]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.243240
+long	-	stonking-stock	200	2	0		152746	1856	95	7.1		hci-raw-sender1[1000668]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-stock	piped	2	0		84106	1856	95	7.9		hci-raw-sender1[1000676]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.231249
+long	-	stonking-patched	60	2	0		113094	1856	95	6.9		hci-raw-sender1[1000684]: @ RAW Close    {0x0002} [hci0] 6.059286
+long	-	stonking-patched	80	2	0		118306	1856	95	7.4		hci-raw-sender1[1000692]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.443257
+long	-	stonking-patched	100	2	0		124072	1856	95	8.2		hci-raw-sender1[1000700]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 7.747244
+long	-	stonking-patched	120	2	0		129786	1856	95	6.6		hci-raw-sender1[1000708]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.383297
+long	-	stonking-patched	200	2	0		152746	1856	95	7.2		hci-raw-sender1[1000716]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-patched	piped	2	0		84106	1856	95	7.8		hci-raw-sender1[1000724]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.447277
+real	-	resolute-stock	60	3	134	*** buffer overflow detected ***: terminated	10215	172	21	5.4		          hci0
+real	-	resolute-stock	80	3	0		111080	1764	87	5.7		hcitool[1000739]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.222576
+real	-	resolute-stock	100	3	0		116520	1764	87	5.4		hcitool[1000746]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.706839
+real	-	resolute-stock	120	3	0		121934	1764	87	5.3		hcitool[1000753]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.023480
+real	-	resolute-stock	200	3	0		143694	1764	87	5.4		hcitool[1000760]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-stock	piped	3	0		78719	1764	87	6.7		hcitool[1000767]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.135528
+real	-	resolute-patched	60	3	0		105686	1764	87	5.4		hcitool[1000774]: @ RAW Close:..   {0x0002} [hci0] 5.566555
+real	-	resolute-patched	80	3	0		111054	1764	87	5.6		hcitool[1000781]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.169598
+real	-	resolute-patched	100	3	0		116494	1764	87	5.4		hcitool[1000788]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.546334
+real	-	resolute-patched	120	3	0		121934	1764	87	5.5		hcitool[1000795]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.037376
+real	-	resolute-patched	200	3	0		143694	1764	87	5.3		hcitool[1000802]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-patched	piped	3	0		78719	1764	87	6.3		hcitool[1000809]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.594516
+real	-	stonking-stock	60	3	134	*** buffer overflow detected ***: terminated	677	8	2	5.5		bluetoothd[1000803]: = Terminating                 0.885021
+real	-	stonking-stock	80	3	0		114540	1807	87	5.3		hcitool[1000823]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.435627
+real	-	stonking-stock	100	3	0		119980	1807	87	5.3		hcitool[1000830]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.732148
+real	-	stonking-stock	120	3	0		125420	1807	87	5.3		hcitool[1000837]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.067594
+real	-	stonking-stock	200	3	0		147180	1807	87	5.4		hcitool[1000844]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-stock	piped	3	0		81529	1807	87	6.3		hcitool[1000851]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.820662
+real	-	stonking-patched	60	3	0		109172	1807	87	5.4		hcitool[1000858]: @ RAW Close:..   {0x0002} [hci0] 5.255409
+real	-	stonking-patched	80	3	0		114566	1807	87	5.4		hcitool[1000865]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.659430
+real	-	stonking-patched	100	3	0		120006	1807	87	5.4		hcitool[1000872]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.093593
+real	-	stonking-patched	120	3	0		125420	1807	87	5.4		hcitool[1000879]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.444096
+real	-	stonking-patched	200	3	0		147180	1807	87	5.5		hcitool[1000886]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-patched	piped	3	0		81529	1807	87	6.5		hcitool[1000893]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.411199
+long	-	resolute-stock	60	3	134	*** buffer overflow detected ***: terminated	10215	172	21	7.5		          hci0
+long	-	resolute-stock	80	3	0		114747	1812	95	7.4		hci-raw-sender1[1000910]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.987300
+long	-	resolute-stock	100	3	0		120487	1812	95	7.5		hci-raw-sender1[1000918]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 7.563284
+long	-	resolute-stock	120	3	0		126227	1812	95	7.6		hci-raw-sender1[1000926]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 7.119271
+long	-	resolute-stock	200	3	0		149187	1812	95	6.8		hci-raw-sender1[1000934]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-stock	piped	3	0		81239	1812	95	7.9		hci-raw-sender1[1000942]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.899333
+long	-	resolute-patched	60	3	0		109535	1812	95	7.1		hci-raw-sender1[1000950]: @ RAW Close    {0x0002} [hci0] 6.971348
+long	-	resolute-patched	80	3	0		114747	1812	95	6.8		hci-raw-sender1[1000958]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.751283
+long	-	resolute-patched	100	3	0		120487	1812	95	6.9		hci-raw-sender1[1000966]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.711278
+long	-	resolute-patched	120	3	0		126227	1812	95	7.2		hci-raw-sender1[1000974]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.875459
+long	-	resolute-patched	200	3	0		149187	1812	95	7.2		hci-raw-sender1[1000982]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-patched	piped	3	0		81239	1812	95	7.8		hci-raw-sender1[1000990]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.927281
+long	-	stonking-stock	60	3	134	*** buffer overflow detected ***: terminated	677	8	2	6.5		bluetoothd-long[1000983]: = Terminating            1.201183
+long	-	stonking-stock	80	3	0		118306	1856	95	6.4		hci-raw-sender1[1001006]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 5.867247
+long	-	stonking-stock	100	3	0		124046	1856	95	6.4		hci-raw-sender1[1001014]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.275636
+long	-	stonking-stock	120	3	0		129786	1856	95	6.6		hci-raw-sender1[1001022]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 5.899272
+long	-	stonking-stock	200	3	0		152746	1856	95	6.6		hci-raw-sender1[1001030]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-stock	piped	3	0		84132	1856	95	7.8		hci-raw-sender1[1001038]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.319281
+long	-	stonking-patched	60	3	0		113068	1856	95	6.4		hci-raw-sender1[1001046]: @ RAW Close    {0x0002} [hci0] 5.803217
+long	-	stonking-patched	80	3	0		118306	1856	95	6.8		hci-raw-sender1[1001054]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.555413
+long	-	stonking-patched	100	3	0		124046	1856	95	6.9		hci-raw-sender1[1001062]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.531257
+long	-	stonking-patched	120	3	0		129786	1856	95	7.9		hci-raw-sender1[1001070]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 7.467269
+long	-	stonking-patched	200	3	0		152772	1856	95	7.9		hci-raw-sender1[1001078]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-patched	piped	3	0		84106	1856	95	7.9		hci-raw-sender1[1001086]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.359259
+real	-	resolute-stock	60	4	134	*** buffer overflow detected ***: terminated	10215	172	21	5.5		          hci0
+real	-	resolute-stock	80	4	0		111054	1764	87	5.3		hcitool[1001101]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.990751
+real	-	resolute-stock	100	4	0		116520	1764	87	5.4		hcitool[1001108]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.363509
+real	-	resolute-stock	120	4	0		121934	1764	87	5.4		hcitool[1001115]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.781151
+real	-	resolute-stock	200	4	0		143694	1764	87	5.4		hcitool[1001122]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-stock	piped	4	0		78745	1764	87	6.5		hcitool[1001129]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.723770
+real	-	resolute-patched	60	4	0		105660	1764	87	5.3		hcitool[1001136]: @ RAW Close:..   {0x0002} [hci0] 5.021944
+real	-	resolute-patched	80	4	0		111054	1764	87	5.4		hcitool[1001143]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.410819
+real	-	resolute-patched	100	4	0		116494	1764	87	5.7		hcitool[1001150]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.122323
+real	-	resolute-patched	120	4	0		121934	1764	87	5.7		hcitool[1001157]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.858736
+real	-	resolute-patched	200	4	0		143694	1764	87	5.3		hcitool[1001164]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-patched	piped	4	0		78719	1764	87	6.3		hcitool[1001171]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.468094
+real	-	stonking-stock	60	4	134	*** buffer overflow detected ***: terminated	677	8	2	5.3		bluetoothd[1001165]: = Terminating                 0.684045
+real	-	stonking-stock	80	4	0		114540	1807	87	5.4		hcitool[1001185]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.219459
+real	-	stonking-stock	100	4	0		120006	1807	87	5.3		hcitool[1001192]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.527909
+real	-	stonking-stock	120	4	0		125420	1807	87	5.4		hcitool[1001199]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.858056
+real	-	stonking-stock	200	4	0		147180	1807	87	5.4		hcitool[1001206]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-stock	piped	4	0		81529	1807	87	6.4		hcitool[1001213]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.701288
+real	-	stonking-patched	60	4	0		109146	1807	87	5.4		hcitool[1001220]: @ RAW Close:..   {0x0002} [hci0] 5.070424
+real	-	stonking-patched	80	4	0		114566	1807	87	5.4		hcitool[1001227]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.451840
+real	-	stonking-patched	100	4	0		119980	1807	87	5.5		hcitool[1001234]: @ RAW Close: hcitool                                     {0x0002} [hci0] 4.941719
+real	-	stonking-patched	120	4	0		125420	1807	87	5.4		hcitool[1001241]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.363498
+real	-	stonking-patched	200	4	0		147180	1807	87	5.4		hcitool[1001248]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-patched	piped	4	0		81529	1807	87	6.3		hcitool[1001255]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.117599
+long	-	resolute-stock	60	4	134	*** buffer overflow detected ***: terminated	10215	172	21	7.2		          hci0
+long	-	resolute-stock	80	4	0		114747	1812	95	7.4		hci-raw-sender1[1001272]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.447427
+long	-	resolute-stock	100	4	0		120513	1812	95	7.0		hci-raw-sender1[1001280]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.567329
+long	-	resolute-stock	120	4	0		126227	1812	95	7.2		hci-raw-sender1[1001288]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.819257
+long	-	resolute-stock	200	4	0		149187	1812	95	7.0		hci-raw-sender1[1001296]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-stock	piped	4	0		81265	1812	95	8.1		hci-raw-sender1[1001304]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.955243
+long	-	resolute-patched	60	4	0		109535	1812	95	7.1		hci-raw-sender1[1001312]: @ RAW Close    {0x0002} [hci0] 7.007280
+long	-	resolute-patched	80	4	0		114747	1812	95	7.0		hci-raw-sender1[1001320]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.083265
+long	-	resolute-patched	100	4	0		120487	1812	95	7.5		hci-raw-sender1[1001328]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.611348
+long	-	resolute-patched	120	4	0		126227	1812	95	6.9		hci-raw-sender1[1001336]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.523271
+long	-	resolute-patched	200	4	0		149187	1812	95	7.3		hci-raw-sender1[1001344]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-patched	piped	4	0		81239	1812	95	8.2		hci-raw-sender1[1001352]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.983941
+long	-	stonking-stock	60	4	134	*** buffer overflow detected ***: terminated	677	8	2	7.4		bluetoothd-long[1001345]: = Terminating            1.258872
+long	-	stonking-stock	80	4	0		118306	1856	95	6.9		hci-raw-sender1[1001368]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.275279
+long	-	stonking-stock	100	4	0		124072	1856	95	7.1		hci-raw-sender1[1001376]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.343295
+long	-	stonking-stock	120	4	0		129786	1856	95	7.4		hci-raw-sender1[1001384]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.735338
+long	-	stonking-stock	200	4	0		152772	1856	95	8.5		hci-raw-sender1[1001392]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-stock	piped	4	0		84106	1856	95	8.1		hci-raw-sender1[1001400]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.371270
+long	-	stonking-patched	60	4	0		113094	1856	95	7.1		hci-raw-sender1[1001408]: @ RAW Close    {0x0002} [hci0] 6.463260
+long	-	stonking-patched	80	4	0		118306	1856	95	6.8		hci-raw-sender1[1001416]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.283280
+long	-	stonking-patched	100	4	0		124046	1856	95	6.9		hci-raw-sender1[1001424]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.223828
+long	-	stonking-patched	120	4	0		129812	1856	95	7.5		hci-raw-sender1[1001432]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.631259
+long	-	stonking-patched	200	4	0		152746	1856	95	7.2		hci-raw-sender1[1001440]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-patched	piped	4	0		84132	1856	95	7.9		hci-raw-sender1[1001448]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.847290
+real	-	resolute-stock	60	5	134	*** buffer overflow detected ***: terminated	10215	172	21	5.7		          hci0
+real	-	resolute-stock	80	5	0		111054	1764	87	5.7		hcitool[1001463]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.040123
+real	-	resolute-stock	100	5	0		116494	1764	87	5.4		hcitool[1001470]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.473285
+real	-	resolute-stock	120	5	0		121934	1764	87	5.4		hcitool[1001477]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.940919
+real	-	resolute-stock	200	5	0		143720	1764	87	5.4		hcitool[1001484]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-stock	piped	5	0		78719	1764	87	6.4		hcitool[1001491]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.801464
+real	-	resolute-patched	60	5	0		105686	1764	87	5.5		hcitool[1001498]: @ RAW Close:..   {0x0002} [hci0] 5.230968
+real	-	resolute-patched	80	5	0		111054	1764	87	5.8		hcitool[1001505]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.898219
+real	-	resolute-patched	100	5	0		116494	1764	87	5.7		hcitool[1001512]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.870383
+real	-	resolute-patched	120	5	0		121960	1764	87	5.4		hcitool[1001519]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.317159
+real	-	resolute-patched	200	5	0		143720	1764	87	5.4		hcitool[1001526]: @ RAW Close: hcitool                                                                                                                          
+real	-	resolute-patched	piped	5	0		78745	1764	87	6.3		hcitool[1001533]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.122338
+real	-	stonking-stock	60	5	134	*** buffer overflow detected ***: terminated	677	8	2	5.3		bluetoothd[1001527]: = Terminating                 1.333097
+real	-	stonking-stock	80	5	0		114540	1807	87	5.5		hcitool[1001547]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.939006
+real	-	stonking-stock	100	5	0		119980	1807	87	5.3		hcitool[1001554]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.245622
+real	-	stonking-stock	120	5	0		125420	1807	87	5.4		hcitool[1001561]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 4.623481
+real	-	stonking-stock	200	5	0		147180	1807	87	5.4		hcitool[1001568]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-stock	piped	5	0		81529	1807	87	6.3		hcitool[1001575]: @ RAW Close: hcitool                 {0x0002} [hci0] 6.221896
+real	-	stonking-patched	60	5	0		109146	1807	87	5.3		hcitool[1001582]: @ RAW Close:..   {0x0002} [hci0] 4.557664
+real	-	stonking-patched	80	5	0		114540	1807	87	5.3		hcitool[1001589]: @ RAW Close: hcitool                 {0x0002} [hci0] 4.852988
+real	-	stonking-patched	100	5	0		120006	1807	87	5.7		hcitool[1001596]: @ RAW Close: hcitool                                     {0x0002} [hci0] 5.541895
+real	-	stonking-patched	120	5	0		125446	1807	87	5.7		hcitool[1001603]: @ RAW Close: hcitool                                                         {0x0002} [hci0] 5.200559
+real	-	stonking-patched	200	5	0		147180	1807	87	5.4		hcitool[1001610]: @ RAW Close: hcitool                                                                                                                          
+real	-	stonking-patched	piped	5	0		81529	1807	87	6.3		hcitool[1001617]: @ RAW Close: hcitool                 {0x0002} [hci0] 5.891685
+long	-	resolute-stock	60	5	134	*** buffer overflow detected ***: terminated	10215	172	21	7.0		          hci0
+long	-	resolute-stock	80	5	0		114747	1812	95	6.8		hci-raw-sender1[1001634]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.367292
+long	-	resolute-stock	100	5	0		120487	1812	95	7.0		hci-raw-sender1[1001642]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.423254
+long	-	resolute-stock	120	5	0		126253	1812	95	7.1		hci-raw-sender1[1001650]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.491381
+long	-	resolute-stock	200	5	0		149213	1812	95	6.8		hci-raw-sender1[1001658]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-stock	piped	5	0		81239	1812	95	7.7		hci-raw-sender1[1001666]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.043263
+long	-	resolute-patched	60	5	0		109509	1812	95	6.8		hci-raw-sender1[1001674]: @ RAW Close    {0x0002} [hci0] 6.887280
+long	-	resolute-patched	80	5	0		114747	1812	95	6.9		hci-raw-sender1[1001682]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 6.835334
+long	-	resolute-patched	100	5	0		120487	1812	95	6.6		hci-raw-sender1[1001690]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.487258
+long	-	resolute-patched	120	5	0		126227	1812	95	6.6		hci-raw-sender1[1001698]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.043265
+long	-	resolute-patched	200	5	0		149187	1812	95	6.6		hci-raw-sender1[1001706]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	resolute-patched	piped	5	0		81239	1812	95	7.8		hci-raw-sender1[1001714]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.435266
+long	-	stonking-stock	60	5	134	*** buffer overflow detected ***: terminated	677	8	2	6.9		bluetoothd-long[1001707]: = Terminating            0.720296
+long	-	stonking-stock	80	5	0		118306	1856	95	6.6		hci-raw-sender1[1001730]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 5.987270
+long	-	stonking-stock	100	5	0		124046	1856	95	6.8		hci-raw-sender1[1001738]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.763260
+long	-	stonking-stock	120	5	0		129786	1856	95	6.7		hci-raw-sender1[1001746]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.379272
+long	-	stonking-stock	200	5	0		152746	1856	95	7.0		hci-raw-sender1[1001754]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-stock	piped	5	0		84106	1856	95	7.6		hci-raw-sender1[1001762]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.003280
+long	-	stonking-patched	60	5	0		113094	1856	95	8.3		hci-raw-sender1[1001770]: @ RAW Close    {0x0002} [hci0] 8.199258
+long	-	stonking-patched	80	5	0		118306	1856	95	6.6		hci-raw-sender1[1001778]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 5.855254
+long	-	stonking-patched	100	5	0		124046	1856	95	6.6		hci-raw-sender1[1001786]: @ RAW Close: hci-raw-sender1                     {0x0002} [hci0] 6.423269
+long	-	stonking-patched	120	5	0		129786	1856	95	6.8		hci-raw-sender1[1001794]: @ RAW Close: hci-raw-sender1                                         {0x0002} [hci0] 6.267580
+long	-	stonking-patched	200	5	0		152746	1856	95	6.4		hci-raw-sender1[1001802]: @ RAW Close: hci-raw-sender1                                                                                                          
+long	-	stonking-patched	piped	5	0		84106	1856	95	7.9		hci-raw-sender1[1001810]: @ RAW Close: hci-raw-sen..   {0x0002} [hci0] 7.607246
