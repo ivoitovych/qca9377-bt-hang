@@ -718,6 +718,59 @@ this controller.
 
 ---
 
+## M-4 — mesh sends pending at controller removal are leaked, with their socket reference
+
+**Status 2026-11-14: reproduced in emulation; a fix written; the regression runs not finished;
+not yet checked on copy.** CO-14's work area `/root/exp/agent-work/lane1-btusb-20261114/task4/`.
+
+**What it is** (bluetooth-next `da3cc02587c6`, source reading): a Mesh Send that has not started
+sits on `hdev->mesh_pending`. When the controller is removed, `hci_cmd_sync_clear()` frees only
+the transmission whose start is queued (`hci_core.c:2805`), and `mgmt_index_removed()` only
+cancels `mesh_send_done` (`mgmt.c:9925`). `mgmt_cleanup()` would free the rest when the mgmt
+socket closes, but it walks `hci_dev_list` (`mgmt.c:11106`), and `hci_unregister_dev()` has
+already taken the controller off it (`hci_core.c:2789`). Each pending request holds a reference to
+its socket (`mgmt_util.c:426`, released only at `:436`), so the socket is pinned too.
+
+**How it was found and measured** (QEMU, BlueZ's `btvirt` in the guest, kmemleak): queue three
+mesh sends per controller, remove the controller mid-backlog (end `btvirt`), close the mgmt
+socket, scan. 10 boots, 40 removals, 120 sends: 93 never completed on the tip, 92 with CO-04;
+kmemleak found 86 leaked `mgmt_mesh_tx` objects and 22 (tip) / 23 (CO-04) leaked sockets, in every
+boot. kmemleak under-reports in some boots, so the never-completed count is the upper bound.
+`close()` returns at once (nothing blocks). With every send completing first, or none sent, no
+kernel leaks (the harness's controls).
+
+**The fix** (on CO-04; applies to the tip alone too): free the pending sends in
+`mgmt_index_removed()` after the done work is cancelled, under `hdev->lock` as its caller already
+holds, completing them silently as `mgmt_cleanup()` does. Same 10-boot run: 0 mesh objects, 0
+sockets. mesh-tester unchanged (8 of 10 on every kernel, 9 runs); mgmt-tester still running.
+
+**Reportable:** after the regression runs and a check on copy, as CO-14's patch. Not specific to
+this controller.
+
+---
+
+## M-5 — lockdep: `cmd_sync_work_lock` and `unregister_lock` taken in both orders at unregister
+
+**Status 2026-11-14: observed (2 of 35 boots on the tip); removed by CO-04.**
+
+**What it is:** `hci_cmd_sync_clear()` runs the destroy callbacks of the queued cmd_sync entries
+while holding `hdev->cmd_sync_work_lock`. `mesh_send_done_sync()`'s destroy callback is
+`mesh_next()`, which calls `hci_cmd_sync_submit()`, which takes `hdev->unregister_lock`.
+`set_powered()` takes them the other way round (`unregister_lock`, then `cmd_sync_work_lock` in
+`hci_cmd_sync_submit()`). lockdep reports a possible circular dependency.
+
+**Evidence:** an unregister sweep in QEMU (KASAN, lockdep, 4 CPUs), 35 boots per kernel: tip 2
+(boots 17 and 28), tip + CO-05 2, tip + CO-04 0, tip + both 0; every other set 0 on every kernel
+(`contributions/CO-04-mesh-test-14888791/send-20261114/circular-count.txt`). Checked on copy: the
+report in `lockdep-base-UnregSweep-plain-17.log` ("WARNING: possible circular locking dependency
+detected", `hci_cmd_sync_submit` taking `unregister_lock` while `hci_cmd_sync_clear` holds
+`cmd_sync_work_lock`), and the counts in two base and two CO-04 logs. A separate natural-timing
+sweep (40 boots) never hit it: the window needs a done step still queued at removal.
+
+**Reportable:** CO-04 removes the destroy callback; its notes below the `---` name the finding.
+
+---
+
 ## BT-9 — Simultaneous discovery can end without the kernel ever stopping it; every later scan is refused Busy
 
 **Status 2026-10-09: already fixed upstream; missing from the 6.12, 6.6 and 6.1 stable

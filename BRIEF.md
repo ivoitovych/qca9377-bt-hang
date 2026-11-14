@@ -117,7 +117,11 @@ Recent detail may be shortened. Settled state is never dropped.
   - debug builds: GNOME Settings, and `btusb` for U8;
   - shellcheck; a second copy of the capture archive (§7); recording the running `bluetoothd` in `bt-trial` (§8a);
 - **Machine:**
-  - **Since 2026-10-30 04:31:21 (boot `738e228b`) the laptop runs `7.0.0-42` with E3 built for it** (`updates/btusb.ko`, srcversion `DDB92562D1890FC3D262993`; kernel log `QCA: patch rome 0x302 build 0x3e8`) and the **stock** `bluetooth.ko` (`12120DE84945B5EB6D372FD`). From 2026-10-11 16:26 to 10-29 it ran `7.0.0-38` with E3 (srcversion `D1DEA96A0C95BFAB05CEE01`). The recipe is in `patches/diag/README.md`.
+  - **Current (read 2026-11-14):** Ubuntu `7.0.0-43` with the **stock** btusb and
+    `bluetooth.ko` since 2026-11-12 22:55; its btusb has the `13d3:3503` entry and the boot loads
+    the patch, so **E3 is retired** (STATUS, the machine section). The lines below are the history
+    up to `-42`.
+  - **From 2026-10-30 04:31:21 (boot `738e228b`) the laptop ran `7.0.0-42` with E3 built for it** (`updates/btusb.ko`, srcversion `DDB92562D1890FC3D262993`; kernel log `QCA: patch rome 0x302 build 0x3e8`) and the **stock** `bluetooth.ko` (`12120DE84945B5EB6D372FD`). From 2026-10-11 16:26 to 10-29 it ran `7.0.0-38` with E3 (srcversion `D1DEA96A0C95BFAB05CEE01`). The recipe is in `patches/diag/README.md`.
   - `-42`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
   - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **The trial of the 10-13 boot was therefore closed by hand on 2026-10-18 at 17:03** (`scripts/trial-close-now.sh --reopen`: `main`'s closer from the checkout, passive, row first; 13 SCO setups, 0 timeouts; STATUS), and E3 #2 opened at 17:05:04, mid-boot. Until the deploy, a shutdown with a trial open still decodes the captures before the row if the trial saw a call, and the installed `autostop` and `bt-mark` send HCI Read Local Name up to four times (STATUS, the machine's warnings). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
@@ -144,8 +148,11 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-12** (the registers reconciled with each other and with upstream; the
-hand-off brought to 11-12; the reset count corrected to two controlled tests). Before that,
+**Last updated: 2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
+ready that day, the outside-review document, the Ubuntu bundle, the five lanes; the 11-12 block
+moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-12** (the registers reconciled
+with each other and with upstream; the hand-off brought to 11-12; the reset count corrected to two
+controlled tests). Before that,
 **2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
 hand-off bullet moved to the end of `HISTORY.md` verbatim and replaced; BlueZ 5.88 carries all
 eleven applied commits; the machine re-read; two "HANG" trial verdicts examined (no hang; BT-16 found); the
@@ -157,131 +164,70 @@ against the facts re-verified that day; the state block above rewritten; the han
 2026-10-18 to 10-23 moved to `HISTORY.md` verbatim and replaced below). The trail of earlier
 updates is in `HISTORY.md` and `git log -- BRIEF.md`, not here: until 2026-10-28 this line
 carried a running list of every update since 10-14, which grew to about 2,800 characters
-(`reviews/2026-10-28T0300Z-documentation-alignment.md`). **Newest exhibit on `main`: EX-088**
+(`reviews/2026-10-28T0300Z-documentation-alignment.md`). **Newest exhibit on `main`: EX-097**
 (EX-067 to EX-083 are CO-02's hardware run and code comparisons; EX-084 to EX-088, added
-2026-10-31 in `3bd731a`, are U12's A2DP loss of 10-31). No tip hash: it rotted within
-hours (`R2-13`).
+2026-10-31 in `3bd731a`, are U12's A2DP loss of 10-31; EX-089 to EX-095 are U12's third loss, on
+2026-11-13 on `-43`, where the headset accepted the Abort and A2DP was closed anyway, EX-093
+superseded by EX-094; EX-096 and EX-097 show that state undone without a reconnect, by a D-Bus
+ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-11-02, brought to 2026-11-12; read first; the 10-29/30 block and the long X1
-> bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's
-> follow-up list is the work queue.
+> **HAND-OFF (2026-11-14; read first; the 11-02/11-12 block is at the end of `HISTORY.md`).**
+> STATUS has every submission row (nothing was sent on 11-13 or 11-14). The page of record for
+> today's work is `contributions/rd-2026-11-14.md`: every possible contribution with its state,
+> the R&D left, and the results of the five work lanes.
 >
-> - **11-08 to 11-12, newest first:**
->   - **11-12 18:03, BT-17 (new):**
->     - Patch loaded, 162 s idle, no link. The first command at login (`0x0c24`) got no reply, the USB resets failed, and the controller left the bus.
->     - The 18:07 reboot left it off; the boot since 18:08 has no controller. Recovery: power-off.
->     - `7.0.0-43` was installed by the updater at 21:48. Its stock btusb carries the entry (`FOUND`, control `FOUND`), so E3 is not needed there.
->     - Evidence: `results/incident-2026-11-12-1803/`.
->   - **11-12, the registers reconciled** against each other and against upstream (read live):
->     `reviews/2026-11-12T1508Z-upstream-contributions-status.md`. Accepted: 1 kernel fix, 11 BlueZ
->     commits (all in BlueZ 5.88), 2 stable requests (every line released). Waiting: CO-02 (no
->     human reply since 10-27; its CI mirror pull requests were closed by the CI's bot 11-11/12,
->     not a review; v2 owed), CO-25 (our reply to Qualcomm unsent since 11-02), gvfs !368/!369 (no
->     comments). No routine re-checks submissions: the last full check before 11-12 was 11-01.
->   - **11-11 18:58, BT-16 again** (boot `5e459fa0`, the first after an 8 h power-off): no
->     Bluetooth for the whole boot; the 11-12 power-off recovered it. Eight candidate defects
->     listed in `docs/issues.md` BT-16, none traced yet.
->   - **11-11, the laptop-only work** (`results/laptop-only-work-2026-11-11/`): `7.0.0-43` carries
->     the entry (now in noble-updates/-security, 11-12); the MOMENTUM 4's microphone sends digital
->     silence since 10-20 (U15); CO-21 runs real btusb in a guest (base 0/5, patch 5/5); one
->     2-hour headset-session checklist; an E3 post-install hook and the BT-16 log-line module
->     built, not installed. The operator's access to the laptop is being limited: laptop-locked
->     work first.
->   - **11-07/08, U29 and CO-39 to CO-42** (STATUS, `contributions/README.md`).
->   - **Operator decisions added:** install the E3 hook or `-43` itself; the BT-16 log-line module
->     (on `-42` only); the headset session (D1–D7 of its checklist); deploying the trial tools; the
->     CO-02 v2; the CO-25 reply.
->
-> - **11-07: the two "HANG" trial rows are not hangs; one hides a new issue, BT-16.** E3 #3
->   (10-30) and E3 #4 (11-06) were classified by the installed, pre-09-19 closer, which probes
->   after bluetoothd has powered the adapter off at shutdown. #3's controller answered a minute
->   before. #4's boot never had Bluetooth: the controller came up reporting its patch already
->   loaded (no rampatch), failed LE commands 0x2007/0x202f, dropped off USB once, and bluetoothd
->   saw "Controllers: 0" for 20 h (**BT-16**, once in 7 boots; `docs/issues.md`;
->   `evidence/trials/E3/hang-verdicts-check-2026-11-07/`). Watch each boot's start-up for the
->   rampatch line. The machine's trial tools are 29 files behind `main`: deploying them is the
->   operator's word (`install.sh --tools-only`, then `bt-mode status`).
-> - **CI has been red since 11-02 13:26 (`83ec2f4`), unread for five days** (a trial open, so no
->   local suite). The first cause, a script without its executable bit, is fixed (11-07); later
->   ones (boot-range parser fixture, systemd unit checks, sandbox decoys, the install round trip)
->   are listed in STATUS "Repository health", not yet examined. `devtools/ci --wait` after pushes.
-> - **Agents:** the weekly limit of 11-02 ended 2026-11-05 09:00. The rule that remains: cheap
->   agents for per-file reviews, the main context synthesises. Three X1 agents ran 11-02/03 in
->   containers (`/root/exp/agent-work/x1-cdsim-20261102/`); none is running.
-> - **The review round is open; nothing from it is acted on yet.** The package
->   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
->   reviewers) was read by six reviewers; their points, each checked, are in
->   `contributions/review-2026-11-02/followups.md`: **14 decisions for the operator (D1–D14)** and
->   **92 follow-ups (F-01–F-92)** marked do / decide / you / doc. The operator closes the round,
->   then the decisions, then the "do" items. One reviewer's input named no item and nothing was
->   taken from it; the operator is weighing which reviewers to keep. A decisions brief (8 decisions,
->   2026-11-01/02) is kept separately; its points are folded into the follow-ups.
-> - **Measured 11-02 (each verified, logged, committed):**
->   - **CO-11a** (`4ecef5b`): 24.04's btmon with the first fix alone still aborts **live** at 60
->     columns (5/5), and at 80/piped with `-T` and long names; both fixes 0 aborts in 264 live runs.
->     The SRU carries both. A further overflow with both fixes at ≥2048 columns is **U28** (source
->     reading; not yet reproduced with the binary).
->   - **CO-02** (`0d3b5f5`): the air-mode mismatch check as its own patch
->     (`patch/mismatch-20261102/`): base and v7 connect the socket on the old air mode; with it 10/10
->     refused then a fresh link, 0 wrong in 315 runs. **The series went out unversioned
->     (`[PATCH 0/3]`), so the next posting is v2, not "v8".** Reviews: -EBUSY for a live link,
->     -ECONNABORTED only for a closing one (`refcnt == 0`), and test a setup already in flight first.
->   - **CO-37** (`dbc75e3`): the series sent `MediaEndpoint1.Release` twice to application endpoints
->     (a 2011 path master already takes for RegisterEndpoint ones); a `released` flag as a separate
->     sixth mail fixes it on master and 5.72; bot checks pass both sides (48 → 53). CO-37's fixes apply
->     without CO-23. **U27** (5.72 only, `clear_endpoint`) is not covered by the 5.72 backport.
->   - **CO-35** (`f4d80fb`): 7.2.y ended with 7.2.15 (request 7.3.y only); **v7.4-rc1 is tagged**
->     (`bc71431221f5`); the backports' patch-ids equal upstream only where nothing was adapted.
-> - **Rules confirmed 11-02:** every kernel and BlueZ send is run by the operator himself (both
->   projects' process documents); proposed, awaiting his word: kernel drafts carry no
->   `Signed-off-by`, he adds his own; **BlueZ takes none at all** (`HACKING`). BlueZ subjects: HACKING
->   asks 50 columns, merged practice is often longer (decision D9).
-> - **Machine, re-read 11-07:** boot `045caff5` since 11-06 15:51, `7.0.0-42` with E3 (srcversion
->   `DDB92562D1890FC3D262993`), stock `bluetooth.ko`; five boots since 10-30; trial **E3 #5** open
->   since 11-06 15:51; gvfsd-cdda is X1's v6 build by `dpkg-divert`; 142 GB free. The CO-02 module
->   for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
->   the remedy and waits for the laptop test with the MOMENTUM 4.
-> - **Later on 11-02, the "nearly ready" five made ready (agents approved for this; each verified,
->   committed, nothing sent):** CO-25 reply v4 (`38b496b`; quotes the kernel's `build 0x111` line;
->   the report's "three headset models" checked true); CO-22 stable request v2 + a separate 6.6.y
->   `btmtk.h` -Werror report (`38b496b`; drafts in `research-2026-11-01/qca-ids/drafts/`; both ASUS
->   commits in v7.4-rc1, none queued); CO-35 final (`11a2784`, `send-20261102/`: 7.3.y only, each
->   line's plain tag hangs and patched passes on the final files); CO-11a filing package for
->   tenacious/stonking/resolute/noble (`a1618a2`, `ubuntu/ready-20261102/`); CO-38 on public bases
->   with its own dossier (`cc90614`). Open questions: D6, D12, and whether CO-38's BlueZ series
->   goes now or only its listing case. An agent asked to reproduce U28 was stopped by the
->   service's safety filter at its first step; U28 stays a source-reading finding.
-> - **Off-topic X1 (not Bluetooth): SUBMITTED to gvfs 2026-11-07.** An audio CD in Totem stopped
->   ~3 s every 16 s: gvfsd-cdda's synchronous `cdio_paranoia_read()` refills paranoia's 1200-sector
->   (16 s) cache model in one ~3 s call, and Totem (reading through **gvfsd-fuse**, not giosrc)
->   runs dry. The fix is GStreamer's: a 150-sector cache model behind a meson `has_function` check
->   (laptop A/B: 19/19 → 0/0 mid-track underflows). A reviewer-found second bug, invalid track names
->   (`Track 99.wav` busy >5 min, `Track 257.wav` = track 1), became its own patch, bounded by the
->   disc's real first/last track numbers (a count-based v5.3 regressed discs numbered from above 1).
->   Filed by the operator: issues **#893**, **#894**; MRs **!368** (`98dc71a`) and **!369**
->   (`610794d`), fork `ivoitovych/gvfs`, both pipelines passed. Every version, review point and
->   test: `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md` (F1–F39, A1–A11, G1–G19,
->   H1–H73). Read back with `scripts/cd-trace/x1-check-submission.py`. **Watch for maintainer
->   comments; replies are drafted here, posted by the operator.** Follow-ups X2–X4 (GError leaks,
->   1-based numbering, ignored seek) are registered, not reported. The laptop runs 1.54.4 + both
->   patches by `dpkg-divert` (undo in STATUS); **after any gvfs package update, rebuild or remove
->   the diversion**. GNOME GitLab: a new account is "external" (no fork) until an SSH key has been on
->   it ~20 min; this machine's `root@n` key is on the operator's account. The detailed running
->   notes of 11-02 to 11-07 are at the end of `HISTORY.md`.
-> - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
->   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
->   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their
->   alternate; contents and patches survive, exact commit objects lost); the second freed 52.6 GB
->   and kept those trees (`tmp/cleanup/cleanup-executed-20261102.md`).
-> - **Open, in order:** the operator closes the review round; decisions D1–D14 (the most
->   consequential: D3 the CO-23/37 route, D1/D2 CO-02 v2 and the mismatch error code, D4/D14 CO-04,
->   D5 CO-12 as an RFC, D6 one Ubuntu upload for CO-03 + CO-11a); then the follow-ups' "do" items
->   (mostly inline: regenerating patches on public bases, message edits, read-only source checks);
->   the heavier QEMU runs (F-19, F-80, F-82) after asking; the laptop tests (CO-18, CO-08, CO-32,
->   CO-15, CO-03, CO-19) on the operator's word; E3 #3's row still to be written from the journal.
->   **Added 11-07:** BT-16 watched at each boot; the red CI (green again from `8bbd04a`: `ubuntu-latest` had become 26.04, runners pinned to 24.04); X1's MRs watched for comments; X2–X4 after
->   them; BlueZ 5.88 carries our eleven commits, so the Ubuntu route for them (an SRU of the fixes
->   onto 5.72) is now a question of backporting released code.
+> - **The machine (read 11-14, STATUS "The investigation machine"):** Ubuntu `7.0.0-43` with the
+>   **stock** btusb and `bluetooth.ko` since 11-12 22:55; the stock btusb has `13d3:3503` and the
+>   boot loads the patch. **E3 is retired; CO-09 is done.** CO-03's `bluetoothd` is staged on disk
+>   (11-13), not running until bluetoothd restarts. `hci0` kernel debug is on (BT-17's arming).
+> - **Ready to send, each with `NOTES-FOR-OPERATOR.md` (his decisions) and nothing sent:**
+>   CO-44 (`send-20261113/`, dry runs OK 11-14); CO-43 E and A (`send-20261113/E`, `A`, dry runs
+>   OK); CO-38, CO-04, CO-05 + CO-26 (`send-20261114/` each, refreshed on bluetooth-next
+>   `da3cc02587c6`); CO-35 (`send-20261114/`, stable tips of 11-14); CO-22 (request v3,
+>   `research-2026-11-01/qca-ids/refresh-20261114/`); CO-21 and CO-20 (`send-20261114/`); CO-02 v2
+>   (`send-v2-20261114/`, three kernel patches + two BlueZ tests). For review, not yet to send: the
+>   rest of CO-43's btusb series on top of E (`send-series-20261114/`: A, B2, D v2, BT-24 and BT-25
+>   fixes; D's system path rests on source reading). **Packages made since 11-13 carry no
+>   Signed-off-by**; the operator adds his own; the author line is his real name and address.
+> - **One document for outside reviewers holds all twelve kernel items verbatim:**
+>   `reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`, built by
+>   `scripts/kernel-review-pack/build.py` (rerun it after any package changes; it embeds the files
+>   by path with their SHA-256). The operator shares it with the reviewers.
+> - **Ubuntu:** one `bluez 5.72-0ubuntu5.9` for CO-03, CO-11a, CO-37's backports and CO-40
+>   (`contributions/ubuntu-bluez-5.72-0ubuntu5.9-bundle/`), built and tested, not filed. Found with
+>   it: CO-11a's resolute/stonking debdiff versions are now taken by unrelated proposed uploads;
+>   its tenacious debdiff is obsolete (5.88-1); CVE-2026-105460 (btmon) not yet checked on 5.72.
+> - **New findings 11-14:** a lockdep cycle at controller unregister on the bluetooth-next tip
+>   (`cmd_sync_work_lock` vs `unregister_lock` via `mesh_next()`), 2 of 35 boots, none with CO-04;
+>   **CO-14 confirmed**: every mesh send pending at controller removal leaks (kmemleak, 86 objects
+>   in 10 boots, with and without CO-04), and a fix in `mgmt_index_removed()` takes it to 0 (lane 1,
+>   regression runs still going).
+> - **Lanes still running at this writing** (`/root/exp/agent-work/lane<N>-*-20261114/`): 1 CO-14
+>   (fix's mgmt-tester runs, the hung-controller lockdep case); 2 CO-30 (the deferred-connect RFC on
+>   v2); 3 CO-38's BlueZ TestFunctional failures (2 of 3 patched; flake not shown), then CO-12's
+>   clamp-or-design package; 4 CO-41 and CO-39 (no report yet); 5 the btmon CVE and CO-11a's
+>   renumbered debdiffs. Their results are leads until checked on copy.
+> - **Porting a lane's output into the repository (learned 11-14, five failed pushes):** run
+>   `tmp/port-check/check.sh <dir>` (executable bits, the suite's timeout spelling), then
+>   `git add -A` and `devtools/repo-scan` before `devtools/save`. Leave in the work area: tester
+>   and bot harness logs (emulated controllers' addresses), saved lore/patchwork pages and other
+>   people's packaging (their addresses, third-party text), kernel images and binaries, scripts that
+>   wait on session-temporary paths. Placeholder addresses (`@example.invalid`) become the
+>   operator's real one in authored files and `example.com` in throwaway identities.
+> - **CI:** green on every push since `2a3f253` (11-14); two red runs that day were ported
+>   scripts without the executable bit and with a non-canonical timeout grep.
+> - **Open for the operator:** delete the 16 old remote branches (the command is in the test-suite
+>   maintainer's 11-13 note); land or drop `ci/upstream-ci-local`'s `eb2e6d6`/`6ada2a1`; the
+>   decisions in each package's notes; whether to delete the 11-13 work areas
+>   (`co43-ea-send-20261113`, `co44-send-20261113`, `bt17-emu-20261113`), all ported; the
+>   headset session and laptop tests as before (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17).
+> - **Still open from before (carried forward):** the 11-02 review round's decisions D1–D14
+>   (`contributions/review-2026-11-02/followups.md`) stay the operator's; today's packages put
+>   D1/D2 (CO-02 v2: -EBUSY on a live link, -ECONNABORTED only when nothing holds it) and D6 (one
+>   Ubuntu upload for the 5.72 fixes) in front of him as built options, not as decisions taken.
+>   Watch X1's MRs !368/!369 for comments (`scripts/cd-trace/x1-check-submission.py`; none on
+>   11-14) and each boot's start-up for BT-16 (third occurrence 11-13 on `-43` stock). CO-25's reply
+>   v4 is still unsent.
 
 
 ---
