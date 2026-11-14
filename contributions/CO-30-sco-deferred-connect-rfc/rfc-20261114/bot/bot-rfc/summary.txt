@@ -1,0 +1,41 @@
+2026-11-14 07:49:42 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 07:49:42 space kernel; base da3cc02587c629420603df4395179ec82955c941 (Bluetooth: hci_vhci: Report write readiness with queued input); BlueZ 20ffd285b58facfd1f2478d159a5f941b09d5be1; ELL 002b32d7c091993c5036956bf92d2444aca1c799
+2026-11-14 07:49:42 mail tmp/mails/kernel-sob/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch
+2026-11-14 07:49:42 mail tmp/mails/kernel-sob/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch
+2026-11-14 07:49:42 mail tmp/mails/kernel-sob/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch
+2026-11-14 07:49:42 mail tmp/mails/rfc/0001-Bluetooth-SCO-defer-a-connect-until-the-link-being-a.patch
+2026-11-14 07:49:42 patched: blobless clone of bluetooth-next since 2026-06-01
+2026-11-14 07:51:43 patched: start
+2026-11-14 07:57:30 patched: done, 2 test(s) not PASS
+Test Summary:
+CheckPatch                    PASS      3.37 seconds
+VerifySignedoff               PASS      0.20 seconds
+GitLint                       FAIL      337.71 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      49.99 seconds
+CheckAllWarning               PASS      61.31 seconds
+CheckSparse                   WARNING   65.91 seconds
+BuildKernel32                 PASS      56.08 seconds
+CheckKernelLLVM               PASS      62.44 seconds
+
+Details
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[RFC] Bluetooth: SCO: defer a connect until the link being aborted is gone
+
+28: B1 Line exceeds max length (81>80): "    approach is wanted. It builds on "[PATCH v2 0/3] Bluetooth: hci_conn: fix SCO"
+30: B2 Line has trailing whitespace: "    "
+32: B1 Line exceeds max length (82>80): "    and lockdep, three runs each. A sco-tester case that behaves as PipeWire 1.0.5"
+38: B2 Line has trailing whitespace: "    "
+39: B1 Line exceeds max length (81>80): "    Limit, measured: a connect() that is refused before the old link's disconnect"
+42: B1 Line exceeds max length (81>80): "    deferred connect runs before the old link's abort is queued behind it and can"
+46: B2 Line has trailing whitespace: "    "
+##############################
+Test: CheckSparse - WARNING
+Desc: Run sparse tool with linux kernel
+Output:
+net/bluetooth/sco.c: note: in included file:./include/net/bluetooth/hci_core.h:151:35: warning: array of flexible structures
+2026-11-14 07:57:30 NOT CLEAN: patched: 2 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 07:57:30 ALL DONE, exit 1

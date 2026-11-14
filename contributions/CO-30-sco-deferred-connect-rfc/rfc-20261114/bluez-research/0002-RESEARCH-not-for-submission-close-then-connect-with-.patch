@@ -1,0 +1,129 @@
+From b1e454a9a33118d6e5040782f7d20c8dc5ee4739 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 08:47:17 +0100
+Subject: [PATCH 2/2] RESEARCH (not for submission): close then connect with
+ another voice setting
+
+---
+ tools/sco-tester.c | 63 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 62 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index fd231e7b3..8021029e9 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -116,6 +116,9 @@ struct sco_client_data {
+ 
+ 	/* RESEARCH: PipeWire-style, retry an ECONNABORTED connect() at once */
+ 	bool retry_aborted;
++
++	/* RESEARCH: close the first socket and connect at once, other voice */
++	bool close_other;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -411,6 +414,10 @@ static const struct sco_client_data reconnect_during_retry = {
+ 	.retry_aborted = true,
+ };
+ 
++static const struct sco_client_data close_other = {
++	.close_other = true,
++};
++
+ static const struct sco_client_data connect_other_acl = {
+ 	.reconnect = CONNECT_OTHER_ACL,
+ };
+@@ -1758,6 +1765,24 @@ static bool reconnect_linked(struct tester_io *io, uint32_t cond,
+ 	return false;
+ }
+ 
++static bool close_other_linked(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	bool ok;
++
++	data->io2_id = 0;
++
++	ok = io_connected(cond, data->sk2, "second") && data->setup_cmds == 2 &&
++				data->setup_coding[1] == 0x03;
++	tester_print("RESULT second socket %s, setups %u, second coding 0x%02x",
++			ok ? "connected with its own link" : "failed",
++			data->setup_cmds, data->setup_coding[1]);
++	reconnect_end(data, ok);
++
++	return false;
++}
++
+ static bool reconnect_connect2(void *user_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -1794,7 +1819,7 @@ static bool reconnect_connect2(void *user_data)
+ 		return false;
+ 	}
+ 
+-	if (other) {
++	if (other || scodata->close_other) {
+ 		struct bt_voice voice;
+ 
+ 		memset(&voice, 0, sizeof(voice));
+@@ -1817,6 +1842,25 @@ static bool reconnect_connect2(void *user_data)
+ 
+ 	tester_print("Second connect() returned %d (%s)", ret, strerror(err));
+ 
++	if (scodata->close_other) {
++		struct tester_io *cio;
++
++		if (ret < 0 && err != EINPROGRESS) {
++			tester_print("RESULT refused at once: %s", strerror(err));
++			reconnect_end(data, false);
++			return false;
++		}
++
++		cio = tester_io_new(data->sk2);
++		tester_io_set_close_on_unref(cio, false);
++		data->io2_id = tester_io_add_watch(cio,
++				TESTER_IO_OUT | TESTER_IO_ERR | TESTER_IO_HUP,
++				close_other_linked, NULL);
++		tester_io_unref(cio);
++		reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
++		return false;
++	}
++
+ 	/* RESEARCH: PipeWire 1.0.5 retries ECONNABORTED at once, twice */
+ 	if (scodata->retry_aborted && ret < 0 && err == ECONNABORTED) {
+ 		close(data->sk2);
+@@ -1974,6 +2018,11 @@ static bool reconnect_first_connected(struct tester_io *io, uint32_t cond,
+ 	close(data->sk);
+ 	data->sk = -1;
+ 
++	if (scodata->close_other) {
++		reconnect_connect2(NULL);
++		return false;
++	}
++
+ 	/* The Disconnection Complete is the next step */
+ 	reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
+ 
+@@ -2258,6 +2307,18 @@ int main(int argc, char *argv[])
+ 					&reconnect_during_retry, setup_powered,
+ 					test_reconnect, false, false, false, 5);
+ 
++	{
++		static char names[10][80];
++		int i;
++
++		for (i = 0; i < 10; i++) {
++			snprintf(names[i], sizeof(names[i]), "RESEARCH eSCO CVSD "
++				"- Close Then Connect Transparent #%d", i + 1);
++			test_sco_full(names[i], &close_other, setup_powered,
++					test_reconnect, false, false, false, 5);
++		}
++	}
++
+ 	test_sco_full("eSCO CVSD - Connect Twice Other Voice Setting",
+ 					&connect_other_acl, setup_powered,
+ 					test_reconnect, false, false, false, 5);
+-- 
+2.43.0
+

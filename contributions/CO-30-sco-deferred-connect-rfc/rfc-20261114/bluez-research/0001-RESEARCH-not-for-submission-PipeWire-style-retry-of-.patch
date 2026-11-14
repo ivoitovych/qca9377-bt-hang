@@ -1,0 +1,83 @@
+From 2ff0479ac80f7996571d326a6763ad35e4d52c58 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 07:28:56 +0100
+Subject: [PATCH 1/2] RESEARCH (not for submission): PipeWire-style retry of an
+ aborted SCO connect
+
+---
+ tools/sco-tester.c | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 96cdadc77..fd231e7b3 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -72,6 +72,7 @@ struct test_data {
+ 	bool sync_held;
+ 	struct bt_hci_evt_sync_conn_complete held_sync;
+ 	int err2;
++	unsigned int retries;
+ };
+ 
+ enum reconnect_mode {
+@@ -112,6 +113,9 @@ struct sco_client_data {
+ 
+ 	/* A second socket connects to the same peer, see the modes above */
+ 	enum reconnect_mode reconnect;
++
++	/* RESEARCH: PipeWire-style, retry an ECONNABORTED connect() at once */
++	bool retry_aborted;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -402,6 +406,11 @@ static const struct sco_client_data reconnect_during = {
+ 	.reconnect = RECONNECT_DURING,
+ };
+ 
++static const struct sco_client_data reconnect_during_retry = {
++	.reconnect = RECONNECT_DURING,
++	.retry_aborted = true,
++};
++
+ static const struct sco_client_data connect_other_acl = {
+ 	.reconnect = CONNECT_OTHER_ACL,
+ };
+@@ -1808,6 +1817,24 @@ static bool reconnect_connect2(void *user_data)
+ 
+ 	tester_print("Second connect() returned %d (%s)", ret, strerror(err));
+ 
++	/* RESEARCH: PipeWire 1.0.5 retries ECONNABORTED at once, twice */
++	if (scodata->retry_aborted && ret < 0 && err == ECONNABORTED) {
++		close(data->sk2);
++		data->sk2 = -1;
++
++		if (data->retries < 2) {
++			data->retries++;
++			tester_print("Retrying at once (%u)", data->retries);
++			return reconnect_connect2(NULL);
++		}
++
++		tester_warn("Still ECONNABORTED after %u retries",
++							data->retries);
++		reconnect_release(data);
++		reconnect_end(data, false);
++		return false;
++	}
++
+ 	if (other) {
+ 		/*
+ 		 * The first socket owns the link: the second connect() shall
+@@ -2227,6 +2254,10 @@ int main(int argc, char *argv[])
+ 					&reconnect_during, setup_powered,
+ 					test_reconnect, false, false, false, 5);
+ 
++	test_sco_full("RESEARCH eSCO CVSD - Reconnect During Disconnect Retry",
++					&reconnect_during_retry, setup_powered,
++					test_reconnect, false, false, false, 5);
++
+ 	test_sco_full("eSCO CVSD - Connect Twice Other Voice Setting",
+ 					&connect_other_acl, setup_powered,
+ 					test_reconnect, false, false, false, 5);
+-- 
+2.43.0
+
