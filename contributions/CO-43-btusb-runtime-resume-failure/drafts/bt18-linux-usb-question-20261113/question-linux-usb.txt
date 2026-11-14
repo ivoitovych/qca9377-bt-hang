@@ -1,0 +1,107 @@
+To: Alan Stern <stern@rowland.harvard.edu>, linux-usb@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+    Oliver Neukum <oneukum@suse.com>,
+    Johan Hovold <johan@kernel.org>,
+    Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+    Sean Rhodes <sean@starlabs.systems>,
+    linux-bluetooth@vger.kernel.org
+Subject: usb: core: runtime reset-resume leaves needs_binding unhandled
+
+Hi Alan,
+
+A question about the USB core, found with btusb.
+
+When a runtime resume fails its GET_STATUS and persist is enabled,
+finish_port_resume() retries it as a reset-resume. For an interface
+whose driver has no reset_resume, usb_resume_interface() then sets
+needs_binding and skips the driver. Only the system-resume path
+(usb_resume() unbinds, usb_resume_complete() rebinds) and
+usb_reset_device() act on that flag; usb_runtime_resume() returns
+after usb_resume_both(). The driver stays bound and is skipped by every
+later resume while the flag is set. autosuspend_check() keeps such
+drivers out of autosuspend only for USB_QUIRK_RESET_RESUME devices, so
+this fallback is not covered. For btusb it leaves BTUSB_SUSPENDING set,
+and all HCI traffic stays on its deferred anchor. (bluetooth-next
+da3cc02587c6; the needs_binding handling is unchanged since 2014.)
+
+Seen in emulation only: QEMU, usbip's vhci_hcd, and an emulated
+13d3:3503 (QCA9377) that holds the first GET_STATUS after a resume and
+answers normally once the host gives up on it. The resume is started by
+powering hci0 off, so btusb's command-timeout reset never runs. All 5
+runs on the unpatched kernel end with Bluetooth dead. One of them, with
+dynamic debug on ("bt17-emu" lines are the test's markers):
+
+  [    5.191615] usb 2-1: usb auto-suspend, wakeup 1
+  [    6.246282] bt17-emu: Set Powered off sent at mono 6.246867
+  [    6.256233] usb 2-1: usb auto-resume
+  [    6.316575] usb 2-1: finish resume
+  [   11.525929] usb 2-1: retry with reset-resume
+  [   11.645386] usb 2-1: reset full-speed USB device number 2 using vhci_hcd
+  [   11.782534] btusb 2-1:1.0: no reset_resume for driver btusb?
+  [   11.782545] btusb 2-1:1.1: no reset_resume for driver btusb?
+  [   13.784208] usb 2-1: usb auto-suspend, wakeup 1
+  [   16.387289] Bluetooth: hci0: Opcode 0x0c03 failed: -110
+  [   16.387781] Bluetooth: hci0: HCI reset during shutdown failed
+  [   16.396845] usb 2-1: usb auto-resume
+  [   16.455315] usb 2-1: finish resume
+  [   17.416371] bt17-emu: Set Powered on sent at mono 17.417119
+  [   19.427408] Bluetooth: hci0: Opcode 0x0c03 failed: -110
+
+Neither HCI Reset reached the emulated device, which answered the
+GET_STATUS at 16.46 normally.
+
+On the real laptop (13d3:3503 behind an AMD xHCI, Ubuntu 7.0 kernel,
+autosuspend on) only the first half has been seen: after 162 s idle a
+command got no answer, the device was reset 5.3 s after it was sent,
+that reset failed (descriptor read -71) and the device left the bus.
+That this was a runtime resume failing its GET_STATUS and falling back
+to a reset-resume is inferred from the timing and the code; dynamic
+debug was off. A device that comes back after the reset-resume, as
+above, has not been seen on hardware.
+
+Earlier discussion:
+- 2014, "BUG: USB Reset-Resume Mechanism does not work for runtime
+  resume" [1]. You replied "I suspect this is an oversight." Loic
+  Poulain's "rebind: Add rebind mechanism for runtime-resume" reached
+  v4 [2] ("This patch looks okay now." on v2); of that work only
+  6aec044cc2f5 ("USB: unbind all interfaces before rebinding any")
+  landed.
+- 9be427efc764 (2016): "run-time resume does not honour it".
+- 811ae81320da (2021): btusb stops working after a runtime resume of
+  an XHCI_RESET_ON_RESUME controller, as no usb_resume_complete()
+  follows to rebind it.
+- A pending series, "Bluetooth: btusb: restore powered-off Intel
+  adapters" (2026-09), adds a btusb reset_resume that still sets
+  needs_binding for every other device, so it would not change this.
+
+Questions:
+1. Is this still an oversight to fix in the core, or are drivers
+   without reset_resume expected to stay out of runtime PM?
+2. If the core: a per-device work item, queued from
+   usb_runtime_resume() when an interface needs binding, that runs
+   usb_unbind_and_rebind_marked_interfaces() under the device lock,
+   as in Poulain's v3? It cannot run inline, since
+   usb_unbind_interface() starts with usb_autoresume_device(). Which
+   lock helper should it use, should it hold a PM reference until it
+   has run, and on which queue? usb_queue_reset_device() already
+   rebinds from the system workqueue under memalloc_noio_save(), while
+   Oliver objected in August to the system workqueue for GFP_KERNEL
+   work.
+3. Or should finish_port_resume() not fall back to a reset-resume in
+   this case, so that usb_port_resume() logically disconnects and the
+   device is re-enumerated? Your 2014 sketch skipped the fallback when
+   do_remote_wakeup is set, as it is above ("wakeup 1").
+4. Or must btusb provide reset_resume? It has relied on re-enumeration
+   instead since b1a8014471b0 (2013), for devices that come back from
+   a reset in HID mode.
+
+[OPTIONAL: delete this marker; keep or delete the two lines below]
+Emulator, harness and all logs:
+https://github.com/ivoitovych/qca9377-bt-hang/tree/main/results/bt17-emulation-2026-11-13
+
+[1] https://www.mail-archive.com/linux-usb@vger.kernel.org/msg38572.html
+[2] https://www.mail-archive.com/linux-usb@vger.kernel.org/msg40098.html
+
+Thanks,
+Iaroslav Voitovych

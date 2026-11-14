@@ -25,6 +25,13 @@ operator adds his own). checkpatch `--strict --no-tree` reports only the missing
 plus on patch 5 an unknown commit id (no tree) and two CamelCase notes for the USB core's own
 `idVendor`/`idProduct`.
 
+**E and A are packaged to send alone** (2026-11-13/14): [`send-20261113/E/`](send-20261113/E/)
+and [`send-20261113/A/`](send-20261113/A/), each with `CHECKS.md`, `NOTES-FOR-OPERATOR.md` and the
+exact commands; `git send-email` dry runs OK on 11-14 (`send-20261113/dry-run-20261114/`). The
+operator decides each send (E: `Cc: stable` or not; A: the subject). **The BT-18 question to
+linux-usb** is drafted: [`drafts/bt18-linux-usb-question-20261113/`](drafts/bt18-linux-usb-question-20261113/README.md)
+(its two 2014 references fixed on 11-14: lore does not hold them).
+
 | # | subject | fixes | for upstream? |
 |---|---|---|---|
 | 1 (A) | Bluetooth: btusb: Report a failed resume for deferred data | BT-20 | yes, small |
