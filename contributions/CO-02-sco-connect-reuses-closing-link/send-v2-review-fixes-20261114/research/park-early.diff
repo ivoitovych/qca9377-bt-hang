@@ -1,0 +1,28 @@
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -626,12 +626,24 @@ void hci_sco_setup(struct hci_conn *conn, __u8 status)
+ 	}
+ }
+
++static unsigned int w2c_park_ms;
++module_param(w2c_park_ms, uint, 0644);
++
+ static void hci_conn_timeout(struct work_struct *work)
+ {
+ 	struct hci_conn *conn = container_of(work, struct hci_conn,
+ 					     disc_work.work);
+-	int refcnt = atomic_read(&conn->refcnt);
++	int refcnt;
++
++	/* Debug only: park the worker of a SCO connection before it reads the
++	 * reference count, so that a connect() can take the connection over
++	 * while its worker has started but not yet looked at the holders.
++	 */
++	if (w2c_park_ms && (conn->type == SCO_LINK || conn->type == ESCO_LINK))
++		msleep(w2c_park_ms);
++
++	refcnt = atomic_read(&conn->refcnt);
+
+ 	BT_DBG("hcon %p state %s", conn, state_to_string(conn->state));
+
+ 	WARN_ON(refcnt < 0);

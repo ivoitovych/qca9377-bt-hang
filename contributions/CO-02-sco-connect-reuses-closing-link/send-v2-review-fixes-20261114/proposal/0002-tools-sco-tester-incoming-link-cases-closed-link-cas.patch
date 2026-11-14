@@ -1,0 +1,37 @@
+From 7519c820dc638fa764240752b6652838b901e87e Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 15:20:30 +0100
+Subject: [PATCH 2/2] tools/sco-tester: incoming link cases, closed-link cases
+ need the debug parameter (research, not for posting)
+
+---
+ tools/sco-tester.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index a4436ddd9..e0b330aad 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2447,6 +2447,19 @@ static bool incoming_accept(struct tester_io *io, uint32_t cond,
+ static void test_incoming(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++
++	/* The link of a closed socket is disconnected by a worker within
++	 * microseconds, so a closed link can only be caught with the
++	 * debug-only w2c_park_ms parameter.
++	 */
++	if (scodata->reconnect == INCOMING_FREE &&
++			access("/sys/module/bluetooth/parameters/w2c_park_ms",
++								W_OK) < 0) {
++		tester_print("Needs the debug-only w2c_park_ms parameter");
++		tester_test_abort();
++		return;
++	}
+ 
+ 	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
+ 					BT_HCI_EVT_SYNC_CONN_COMPLETE,
+-- 
+2.43.0
+

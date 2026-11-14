@@ -209,6 +209,21 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
 - **R7's wording:**
   - the codec comparison covers the voice setting, codec id and data path, not `cid`/`vid`;
   - say "no causal evidence found" instead of "cannot be involved" for the l2cap stalls.
+- **Done 11-14** (`contributions/CO-02-…/send-v2-review-fixes-20261114/`):
+  - **Layouts:** both (a) and (b) are ready, and every wording point above is applied.
+  - **Stable line:** [verified] it now reads 6.18.y and 7.3.y. The kref code is in v6.18.63,
+    v7.2.13 and v7.3.4, and 7.2 is end of life.
+  - **Incoming-SCO test, on a debug kernel:** with 1+2, a transparent socket is given the
+    remote's CVSD link. Patch 3 refuses it once and the retry gets its own link; a matching
+    connect is refused once too, and the message says so.
+  - **`abort_reason`:** one write and seven reads, each listed; a `READ_ONCE` is proposed
+    for the operator.
+  - **The wait under `hdev->lock`:** it adds no new lock order, because `hci_conn_del()`
+    already waits on the same work under that lock. Lockdep showed nothing.
+  - **sco-tester, 3 runs each:** base 33 pass and 4 fail, 1+2 35 and 2, 1+2+3 37 and 0.
+    mgmt-tester 526/526 and iso-tester 213/213.
+  - **Open:** 3 of 33 runs of one debug-only kernel hung, with no cause found. There were 0 of
+    62 on the other kernels, including all four that match the mails.
 
 ## What is done here, what goes to lanes, what is the operator's
 

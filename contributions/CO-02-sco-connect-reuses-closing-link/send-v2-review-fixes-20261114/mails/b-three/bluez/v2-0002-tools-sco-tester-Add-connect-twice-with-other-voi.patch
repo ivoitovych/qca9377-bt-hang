@@ -1,0 +1,305 @@
+From 62710a92d006a01d0a7b97168f1323f2be6c70e2 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:13 +0100
+Subject: [PATCH BlueZ v2 2/2] tools/sco-tester: Add connect twice with other
+ voice tests
+
+Add two tests where a second socket asks for BT_VOICE_TRANSPARENT
+while the first socket's link, set up with the default CVSD voice
+setting, does not exist yet:
+
+- "eSCO CVSD - Connect Twice Other Voice Setting": the second
+  connect() follows the first at once, while the ACL link is still
+  being set up.
+
+- "eSCO CVSD - Connect Twice Other Voice Retry": the second
+  connect() is made after the first Setup Synchronous Connection has
+  been seen, and that setup is then answered with an error, so that
+  it is sent again.
+
+In both, the second connect() shall fail with EBUSY, every Setup
+Synchronous Connection shall carry the first socket's parameters,
+and the first socket shall connect to a link that stays up.
+---
+
+Notes:
+    New in v2. Both cases fail with kernel patches 1 and 2 of the series
+    above and pass with patch 3; with the series absent they also fail
+    (the second connect() disconnects the first link).
+
+ tools/sco-tester.c | 150 +++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 145 insertions(+), 5 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 823a9b004..96cdadc77 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -68,6 +68,10 @@ struct test_data {
+ 	unsigned int sync_complete;
+ 	unsigned int setup_cmds;
+ 	unsigned int disc_cmds;
++	uint8_t setup_coding[4];
++	bool sync_held;
++	struct bt_hci_evt_sync_conn_complete held_sync;
++	int err2;
+ };
+ 
+ enum reconnect_mode {
+@@ -75,6 +79,8 @@ enum reconnect_mode {
+ 	RECONNECT_AFTER,	/* Connect again once the first link is gone */
+ 	RECONNECT_DURING,	/* ... while the completion is held */
+ 	CONNECT_TWICE,		/* Connect again while the first link is up */
++	CONNECT_OTHER_ACL,	/* ... other voice setting, link not set up */
++	CONNECT_OTHER_RETRY,	/* ... other voice setting, setup retried */
+ };
+ 
+ struct sco_client_data {
+@@ -396,6 +402,14 @@ static const struct sco_client_data reconnect_during = {
+ 	.reconnect = RECONNECT_DURING,
+ };
+ 
++static const struct sco_client_data connect_other_acl = {
++	.reconnect = CONNECT_OTHER_ACL,
++};
++
++static const struct sco_client_data connect_other_retry = {
++	.reconnect = CONNECT_OTHER_RETRY,
++};
++
+ static const struct sco_client_data connect_twice = {
+ 	.reconnect = CONNECT_TWICE,
+ };
+@@ -1484,6 +1498,15 @@ static bool reconnect_deadline(void *user_data)
+ 	return false;
+ }
+ 
++static bool reconnect_connect2(void *user_data);
++
++static enum reconnect_mode scodata_mode(struct test_data *data)
++{
++	const struct sco_client_data *scodata = data->test_data;
++
++	return scodata->reconnect;
++}
++
+ static bool hook_reconnect_sync(const void *buf, uint16_t len, void *user_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -1498,6 +1521,18 @@ static bool hook_reconnect_sync(const void *buf, uint16_t len, void *user_data)
+ 		return true;
+ 	}
+ 
++	/* The first setup is answered with an error once the second connect()
++	 * is done, instead of with this event.
++	 */
++	if (scodata_mode(data) == CONNECT_OTHER_RETRY && !data->sync_held) {
++		data->held_sync = *evt;
++		data->sync_held = true;
++		tester_print("Holding back the Synchronous Connection "
++								"Complete");
++		reconnect_arm(data, 0, reconnect_connect2);
++		return false;
++	}
++
+ 	data->sync_complete++;
+ 	if (data->sync_complete == 1)
+ 		data->handle = le16_to_cpu(evt->handle);
+@@ -1526,12 +1561,27 @@ static void hook_reconnect_cmd(uint16_t opcode, const void *buf, uint8_t len,
+ 	struct test_data *data = user_data;
+ 	const struct sco_client_data *scodata = data->test_data;
+ 	const struct bt_hci_cmd_disconnect *cmd = buf;
++	const struct bt_hci_cmd_enhanced_setup_sync_conn *enh = buf;
++	const struct bt_hci_cmd_setup_sync_conn *setup = buf;
+ 
+ 	if (opcode == BT_HCI_CMD_SETUP_SYNC_CONN ||
+ 			opcode == BT_HCI_CMD_ENHANCED_SETUP_SYNC_CONN) {
++		uint8_t coding = 0;
++
++		if (opcode == BT_HCI_CMD_ENHANCED_SETUP_SYNC_CONN &&
++				len >= sizeof(*enh))
++			coding = enh->tx_coding_format[0];
++		else if (opcode == BT_HCI_CMD_SETUP_SYNC_CONN &&
++				len >= sizeof(*setup))
++			coding = le16_to_cpu(setup->voice_setting) ==
++				BT_VOICE_TRANSPARENT ? 0x03 : 0x02;
++
++		if (data->setup_cmds < ARRAY_SIZE(data->setup_coding))
++			data->setup_coding[data->setup_cmds] = coding;
++
+ 		data->setup_cmds++;
+-		tester_print("Setup Synchronous Connection #%u",
+-							data->setup_cmds);
++		tester_print("Setup Synchronous Connection #%u, coding 0x%02x",
++						data->setup_cmds, coding);
+ 	}
+ 
+ 	if (opcode != BT_HCI_CMD_DISCONNECT || len < sizeof(*cmd) ||
+@@ -1550,8 +1600,6 @@ static void hook_reconnect_cmd(uint16_t opcode, const void *buf, uint8_t len,
+ 	}
+ }
+ 
+-static bool reconnect_connect2(void *user_data);
+-
+ static bool hook_reconnect_disc(const void *buf, uint16_t len, void *user_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -1708,6 +1756,8 @@ static bool reconnect_connect2(void *user_data)
+ 	const uint8_t *client_bdaddr;
+ 	struct sockaddr_sco addr;
+ 	struct tester_io *io;
++	bool other = scodata->reconnect == CONNECT_OTHER_ACL ||
++				scodata->reconnect == CONNECT_OTHER_RETRY;
+ 	int ret, err;
+ 
+ 	data->timer_id = 0;
+@@ -1715,7 +1765,7 @@ static bool reconnect_connect2(void *user_data)
+ 	if (data->done)
+ 		return false;
+ 
+-	if (data->sync_complete != 1 || data->setup_cmds != 1) {
++	if (!other && (data->sync_complete != 1 || data->setup_cmds != 1)) {
+ 		tester_warn("The first link was not set up as expected");
+ 		reconnect_end(data, false);
+ 		return false;
+@@ -1735,6 +1785,20 @@ static bool reconnect_connect2(void *user_data)
+ 		return false;
+ 	}
+ 
++	if (other) {
++		struct bt_voice voice;
++
++		memset(&voice, 0, sizeof(voice));
++		voice.setting = BT_VOICE_TRANSPARENT;
++		if (setsockopt(data->sk2, SOL_BLUETOOTH, BT_VOICE, &voice,
++							sizeof(voice)) < 0) {
++			tester_warn("setsockopt(BT_VOICE): %s",
++							strerror(errno));
++			reconnect_end(data, false);
++			return false;
++		}
++	}
++
+ 	memset(&addr, 0, sizeof(addr));
+ 	addr.sco_family = AF_BLUETOOTH;
+ 	bacpy(&addr.sco_bdaddr, (void *) client_bdaddr);
+@@ -1744,6 +1808,38 @@ static bool reconnect_connect2(void *user_data)
+ 
+ 	tester_print("Second connect() returned %d (%s)", ret, strerror(err));
+ 
++	if (other) {
++		/*
++		 * The first socket owns the link: the second connect() shall
++		 * fail with EBUSY and leave the setup parameters alone.
++		 */
++		if (ret >= 0 || err != EBUSY) {
++			tester_warn("Expected EBUSY from the second connect()");
++			reconnect_end(data, false);
++			return false;
++		}
++
++		if (scodata->reconnect == CONNECT_OTHER_RETRY) {
++			struct btdev *btdev;
++			struct bt_hci_evt_sync_conn_complete cc;
++
++			btdev = vhci_get_btdev(hciemu_get_vhci(data->hciemu));
++			cc = data->held_sync;
++			cc.status = BT_HCI_ERR_UNSPECIFIED_ERROR;
++			tester_print("Answering the first setup with an error");
++			if (btdev_send_event(btdev,
++					BT_HCI_EVT_SYNC_CONN_COMPLETE, &cc,
++					sizeof(cc))) {
++				tester_warn("Failed to deliver the event");
++				reconnect_end(data, false);
++				return false;
++			}
++		}
++
++		reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
++		return false;
++	}
++
+ 	if (scodata->reconnect == CONNECT_TWICE) {
+ 		if (ret >= 0 || err != EBUSY) {
+ 			tester_warn("Expected EBUSY from the second connect()");
+@@ -1791,6 +1887,30 @@ static bool reconnect_connect2(void *user_data)
+ 	return false;
+ }
+ 
++static bool reconnect_other_check(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	unsigned int i, want = 1;
++	bool ok;
++
++	if (scodata->reconnect == CONNECT_OTHER_RETRY)
++		want = 2;
++
++	data->timer_id = 0;
++
++	/* Every setup shall carry the first socket's parameters: CVSD */
++	ok = sock_connected(data->sk, "first") && data->setup_cmds == want &&
++			data->sync_complete == 1 && !data->disc_cmds;
++
++	for (i = 0; i < want && i < ARRAY_SIZE(data->setup_coding); i++)
++		if (data->setup_coding[i] != 0x02)
++			ok = false;
++
++	reconnect_end(data, ok);
++	return false;
++}
++
+ static bool reconnect_first_connected(struct tester_io *io, uint32_t cond,
+ 							void *user_data)
+ {
+@@ -1804,6 +1924,13 @@ static bool reconnect_first_connected(struct tester_io *io, uint32_t cond,
+ 		return false;
+ 	}
+ 
++	if (scodata->reconnect == CONNECT_OTHER_ACL ||
++			scodata->reconnect == CONNECT_OTHER_RETRY) {
++		tester_print("First socket connected");
++		reconnect_arm(data, RECONNECT_QUIET_MS, reconnect_other_check);
++		return false;
++	}
++
+ 	if (data->sync_complete != 1 || data->setup_cmds != 1) {
+ 		tester_warn("The first link was not set up as expected");
+ 		reconnect_end(data, false);
+@@ -1829,6 +1956,7 @@ static bool reconnect_first_connected(struct tester_io *io, uint32_t cond,
+ static void test_reconnect(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
+ 	struct tester_io *io;
+ 	int sk;
+ 
+@@ -1868,6 +1996,10 @@ static void test_reconnect(const void *test_data)
+ 	tester_io_unref(io);
+ 
+ 	tester_print("Connect in progress");
++
++	/* The ACL link is still being set up, so is the first SCO link */
++	if (scodata->reconnect == CONNECT_OTHER_ACL)
++		reconnect_connect2(NULL);
+ }
+ 
+ static void test_sco_ethtool_get_ts_info(const void *test_data)
+@@ -2095,6 +2227,14 @@ int main(int argc, char *argv[])
+ 					&reconnect_during, setup_powered,
+ 					test_reconnect, false, false, false, 5);
+ 
++	test_sco_full("eSCO CVSD - Connect Twice Other Voice Setting",
++					&connect_other_acl, setup_powered,
++					test_reconnect, false, false, false, 5);
++
++	test_sco_full("eSCO CVSD - Connect Twice Other Voice Retry",
++					&connect_other_retry, setup_powered,
++					test_reconnect, false, false, false, 5);
++
+ 	test_sco_full("eSCO CVSD - Connect Twice",
+ 					&connect_twice, setup_powered,
+ 					test_reconnect, false, false, false, 8);
+-- 
+2.43.0
+

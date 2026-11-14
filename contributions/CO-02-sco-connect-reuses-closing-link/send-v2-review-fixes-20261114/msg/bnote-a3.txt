@@ -1,0 +1,8 @@
+New. Both cases fail with the kernel series "[PATCH v2 0/2] Bluetooth:
+hci_conn: fix SCO connection reuse" (KERNEL-V2-LINK) alone, and pass
+with the separate kernel patch "Bluetooth: hci_conn: don't change the
+parameters of a SCO link in use" (KERNEL-P3-LINK); with neither they
+also fail (the second connect() disconnects the first link).
+
+This applies on top of "[PATCH BlueZ v2] tools/sco-tester: Add SCO
+reconnect tests" (BLUEZ-V2-LINK).

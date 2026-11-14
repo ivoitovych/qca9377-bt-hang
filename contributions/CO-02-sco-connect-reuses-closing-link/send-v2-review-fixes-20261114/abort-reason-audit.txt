@@ -1,0 +1,52 @@
+abort_reason in net/bluetooth, include/net/bluetooth, drivers/bluetooth (tree: bluetooth-next da3cc02587c6 + CO-02 v2 patches 1-3)
+Command: grep -rn abort_reason net/bluetooth include/net/bluetooth drivers/bluetooth
+(include/net/bluetooth/hci.h lines 3479 and 3494 are fields of the LE Channel Sounding subevent structs, unrelated.)
+
+Field: include/net/bluetooth/hci_core.h:814  __u8 abort_reason  in struct hci_conn. Never reset to 0 once set
+(a connection that was aborted is deleted, not reused).
+
+WRITES (one):
+  hci_conn.c:3372  hci_abort_conn()   WRITE_ONCE(conn->abort_reason, reason)   (patch 2 adds WRITE_ONCE)
+    callers and lock context
+      hci_conn.c:649   hci_conn_timeout()      disc_work on hdev->workqueue, no hdev->lock
+      hci_conn.c:735   le_conn_timeout()       delayed work, no hdev->lock (LE only)
+      hci_conn.c:194   hci_disconnect()        caller-dependent:
+         hci_event.c:3083,3124,3858,3964,5304,5768,5841   event handlers, hdev->lock held
+         hci_core.c:3639 hci_link_tx_to()                   hdev->lock held
+         smp.c:1373 smp_timeout()                           delayed work, no hdev->lock
+         smp.c:3276 smp_recv_cb()                           l2cap rx, no hdev->lock
+      mgmt.c:3164 unpair_device_sync(), mgmt.c:3333 disconnect_sync()   cmd_sync work, hdev->lock dropped before the call
+      mgmt.c:3873 cancel_pair_device()                                  hdev->lock held
+  So the writer runs both with and without hdev->lock, on several CPUs: a reader that holds hdev->lock does not
+  exclude it.
+
+READS:
+  #  where                                  marked        lock context                          can race with the write
+  1  hci_conn.c:3367 hci_abort_conn()       plain load    caller-dependent (see writers)        yes: another caller's WRITE_ONCE in the
+                                                                                               same function; check-then-set is not
+                                                                                               atomic, a second writer with another
+                                                                                               reason is possible and harmless
+  2  hci_conn.c:3349 abort_conn_sync()      plain load    cmd_sync_work (req_workqueue), no     only a second hci_abort_conn() writer
+                                                         hdev->lock; entry queued by the        (value already non-zero, same byte)
+                                                         writer, so ordered after its write
+  3  hci_conn.c:1486-1487 hci_conn_set_handle() plain x2  hdev->lock (event handlers)            yes in principle: hci_conn_timeout() writes
+                                                                                               without hdev->lock
+  4  hci_conn.c:1270 hci_conn_unlink()      plain load    hdev->lock (hci_conn_del callers)      yes in principle: hci_conn_del() disables
+                                                                                               disc_work only after hci_conn_unlink()
+  5  iso.c:1077 iso_sock_disconn()          plain load    lock_sock(sk); hdev->lock not held     yes in principle (ISO, not touched by CO-02)
+  6  hci_conn.c:1910 hci_connect_sco()      READ_ONCE     hdev->lock (sco_connect())             yes: hci_conn_timeout() writes without it
+  7  hci_conn.c:1955 hci_connect_sco()      READ_ONCE     hdev->lock, after cancel_delayed_work_sync(disc_work)
+                                                         (the worker has finished, no new one while the hold is taken)
+
+Findings
+- Reads 6 and 7 (patch 2) are marked, the write is marked, the read at the top of hci_abort_conn() (1) is plain. A plain
+  read that pairs with a marked write of the same field in the same function is the mismatch a data-race checker reports,
+  and it is the one a reviewer sees next to the new WRITE_ONCE(). Value semantics are unaffected (one byte, no tearing,
+  duplicate writers store a non-zero reason).
+- Reads 3, 4 and 5 are old, outside CO-02, and have the same shape. Reads 2 is ordered by the cmd_sync queue.
+
+Minimal annotation change: mark read 1 (one token, in patch 2 next to the WRITE_ONCE it adds):
+  -	if (conn->abort_reason)
+  +	if (READ_ONCE(conn->abort_reason))
+  (proposal/abort-reason-readonce.diff, applies on top of patch 2; builds). Reads 2-5 can be marked in a follow-up
+  that is not part of this series; they do not change what patch 2 does.

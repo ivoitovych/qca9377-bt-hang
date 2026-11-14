@@ -1,0 +1,27 @@
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -626,6 +626,9 @@ void hci_sco_setup(struct hci_conn *conn, __u8 status)
+ 	}
+ }
+
++static unsigned int w2c_park_ms;
++module_param(w2c_park_ms, uint, 0644);
++
+ static void hci_conn_timeout(struct work_struct *work)
+ {
+ 	struct hci_conn *conn = container_of(work, struct hci_conn,
+@@ -646,6 +649,14 @@ static void hci_conn_timeout(struct work_struct *work)
+ 	if (refcnt > 0)
+ 		return;
+
++	if (w2c_park_ms && (conn->type == SCO_LINK || conn->type == ESCO_LINK)) {
++		pr_warn("w2c: hcon %p saw refcnt 0, parking %u ms\n", conn,
++			w2c_park_ms);
++		msleep(w2c_park_ms);
++		pr_warn("w2c: hcon %p released: refcnt %d abort_reason %u\n",
++			conn, atomic_read(&conn->refcnt), conn->abort_reason);
++	}
++
+ 	hci_abort_conn(conn, hci_proto_disconn_ind(conn));
+ }
+

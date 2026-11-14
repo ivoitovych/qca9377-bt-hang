@@ -1,0 +1,13 @@
+v2: rebased onto BlueZ master 20ffd285b58f. The tests check the same
+as in v1; the watches and timers use tester_io_add_watch(),
+timeout_add() and tester_remove_source() since the sco-tester moved
+to the mainloop (e37f17751). The setup macro's malloc() -> calloc(),
+already in v1, is now named in the message.
+
+"Reconnect During Disconnect" and "Connect Twice" fail on current
+bluetooth-next and pass with the kernel series "[PATCH v2 0/2]
+Bluetooth: hci_conn: fix SCO connection reuse" (KERNEL-V2-LINK).
+Please apply this after that series is in bluetooth-next; until then
+the two cases fail there.
+
+v1: https://lore.kernel.org/linux-bluetooth/20261027165059.2402360-1-yaroslav.voytovych@gmail.com/

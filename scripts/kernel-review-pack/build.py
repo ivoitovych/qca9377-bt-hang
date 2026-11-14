@@ -33,6 +33,7 @@ C21 = "contributions/CO-21-btusb-sco-alt-setting/send-20261114"
 C20 = "contributions/CO-20-sco-unknown-handle-messages/send-20261114"
 C43S = "contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114"
 C02 = "contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114"
+C02F = "contributions/CO-02-sco-connect-reuses-closing-link/send-v2-review-fixes-20261114"
 
 SECTIONS = [
     ("1. CO-44 — MGMT: a timed-out command reported as Authentication Failed", """
@@ -355,12 +356,31 @@ for the Signed-off-by checks.
 
 **Questions for you.** Three kernel patches or two (patch 3 is separable); `Cc: stable` on patch 3;
 whether -EBUSY vs -ECONNABORTED is the right split for user space (PipeWire retries on the latter).
+
+**Changed after the outside review (2026-11-14; `send-v2-review-fixes-20261114/`):**
+- There are now two layouts: (a) v2 as patches 1-2 with patch 3 separate, and (b) all three,
+  shown here.
+- An incoming-link test, on a debug kernel that holds the idle worker back:
+  - with 1+2, a transparent socket is silently given the remote's CVSD link;
+  - with patch 3, the connect is refused once and the retry gets its own link;
+  - a matching connect is also refused once, and patch 3's message says so.
+- Audits:
+  - `abort_reason` has one write and seven reads; a one-line `READ_ONCE` is proposed, not
+    applied;
+  - the wait under `hdev->lock` adds no new lock order, since `hci_conn_del()` already waits
+    on the same work.
+- The cover's stable line now says 6.18.y and 7.3.y, and the wording points of reviewers 3
+  and 7 are applied.
+- sco-tester, 3 runs each, with all of the tests: base 33 pass and 4 fail, 1+2 35 pass and 2
+  fail (the two "other voice" cases, which are patch 3's), 1+2+3 37 pass and 0 fail.
+- Unresolved: 3 of 33 runs of one debug-only kernel hung, against 0 of 62 on the kernels that
+  match the mails.
 """, [
-        (f"{C02}/kernel/v2-0000-cover-letter.patch", "diff"),
-        (f"{C02}/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch", "diff"),
-        (f"{C02}/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch", "diff"),
-        (f"{C02}/kernel/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch", "diff"),
-        (f"{C02}/CHECKS.md", "markdown"),
+        (f"{C02F}/mails/b-three/kernel/v2-0000-cover-letter.patch", "diff"),
+        (f"{C02F}/mails/b-three/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch", "diff"),
+        (f"{C02F}/mails/b-three/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch", "diff"),
+        (f"{C02F}/mails/b-three/kernel/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch", "diff"),
+        (f"{C02F}/README.md", "markdown"),
     ]),
 ]
 

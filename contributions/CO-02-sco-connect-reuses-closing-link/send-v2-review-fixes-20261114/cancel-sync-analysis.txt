@@ -1,0 +1,77 @@
+cancel_delayed_work_sync(&sco->disc_work) under hdev->lock in hci_connect_sco()  (patch 2)
+Tree: bluetooth-next da3cc02587c6 + CO-02 v2. Source facts first, runs after (see the results section at the end).
+
+1. Who waits, for what
+   - sco_connect() takes hci_dev_lock(hdev), calls hci_connect_sco(), which calls cancel_delayed_work_sync(&sco->disc_work).
+   - It waits only if hci_conn_timeout() (hci_conn.c:629) is RUNNING for that connection. A queued or timer-pending work is
+     cancelled without waiting; a work that never ran (new connection) is a no-op.
+   - hci_conn_hold() uses cancel_delayed_work() (no wait), so only the new wait is blocking.
+
+2. What a running hci_conn_timeout() can block on (SCO/eSCO connection)
+   hci_conn_timeout()
+     atomic_read(refcnt)                            no lock
+     hci_proto_disconn_ind(conn)                    hci_core.h:2247: type is not ACL/LE -> returns HCI_ERROR_REMOTE_USER_TERM;
+                                                    l2cap_disconn_ind() (which could take locks) is not reached
+     hci_abort_conn(conn, reason)
+       READ/WRITE_ONCE(abort_reason)                no lock
+       hci_cancel_connect_sync(hdev, conn)          hci_sync.c:7924: switch on conn->type; ACL/LE/CIS take
+                                                    hdev->cmd_sync_work_lock; SCO/ESCO fall to default: return -ENOENT
+                                                    (reviewer's point confirmed: no lock, no queue lookup for SCO/eSCO)
+       hci_cmd_sync_run_once(abort_conn_sync, ...)  hci_sync.c:850:
+         hci_cmd_sync_lookup_entry()                mutex_lock(&hdev->cmd_sync_work_lock), short
+         hci_cmd_sync_run(): !HCI_RUNNING -> -ENETDOWN; current_work() != cmd_sync_work -> hci_cmd_sync_submit():
+             mutex_lock(&hdev->unregister_lock), mutex_lock(&hdev->cmd_sync_work_lock), list_add, queue_work(req_workqueue)
+             (queues; the Disconnect itself runs later on cmd_sync_work, not under the caller's lock or mutex)
+   So the reviewer's statement is right for hdev->lock itself and for the disconnect: the worker never takes hdev->lock and
+   never runs the abort inline. It is NOT right that the worker takes no mutex: it takes hdev->cmd_sync_work_lock and
+   hdev->unregister_lock for a short time.
+
+3. Can those mutexes be held by someone who waits for hdev->lock? (the only way the wait could deadlock)
+   - unregister_lock: holders are hci_unregister_dev() (sets a flag), hci_rfkill_set_hw_state() and hci_cmd_sync_submit()
+     itself; none takes hdev->lock inside. No.
+   - cmd_sync_work_lock: held across entry destroy callbacks in hci_cmd_sync_clear() (controller teardown) and in
+     _hci_cmd_sync_cancel_entry() (hci_{acl,le}_cancel_create_conn_sync). scripts/destroy-lock-scan.py lists the
+     destroy callbacks of the tree: create_le_conn_complete, create_big_complete, create_pa_complete, mgmt_set_powered_complete,
+     mgmt_set_discoverable_complete, mgmt_set_connectable_complete, stop_discovery_complete, set_advertising_complete check
+     -ECANCELED before hci_dev_lock(); add_device_complete and add_ext_adv_params_complete call hci_dev_lock() with no
+     -ECANCELED check. So during hci_cmd_sync_clear() with an Add Device (or Add Ext Adv Params) entry still queued, the
+     order is cmd_sync_work_lock -> hdev->lock.
+   - Together: A holds hdev->lock and waits for the running hci_conn_timeout(); the worker waits for cmd_sync_work_lock; B
+     (hci_cmd_sync_clear, power off) holds cmd_sync_work_lock and waits for hdev->lock. That is a three-way cycle. It needs a
+     SCO/eSCO disc_work running at the same moment as a connect() to the same connection, and an Add Device entry still queued
+     while the controller is unregistered (the only caller of hci_cmd_sync_clear()): not reachable in the emulator tests, and a
+     window of microseconds in practice.
+   - It is not new. hci_conn_del() (hci_conn.c:1298) already does disable_delayed_work_sync(&conn->disc_work) with hdev->lock
+     held (hci_dev_close_sync() calls hci_conn_hash_flush() under hci_dev_lock, hci_sync.c:6099), and the same worker can be
+     running then. So lockdep's dependency hdev->lock -> disc_work -> cmd_sync_work_lock -> hdev->lock exists on the base
+     tree; patch 2 adds a second place that waits, not a new ordering. The patch text now says so ("adds no lock ordering that
+     is not already there").
+   - Not changed by patch 2 and not part of CO-02: the clear-time destroy callbacks that take hdev->lock under
+     cmd_sync_work_lock (add_device_complete, add_ext_adv_params_complete). A maintainers' call; no change proposed here.
+
+4. Incoming connections and controller teardown
+   - Incoming SCO links are created in the event handlers (hci_conn_request_evt / hci_sync_conn_complete_evt), under hdev->lock;
+     those paths do not call hci_connect_sco() and do not wait for disc_work.
+   - A local connect() onto a remote-set-up connection takes the same path as any other (lookup, hold, wait, check); the
+     remote-set-up connection has no hci_link, so hci_conn_link() builds one (patch 2 commit message: the link stays with
+     the aborting connection and is released with its ACL hold by hci_conn_del()).
+   - Teardown, power off: hci_dev_close_sync() takes hdev->lock around hci_conn_hash_flush() (hci_sync.c:6087-6099) and clears
+     HCI_RUNNING at hci_sync.c:5868, so a hci_conn_timeout() running after that gets -ENETDOWN from hci_cmd_sync_run() (no
+     queue, no sleep) and drops its reference. hci_conn_del() waits for disc_work there as before the patch.
+   - Teardown, unregister: hci_unregister_dev() (hci_core.c:2782-2805) sets HCI_UNREGISTER, then calls hci_cmd_sync_clear()
+     (the only caller), then hci_dev_do_close(). With HCI_UNREGISTER set hci_cmd_sync_submit() returns -ENODEV, so a running
+     hci_conn_timeout() does not queue; hci_cmd_sync_clear() is where the cmd_sync_work_lock -> hdev->lock order of section 3
+     can occur, and it runs before hci_dev_close_sync() takes hdev->lock for the flush.
+
+5. Workqueue
+   disc_work runs on hdev->workqueue (ordered). A cancel_delayed_work_sync() of a running item cannot be stuck behind other
+   items of that queue (the item is the one running), and a queued item is dequeued, not waited for.
+
+6. Results of the lockdep guests (KASAN + PROVE_LOCKING, 256 MB, 4 CPUs; scripts/check-logs.sh over logs/run-*.log)
+   - sco-tester on base, 1+2, 1+2+3, with the teardown cases (Simultaneous Disconnect, ACL Disconnect) and the remote-link
+     cases: no lockdep report, no KASAN, no BUG/WARNING line in any guest.
+   - Kernels where the wait really blocks (connect() takes a hold, the worker is held back by the debug-only parameter,
+     cancel_delayed_work_sync() sleeps under hdev->lock): parkB (1+2, worker held after its holder check) and e12 (1+2,
+     held before it). Lockdep records hdev->lock -> disc_work there. No report. A report needs the third edge
+     (cmd_sync_work_lock -> hdev->lock: hci_cmd_sync_clear() with an Add Device queued) in the same boot; no run produced it
+     and none was injected.

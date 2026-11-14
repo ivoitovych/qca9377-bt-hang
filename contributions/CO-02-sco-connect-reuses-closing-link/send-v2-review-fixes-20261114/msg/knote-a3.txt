@@ -1,0 +1,21 @@
+New. Applies on top of "[PATCH v2 0/2] Bluetooth: hci_conn: fix SCO
+connection reuse" (KERNEL-V2-LINK): it adds an "else if" next to the
+abort_reason check of that series' patch 2.
+
+Tested on bluetooth-next da3cc02587c6, QEMU, 4 CPUs, KASAN and lockdep,
+with the sco-tester cases of "[PATCH BlueZ] tools/sco-tester: Add
+connect twice with other voice tests" (BLUEZ-P2-LINK): of the 35 cases
+33 pass with patches 1 and 2 ("Connect Twice Other Voice Setting" and
+"... Retry" fail), all 35 with this patch (3 runs each). mgmt-tester
+(526) and iso-tester (213) pass with it (1 run each).
+
+A link the remote device set up (a listening socket accepted it, then
+its socket was closed) has no stored parameters. For a connect() that
+arrives after the last holder dropped the link and before its idle
+disconnect has run, held back with a debug-only change: with patches 1
+and 2 it returns 0 and the socket is reported connected on the remote
+device's link, with the default CVSD and with a transparent voice
+setting (3 of 3 runs). With this patch it fails with -ECONNABORTED and
+the next connect() gets a link of its own (30 of 30 runs that ran to
+the end). While a socket holds the link the second connect() fails
+with -EBUSY either way.
