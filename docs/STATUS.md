@@ -308,6 +308,18 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
 
 ## Repository health
 
+**Disk reclaim, 2026-11-14 (the operator's yes):** nine finished agent work areas are deleted,
+about 40 GB: `co43-ea-send-20261113`, `bt17-emu-20261113`, `co44-send-20261113`,
+`laptop-btusb-modules-20261111`, `co02-mismatch-20261102`, `bt17-mgmt-timeout`,
+`co37-release-20261102`, `u29-t3-lifetime-patch` and `u25-settle-20261101`. So are seven
+one-off Docker images and the Docker build cache. Free space went from 33 GB to 72 GB. Their
+results were ported before. Before the deletion, what they held that existed nowhere else was
+saved to private `backup/local-work` (`2026-11-14-agent-work/`, commit `fdaf84d`): 6,046
+agent-written files and an export of all 79 git trees. Old dossier paths into those areas now
+point at deleted copies. The bot image `bluez-action-ci`, `archive/` and `/var/log/bt-health`
+are untouched. The rule is in the private procedure: reclaim bulk whose result is ported, after
+the rescue.
+
 **Incident 2026-11-14: one `journalctl` ran 7 h 44 min at a full CPU and slowed the desktop all
 morning.** `devtools/check`'s journal-contract step ran `journalctl -k -b all` and counted every
 boot separator. The step needed only the first one. With BT-17's debug logging on, the
