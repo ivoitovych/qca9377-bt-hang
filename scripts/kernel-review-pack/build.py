@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""Assemble the self-contained review document of the kernel patches that are ready to send.
+
+    python3 -I scripts/kernel-review-pack/build.py <output.md>
+
+Every patch, mail and result file is copied verbatim from the repository path it is listed
+under, with that file's SHA-256, so the reviewed text is the text that would be sent. The
+context paragraphs are written here; the files are not touched. Rerun after any package is
+regenerated: the document then follows the files.
+"""
+import hashlib
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+HERE = pathlib.Path(__file__).resolve().parent
+
+C44 = "contributions/CO-44-mgmt-timeout-reported-as-auth-failed/send-20261113"
+C43 = "contributions/CO-43-btusb-runtime-resume-failure/send-20261113"
+C38 = "contributions/CO-38-read-adv-features-hidden-instances/send-20261102"
+C04 = "contributions/CO-04-mesh-test-14888791/patch"
+C05 = "contributions/CO-05-mesh-adv-list-lock-i12/patch"
+C35 = "contributions/CO-35-l2cap-ecred-defer-hang-stable/send-20261102"
+C22 = "contributions/research-2026-11-01/qca-ids/drafts"
+C21 = "contributions/CO-21-btusb-sco-alt-setting/patches-20261101"
+
+SECTIONS = [
+    ("1. CO-44 — MGMT: a timed-out command reported as Authentication Failed", """
+**The defect.** When an HCI command sent from an MGMT handler gets no answer, the sync layer
+returns `-ETIMEDOUT`, and `mgmt_errno_status()` has no case for it, so user space is told
+`MGMT_STATUS_AUTH_FAILED` (0x05). bluetoothd then prints "Authentication Failed" for a Set
+Device Class or a Set Powered that simply timed out; users and maintainers read it as a pairing
+problem. The table for HCI statuses already maps the controller's own timeouts (0x08, 0x10) to
+`MGMT_STATUS_TIMEOUT`, and a timed-out pairing connection already reports 0x08; the patch makes
+`-ETIMEDOUT` agree. `Fixes: 161510ccf91c`.
+
+**Tested** (bluetooth-next `da3cc02587c6`, BlueZ master): a new mgmt-tester case drops the Write
+Class of Device command and expects Timeout; on the base kernel it gets 0x05 and fails, patched it
+passes. Full mgmt-tester 526 + the new case: only that case changes; l2cap-tester 144/144 and
+smp-tester 8/8 on both kernels. The bot's checks locally: only the three Signed-off-by checks
+differ. The BlueZ test is a separate mail to BlueZ the same day; it is reproduced after the kernel
+patch for context.
+
+**Questions for you.** `Cc: stable` or not (the maintainer took two MGMT status fixes with it in
+the last months; the last two changes to this function went in without it). Whether the `Link:`
+to a 2022 BlueZ posting that names the symptom is useful or noise. Subject wording.
+""", [
+        (f"{C44}/kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch", "diff"),
+        (f"{C44}/cc-stable-variant.txt", "text"),
+        (f"{C44}/bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch", "diff"),
+        (f"{C44}/CHECKS.md", "markdown"),
+    ]),
+    ("2. CO-43 E — btusb: anchor a deferred URB under `txlock`", """
+**The defect** (present since `7bee549e197c`, 2009). `submit_or_queue_tx_urb()` decides under
+`data->txlock` that the device is suspending and the URB must be deferred, drops the lock, and only
+then anchors the URB on `data->deferred`. A resume that runs `play_deferred()` in that window
+does not see it: the URB stays parked until the next suspend/resume cycle, and the HCI command in
+it times out. The patch anchors it before the lock is dropped.
+
+**Tested** (bluetooth-next `da3cc02587c6`): with a debug-only delay that widens the window and a
+resume forced inside it, the unpatched kernel parked the command and timed out 3 of 3; with the
+patch it was answered. Without the delay, 10 runs of 100 suspend/resume cycles on each kernel,
+KASAN, lockdep and kmemleak on: no report and no parked packet on either. The bot's checks: only
+the Signed-off-by checks fail. It applies and builds alone and together with item 3 in either
+order.
+
+**Questions for you.** The lock order and the teardown cases (disconnect while URBs are
+deferred). `Cc: stable` or not: the hang was reproduced only with the window widened, and nobody
+has reported it in the field.
+""", [
+        (f"{C43}/E/0001-Bluetooth-btusb-Anchor-a-deferred-URB-under-txlock.patch", "diff"),
+        (f"{C43}/E/CHECKS.md", "markdown"),
+    ]),
+    ("3. CO-43 A — btusb: report a failed runtime resume for deferred data", """
+**The defect.** `btusb_waker()` calls `usb_autopm_get_interface()` to resume the device for
+deferred data and ignores a failure, so a device that does not come back leaves no trace of why
+the HCI traffic stalls. The patch logs the failure, except `-EACCES` (runtime PM disabled, for
+example during a system sleep transition). No `Fixes:`, no `Cc: stable`: it adds a message only.
+
+**Tested:** in the emulator run where the device fails its resume, the new line appears at the
+moment of the failure. The bot's checks: only the Signed-off-by checks fail.
+
+**Questions for you.** Whether the message is worth having upstream at all, and its wording; the
+subject ("runtime resume", since the waker's resume is a runtime one).
+""", [
+        (f"{C43}/A/0001-Bluetooth-btusb-Report-a-failed-runtime-resume-for-d.patch", "diff"),
+        (f"{C43}/A/CHECKS.md", "markdown"),
+    ]),
+    ("4. CO-38 — MGMT: Read Advertising Features hides instances", """
+**The defect** (from `b338d91703fa`, 2022; in 6.1.y to bluetooth-next). `read_adv_features()`
+skips every instance whose number is above `hdev->adv_instance_cnt`, the count of instances,
+instead of the controller's number of sets. After instance 1 is removed, instance 2 is no longer
+listed, though it still advertises. Found by the tests of another item (CO-12, the
+advertising-duration clamp, not in this document).
+
+**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-11-02): the one-line fix passes all 128 mgmt-tester
+"Add" cases and a new case that lists a remaining instance (BlueZ tests reproduced after the
+patch). **Being refreshed today on the current tip**, and checked against a newer patch on the
+list, "mgmt: drop advertising instances the controller cannot carry" (patchwork 14976301), which
+may touch the same function.
+""", [
+        (f"{C38}/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch", "diff"),
+        (f"{C38}/bluez/0000-cover-letter.patch", "diff"),
+        (f"{C38}/bluez/0001-mgmt-tester-Add-extended-advertising-timeout-tests.patch", "diff"),
+        (f"{C38}/bluez/0002-mgmt-tester-Add-test-for-listing-a-remaining-instanc.patch", "diff"),
+        (f"{C38}/bluez/0003-mesh-tester-Add-Mesh-Send-test-with-extended-adverti.patch", "diff"),
+        (f"{C38}/RESULTS.md", "markdown"),
+    ]),
+    ("5. CO-04 — MGMT: a use-after-free in `mesh_send_sync()`", """
+**The defect** (a syzbot report; `Fixes: b338d91703fa`, `Cc: stable`). `mesh_send()` tests
+`HCI_MESH_SENDING` under `hdev->lock`, but the completion paths clear it without the lock before
+`mesh_next()` queues the next start, so a Mesh Send in between can queue a second start for the
+same request; if the first start fails and frees it, the second reads freed memory (the patch's
+message has the KASAN trace). The patch keeps the flag set until the next-or-idle decision is made
+under `hdev->lock`, and takes `hdev->lock` nowhere under `cmd_sync_work_lock`.
+
+**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-10-29): no lockdep or KASAN report in 48 boots
+per image of the mesh tests, verdicts unchanged; the bot's checks pass. The use-after-free itself
+was not reproduced. A different fix for the same report is pending on the list (patchwork
+14888791, now archived); in the same boots it showed a lock-order inversion in 8 of 12. **Being
+refreshed today on the current tip.**
+
+**Questions for you.** Whether the hand-over closes every path the syzbot trace shows, and
+whether "not reproduced" needs saying below the `---`.
+""", [
+        (f"{C04}/0001-Bluetooth-MGMT-Fix-use-after-free-in-mesh_send_sync.patch", "diff"),
+    ]),
+    ("6. CO-05 + CO-26 — `mesh_send_sync()` and the advertising list", """
+**The defects.** (1) `mesh_send_sync()` adds and removes an advertising instance without
+`hdev->lock`, while other paths walk the list under it (lockdep and KCSAN warnings). (2) When the
+add fails, it loses the error and schedules an instance that does not exist (`Fixes:
+b338d91703fa`).
+
+**Tested** (bluetooth-next `1081a6ef8f1e0`, 2026-10-29): warnings 3 → 0; KCSAN reports in
+`mesh_send_sync()` 1 → 0 of 45 boots; a fault-injection trace for (2); the bot's checks pass.
+**Being refreshed today on the current tip.**
+
+**Questions for you.** The series order relative to item 5 (they touch the same function), and
+whether patch 2 belongs in the same series or alone.
+""", [
+        (f"{C05}/0000-cover-letter.patch", "diff"),
+        (f"{C05}/0001-Bluetooth-MGMT-Take-hdev-lock-in-mesh_send_sync.patch", "diff"),
+        (f"{C05}/0002-Bluetooth-MGMT-Stop-mesh_send_sync-when-it-cannot-ad.patch", "diff"),
+    ]),
+    ("7. CO-35 — the L2CAP ECRED deferred-accept hang, for stable", """
+**The defect.** With a deferred ECRED accept, the socket lock is taken twice on the same path, a
+self-deadlock present since v6.3 (`9aa9d9473f15`). Pauli Virtanen fixed it in mainline with
+`608e0b7a675b` and `32d86e048d8e` (7.4 merge window), without `Cc: stable`; neither is in a stable
+release or queue (checked 2026-11-14).
+
+**This package:** a request that 7.3.y take the two commits as they are; backports of the pair for
+6.18.y, 6.12.y and 6.6.y as `[PATCH <line> 0/2]` series (code changed only where the older trees
+need it); and a separate request for 7.3.y to take `5874f8d03268`, without which plain v7.3 fails
+l2cap-tester's SCI cases for an unrelated reason. **Tested** (7.2.13 and v7.3, 2026-10-28): l2cap-
+tester 111/111 with the pair, the deferred-accept cases hang without it. 6.1.y, 5.15.y and 5.10.y
+also carry the bug and are not covered. **Being refreshed today on the current stable tips.**
+
+**Questions for you.** The backports' changes against the mainline commits (the cover letters
+list them); whether the two requests should be one mail.
+""", [
+        (f"{C35}/request-v3.eml", "text"),
+        (f"{C35}/request-sci-7.3.y.eml", "text"),
+        (f"{C35}/6.18.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/6.18.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
+        (f"{C35}/6.18.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
+        (f"{C35}/6.12.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/6.12.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
+        (f"{C35}/6.12.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
+        (f"{C35}/6.6.y/0000-cover-letter.patch", "diff"),
+        (f"{C35}/6.6.y/0001-Bluetooth-L2CAP-add-l2cap_chan_close_unlocked-and-lo.patch", "diff"),
+        (f"{C35}/6.6.y/0002-Bluetooth-L2CAP-hold-conn-lock-for-__l2cap_ecred_con.patch", "diff"),
+        (f"{C35}/results.md", "markdown"),
+    ]),
+    ("8. CO-22 — two ASUS QCA ROME entries for stable (a request, no patch)", """
+**The request.** Mainline has two btusb device-table entries for ASUS laptops with a QCA ROME
+controller, `d54601f21faf` and `cfa67a1dbfd9`; no stable branch has them (checked 2026-11-14).
+Without an entry btusb does no QCA setup, so the controller keeps its ROM firmware; that was the
+condition under which this project's own QCA9377 hung on wideband-speech calls until its entry
+(`dc16388d45ec`) reached stable. Whether these two models show the same hang is not known. Both cherry-pick cleanly to 7.3.y
+down to 6.1.y (checked 2026-11-01; being rechecked today). The mail asks the stable team to take
+them; it names the entries' authors in Cc.
+
+**Questions for you.** Whether the request reads as justified for device-ID additions (which
+stable rules allow), and its wording.
+""", [
+        (f"{C22}/stable-request-asus-rome-v2.eml", "text"),
+    ]),
+    ("9. CO-21 (close to ready) — btusb picks alternate setting 0 while a SCO link is up", """
+**The defect** (`Fixes: baac6276c0a9`). `btusb_notify()` takes the air mode from the one link
+whose state changed and picks the USB alternate setting from it. With two SCO links, one going
+down switches the other to alt 0, and a single-link race does the same (seen twice on the laptop,
+2026-09-02). **The design** (two patches on bluetooth-next `42b8c2d72926`): the core keeps the air
+mode of each SCO link that came up (from its Synchronous Connection Complete event), and btusb's
+worker derives the setting from the links that are up; notify only schedules it. An earlier
+single-patch candidate was judged not ready by an outside review (a failed second setup still
+sends the link-up notification); this design answers that.
+
+**Tested** (2026-11-11): real btusb in a QEMU guest against an emulated controller through usbip:
+the base kernel fails 5 of 5 scenarios, the patches pass 5 of 5; a 20-scenario model of the
+worker. The bot's checks on current bluetooth-next: no new findings except GitLint (patch 2's
+title is 81 characters; it will be shortened). Patch 1 changes `struct hci_conn`, so `bluetooth.ko`
+and btusb must be rebuilt together.
+
+**Questions for you.** The design itself: is a per-link air mode in the core acceptable, or should
+btusb track it alone? The counting helper's locking.
+""", [
+        (f"{C21}/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch", "diff"),
+        (f"{C21}/0002-Bluetooth-btusb-Pick-the-SCO-alternate-setting-from-.patch", "diff"),
+    ]),
+]
+
+
+def fence(text: str) -> str:
+    """A backtick fence longer than any backtick run in the text."""
+    longest = max((len(m) for m in re.findall(r"`+", text)), default=0)
+    return "`" * max(3, longest + 1)
+
+
+def block(rel: str, lang: str) -> str:
+    path = ROOT / rel
+    data = path.read_bytes()
+    text = data.decode("utf-8")
+    f = fence(text)
+    digest = hashlib.sha256(data).hexdigest()
+    body = text if text.endswith("\n") else text + "\n"
+    return f"**`{rel}`** (SHA-256 `{digest}`)\n\n{f}{lang}\n{body}{f}\n"
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    parts = [(HERE / "intro.md").read_text()]
+    for title, context, files in SECTIONS:
+        parts.append(f"\n---\n\n## {title}\n{context}")
+        for rel, lang in files:
+            parts.append("\n" + block(rel, lang))
+    parts.append("\n---\n\n*End of document. Repository: "
+                 "<https://github.com/ivoitovych/qca9377-bt-hang>; every file above is at "
+                 "the path given, in the commit that added this document.*\n")
+    pathlib.Path(sys.argv[1]).write_text("".join(parts))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

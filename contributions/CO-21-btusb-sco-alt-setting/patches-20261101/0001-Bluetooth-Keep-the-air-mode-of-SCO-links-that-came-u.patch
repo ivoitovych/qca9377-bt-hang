@@ -1,0 +1,112 @@
+From 38c2e8c9620f1450d9892307d266eb915779c98d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 18:33:56 +0100
+Subject: [PATCH 1/2] Bluetooth: Keep the air mode of SCO links that came up
+
+The air mode of a synchronous link is passed to the driver as
+HCI_NOTIFY_ENABLE_SCO_CVSD or HCI_NOTIFY_ENABLE_SCO_TRANSP and not kept.
+conn->setting is the voice setting the host asked for, which is not
+always the air mode of the link: it is left unset for an incoming
+connection, which is accepted with the setting of its socket, and
+hci_connect_sco() overwrites it for an existing connection, also one
+whose link is up.
+
+Keep in the connection the air mode reported by Synchronous Connection
+Complete, and for a SCO link that completes with Connection Complete
+the one its notification already assumes. Add hci_conn_sco_up_num() to
+count the SCO links that are up by air mode, so that a driver can
+configure itself from the links that exist instead of from the last
+notification.
+
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ include/net/bluetooth/hci.h      |  6 ++++++
+ include/net/bluetooth/hci_core.h | 25 +++++++++++++++++++++++++
+ net/bluetooth/hci_event.c        |  2 ++
+ 3 files changed, 33 insertions(+)
+
+diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
+index 1c992e87534d7..419d756b5d21b 100644
+--- a/include/net/bluetooth/hci.h
++++ b/include/net/bluetooth/hci.h
+@@ -2762,6 +2762,12 @@ struct hci_ev_sync_conn_complete {
+ 	__u8     air_mode;
+ } __packed;
+ 
++/* Air_Mode of HCI_Synchronous_Connection_Complete */
++#define HCI_AIR_MODE_ULAW	0x00
++#define HCI_AIR_MODE_ALAW	0x01
++#define HCI_AIR_MODE_CVSD	0x02
++#define HCI_AIR_MODE_TRANSP	0x03
++
+ #define HCI_EV_SYNC_CONN_CHANGED	0x2d
+ struct hci_ev_sync_conn_changed {
+ 	__u8     status;
+diff --git a/include/net/bluetooth/hci_core.h b/include/net/bluetooth/hci_core.h
+index 9d5d3ab4a075e..36cfa06894867 100644
+--- a/include/net/bluetooth/hci_core.h
++++ b/include/net/bluetooth/hci_core.h
+@@ -762,6 +762,7 @@ struct hci_conn {
+ 	__u16		disc_timeout;
+ 	__u16		conn_timeout;
+ 	__u16		setting;
++	__u8		air_mode;
+ 	__u16		auth_payload_timeout;
+ 	__u16		le_conn_min_interval;
+ 	__u16		le_conn_max_interval;
+@@ -1132,6 +1133,30 @@ static inline unsigned int hci_conn_num(struct hci_dev *hdev, __u8 type)
+ 	}
+ }
+ 
++/* Number of SCO and eSCO links that are up, carry their data over HCI and
++ * use the given air mode (HCI_AIR_MODE_*)
++ */
++static inline unsigned int hci_conn_sco_up_num(struct hci_dev *hdev,
++					       __u8 air_mode)
++{
++	struct hci_conn_hash *h = &hdev->conn_hash;
++	struct hci_conn *c;
++	unsigned int num = 0;
++
++	rcu_read_lock();
++
++	list_for_each_entry_rcu(c, &h->list, list) {
++		if ((c->type == SCO_LINK || c->type == ESCO_LINK) &&
++		    c->state == BT_CONNECTED && !c->codec.data_path &&
++		    c->air_mode == air_mode)
++			num++;
++	}
++
++	rcu_read_unlock();
++
++	return num;
++}
++
+ static inline unsigned int hci_conn_count(struct hci_dev *hdev)
+ {
+ 	struct hci_conn_hash *c = &hdev->conn_hash;
+diff --git a/net/bluetooth/hci_event.c b/net/bluetooth/hci_event.c
+index d05934fef4d99..9237d05557ca2 100644
+--- a/net/bluetooth/hci_event.c
++++ b/net/bluetooth/hci_event.c
+@@ -3366,6 +3366,7 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
+ 	} else if (ev->link_type == SCO_LINK) {
+ 		switch (conn->setting & SCO_AIRMODE_MASK) {
+ 		case SCO_AIRMODE_CVSD:
++			conn->air_mode = HCI_AIR_MODE_CVSD;
+ 			if (hdev->notify)
+ 				hdev->notify(hdev, HCI_NOTIFY_ENABLE_SCO_CVSD);
+ 			break;
+@@ -5232,6 +5233,7 @@ static void hci_sync_conn_complete_evt(struct hci_dev *hdev, void *data,
+ 
+ 		conn->state  = BT_CONNECTED;
+ 		conn->type   = ev->link_type;
++		conn->air_mode = ev->air_mode;
+ 
+ 		hci_debugfs_create_conn(conn);
+ 		hci_conn_add_sysfs(conn);
+
+base-commit: 42b8c2d729268a65a2d98064e8dc59ff53646b14
+-- 
+2.43.0
+

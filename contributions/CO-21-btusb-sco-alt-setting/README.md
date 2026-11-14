@@ -6,6 +6,11 @@ findings except GitLint, patch 2's title at 81 characters. The posted patch chan
 `bluetooth.ko`'s 94 CRCs, so a laptop run needs the test-only variant. Modules, procedure and
 logs: `../../results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/`.
 
+**The redesign's two patches** (the ones tested on 11-11) are now in the repository:
+[`patches-20261101/`](patches-20261101/) (copied 2026-11-14 from
+`/root/exp/agent-work/co21-redesign-20261101/patches-v0/`). They are item 9 of the outside
+review document `../../reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`.
+
 **State (2026-11-01):** confirmed in source and by a model test; a candidate fix compiles and
 passes the model; never loaded, not sent. **Outside review the same day: not ready.** The core
 sends the link-up notification also for a failed setup (`hci_event.c:5257-5278` at

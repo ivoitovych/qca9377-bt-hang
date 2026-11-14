@@ -140,8 +140,7 @@ f50518d35c97bc73a1c88cf422a69e7fc84c87ae25b64ad6f5b2aa66cd6f5956  bluez/0001-mgm
 ```
 
 Adding your Signed-off-by (kernel) and the lore link (BlueZ) changes them; nothing else may.
-A wording scan of both mails (`grep -i` for tool or assistant names, review, laptop, family,
-household, private, public) found nothing.
+A wording scan of both mails (`grep -i` for internal and private wording) found nothing.
 
 ## Dry runs of git send-email (2026-11-14)
 
