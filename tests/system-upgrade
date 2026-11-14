@@ -141,7 +141,14 @@ unit_states() {   # "unit enabled-state up|down active/sub", for every project u
         printf '%s %s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "$c" "${a:-?}/${s:-?}"
     done
 }
-same_units() { [[ "$(cut -d' ' -f1-3 <<<"$1")" == "$(cut -d' ' -f1-3 <<<"$2")" ]]; }
+# What changed between two unit_states lists, one line per change (empty: none).
+# A unit only the new tree has is judged by itself: installed and not armed.
+unit_changes() { awk -f "$NEW/tests/unit-state-changes.awk" <(echo "$1") <(echo "$2"); }
+new_units() {
+    local n
+    n=$(comm -13 <(cut -d' ' -f1 <<<"$1" | sort) <(cut -d' ' -f1 <<<"$2" | sort) | tr '\n' ' ')
+    [[ -n "$n" ]] && echo " (new, installed and not armed: ${n% })"
+}
 # Which units are looping, and why, so a reader of the log sees it was there.
 restart_loops() {
     local u n
@@ -235,8 +242,9 @@ extra=$(comm -13 <(echo "$expected") <(echo "$actual") | grep .)
 pre=$(find /usr/local /etc -name '*.pre-qca9377-bt-hang' 2>/dev/null)
 [[ -z "$pre" ]] && ok "no .pre-qca9377-bt-hang copy of the project's own earlier files" \
                 || { bad "the upgrade kept the project's own files as foreign:"; sed 's/^/      /' <<<"$pre"; }
-same_units "$U2" "$U1" && ok "every project unit is as enabled and as active as before" \
-                     || { bad "unit states changed:"; diff <(echo "$U1") <(echo "$U2") | sed 's/^/      /'; }
+UC=$(unit_changes "$U1" "$U2")
+[[ -z "$UC" ]] && ok "every project unit is as enabled and as active as before$(new_units "$U1" "$U2")" \
+               || { bad "unit states changed:"; sed 's/^/      /' <<<"$UC"; }
 [[ "$(cat "$CUR" 2>/dev/null)" == "$CUR_BEFORE" && -n "$CUR_BEFORE" ]] && ok "the open trial's state is untouched" \
                                                                         || bad "the open trial's state changed or vanished"
 [[ "$(cat /usr/local/share/qca9377-bt-hang/mode 2>/dev/null)" == "$MODE_BEFORE" \
@@ -247,8 +255,9 @@ same_units "$U2" "$U1" && ok "every project unit is as enabled and as active as 
 # ── the operator's next step, and the shutdown ────────────────────────────
 systemctl daemon-reload
 U3=$(unit_states)
-same_units "$U3" "$U1" && ok "after daemon-reload, still nothing armed and nothing stopped" \
-                     || { bad "daemon-reload changed unit states:"; diff <(echo "$U1") <(echo "$U3") | sed 's/^/      /'; }
+UC=$(unit_changes "$U1" "$U3")
+[[ -z "$UC" ]] && ok "after daemon-reload, still nothing armed and nothing stopped$(new_units "$U1" "$U3")" \
+               || { bad "daemon-reload changed unit states:"; sed 's/^/      /' <<<"$UC"; }
 # The checklist's last two steps (SU1; docs/install.md): what the operator reads
 # after the deploy, the verifier run against this checkout as the operator runs
 # it against theirs.
