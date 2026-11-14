@@ -1,0 +1,1796 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x00000000070402c4
+input_len: 0x0000000001040646
+output: 0x0000000001000000
+output_len: 0x00000000038357a8
+kernel_total_size: 0x00000000070c3000
+needed_size: 0x0000000007200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ac2d0).
+Linux version 7.3.0-g9b3a3c6a3d43 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Sat Nov 14 07:10:14 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/qca9377-bt-hang/tmp/co05-w4/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mgmt-tester-master-4dc15be8 -s Remove'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mgmt-tester-master-4dc15be8 -s Remove
+Changing into directory /root/exp
+New process 59 created
+
+[1;39mRemove UUID - Success 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove UUID - Success 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with SPP UUID)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove UUID - Success 1[0m - [0;34msetup complete[0m
+[1;39mRemove UUID - Success 1[0m - [0;30mrun[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Remove UUID (0x0011)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mHCI Command 0x0c52 length 241[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mRemove UUID (0x0011): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove UUID - Success 1[0m - [0;32mtest passed[0m
+[1;39mRemove UUID - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove UUID - Success 1[0m - [0;35mteardown complete[0m
+[1;39mRemove UUID - Success 1[0m - [0;30mdone[0m
+
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with SPP UUID)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;34msetup complete[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;30mrun[0m
+  [0;37mSending Remove UUID (0x0011)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove UUID (0x0011): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;32mtest passed[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;35mteardown complete[0m
+[1;39mRemove UUID - All UUID - Success 2[0m - [0;30mdone[0m
+
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;34msetup[0m
+  [0;37mAdding UUIDs without powering on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;34msetup complete[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;30mrun[0m
+  [0;37mSending Remove UUID (0x0011)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove UUID (0x0011): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;32mtest passed[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;35mteardown complete[0m
+[1;39mRemove UUID - Power Off - Success 3[0m - [0;30mdone[0m
+
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;34msetup[0m
+  [0;37mAdding UUIDs without powering on and remove UUID[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;34msetup complete[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;30mrun[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Set Powered (0x0005)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mHCI Command 0x0c56 length 1[0m
+  [0;37mHCI Command 0x0c13 length 248[0m
+  [0;37mHCI Command 0x0c52 length 241[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mSet Powered (0x0005): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;32mtest passed[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;35mteardown complete[0m
+[1;39mRemove UUID - Power Off and On - Success 4[0m - [0;30mdone[0m
+
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with SPP UUID)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;34msetup complete[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;30mrun[0m
+  [0;37mSending Remove UUID (0x0011)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove UUID (0x0011): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;32mtest passed[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;35mteardown complete[0m
+[1;39mRemove UUID - Not Exist - Invalid Params 1[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Invalid Params 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;34msetup[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;30mrun[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove Device (0x0034): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Invalid Params 1[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Invalid Params 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;34msetup[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;30mrun[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove Device (0x0034): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Invalid Params 2[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Invalid Params 3[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;34msetup[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;30mrun[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove Device (0x0034): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Invalid Params 3[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 1[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 1[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 1[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 1[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 2[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 2[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 2[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x0c1a length 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 2[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 2[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 2[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 3[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 3[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 3[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 3[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 2[0m
+[1;39mRemove Device - Success 3[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mRemove Device - Success 3[0m - [0;30mwaiting done[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 3[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 3[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 3[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 3[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 4[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 4[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 4[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 4[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 2[0m
+[1;39mRemove Device - Success 4[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mRemove Device - Success 4[0m - [0;30mwaiting done[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 4[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 4[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 4[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 4[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 5[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 5[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 5[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 5[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 2[0m
+[1;39mRemove Device - Success 5[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mRemove Device - Success 5[0m - [0;30mwaiting done[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 5[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 5[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 5[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 5[0m - [0;30mdone[0m
+
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;34msetup[0m
+  [0;37mPowering on controller (with added device)[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;34msetup complete[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;30mrun[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 1[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;30mwaiting done[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;32mtest passed[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;35mteardown complete[0m
+[1;39mRemove Device - Success 6 - All Devices[0m - [0;30mdone[0m
+
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;34msetup complete[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;30mrun[0m
+  [0;37mAdding and removing a device[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37m<0x0000> (0x0000): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;32mtest passed[0m
+  [0;37mDelaying emulator response...[0m
+  [0;37mDelaying emulator response... Done.[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x200b failed: -19
+Bluetooth: hci0: start background scanning failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;35mteardown complete[0m
+[1;39mAdd + Remove Device Nowait - Success[0m - [0;30mdone[0m
+
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance with timeout[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;34msetup complete[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Set Powered (0x0005)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mSet Powered (0x0005): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;32mtest passed[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;35mteardown complete[0m
+[1;39mAdd Advertising - Success 18 (Power -> off, Remove)[0m - [0;30mdone[0m
+
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;34msetup complete[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Set Low Energy (0x000d)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mSet Low Energy (0x000d): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;32mtest passed[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;35mteardown complete[0m
+[1;39mAdd Advertising - Success 22 (LE -> off, Remove)[0m - [0;30mdone[0m
+
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;34msetup[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;34msetup complete[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;30mrun[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove Advertising (0x003f): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;32mtest passed[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Advertising - Invalid Params 1[0m - [0;30mdone[0m
+
+[1;39mRemove Advertising - Success 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Advertising - Success 1[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Advertising - Success 1[0m - [0;34msetup complete[0m
+[1;39mRemove Advertising - Success 1[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Advertising - Success 1[0m - [0;32mtest passed[0m
+[1;39mRemove Advertising - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Advertising - Success 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Advertising - Success 1[0m - [0;30mdone[0m
+
+[1;39mRemove Advertising - Success 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Advertising - Success 2[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Advertising - Success 2[0m - [0;34msetup complete[0m
+[1;39mRemove Advertising - Success 2[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Advertising - Success 2[0m - [0;32mtest passed[0m
+[1;39mRemove Advertising - Success 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Advertising - Success 2[0m - [0;35mteardown complete[0m
+[1;39mRemove Advertising - Success 2[0m - [0;30mdone[0m
+
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;34msetup complete[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSending Set Low Energy (0x000d)[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+Bluetooth: hci0: Opcode 0x203c failed: -38
+  [0;37mSet Low Energy (0x000d): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;32mtest passed[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;35mteardown complete[0m
+[1;39mAdd Ext Advertising - Success 22 (LE -> off, Remove)[0m - [0;30mdone[0m
+
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;34msetup[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;34msetup complete[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;30mrun[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRemove Advertising (0x003f): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;32mtest passed[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Ext Advertising - Invalid Params 1[0m - [0;30mdone[0m
+
+[1;39mRemove Ext Advertising - Success 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;34msetup complete[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x203c length 1[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;32mtest passed[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;35mteardown complete[0m
+[1;39mRemove Ext Advertising - Success 1[0m - [0;30mdone[0m
+
+[1;39mRemove Ext Advertising - Success 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;34msetup complete[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2039 length 2[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x203d length 0[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;32mtest passed[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;35mteardown complete[0m
+[1;39mRemove Ext Advertising - Success 2[0m - [0;30mdone[0m
+
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mAdd Advertising setup complete (instance 2)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;34msetup complete[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command list callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 4[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mTest condition complete, 3 left[0m
+  [0;37mHCI Command 0x203c length 1[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;32mtest passed[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;35mteardown complete[0m
+[1;39mMulti Ext Advertising - Success 4 (Remove Adv)[0m - [0;30mdone[0m
+
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;34msetup[0m
+  [0;37mAdding advertising instance while powered[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mAdd Advertising setup complete (instance 2)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;34msetup complete[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;30mrun[0m
+  [0;37mRegistering Advertising Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command list callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mSending Remove Advertising (0x003f)[0m
+  [0;37mTest condition added, total 4[0m
+  [0;37mHCI Command 0x2039 length 2[0m
+  [0;37mTest condition complete, 3 left[0m
+  [0;37mHCI Command 0x203d length 0[0m
+[1mtools/mgmt-tester.c:7935:8:[1m[31m runtime error: [1m[0m[1mnull pointer passed as argument 2, which is declared to never be null[1m[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mRemove Advertising (0x003f): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Advertising Removed event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;32mtest passed[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;35mteardown complete[0m
+[1;39mMulti Ext Advertising - Success 5 (Remove all)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mLoad IRK completed[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2028 length 7[0m
+  [0;37mHCI Command 0x2012 length 7[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;32mtest passed[0m
+  [0;37mHCI Command 0x202d length 1[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2041 failed: -19
+Bluetooth: hci0: start background scanning failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Remove Device 1 (Remove from AL)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mLoad IRK completed[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2028 length 7[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;32mtest passed[0m
+  [0;37mHCI Command 0x2012 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2042 failed: -19
+Bluetooth: hci0: start background scanning failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Remove Device 2 (Remove from RL)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mLoad IRK completed[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mUnexpected HCI command parameter value:[0m
+  [0;37m> 01                                               .               [0m
+  [0;37m! 00                                               .               [0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;31mtest failed[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2042 failed: -19
+Bluetooth: hci0: Unable to disable scanning: -19
+Bluetooth: hci0: disable scanning failed: -19
+Bluetooth: hci0: start background scanning failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Remove Device 3 (Disable RL)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mLoad IRK completed[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x2027 length 39[0m
+  [0;37mHCI Command 0x204e length 8[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2039 length 2[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2039 length 6[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;31mtest timed out[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Remove Device 4 (Disable Adv)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mLoad IRK completed[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mNew Device is Added[0m
+  [0;37mDevice Flags are set[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mAdd Advertising setup complete (instance 2)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Removed notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Removed event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2039 length 2[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2028 length 7[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;32mtest passed[0m
+  [0;37mHCI Command 0x2012 length 7[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x202d failed: -19
+Bluetooth: hci0: Unable to enable LL privacy: -19
+Bluetooth: hci0: Opcode 0x2039 failed: -110
+Bluetooth: hci0: Opcode 0x203c failed: -110
+Bluetooth: hci0: Opcode 0x2039 failed: -110
+Bluetooth: hci0: Opcode 0x203c failed: -110
+Bluetooth: hci0: Opcode 0x2041 failed: -110
+Bluetooth: hci0: start background scanning failed: -110
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Remove Device 5 (Multi Adv)[0m - [0;30mdone[0m
+
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Secure Simple Pairing (0x000b)[0m
+  [0;37mSetup sending Set Bondable (0x0009)[0m
+  [0;37mSetup sending Set Secure Connections (0x002d)[0m
+  [0;37mSetup sending Set Privacy (0x002f)[0m
+  [0;37mSetup sending Set Experimental Feature (0x004a)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mClient enable SSP: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;34msetup complete[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;30mrun[0m
+  [0;37mRegistering Device Unpaired notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Pair Device (0x0019)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRegistering New Link Key notification[0m
+  [0;37mTest condition added, total 4[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x2043 length 26[0m
+random: crng init done
+  [0;37mHCI Command 0x2016 length 2[0m
+  [0;37mHCI Command 0x2019 length 28[0m
+  [0;37mNew New Link Key event received[0m
+  [0;37mTest condition complete, 3 left[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mPair Device (0x0019): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;30mwaiting done[0m
+  [0;37mSending Disconnect (0x0014)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x0406 length 3[0m
+  [0;37mDisconnect (0x0014): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mSending Add Device (0x0033)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mAdd Device (0x0033): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mSending Add Device (0x0033)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mAdd Device (0x0033): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mSending Remove Device (0x0034)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mRemove Device (0x0034): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mSending Unpair Device (0x001b)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mUnpair Device (0x001b): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mNew Device Unpaired event received[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2012 length 7[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;32mtest passed[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;35mteardown[0m
+Bluetooth: hci0: Opcode 0x2042 failed: -19
+Bluetooth: hci0: start background scanning failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;35mteardown complete[0m
+[1;39mLL Privacy - Unpair 2 (Remove from AL)[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Remove UUID - Success 1                              [0;32mPassed    [0m   0.145 seconds
+Remove UUID - All UUID - Success 2                   [0;32mPassed    [0m   0.069 seconds
+Remove UUID - Power Off - Success 3                  [0;32mPassed    [0m   0.062 seconds
+Remove UUID - Power Off and On - Success 4           [0;32mPassed    [0m   0.070 seconds
+Remove UUID - Not Exist - Invalid Params 1           [0;32mPassed    [0m   0.062 seconds
+Remove Device - Invalid Params 1                     [0;32mPassed    [0m   0.063 seconds
+Remove Device - Invalid Params 2                     [0;32mPassed    [0m   0.055 seconds
+Remove Device - Invalid Params 3                     [0;32mPassed    [0m   0.055 seconds
+Remove Device - Success 1                            [0;32mPassed    [0m   0.064 seconds
+Remove Device - Success 2                            [0;32mPassed    [0m   0.064 seconds
+Remove Device - Success 3                            [0;32mPassed    [0m   1.063 seconds
+Remove Device - Success 4                            [0;32mPassed    [0m   1.063 seconds
+Remove Device - Success 5                            [0;32mPassed    [0m   1.063 seconds
+Remove Device - Success 6 - All Devices              [0;32mPassed    [0m   1.059 seconds
+Add + Remove Device Nowait - Success                 [0;32mPassed    [0m   0.329 seconds
+Add Advertising - Success 18 (Power -> off, Remove)  [0;32mPassed    [0m   0.076 seconds
+Add Advertising - Success 22 (LE -> off, Remove)     [0;32mPassed    [0m   0.077 seconds
+Remove Advertising - Invalid Params 1                [0;32mPassed    [0m   0.079 seconds
+Remove Advertising - Success 1                       [0;32mPassed    [0m   0.087 seconds
+Remove Advertising - Success 2                       [0;32mPassed    [0m   0.088 seconds
+Add Ext Advertising - Success 22 (LE -> off, Remove) [0;32mPassed    [0m   0.112 seconds
+Remove Ext Advertising - Invalid Params 1            [0;32mPassed    [0m   0.079 seconds
+Remove Ext Advertising - Success 1                   [0;32mPassed    [0m   0.110 seconds
+Remove Ext Advertising - Success 2                   [0;32mPassed    [0m   0.091 seconds
+Multi Ext Advertising - Success 4 (Remove Adv)       [0;32mPassed    [0m   0.097 seconds
+Multi Ext Advertising - Success 5 (Remove all)       [0;32mPassed    [0m   0.141 seconds
+LL Privacy - Remove Device 1 (Remove from AL)        [0;32mPassed    [0m   0.194 seconds
+LL Privacy - Remove Device 2 (Remove from RL)        [0;32mPassed    [0m   0.174 seconds
+LL Privacy - Remove Device 3 (Disable RL)            [0;31mFailed    [0m   0.229 seconds
+LL Privacy - Remove Device 4 (Disable Adv)           [0;31mTimed out [0m   2.374 seconds
+LL Privacy - Remove Device 5 (Multi Adv)             [0;32mPassed    [0m  10.469 seconds
+LL Privacy - Unpair 2 (Remove from AL)               [0;32mPassed    [0m   2.234 seconds
+Total: 32, [0;32mPassed: 30 (93.8%)[0m, [0;31mFailed: 2[0m, [0;33mNot Run: 0[0m
+Overall execution time: 22.1 seconds
+
+=================================================================
+[1m[31m==60==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 840 byte(s) in 21 object(s) allocated from:
+[1m[0m    #0 0x7f569ea5d9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+    #1 0x55f0b765f166 in util_malloc src/shared/util.c:46
+
+[1m[34mDirect leak of 24 byte(s) in 1 object(s) allocated from:
+[1m[0m    #0 0x7f569ea5d9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+    #1 0x55f0b7639c70 in btdev_add_hook emulator/btdev.c:8916
+
+SUMMARY: AddressSanitizer: 864 byte(s) leaked in 22 allocation(s).
+Process 59 exited with status 1

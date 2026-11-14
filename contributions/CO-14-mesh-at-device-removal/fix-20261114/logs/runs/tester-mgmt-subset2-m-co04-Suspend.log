@@ -1,0 +1,537 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x00000000070402c4
+input_len: 0x0000000001040646
+output: 0x0000000001000000
+output_len: 0x00000000038357a8
+kernel_total_size: 0x00000000070c3000
+needed_size: 0x0000000007200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ac2d0).
+Linux version 7.3.0-g9b3a3c6a3d43 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Sat Nov 14 07:10:14 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/qca9377-bt-hang/tmp/co05-w4/bin/test-runner TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mgmt-tester-master-4dc15be8 -s Suspend'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000007ffdffff]  System RAM
+BIOS-e820: [mem 0x000000007ffe0000-0x000000007fffffff]  device reserved
+BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mgmt-tester-master-4dc15be8 -s Suspend
+Changing into directory /root/exp
+New process 59 created
+
+[1;39mSuspend - Success 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 1[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 1[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 1[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mExecuting no-op test[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 1[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 1[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 1[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;34msetup[0m
+  [0;37mNew Device is Added[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mExecuting no-op test[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 3 (Device in WL)[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;34msetup[0m
+  [0;37mAdd Advertising setup complete (instance 1)[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mExecuting no-op test[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 4 (Advertising)[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;34msetup[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSetup sending Set Bondable (0x0009)[0m
+  [0;37mSetup sending Set Connectable (0x0007)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 2[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;30mwaiting 1 seconds[0m
+random: crng init done
+  [0;37mNew connection with handle 0x0001[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 5 (Pairing - Legacy)[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Bondable (0x0009)[0m
+  [0;37mSetup sending Set Connectable (0x0007)[0m
+  [0;37mSetup sending Set Secure Simple Pairing (0x000b)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mClient enable SSP: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mNew connection with handle 0x0001[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 6 (Pairing - SSP)[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mExecuting no-op test[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 7 (Suspend/Force Wakeup)[0m - [0;30mdone[0m
+
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;34msetup complete[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Suspend notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Start Discovery (0x0023)[0m
+  [0;37mTest condition added, total 3[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;30mwaiting 1 seconds[0m
+  [0;37mHCI Command 0x202d length 1[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mStart Discovery (0x0023): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mNew Controller Suspend event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;32mtest passed[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;35mteardown complete[0m
+[1;39mSuspend - Success 8 (Discovery/Suspend)[0m - [0;30mdone[0m
+
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mSetup sending Start Discovery (0x0023)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mRegistering setup expected HCI command callback[0m
+  [0;37mSetup expected HCI command 0x2042[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mSending setup opcode array[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mwaiting 1 seconds[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;34msetup complete[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Resume notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mExecuting no-op test[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mwaiting 2 seconds[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30m1 seconds left[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Resume via force_suspend[0m
+  [0;37mHCI Command 0x0c01 length 8[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2041 length 13[0m
+  [0;37mHCI Command 0x2042 length 6[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Controller Resume event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;32mtest passed[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;35mteardown complete[0m
+[1;39mResume - Success 9 (Discovery/Suspend/Resume)[0m - [0;30mdone[0m
+
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: 00:AA:01:00:00:00[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0041beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;34msetup[0m
+  [0;37mSetup sending Set Low Energy (0x000d)[0m
+  [0;37mSetup sending Set Powered (0x0005)[0m
+  [0;37mInitial settings completed[0m
+  [0;37mRegistering Controller Resume notification[0m
+  [0;37mTest condition added, total 1[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting 1 seconds[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting 2 seconds[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30m1 seconds left[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Resume via force_suspend[0m
+  [0;37mNew Controller Resume event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;34msetup complete[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mrun[0m
+  [0;37mRegistering Controller Resume notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mExecuting no-op test[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting 1 seconds[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting 2 seconds[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Suspend via force_suspend[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30m1 seconds left[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mwaiting done[0m
+  [0;37mSet the system into Resume via force_suspend[0m
+  [0;37mNew Controller Resume event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;32mtest passed[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;35mteardown complete[0m
+[1;39mResume - Success 10 (Multiple Suspend/Resume)[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Suspend - Success 1                                  [0;32mPassed    [0m   0.347 seconds
+Suspend - Success 3 (Device in WL)                   [0;32mPassed    [0m   0.164 seconds
+Suspend - Success 4 (Advertising)                    [0;32mPassed    [0m   0.201 seconds
+Suspend - Success 5 (Pairing - Legacy)               [0;32mPassed    [0m   1.140 seconds
+Suspend - Success 6 (Pairing - SSP)                  [0;32mPassed    [0m   1.119 seconds
+Suspend - Success 7 (Suspend/Force Wakeup)           [0;32mPassed    [0m   0.100 seconds
+Suspend - Success 8 (Discovery/Suspend)              [0;32mPassed    [0m   1.088 seconds
+Resume - Success 9 (Discovery/Suspend/Resume)        [0;32mPassed    [0m   3.106 seconds
+Resume - Success 10 (Multiple Suspend/Resume)        [0;32mPassed    [0m   4.121 seconds
+Total: 9, [0;32mPassed: 9 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 11.4 seconds
+
+=================================================================
+[1m[31m==60==ERROR: LeakSanitizer: detected memory leaks
+[1m[0m
+[1m[34mDirect leak of 400 byte(s) in 10 object(s) allocated from:
+[1m[0m    #0 0x7fec850c69c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+    #1 0x561fdec04166 in util_malloc src/shared/util.c:46
+
+SUMMARY: AddressSanitizer: 400 byte(s) leaked in 10 allocation(s).
+Process 59 exited with status 1

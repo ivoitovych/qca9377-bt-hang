@@ -720,8 +720,9 @@ this controller.
 
 ## M-4 — mesh sends pending at controller removal are leaked, with their socket reference
 
-**Status 2026-11-14: reproduced in emulation; a fix written; the regression runs not finished;
-not yet checked on copy.** CO-14's work area `/root/exp/agent-work/lane1-btusb-20261114/task4/`.
+**Status 2026-11-14: reproduced in emulation; a fix written; checked on copy; mgmt-tester only
+in part.** `contributions/CO-14-mesh-at-device-removal/` (from the work area
+`/root/exp/agent-work/lane1-btusb-20261114/task4/`).
 
 **What it is** (bluetooth-next `da3cc02587c6`, source reading): a Mesh Send that has not started
 sits on `hdev->mesh_pending`. When the controller is removed, `hci_cmd_sync_clear()` frees only
@@ -742,7 +743,9 @@ kernel leaks (the harness's controls).
 **The fix** (on CO-04; applies to the tip alone too): free the pending sends in
 `mgmt_index_removed()` after the done work is cancelled, under `hdev->lock` as its caller already
 holds, completing them silently as `mgmt_cleanup()` does. Same 10-boot run: 0 mesh objects, 0
-sockets. mesh-tester unchanged (8 of 10 on every kernel, 9 runs); mgmt-tester still running.
+sockets. mesh-tester unchanged (8 of 10 on every kernel, 9 runs); mgmt-tester only in part
+("Remove" 30/32 on CO-04, 31/32 with the fix; "Suspend" 9/9 on both; the full run, ~75 min per
+kernel, still to do before a send).
 
 **Reportable:** after the regression runs and a check on copy, as CO-14's patch. Not specific to
 this controller.

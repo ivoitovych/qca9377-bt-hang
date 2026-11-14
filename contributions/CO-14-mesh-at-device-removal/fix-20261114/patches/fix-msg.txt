@@ -1,0 +1,18 @@
+Bluetooth: MGMT: Free pending mesh sends when the controller is removed
+
+A Mesh Send is queued on hdev->mesh_pending when another transmission
+is on air, and is started when that one is done. Only the transmission
+whose start is queued is freed at unregister, by hci_cmd_sync_clear().
+The requests behind it stay on the list: mgmt_index_removed() cancels
+the delayed work that would have started them, and nothing frees them.
+mgmt_cleanup() frees the requests of a socket when it is closed, but it
+walks hci_dev_list, which no longer holds the controller by then. Each
+request holds a reference on its mgmt socket, so the socket is pinned
+too, and neither Mesh Packet Complete nor anything else is ever sent
+for them. Both the requests and the sockets are reported by kmemleak
+once the freed hci_dev is out of the way.
+
+Free the pending requests in mgmt_index_removed(), after the delayed
+work is cancelled and with hdev->lock held, as its caller holds it. They
+are completed silently, as mgmt_cleanup() does for a closing socket;
+the Index Removed event has been sent.

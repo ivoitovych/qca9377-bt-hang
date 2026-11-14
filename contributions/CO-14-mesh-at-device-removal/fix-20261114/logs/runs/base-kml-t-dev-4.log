@@ -1,0 +1,657 @@
+start 2026-11-14 07:01:42 kernel base-kml label t-dev-4 args nosend --dump-slabinfo cpus 4
+dbdb53d5b986895120449a1fa9e23a5ed168cd2452fd21867beedc73b2857a3f  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base-kml
+b043154bc74c8371d6953ead88ef7f3db23d74608b5fc9710332bf94c6783afe  /root/exp/agent-work/lane1-btusb-20261114/task4/harness/mesh-removal.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x00000000070402c4
+input_len: 0x000000000104052f
+output: 0x0000000001000000
+output_len: 0x00000000038357a4
+kernel_total_size: 0x00000000070c3000
+needed_size: 0x0000000007200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030ac2d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #10 SMP PREEMPT_DYNAMIC Fri Nov 13 18:51:40 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task4/harness/mesh-removal.py nosend --dump-slabinfo'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task4/harness/mesh-removal.py nosend --dump-slabinfo
+Changing into directory /root/exp
+New process 59 created
+random: crng init done
+   1.790 [mono  16.089901] baseline HCI objects 0 (protocols HCI sockets)
+   1.803 [mono  16.101280] SLABS ['kmalloc-4k 457 460', 'kmalloc-2k 913 920', 'kmalloc-1k 215 240', 'kmalloc-512 1503 1504', 'kmalloc-256 565 624', 'kmalloc-128 720 752', 'kmalloc-192 329 400', 'kmalloc-96 1813 1824']
+   1.810 [mono  16.107861] SLABINFO slabinfo - version: 2.1
+   1.812 [mono  16.110093] SLABINFO # name <active_objs> <num_objs>
+   1.818 [mono  16.115913] SLABINFO 9p-fcall-cache-1 0 0 133144
+   1.819 [mono  16.117111] SLABINFO p9_req_t 222 270 272
+   1.823 [mono  16.120845] SLABINFO io_kiocb 0 0 320
+   1.830 [mono  16.127616] SLABINFO v9fs_inode_cache 83 110 1472
+   1.832 [mono  16.129539] SLABINFO fuse_request 0 0 296
+   1.833 [mono  16.131169] SLABINFO fuse_inode 0 0 1728
+   1.834 [mono  16.131972] SLABINFO kioctx 0 0 1088
+   1.835 [mono  16.133483] SLABINFO aio_kiocb 0 0 320
+   1.837 [mono  16.135395] SLABINFO aio_inode_cache 12 25 1264
+   1.838 [mono  16.136407] SLABINFO dnotify_mark 0 0 200
+   1.839 [mono  16.137277] SLABINFO dnotify_struct 0 0 48
+   1.841 [mono  16.138544] SLABINFO fasync_cache 0 0 168
+   1.842 [mono  16.139881] SLABINFO pid_namespace 0 0 896
+   1.843 [mono  16.141310] SLABINFO ip6-frags 0 0 352
+   1.846 [mono  16.143609] SLABINFO fib6_node 0 0 128
+   1.853 [mono  16.150590] SLABINFO ip6_dst_cache 0 0 320
+   1.862 [mono  16.159720] SLABINFO PINGv6 0 0 2048
+   1.864 [mono  16.161699] SLABINFO RAWv6 12 16 2048
+   1.870 [mono  16.168517] SLABINFO UDPv6 0 0 2176
+   1.873 [mono  16.171096] SLABINFO tw_sock_TCPv6 0 0 344
+   1.874 [mono  16.171873] SLABINFO request_sock_TCPv6 0 0 416
+   1.875 [mono  16.172755] SLABINFO TCPv6 0 0 3392
+   1.875 [mono  16.173519] SLABINFO UNIX-STREAM 0 0 2112
+   1.876 [mono  16.174320] SLABINFO UNIX 0 0 2112
+   1.877 [mono  16.175073] SLABINFO ip4-frags 0 0 368
+   1.878 [mono  16.176433] SLABINFO tcp_bind2_bucket 0 0 128
+   1.890 [mono  16.187537] SLABINFO tcp_bind_bucket 0 0 128
+   1.890 [mono  16.188512] SLABINFO inet_peer 0 0 256
+   1.891 [mono  16.189227] SLABINFO ip_fib_trie 0 0 64
+   1.894 [mono  16.192465] SLABINFO ip_fib_alias 0 0 88
+   1.895 [mono  16.193367] SLABINFO rtable 0 0 256
+   1.896 [mono  16.194152] SLABINFO PING 0 0 1728
+   1.898 [mono  16.196411] SLABINFO RAW 24 34 1856
+   1.899 [mono  16.197229] SLABINFO UDP 0 0 2048
+   1.902 [mono  16.200427] SLABINFO tw_sock_TCP 0 0 344
+   1.904 [mono  16.201968] SLABINFO request_sock_TCP 0 0 416
+   1.905 [mono  16.202644] SLABINFO TCP 0 0 3264
+   1.907 [mono  16.204742] SLABINFO netfs_subrequest 191 200 320
+   1.907 [mono  16.205465] SLABINFO netfs_request 283 289 960
+   1.910 [mono  16.208308] SLABINFO bio-248 84 100 320
+   1.912 [mono  16.210027] SLABINFO bio-224 56 75 320
+   1.913 [mono  16.210973] SLABINFO backing_aio 0 0 256
+   1.915 [mono  16.212827] SLABINFO ep_head 0 0 40
+   1.917 [mono  16.215474] SLABINFO eventpoll_pwq 0 0 96
+   1.919 [mono  16.216806] SLABINFO eventpoll_epi 0 0 192
+   1.919 [mono  16.217397] SLABINFO inotify_inode_mark 0 0 200
+   1.925 [mono  16.222664] SLABINFO request_queue 0 0 2184
+   1.926 [mono  16.223832] SLABINFO blkdev_ioc 0 0 32
+   1.932 [mono  16.229700] SLABINFO bio-160 28 32 256
+   1.932 [mono  16.230446] SLABINFO biovec-max 76 77 4352
+   1.934 [mono  16.232372] SLABINFO biovec-128 0 0 2176
+   1.935 [mono  16.233077] SLABINFO biovec-64 0 0 1152
+   1.936 [mono  16.233939] SLABINFO biovec-16 0 0 320
+   1.938 [mono  16.235546] SLABINFO swap_table 0 0 2176
+   1.938 [mono  16.236385] SLABINFO uid_cache 0 0 320
+   1.946 [mono  16.244321] SLABINFO iommu_iova_magazine 0 0 1152
+   1.953 [mono  16.251512] SLABINFO iommu_iova 0 0 64
+   1.957 [mono  16.255504] SLABINFO sock_inode_cache 48 66 1472
+   1.962 [mono  16.260387] SLABINFO skbuff_small_head 53 63 768
+   1.964 [mono  16.262430] SLABINFO skbuff_fclone_cache 0 0 512
+   1.970 [mono  16.267577] SLABINFO skbuff_head_cache 50 75 320
+   1.970 [mono  16.268510] SLABINFO tracefs_inode_cache 108 130 1224
+   1.977 [mono  16.275522] SLABINFO debugfs_inode_cache 144 162 1208
+   1.980 [mono  16.277959] SLABINFO file_lease_cache 0 0 280
+   1.981 [mono  16.279371] SLABINFO file_lock_cache 0 0 312
+   1.983 [mono  16.280731] SLABINFO file_lock_ctx 0 0 176
+   1.990 [mono  16.288453] SLABINFO fsnotify_inode_mark_connector 0 0 168
+   1.991 [mono  16.289269] SLABINFO fsnotify_mark_connector 0 0 120
+   1.994 [mono  16.291838] SLABINFO posix_timers_cache 0 0 512
+   1.995 [mono  16.292787] SLABINFO pidfs_attr_cache 0 0 128
+   1.996 [mono  16.294289] SLABINFO proc_dir_entry 335 350 320
+   1.998 [mono  16.295653] SLABINFO pde_opener 60 73 56
+   2.000 [mono  16.298481] SLABINFO proc_inode_cache 12 25 1264
+   2.003 [mono  16.300812] SLABINFO seq_file 27 28 288
+   2.006 [mono  16.304402] SLABINFO sigqueue 0 0 112
+   2.008 [mono  16.305923] SLABINFO bdev_cache 12 22 2880
+   2.009 [mono  16.306713] SLABINFO shmem_inode_cache 672 690 1424
+   2.010 [mono  16.307659] SLABINFO kernfs_iattrs_cache 0 0 112
+   2.011 [mono  16.309348] SLABINFO kernfs_node_cache 16356 16524 240
+   2.015 [mono  16.313016] SLABINFO mnt_cache 84 90 448
+   2.020 [mono  16.318509] SLABINFO bfilp 0 0 448
+   2.022 [mono  16.320360] SLABINFO filp 83 108 448
+   2.026 [mono  16.324402] SLABINFO inode_cache 36 54 1192
+   2.030 [mono  16.327583] SLABINFO dentry 992 1045 416
+   2.030 [mono  16.328398] SLABINFO names_cache 63 96 256
+   2.031 [mono  16.328906] SLABINFO net_namespace 0 0 4352
+   2.034 [mono  16.331974] SLABINFO uts_namespace 0 0 896
+   2.035 [mono  16.332666] SLABINFO nsproxy 60 78 104
+   2.038 [mono  16.335860] SLABINFO vm_area_struct 165 175 320
+   2.038 [mono  16.336521] SLABINFO fs_cache 84 96 256
+   2.039 [mono  16.337150] SLABINFO files_cache 84 85 960
+   2.040 [mono  16.337793] SLABINFO task_exec_state 179 192 64
+   2.040 [mono  16.338369] SLABINFO signal_cache 83 84 1536
+   2.045 [mono  16.342851] SLABINFO sighand_cache 83 91 2368
+   2.048 [mono  16.346249] SLABINFO task_struct 63 65 6208
+   2.049 [mono  16.346829] SLABINFO cred 139 144 256
+   2.051 [mono  16.348598] SLABINFO anon_vma_chain 211 252 96
+   2.053 [mono  16.351509] SLABINFO anon_vma 72 93 264
+   2.055 [mono  16.352836] SLABINFO pid 139 150 320
+   2.057 [mono  16.355306] SLABINFO Acpi-Operand 1692 2223 104
+   2.058 [mono  16.355957] SLABINFO Acpi-ParseExt 94 240 168
+   2.059 [mono  16.356595] SLABINFO Acpi-Parse 92 216 112
+   2.060 [mono  16.357939] SLABINFO Acpi-State 94 252 112
+   2.061 [mono  16.359384] SLABINFO Acpi-Namespace 429 512 64
+   2.062 [mono  16.360075] SLABINFO perf_event 0 0 1608
+   2.068 [mono  16.366129] SLABINFO trace_event_file 660 672 128
+   2.069 [mono  16.366871] SLABINFO ftrace_event_field 2040 2070 88
+   2.075 [mono  16.372663] SLABINFO pool_workqueue 224 231 768
+   2.076 [mono  16.373832] SLABINFO radix_tree_node 596 621 704
+   2.082 [mono  16.379673] SLABINFO maple_node 262 464 512
+   2.082 [mono  16.380438] SLABINFO mm_struct 35 36 2560
+   2.086 [mono  16.384499] SLABINFO vmap_area 239 273 104
+   2.090 [mono  16.387603] SLABINFO page->ptl 216 252 96
+   2.090 [mono  16.388342] SLABINFO kmemleak_scan_area 18 85 48
+   2.097 [mono  16.394961] SLABINFO kmemleak_object 38377 38480 304
+   2.098 [mono  16.395775] SLABINFO dma-kmalloc-8k 0 0 16384
+   2.098 [mono  16.396442] SLABINFO dma-kmalloc-4k 0 0 8192
+   2.100 [mono  16.397554] SLABINFO dma-kmalloc-2k 0 0 4096
+   2.101 [mono  16.398573] SLABINFO dma-kmalloc-1k 0 0 2048
+   2.106 [mono  16.404330] SLABINFO dma-kmalloc-512 0 0 1024
+   2.112 [mono  16.410424] SLABINFO dma-kmalloc-256 0 0 512
+   2.113 [mono  16.411424] SLABINFO dma-kmalloc-128 0 0 256
+   2.115 [mono  16.413013] SLABINFO dma-kmalloc-64 0 0 128
+   2.117 [mono  16.414719] SLABINFO dma-kmalloc-32 0 0 64
+   2.117 [mono  16.415346] SLABINFO dma-kmalloc-16 0 0 32
+   2.119 [mono  16.416890] SLABINFO dma-kmalloc-8 0 0 32
+   2.127 [mono  16.424551] SLABINFO dma-kmalloc-192 0 0 256
+   2.128 [mono  16.426410] SLABINFO dma-kmalloc-96 0 0 128
+   2.130 [mono  16.427607] SLABINFO kmalloc-rcl-8k 0 0 16384
+   2.134 [mono  16.432440] SLABINFO kmalloc-rcl-4k 0 0 8192
+   2.137 [mono  16.435387] SLABINFO kmalloc-rcl-2k 0 0 4096
+   2.141 [mono  16.439416] SLABINFO kmalloc-rcl-1k 0 0 2048
+   2.145 [mono  16.443394] SLABINFO kmalloc-rcl-512 0 0 1024
+   2.150 [mono  16.448384] SLABINFO kmalloc-rcl-256 0 0 512
+   2.152 [mono  16.450353] SLABINFO kmalloc-rcl-128 0 0 256
+   2.158 [mono  16.455564] SLABINFO kmalloc-rcl-64 0 0 128
+   2.159 [mono  16.457351] SLABINFO kmalloc-rcl-32 0 0 64
+   2.164 [mono  16.462505] SLABINFO kmalloc-rcl-16 0 0 32
+   2.170 [mono  16.467582] SLABINFO kmalloc-rcl-8 0 0 32
+   2.172 [mono  16.469956] SLABINFO kmalloc-rcl-192 0 0 256
+   2.173 [mono  16.471423] SLABINFO kmalloc-rcl-96 235 256 128
+   2.178 [mono  16.476524] SLABINFO kmalloc-8k 41 42 16384
+   2.183 [mono  16.480751] SLABINFO kmalloc-4k 461 464 8192
+   2.190 [mono  16.487772] SLABINFO kmalloc-2k 913 920 4096
+   2.191 [mono  16.488555] SLABINFO kmalloc-1k 215 240 2048
+   2.191 [mono  16.489211] SLABINFO kmalloc-512 1503 1504 1024
+   2.193 [mono  16.491131] SLABINFO kmalloc-256 565 624 512
+   2.195 [mono  16.492605] SLABINFO kmalloc-128 720 752 256
+   2.199 [mono  16.496539] SLABINFO kmalloc-64 1535 1568 128
+   2.199 [mono  16.497331] SLABINFO kmalloc-32 838 1024 64
+   2.201 [mono  16.499479] SLABINFO kmalloc-16 877 1024 32
+   2.202 [mono  16.500322] SLABINFO kmalloc-8 3393 3712 32
+   2.203 [mono  16.501480] SLABINFO kmalloc-192 329 400 256
+   2.205 [mono  16.503348] SLABINFO kmalloc-96 1813 1824 128
+   2.207 [mono  16.504885] SLABINFO kmem_cache_node 156 168 192
+   2.208 [mono  16.505553] SLABINFO kmem_cache 156 175 320
+   2.211 [mono  16.508821] SLABDIR 9p-fcall-cache-1 Acpi-Namespace Acpi-Operand Acpi-Parse Acpi-ParseExt Acpi-State PING PINGv6 RAW RAWv6 TCP TCPv6 UDP UDPv6 UNIX UNIX-STREAM aio_inode_cache aio_kiocb anon_vma anon_vma_chain backing_aio bdev_cache bfilp bio-160 bio-224 bio-248 biovec-128 biovec-16 biovec-64 biovec-max blkdev_ioc cred debugfs_inode_cache dentry dma-kmalloc-128 dma-kmalloc-16 dma-kmalloc-192 dma-kmalloc-1k dma-kmalloc-256 dma-kmalloc-2k dma-kmalloc-32 dma-kmalloc-4k dma-kmalloc-512 dma-kmalloc-64 dma-kmalloc-8 dma-kmalloc-8k dma-kmalloc-96 dnotify_mark dnotify_struct ep_head eventpoll_epi eventpoll_pwq fasync_cache fib6_node file_lease_cache file_lock_cache file_lock_ctx files_cache filp fs_cache fsnotify_inode_mark_connector fsnotify_mark_connector ftrace_event_field fuse_inode fuse_request inet_peer inode_cache inotify_inode_mark io_kiocb iommu_iova iommu_iova_magazine ip4-frags ip6-frags ip6_dst_cache ip_fib_alias ip_fib_trie kernfs_iattrs_cache kernfs_node_cache kioctx kmalloc-128 kmalloc-16 kmalloc-192 kmalloc-1k kmalloc-256 kmalloc-2k kmalloc-32 kmalloc-4k kmalloc-512 kmalloc-64 kmalloc-8 kmalloc-8k kmalloc-96 kmalloc-rcl-128 kmalloc-rcl-16 kmalloc-rcl-192 kmalloc-rcl-1k kmalloc-rcl-256 kmalloc-rcl-2k kmalloc-rcl-32 kmalloc-rcl-4k kmalloc-rcl-512 kmalloc-rcl-64 kmalloc-rcl-8 kmalloc-rcl-8k kmalloc-rcl-96 kmem_cache kmem_cache_node kmemleak_object kmemleak_scan_area maple_node mm_struct mnt_cache names_cache net_namespace netfs_request netfs_subrequest nsproxy p9_req_t page->ptl pde_opener perf_event pid pid_namespace pidfs_attr_cache pool_workqueue posix_timers_cache proc_dir_entry proc_inode_cache radix_tree_node request_queue request_sock_TCP request_sock_TCPv6 rtable seq_file shmem_inode_cache sighand_cache signal_cache sigqueue skbuff_fclone_cache skbuff_head_cache skbuff_small_head sock_inode_cache swap_table task_exec_state task_struct tcp_bind2_bucket tcp_bind_bucket trace_event_file tracefs_inode_cache tw_sock_TCP tw_sock_TCPv6 uid_cache uts_namespace v9fs_inode_cache vm_area_struct vmap_area
+   6.668 [mono  20.966166] MGMT Index Added index 0 
+   7.234 [mono  21.532491] Set Powered: 0
+   7.285 [mono  21.583252] Set LE: 0
+   7.297 [mono  21.595289] Set Experimental Feature (mesh): 0
+   7.648 [mono  21.946324] MGMT Index Removed index 0 
+   7.909 [mono  22.207311] controller removed after 0.301 s (sends were queued 0.306 s before the removal, 0 complete events so far): hci0 gone=True
+   9.422 [mono  23.720087] Mesh Packet Complete events: 0 before the removal, 0 after (of 0 sends); Index Removed events 1
+   9.432 [mono  23.730284] mgmt socket close() returned after 0.000016 s
+  10.440 [mono  24.737893] HCI objects: baseline 0, with the socket open 0, after close 0 -> pinned 0 (protocols HCI sockets)
+  10.447 [mono  24.744980] SLABS ['kmalloc-4k 410 412', 'kmalloc-2k 905 920', 'kmalloc-1k 221 240', 'kmalloc-512 1609 1648', 'kmalloc-256 561 624', 'kmalloc-128 705 736', 'kmalloc-192 348 400', 'kmalloc-96 1462 1920']
+  28.971 [mono  43.268620] KMEMLEAK objects 0, from the mesh paths 0
+  29.505 [mono  43.803472] RESULT nosend n=3 cnt=20 remove_after_ms=300 gone=True complete_before=0 complete_after=0 kmemleak_mesh=0 kmemleak_all=0 pinned_hci=0 close_s=0.000016 lockdep_circular=0 kernel_reports=0
+  29.507 [mono  43.804549] PASS nosend
+  29.508 [mono  43.806530] ---- kernel log ----
+[32m[    0.000000] [0mLinux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #10 SMP PREEMPT_DYNAMIC Fri Nov 13 18:51:40 CET 2026
+[32m[    0.000000] [0m[33mCommand line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task4/harness/mesh-removal.py nosend --dump-slabinfo'
+[32m[    0.000000] [0mBIOS-provided physical RAM map:
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000000a0000-0x00000000000effff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000010000000-0x00000000afffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000c0000000-0x00000000fed1bfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000fed20000-0x00000000feffbfff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x00000000ff000000-0x00000000fffbffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[gap 0x0000000100000000-0x000000fcffffffff]
+[32m[    0.000000] [0m[33mBIOS-e820: [0m[mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[32m[    0.000000] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] enabled
+[32m[    0.000000] [0mHash pointers mode set to never.
+[32m[    0.000000] [0m[33mNX (Execute Disable) protection: [0mactive
+[32m[    0.000000] [0m[33mAPIC: [0mStatic calls initialized
+[32m[    0.000000] [0m[33mDMI: [0mSMBIOS 3.0.0 present.
+[32m[    0.000000] [0m[33mDMI: [0mQEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[32m[    0.000000] [0m[33mDMI: [0mMemory slots populated: 1/1
+[32m[    0.000000] [0m[33mHypervisor detected: [0mKVM
+[32m[    0.000000] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.000000] [0m[33mkvm-clock: [0mUsing msrs 4b564d01 and 4b564d00
+[32m[    0.000007] [0m[33mkvm-clock: [0musing sched offset of 1533829249 cycles
+[32m[    0.000020] [0m[33mclocksource: [0mkvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[32m[    0.000039] [0m[33mtsc: [0mDetected 1996.245 MHz processor
+[32m[    0.001512] [0m[33me820: [0mupdate [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[32m[    0.001541] [0m[33me820: [0mremove [mem 0x000a0000-0x000fffff] System RAM
+[32m[    0.001564] [0mlast_pfn = 0xffe0 max_arch_pfn = 0x400000000
+[32m[    0.001668] [0m[33mMTRR map: [0m4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[32m[    0.001682] [0m[33mx86/PAT: [0mConfiguration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[32m[    0.005198] [0mfound SMP MP-table at [mem 0x000f5470-0x000f547f]
+[32m[    0.012735] [0m[33mACPI: [0mEarly table checksum verification disabled
+[32m[    0.012768] [0m[33mACPI: [0mRSDP 0x00000000000F52B0 000014 (v00 BOCHS )
+[32m[    0.012803] [0m[33mACPI: [0mRSDT 0x000000000FFE23D6 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012827] [0m[33mACPI: [0mFACP 0x000000000FFE21B6 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012856] [0m[33mACPI: [0mDSDT 0x000000000FFE0040 002176 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012874] [0m[33mACPI: [0mFACS 0x000000000FFE0000 000040
+[32m[    0.012890] [0m[33mACPI: [0mAPIC 0x000000000FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012906] [0m[33mACPI: [0mHPET 0x000000000FFE233A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012922] [0m[33mACPI: [0mMCFG 0x000000000FFE2372 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012938] [0m[33mACPI: [0mWAET 0x000000000FFE23AE 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[32m[    0.012953] [0m[33mACPI: [0mReserving FACP table memory at [mem 0xffe21b6-0xffe22a9]
+[32m[    0.012975] [0m[33mACPI: [0mReserving DSDT table memory at [mem 0xffe0040-0xffe21b5]
+[32m[    0.012987] [0m[33mACPI: [0mReserving FACS table memory at [mem 0xffe0000-0xffe003f]
+[32m[    0.012994] [0m[33mACPI: [0mReserving APIC table memory at [mem 0xffe22aa-0xffe2339]
+[32m[    0.013001] [0m[33mACPI: [0mReserving HPET table memory at [mem 0xffe233a-0xffe2371]
+[32m[    0.013006] [0m[33mACPI: [0mReserving MCFG table memory at [mem 0xffe2372-0xffe23ad]
+[32m[    0.013010] [0m[33mACPI: [0mReserving WAET table memory at [mem 0xffe23ae-0xffe23d5]
+[32m[    0.162125] [0mKernelAddressSanitizer initialized (generic)
+[32m[    0.163334] [0m[33mACPI: [0mPM-Timer IO Port: 0x608
+[32m[    0.163382] [0m[33mACPI: [0mLAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[32m[    0.163477] [0m[33mIOAPIC[0]: [0mapic_id 0, version 17, address 0xfec00000, GSI 0-23
+[32m[    0.163491] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[32m[    0.163501] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[32m[    0.163508] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[32m[    0.163516] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[32m[    0.163522] [0m[33mACPI: [0mINT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[32m[    0.163536] [0m[33mACPI: [0mUsing ACPI (MADT) for SMP configuration information
+[32m[    0.163543] [0m[33mACPI: [0mHPET id: 0x8086a201 base: 0xfed00000
+[32m[    0.163586] [0m[33mCPU topo: [0mMax. logical packages:   1
+[32m[    0.163593] [0m[33mCPU topo: [0mMax. logical nodes:      1
+[32m[    0.163598] [0m[33mCPU topo: [0mNum. nodes per package:  1
+[32m[    0.163607] [0m[33mCPU topo: [0mMax. logical dies:       1
+[32m[    0.163612] [0m[33mCPU topo: [0mMax. dies per package:   1
+[32m[    0.163626] [0m[33mCPU topo: [0mMax. threads per core:   1
+[32m[    0.163632] [0m[33mCPU topo: [0mNum. cores per package:     4
+[32m[    0.163636] [0m[33mCPU topo: [0mNum. threads per package:   4
+[32m[    0.163639] [0m[33mCPU topo: [0mAllowing 4 present CPUs plus 0 hotplug CPUs
+[32m[    0.163709] [0m[33mkvm-guest: [0mAPIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[32m[    0.163784] [0m[gap 0x10000000-0xafffffff] available for PCI devices
+[32m[    0.163792] [0mBooting paravirtualized kernel on KVM
+[32m[    0.163800] [0m[33mclocksource: [0mrefined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[32m[    0.179569] [0mZone ranges:
+[32m[    0.179586] [0m  DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[32m[    0.179600] [0m  DMA32    [mem 0x0000000001000000-0x000000000ffdffff]
+[32m[    0.179609] [0m  Normal   empty
+[32m[    0.179615] [0mMovable zone start for each node
+[32m[    0.179620] [0mEarly memory node ranges
+[32m[    0.179625] [0m[33m  node   0: [0m[mem 0x0000000000001000-0x000000000009efff]
+[32m[    0.179631] [0m[33m  node   0: [0m[mem 0x0000000000100000-0x000000000ffdffff]
+[32m[    0.179638] [0mInitmem setup node 0 [mem 0x0000000000001000-0x000000000ffdffff]
+[32m[    0.184149] [0m[33mOn node 0, zone DMA: [0m1 pages in unavailable ranges
+[32m[    0.184962] [0m[33mOn node 0, zone DMA: [0m97 pages in unavailable ranges
+[32m[    0.201559] [0m[33mOn node 0, zone DMA32: [0m32 pages in unavailable ranges
+[32m[    0.201617] [0m[33msetup_percpu: [0mNR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[32m[    0.210041] [0m[33mpercpu: [0mEmbedded 62 pages/cpu s223120 r0 d30832 u524288
+[32m[    0.210079] [0m[33mpcpu-alloc: [0ms223120 r0 d30832 u524288 alloc=1*2097152
+[32m[    0.210093] [0m[33mpcpu-alloc: [0m[0] 0 1 2 3 
+[32m[    0.210187] [0m[33mKernel command line: [0mconsole=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task4/harness/mesh-removal.py nosend --dump-slabinfo'
+[32m[    0.210526] [0mUnknown kernel command line parameters "-I nosend --dump-slabinfo' TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3", will be passed to user space.
+[32m[    0.210551] [0m[33mprintk: [0mlog buffer data + meta data: 131072 + 458752 = 589824 bytes
+[32m[    0.210886] [0m[33mDentry cache hash table entries: [0m16384 (order: 5, 131072 bytes, linear)
+[32m[    0.211070] [0m[33mInode-cache hash table entries: [0m8192 (order: 4, 65536 bytes, linear)
+[32m[    0.211969] [0m[33mBuilt 1 zonelists, mobility grouping on.  Total pages: [0m65406
+[32m[    0.211986] [0m[33mmem auto-init: [0mstack:all(zero), heap alloc:off, heap free:off
+[32m[    0.211993] [0m[33mstackdepot: [0mallocating hash table via alloc_large_system_hash
+[32m[    0.212003] [0m[33mstackdepot hash table entries: [0m1048576 (order: 12, 16777216 bytes, linear)
+[32m[    0.282211] [0m[33mstackdepot: [0mallocating space for 8192 stack pools via memblock
+[32m[    0.287826] [0m[1m**********************************************************[0m
+[32m[    0.287845] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.287850] [0m[1m**                                                      **[0m
+[32m[    0.287854] [0m[1m** This system shows unhashed kernel memory addresses   **[0m
+[32m[    0.287858] [0m[1m** via the console, logs, and other interfaces. This    **[0m
+[32m[    0.287862] [0m[1m** might reduce the security of your system.            **[0m
+[32m[    0.287866] [0m[1m**                                                      **[0m
+[32m[    0.287870] [0m[1m** If you see this message and you are not debugging    **[0m
+[32m[    0.287874] [0m[1m** the kernel, report this immediately to your system   **[0m
+[32m[    0.287878] [0m[1m** administrator!                                       **[0m
+[32m[    0.287882] [0m[1m**                                                      **[0m
+[32m[    0.287886] [0m[1m** Use hash_pointers=always to force this mode off      **[0m
+[32m[    0.287890] [0m[1m**                                                      **[0m
+[32m[    0.287894] [0m[1m**   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **[0m
+[32m[    0.287898] [0m[1m**********************************************************[0m
+[32m[    0.290737] [0m[33mSLUB: [0mHWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[32m[    0.294372] [0m[33mDynamic Preempt: [0mlazy
+[32m[    0.304726] [0mRunning RCU self tests
+[32m[    0.304745] [0mRunning RCU synchronous self tests
+[32m[    0.304753] [0m[33mrcu: [0mPreemptible hierarchical RCU implementation.
+[32m[    0.304758] [0m[33mrcu: [0m	RCU event tracing is enabled.
+[32m[    0.304763] [0m[33mrcu: [0m	RCU lockdep checking is enabled.
+[32m[    0.304769] [0m	Trampoline variant of Tasks RCU enabled.
+[32m[    0.304772] [0m	Tracing variant of Tasks RCU enabled.
+[32m[    0.304777] [0m[33mrcu: [0mRCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[32m[    0.305835] [0mRunning RCU synchronous self tests
+[32m[    0.305871] [0m[33mRCU Tasks: [0mSetting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[32m[    0.427613] [0m[33mNR_IRQS: [0m4352, nr_irqs: 72, preallocated irqs: 16
+[32m[    0.429659] [0m[33mrcu: [0msrcu_init: Setting srcu_struct sizes based on contention.
+[32m[    0.429731] [0m[33mclocksource: [0mjiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[32m[    0.434275] [0m[33mConsole: [0mcolour *CGA 80x25
+[32m[    0.434505] [0m[33mLock dependency validator: [0mCopyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[32m[    0.434514] [0m[33m... MAX_LOCKDEP_SUBCLASSES: [0m 8
+[32m[    0.434520] [0m[33m... MAX_LOCK_DEPTH: [0m         48
+[32m[    0.434525] [0m[33m... MAX_LOCKDEP_KEYS: [0m       8192
+[32m[    0.434530] [0m[33m... CLASSHASH_SIZE: [0m         4096
+[32m[    0.434535] [0m[33m... MAX_LOCKDEP_ENTRIES: [0m    32768
+[32m[    0.434540] [0m[33m... MAX_LOCKDEP_CHAINS: [0m     65536
+[32m[    0.434546] [0m[33m... CHAINHASH_SIZE: [0m         32768
+[32m[    0.434551] [0m[33m memory used by lock dependency info: [0m6429 kB
+[32m[    0.434557] [0m[33m memory used for stack traces: [0m16896 kB
+[32m[    0.434562] [0m[33m per task-struct memory footprint: [0m1920 bytes
+[32m[    0.434659] [0m[33mACPI: [0mCore revision 20260408
+[32m[    0.438259] [0m[33mclocksource: [0mhpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[32m[    0.438996] [0m[33mAPIC: [0mSwitch to symmetric I/O mode setup
+[32m[    0.439558] [0mx2apic enabled
+[32m[    0.440489] [0m[33mAPIC: [0mSwitched APIC routing to: physical x2apic
+[32m[    0.445779] [0m[33m..TIMER: [0mvector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[32m[    0.445875] [0m[33mclocksource: [0mtsc-early: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+[32m[    0.445916] [0mCalibrating delay loop (skipped) preset value.. 3992.49 BogoMIPS (lpj=7984980)
+[32m[    0.450027] [0m[33mLast level iTLB entries: [0m4KB 512, 2MB 255, 4MB 127
+[32m[    0.450040] [0m[33mLast level dTLB entries: [0m4KB 512, 2MB 255, 4MB 127, 1GB 0
+[32m[    0.450058] [0m[33mmitigations: [0mEnabled attack vectors: user_kernel, user_user, SMT mitigations: auto
+[32m[    0.450082] [0m[33mSpectre V2 : [0mMitigation: Retpolines
+[32m[    0.450091] [0m[33mSpectre V1 : [0mMitigation: usercopy/swapgs barriers and __user pointer sanitization
+[32m[    0.450098] [0m[33mSpectre V2 : [0mSpectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+[32m[    0.450137] [0m[33mx86/fpu: [0mx87 FPU will use FXSAVE
+[32m[    0.489045] [0m[33mpid_max: [0mdefault: 32768 minimum: 301
+[32m[    0.495210] [0m[33mMount-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.495266] [0m[33mMountpoint-cache hash table entries: [0m512 (order: 0, 4096 bytes, linear)
+[32m[    0.500496] [0m[33mVFS: [0mFinished mounting rootfs on nullfs
+[32m[    0.507972] [0mRunning RCU synchronous self tests
+[32m[    0.507995] [0mRunning RCU synchronous self tests
+[32m[    0.619071] [0m[33msmpboot: [0mCPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[32m[    0.631161] [0m[33mPerformance Events: [0mAMD PMU driver.
+[32m[    0.631243] [0m[33m... version: [0m                  0
+[32m[    0.631251] [0m[33m... bit width: [0m                48
+[32m[    0.631257] [0m[33m... generic counters: [0m         4
+[32m[    0.631262] [0m[33m... generic bitmap: [0m           000000000000000f
+[32m[    0.631269] [0m[33m... fixed-purpose counters: [0m   0
+[32m[    0.631274] [0m[33m... fixed-purpose bitmap: [0m     0000000000000000
+[32m[    0.631279] [0m[33m... value mask: [0m               0000ffffffffffff
+[32m[    0.631285] [0m[33m... max period: [0m               00007fffffffffff
+[32m[    0.631290] [0m[33m... global_ctrl mask: [0m         000000000000000f
+[32m[    0.632207] [0m[33msignal: [0mmax sigframe size: 1040
+[32m[    0.633059] [0m[33mrcu: [0mHierarchical SRCU implementation.
+[32m[    0.633069] [0m[33mrcu: [0m	Max phase no-delay instances is 1000.
+[32m[    0.643001] [0m[33msmp: [0mBringing up secondary CPUs ...
+[32m[    0.646838] [0m[33msmpboot: [0mx86: Booting SMP configuration:
+[32m[    0.646863] [0m[33m.... node  #0, CPUs: [0m     #1 #2 #3
+[32m[    0.670403] [0m[33msmp: [0mBrought up 1 node, 4 CPUs
+[32m[    0.670426] [0m[33msmpboot: [0mTotal of 4 processors activated (15969.96 BogoMIPS)
+[32m[    0.678742] [0m[33mMemory: [0m70500K/261624K available (29454K kernel code, 5838K rwdata, 6888K rodata, 4132K init, 61456K bss, 185216K reserved, 0K cma-reserved)
+[32m[    0.684591] [0m[33mdevtmpfs: [0minitialized
+[32m[    0.712787] [0mRunning RCU synchronous self tests
+[32m[    0.712860] [0mRunning RCU synchronous self tests
+[32m[    0.716241] [0mRunning RCU Tasks wait API self tests
+[32m[    0.826338] [0mRunning RCU Tasks Trace wait API self tests
+[32m[    0.827996] [0m[33mposixtimers hash table entries: [0m2048 (order: 6, 147456 bytes, linear)
+[32m[    0.828924] [0m[33mfutex hash table entries: [0m1024 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[32m[    0.829945] [0mCallback from call_rcu_tasks() invoked.
+[32m[    0.871104] [0m[33mNET: [0mRegistered PF_NETLINK/PF_ROUTE protocol family
+[32m[    0.877965] [0mCallback from call_rcu_tasks_trace() invoked.
+[32m[    0.914179] [0m[33mthermal_sys: [0mRegistered thermal governor 'step_wise'
+[32m[    0.916855] [0m[33mcpuidle: [0musing governor ladder
+[32m[    0.938237] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff]
+[32m[    0.938270] [0m[33mPCI: [0mECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry
+[32m[    0.938487] [0m[33mPCI: [0mUsing configuration type 1 for base access
+[32m[    1.015781] [0m[33mACPI: [0mAdded _OSI(Module Device)
+[32m[    1.015799] [0m[33mACPI: [0mAdded _OSI(Processor Device)
+[32m[    1.015807] [0m[33mACPI: [0mAdded _OSI(Processor Aggregator Device)
+[32m[    1.578091] [0m[33mACPI: [0m1 ACPI AML tables successfully acquired and loaded
+[32m[    1.628142] [0m[33mACPI: [0m\_SB_: platform _OSC: OS support mask [000a7eee]
+[32m[    1.656128] [0m[33mACPI: [0mInterpreter enabled
+[32m[    1.675457] [0m[33mACPI: [0mPM: (supports S0 S3 S5)
+[32m[    1.675497] [0m[33mACPI: [0mUsing IOAPIC for interrupt routing
+[32m[    1.677209] [0m[33mPCI: [0mUsing host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[32m[    1.677224] [0m[33mPCI: [0mUsing E820 reservations for host bridge windows
+[32m[    1.692323] [0m[33mACPI: [0mEnabled 2 GPEs in block 00 to 3F
+[32m[    2.209437] [0m[33mACPI: [0mPCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[32m[    2.210399] [0m[33macpi PNP0A08:00: [0m_OSC: OS supports [ExtendedConfig ASPM ClockPM Segments HPX-Type3]
+[32m[    2.210416] [0m[33macpi PNP0A08:00: [0mPCIe port services disabled; not requesting _OSC control
+[32m[    2.247525] [0mPCI host bridge to bus 0000:00
+[32m[    2.248475] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0000-0x0cf7 window]
+[32m[    2.248528] [0m[33mpci_bus 0000:00: [0mroot bus resource [io  0x0d00-0xffff window]
+[32m[    2.248567] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x000a0000-0x000bffff window]
+[32m[    2.248607] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x10000000-0xafffffff window]
+[32m[    2.248648] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0xc0000000-0xfebfffff window]
+[32m[    2.248687] [0m[33mpci_bus 0000:00: [0mroot bus resource [mem 0x100000000-0x8ffffffff window]
+[32m[    2.248738] [0m[33mpci_bus 0000:00: [0mroot bus resource [bus 00-ff]
+[32m[    2.248780] [0m[33macpi PNP0A08:00: [0mOS native features: SHPCHotplug- PCIeHotplug- PME- AER- DPC- LTR-
+[32m[    2.250003] [0m[33mpci 0000:00:00.0: [0m[8086:29c0] type 00 class 0x060000 conventional PCI endpoint
+[32m[    2.281949] [0m[33mpci 0000:00:01.0: [0m[1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+[32m[    2.290052] [0m[33mpci 0000:00:01.0: [0mBAR 0 [io  0xc000-0xc03f]
+[32m[    2.290116] [0m[33mpci 0000:00:01.0: [0mBAR 1 [mem 0xfebfd000-0xfebfdfff]
+[32m[    2.290241] [0m[33mpci 0000:00:01.0: [0mBAR 4 [mem 0xfebf4000-0xfebf7fff 64bit pref]
+[32m[    2.309935] [0m[33mpci 0000:00:02.0: [0m[1af4:1009] type 00 class 0x000200 conventional PCI endpoint
+[32m[    2.316328] [0m[33mpci 0000:00:02.0: [0mBAR 0 [io  0xc040-0xc07f]
+[32m[    2.318175] [0m[33mpci 0000:00:02.0: [0mBAR 1 [mem 0xfebfe000-0xfebfefff]
+[32m[    2.318804] [0m[33mpci 0000:00:02.0: [0mBAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]
+[32m[    2.349550] [0m[33mpci 0000:00:1f.0: [0m[8086:2918] type 00 class 0x060100 conventional PCI endpoint
+[32m[    2.354423] [0m[33mpci 0000:00:1f.0: [0mquirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO
+[32m[    2.376388] [0m[33mpci 0000:00:1f.2: [0m[8086:2922] type 00 class 0x010601 conventional PCI endpoint
+[32m[    2.380575] [0m[33mpci 0000:00:1f.2: [0mBAR 4 [io  0xc0c0-0xc0df]
+[32m[    2.380643] [0m[33mpci 0000:00:1f.2: [0mBAR 5 [mem 0xfebff000-0xfebfffff]
+[32m[    2.408246] [0m[33mpci 0000:00:1f.3: [0m[8086:2930] type 00 class 0x0c0500 conventional PCI endpoint
+[32m[    2.410428] [0m[33mpci 0000:00:1f.3: [0mBAR 4 [io  0x0700-0x073f]
+[32m[    2.421995] [0m[33mpci_bus 0000:00: [0mon NUMA node 0
+[32m[    2.460848] [0m[33mACPI: [0mPCI: Interrupt link LNKA configured for IRQ 10
+[32m[    2.481216] [0m[33mACPI: [0mPCI: Interrupt link LNKB configured for IRQ 10
+[32m[    2.497052] [0m[33mACPI: [0mPCI: Interrupt link LNKC configured for IRQ 11
+[32m[    2.524567] [0m[33mACPI: [0mPCI: Interrupt link LNKD configured for IRQ 11
+[32m[    2.545172] [0m[33mACPI: [0mPCI: Interrupt link LNKE configured for IRQ 10
+[32m[    2.573476] [0m[33mACPI: [0mPCI: Interrupt link LNKF configured for IRQ 10
+[32m[    2.589331] [0m[33mACPI: [0mPCI: Interrupt link LNKG configured for IRQ 11
+[32m[    2.614106] [0m[33mACPI: [0mPCI: Interrupt link LNKH configured for IRQ 11
+[32m[    2.617549] [0m[33mACPI: [0mPCI: Interrupt link GSIA configured for IRQ 16
+[32m[    2.619686] [0m[33mACPI: [0mPCI: Interrupt link GSIB configured for IRQ 17
+[32m[    2.621567] [0m[33mACPI: [0mPCI: Interrupt link GSIC configured for IRQ 18
+[32m[    2.623349] [0m[33mACPI: [0mPCI: Interrupt link GSID configured for IRQ 19
+[32m[    2.625334] [0m[33mACPI: [0mPCI: Interrupt link GSIE configured for IRQ 20
+[32m[    2.627175] [0m[33mACPI: [0mPCI: Interrupt link GSIF configured for IRQ 21
+[32m[    2.629087] [0m[33mACPI: [0mPCI: Interrupt link GSIG configured for IRQ 22
+[32m[    2.631070] [0m[33mACPI: [0mPCI: Interrupt link GSIH configured for IRQ 23
+[32m[    2.695795] [0m[33miommu: [0mDefault domain type: Translated
+[32m[    2.695811] [0m[33miommu: [0mDMA domain TLB invalidation policy: lazy mode
+[32m[    2.699073] [0m[33mACPI: [0mbus type USB registered
+[32m[    2.703698] [0m[33musbcore: [0mregistered new interface driver usbfs
+[32m[    2.704486] [0m[33musbcore: [0mregistered new interface driver hub
+[32m[    2.706398] [0m[33musbcore: [0mregistered new device driver usb
+[32m[    2.709322] [0m[33mpps_core: [0mLinuxPPS API ver. 1 registered
+[32m[    2.709338] [0m[33mpps_core: [0mSoftware ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[32m[    2.709556] [0mPTP clock support registered
+[32m[    2.726066] [0m[33mBluetooth: [0mCore ver 2.22
+[32m[    2.726679] [0m[33mNET: [0mRegistered PF_BLUETOOTH protocol family
+[32m[    2.726690] [0m[33mBluetooth: [0mHCI device and connection manager initialized
+[32m[    2.726808] [0m[33mBluetooth: [0mHCI socket layer initialized
+[32m[    2.726847] [0m[33mBluetooth: [0mL2CAP socket layer initialized
+[32m[    2.727025] [0m[33mBluetooth: [0mSCO socket layer initialized
+[32m[    2.730185] [0m[33mPCI: [0mUsing ACPI for IRQ routing
+[32m[    3.056614] [0m[33mPCI: [0mpci_cache_line_size set to 64 bytes
+[32m[    3.057357] [0m[33me820: [0mregister RAM buffer resource [mem 0x0009fc00-0x0009ffff]
+[32m[    3.057542] [0m[33me820: [0mregister RAM buffer resource [mem 0x0ffe0000-0x0fffffff]
+[32m[    3.060233] [0m[33mvgaarb: [0mloaded
+[32m[    3.075102] [0m[33mclocksource: [0mSwitched to clocksource kvm-clock
+[32m[    3.300054] [0m[33macpi PNP0C01:00: [0mReserved [mem 0xb0000000-0xbfffffff]
+[32m[    3.301023] [0m[33mpnp: [0mPnP ACPI init
+[32m[    3.338772] [0m[33mpnp: [0mPnP ACPI: found 3 devices
+[32m[    3.345447] [0m[33mclocksource: [0macpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[32m[    3.347494] [0m[33mNET: [0mRegistered PF_INET protocol family
+[32m[    3.348405] [0m[33mIP idents hash table entries: [0m2048 (order: 2, 16384 bytes, linear)
+[32m[    3.354037] [0m[33mtcp_listen_portaddr_hash hash table entries: [0m64 (order: 1, 4608 bytes, linear)
+[32m[    3.354127] [0m[33mTable-perturb hash table entries: [0m65536 (order: 6, 262144 bytes, linear)
+[32m[    3.354601] [0m[33mTCP established hash table entries: [0m1024 (order: 1, 8192 bytes, linear)
+[32m[    3.354725] [0m[33mTCP bind hash table entries: [0m1024 (order: 6, 147456 bytes, linear)
+[32m[    3.355155] [0m[33mTCP: [0mHash tables configured (established 1024 bind 1024)
+[32m[    3.358207] [0m[33mUDP hash table entries: [0m256 (order: 4, 65536 bytes, linear)
+[32m[    3.360112] [0m[33mNET: [0mRegistered PF_UNIX/PF_LOCAL protocol family
+[32m[    3.360471] [0m[33mpci_bus 0000:00: [0mresource 4 [io  0x0000-0x0cf7 window]
+[32m[    3.360490] [0m[33mpci_bus 0000:00: [0mresource 5 [io  0x0d00-0xffff window]
+[32m[    3.360499] [0m[33mpci_bus 0000:00: [0mresource 6 [mem 0x000a0000-0x000bffff window]
+[32m[    3.360509] [0m[33mpci_bus 0000:00: [0mresource 7 [mem 0x10000000-0xafffffff window]
+[32m[    3.360518] [0m[33mpci_bus 0000:00: [0mresource 8 [mem 0xc0000000-0xfebfffff window]
+[32m[    3.360533] [0m[33mpci_bus 0000:00: [0mresource 9 [mem 0x100000000-0x8ffffffff window]
+[32m[    3.363968] [0m[33mPCI: [0mCLS 0 bytes, default 64
+[32m[    3.365917] [0m[33mNET: [0mRegistered PF_INET6 protocol family
+[32m[    3.382664] [0mSegment Routing with IPv6
+[32m[    3.383086] [0mIn-situ OAM (IOAM) with IPv6
+[32m[    3.384630] [0m[33mclocksource: [0mtsc: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+[32m[    3.410068] [0m[33mworkingset: [0mtimestamp_bits=62 (anon: 57) max_order=15 bucket_order=0 (anon: 0)
+[32m[    3.414079] [0m[33mfuse: [0minit (API version 7.47)
+[32m[    3.416257] [0m[33m9p: [0mInstalling v9fs 9p2000 file system support
+[32m[    3.416952] [0m[33mNET: [0mRegistered PF_ALG protocol family
+[32m[    3.417468] [0mio scheduler mq-deadline registered
+[32m[    3.417477] [0mio scheduler kyber registered
+[32m[    3.423905] [0m[33minput: [0mPower Button as /devices/platform/LNXPWRBN:00/input/input0
+[32m[    3.426214] [0m[33mACPI: [0mbutton: Power Button [PWRF]
+[32m[    3.537320] [0m[33mACPI: [0m\_SB_.GSIF: Enabled at IRQ 21
+[32m[    3.657254] [0m[33mACPI: [0m\_SB_.GSIG: Enabled at IRQ 22
+[32m[    3.966850] [0m[33mclocksource: [0mWatchdog remote CPU 1 read timed out
+[32m[    4.411549] [0m[33mSerial: [0m8250/16550 driver, 4 ports, IRQ sharing disabled
+[32m[    4.420926] [0m[33m00:02: [0mttyS0 I/O:0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[32m[    4.553990] [0m[33mdummy_hcd dummy_hcd.0: [0mUSB Host+Gadget Emulator, driver 02 May 2005
+[32m[    4.554148] [0m[33mdummy_hcd dummy_hcd.0: [0mDummy host controller
+[32m[    4.557227] [0m[33mdummy_hcd dummy_hcd.0: [0mnew USB bus registered, assigned bus number 1
+[32m[    4.559264] [0m[33musb usb1: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    4.564971] [0m[33musb usb1: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    4.564994] [0m[33musb usb1: [0mProduct: Dummy host controller
+[32m[    4.565003] [0m[33musb usb1: [0mManufacturer: Linux 7.3.0-gda3cc02587c6 dummy_hcd
+[32m[    4.565009] [0m[33musb usb1: [0mSerialNumber: dummy_hcd.0
+[32m[    4.571014] [0m[33mprintk: [0mlegacy console [hvc0] enabled
+[32m[    4.571029] [0m[33mprintk: [0mlegacy bootconsole [earlyser0] disabled
+[32m[    4.578336] [0m[33mhub 1-0:1.0: [0mUSB hub found
+[32m[    4.579174] [0m[33mhub 1-0:1.0: [0m1 port detected
+[32m[    4.600102] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    4.602571] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 2
+[32m[    4.603111] [0m[33mvhci_hcd vhci_hcd.0: [0mcreated sysfs vhci_hcd.0
+[32m[    4.603538] [0m[33musb usb2: [0mNew USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+[32m[    4.606209] [0m[33musb usb2: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    4.606228] [0m[33musb usb2: [0mProduct: USB/IP Virtual Host Controller
+[32m[    4.606235] [0m[33musb usb2: [0mManufacturer: Linux 7.3.0-gda3cc02587c6 vhci_hcd
+[32m[    4.606242] [0m[33musb usb2: [0mSerialNumber: vhci_hcd.0
+[32m[    4.614546] [0m[33mhub 2-0:1.0: [0mUSB hub found
+[32m[    4.615353] [0m[33mhub 2-0:1.0: [0m8 ports detected
+[32m[    4.642769] [0m[33mvhci_hcd vhci_hcd.0: [0mUSB/IP Virtual Host Controller
+[32m[    4.647982] [0m[33mvhci_hcd vhci_hcd.0: [0mnew USB bus registered, assigned bus number 3
+[32m[    4.649469] [0m[33musb usb3: [0mWe don't know the algorithms for LPM for this host, disabling LPM.
+[32m[    4.649486] [0m[33musb usb3: [0mNew USB device found: idVendor=1d6b, idProduct=0003, bcdDevice=7.03
+[32m[    4.652379] [0m[33musb usb3: [0mNew USB device strings: Mfr=3, Product=2, SerialNumber=1
+[32m[    4.652400] [0m[33musb usb3: [0mProduct: USB/IP Virtual Host Controller
+[32m[    4.652640] [0m[33musb usb3: [0mManufacturer: Linux 7.3.0-gda3cc02587c6 vhci_hcd
+[32m[    4.652648] [0m[33musb usb3: [0mSerialNumber: vhci_hcd.0
+[32m[    4.660990] [0m[33mhub 3-0:1.0: [0mUSB hub found
+[32m[    4.661704] [0m[33mhub 3-0:1.0: [0m8 ports detected
+[32m[    4.695274] [0m[33mi8042: [0mPNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[32m[    4.703081] [0m[33mserio: [0mi8042 KBD port at 0x60,0x64 irq 1
+[32m[    4.703390] [0m[33mserio: [0mi8042 AUX port at 0x60,0x64 irq 12
+[32m[    4.724420] [0m[33mBluetooth: [0mHCI UART driver ver 2.3
+[32m[    4.724442] [0m[33mBluetooth: [0mHCI UART protocol H4 registered
+[32m[    4.724448] [0m[33mBluetooth: [0mHCI UART protocol BCSP registered
+[32m[    4.724814] [0m[33mBluetooth: [0mHCI UART protocol LL registered
+[32m[    4.724824] [0m[33mBluetooth: [0mHCI UART protocol ATH3K registered
+[32m[    4.725198] [0m[33mBluetooth: [0mHCI UART protocol Three-wire (H5) registered
+[32m[    4.725456] [0m[33mBluetooth: [0mHCI UART protocol QCA registered
+[32m[    4.725462] [0m[33mBluetooth: [0mHCI UART protocol AG6XX registered
+[32m[    4.725791] [0m[33mBluetooth: [0mHCI UART protocol Marvell registered
+[32m[    4.726063] [0m[33mBluetooth: [0mHCI UART protocol AML registered
+[32m[    4.726454] [0m[33musbcore: [0mregistered new interface driver bcm203x
+[32m[    4.727031] [0m[33musbcore: [0mregistered new interface driver bpa10x
+[32m[    4.727285] [0m[33musbcore: [0mregistered new interface driver bfusb
+[32m[    4.735777] [0m[33musbcore: [0mregistered new interface driver btusb
+[32m[    4.736394] [0m[33musbcore: [0mregistered new interface driver ath3k
+[32m[    4.738035] [0m[33mhid: [0mraw HID events driver (C) Jiri Kosina
+[32m[    4.742588] [0m[33musbcore: [0mregistered new interface driver usbhid
+[32m[    4.742604] [0m[33musbhid: [0mUSB HID core driver
+[32m[    4.743776] [0m[33msit: [0mIPv6, IPv4 and MPLS over IPv4 tunneling driver
+[32m[    4.745523] [0m[33minput: [0mAT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+[32m[    4.760847] [0m[33mNET: [0mRegistered PF_PACKET protocol family
+[32m[    4.762427] [0m[33mBluetooth: [0mRFCOMM socket layer initialized
+[32m[    4.762556] [0m[33mBluetooth: [0mRFCOMM ver 1.11
+[32m[    4.762638] [0m[33mBluetooth: [0mBNEP (Ethernet Emulation) ver 1.3
+[32m[    4.762677] [0m[33mBluetooth: [0mBNEP socket layer initialized
+[32m[    4.762683] [0m[33mBluetooth: [0mHIDP (Human Interface Emulation) ver 1.2
+[32m[    4.762747] [0m[33mBluetooth: [0mHIDP socket layer initialized
+[32m[    4.763136] [0m[33m9pnet: [0mInstalling 9P2000 support
+[32m[    4.787324] [0m[33mIPI shorthand broadcast: [0menabled
+[32m[    4.976793] [0m[33msched_clock: [0mMarking stable (4961789489, 12184937)->(5006224775, -32250349)
+[32m[    5.205172] [0m[33minput: [0mImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[32m[    5.236370] [0m[33mkmemleak: [0mKernel memory leak detector initialized (mem pool available: 158505)
+[32m[    5.244989] [0m[33m9p: [0m[31mBad value for 'source'[0m
+[32m[    5.263729] [0m[33mVFS: [0mMounted root (9p filesystem) readonly on device 0:18.
+[32m[    5.265388] [0m[33mVFS: [0mPivoted into new rootfs
+[32m[    5.269494] [0m[33mFreeing unused kernel image (initmem) memory: [0m4132K
+[32m[    5.269514] [0m[33mWrite protecting the kernel read-only data: [0m38912k
+[32m[    5.272205] [0m[33mFreeing unused kernel image (text/rodata gap) memory: [0m1264K
+[32m[    5.276341] [0m[33mFreeing unused kernel image (rodata/data gap) memory: [0m1304K
+[32m[    5.379360] [0m[33mx86/mm: [0mChecked W+X mappings: passed, no W+X pages found.
+[32m[    5.379619] [0mRun /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+[32m[    5.379633] [0m  with arguments:
+[32m[    5.379641] [0m    /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+[32m[    5.379648] [0m    -I
+[32m[    5.379653] [0m    nosend
+[32m[    5.379658] [0m    --dump-slabinfo'
+[32m[    5.379664] [0m  with environment:
+[32m[    5.379670] [0m    HOME=/
+[32m[    5.379677] [0m    TERM=linux
+[32m[    5.379687] [0m    TESTHOME=/root/exp
+[32m[    5.379694] [0m    TESTDBUS=0
+[32m[    5.379699] [0m    TESTDAEMON=0
+[32m[    5.379704] [0m    TESTDBUSSESSION=0
+[32m[    5.379709] [0m    XDG_RUNTIME_DIR=/run/user/0
+[32m[    5.379714] [0m    TESTMONITOR=0
+[32m[    5.379720] [0m    TESTEMULATOR=0
+[32m[    5.379726] [0m    TESTDEVS=0
+[32m[    5.379732] [0m    TESTAUTO=0
+[32m[    5.379737] [0m    TESTAUDIO=''
+[32m[    5.379748] [0m    TESTARGS='python3
+[32m[    8.128748] [0m[33mrandom: [0mcrng init done
+[32m[   21.506127] [0m[33mBluetooth: [0mMGMT ver 1.23
+  30.807 [mono  45.104941] BT17-EXIT 0
+Process 67 exited with status 0
+Process 59 exited with status 0
+exit=0 end 2026-11-14 07:02:29
