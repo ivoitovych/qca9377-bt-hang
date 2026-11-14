@@ -29,3 +29,7 @@ one `reset … USB device` line, `hci0_removed=False`, `FAIL bt17`; `ab2dn-dbg-d
 `hci0_removed=True`, `PASS bt17`. In the wide-D run the final class write still returned `0x00`:
 Bluetooth worked, but without the reset and rebinding D is meant to give, which is what the run
 judges (`--expect-rebind`).
+
+**Changed on copy:** `harness/metrics.py` given its executable bit (it has a shebang; the work
+area had it 0644, and the suite requires the bit). Nothing else in the folder differs from the
+work area.
