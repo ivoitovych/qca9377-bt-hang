@@ -609,17 +609,27 @@ second instance makes it a pattern.
 
 ## BT-6 — Controller delivers ACL data for a connection handle the host does not know
 
-**Status 2026-11-12: not once.** 15 such lines from 2026-08-12 to 08-19, none since 10-12
-(`journal-archive-grep.py`, 11-11; `results/laptop-only-work-2026-11-11/`); CO-23 (10-28) counted
+**Status 2026-11-14: not once.** 15 such lines from 2026-08-12 to 08-19 (`journal-archive-grep.py`,
+11-11), the last on 08-19: none in the 64 archived boots to 10-23 nor in boot 0 (CO-23 `investigation-2026-10-28.md`; until 11-14 this said "none since 10-12", for which no grep output is kept); CO-23 (10-28) counted
 12 instants in August and read it as a benign race, data arriving after a disconnect at power-off
 (`contributions/CO-23-one-off-events/`). The "observed once" below was written from one boot.
 **Status (as first written):** observed once.
-**Reportable:** ❌ no — a single occurrence with no mechanism and no second instance.
+**Reportable:** ❌ no — a benign race (data after a disconnect at power-off); only a log-level
+change could be offered, not worth sending without a user complaint (CO-23 event 2). Until
+2026-11-14 this said "a single occurrence with no mechanism and no second instance".
 
 ```
 2026-08-12T08:27:36.996046  hci0 evt 2
 2026-08-12T08:27:36.996084  Bluetooth: hci0: ACL packet for unknown connection handle 1
 ```
+
+**Superseded 2026-11-14 by CO-23's verdict:** not a host/controller state disagreement and not
+related to BT-1 or BT-2. All 12 distinct instants fall 17 to 32 ms after the host marked the
+connection closed (`BT_CLOSED`) while `bluetooth.service` was stopping (adapter power-off; in 10 of 12 the
+project's watchdog had started the stop, all on 08-12): the
+data frame was queued after the Disconnection Complete (`hci_rx_work()` handles `rx_q` in order;
+events and ACL data arrive on separate USB endpoints). The three paragraphs below are the first
+reading, kept as written.
 
 The controller sent ACL data on handle 1 while the host had no such connection. That is a
 host/controller **state disagreement**, and it is a different signature from the `0x2005`
