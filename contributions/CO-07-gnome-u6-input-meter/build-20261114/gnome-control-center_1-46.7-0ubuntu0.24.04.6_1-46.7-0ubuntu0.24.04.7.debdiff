@@ -1,0 +1,502 @@
+diff -Nru gnome-control-center-46.7/debian/changelog gnome-control-center-46.7/debian/changelog
+--- gnome-control-center-46.7/debian/changelog	2026-08-14 00:32:34.000000000 +0000
++++ gnome-control-center-46.7/debian/changelog	2026-11-14 08:33:37.000000000 +0000
+@@ -1,3 +1,20 @@
++gnome-control-center (1:46.7-0ubuntu0.24.04.7) noble; urgency=medium
++
++  * Sound panel: make the input level meter follow the selected input device
++    (LP: #<LP-GCC-METER>). Cherry-picked from upstream (GNOME 47.0):
++    - d/p/01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch
++    - d/p/02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch
++    - d/p/03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch
++    - d/p/04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch
++    - d/p/05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch
++    - d/p/06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch
++    The panel now listens to the mixer's signals only while it is shown,
++    updates the active-device UI from those signals and keeps the meter
++    stream in step with the active device, so that the meter is re-pointed
++    when the default input changes (before, only while it held no stream).
++
++ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Sat, 14 Nov 2026 16:00:00 +0000
++
+ gnome-control-center (1:46.7-0ubuntu0.24.04.6) noble; urgency=medium
+ 
+   [ Cyrus Lien ]
+diff -Nru gnome-control-center-46.7/debian/patches/01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch gnome-control-center-46.7/debian/patches/01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch
+--- gnome-control-center-46.7/debian/patches/01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,197 @@
++Description: sound: Listen to signals from GvcMixerControl only in sound panel
++ We should only listen to "active-input-update" and "active-output-update" in
++ one place, and then update the combo box from there. This way we can block our
++ own signal handler for input/output device changes on the combo box, which
++ we'll do in the next commit.
++Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/21528993549a7575456ddd8e1902e2e88dec8476
++Applied-Upstream: 47.0, commit:21528993549a7575456ddd8e1902e2e88dec8476
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-device-combo-box.c b/panels/sound/cc-device-combo-box.c
++index b0f5d478c..85e29268c 100644
++--- a/panels/sound/cc-device-combo-box.c
+++++ b/panels/sound/cc-device-combo-box.c
++@@ -25,9 +25,6 @@ struct _CcDeviceComboBox
++   GtkListStore    *device_model;
++ 
++   GvcMixerControl *mixer_control;
++-  guint            added_handler_id;
++-  guint            removed_handler_id;
++-  guint            active_update_handler_id;
++   gboolean         is_output;
++ };
++ 
++@@ -35,9 +32,9 @@ G_DEFINE_TYPE (CcDeviceComboBox, cc_device_combo_box, GTK_TYPE_COMBO_BOX)
++ 
++ static gboolean get_iter (CcDeviceComboBox *self, guint id, GtkTreeIter *iter);
++ 
++-static void
++-device_added_cb (CcDeviceComboBox *self,
++-                 guint             id)
+++void
+++cc_device_combo_box_device_added (CcDeviceComboBox *self,
+++                                  guint             id)
++ {
++   GvcMixerUIDevice *device = NULL;
++   g_autofree gchar *label = NULL;
++@@ -97,9 +94,9 @@ get_iter (CcDeviceComboBox *self,
++   return FALSE;
++ }
++ 
++-static void
++-device_removed_cb (CcDeviceComboBox *self,
++-                   guint             id)
+++void
+++cc_device_combo_box_device_removed (CcDeviceComboBox *self,
+++                                    guint             id)
++ {
++   GtkTreeIter iter;
++ 
++@@ -107,9 +104,9 @@ device_removed_cb (CcDeviceComboBox *self,
++     gtk_list_store_remove (self->device_model, &iter);
++ }
++ 
++-static void
++-active_device_update_cb (CcDeviceComboBox *self,
++-                         guint             id)
+++void
+++cc_device_combo_box_active_device_changed (CcDeviceComboBox *self,
+++                                           guint             id)
++ {
++   GtkTreeIter iter;
++ 
++@@ -153,47 +150,12 @@ cc_device_combo_box_set_mixer_control (CcDeviceComboBox *self,
++                                        GvcMixerControl  *mixer_control,
++                                        gboolean          is_output)
++ {
++-  const gchar *added_signal, *removed_signal, *active_update_signal;
++   g_return_if_fail (CC_IS_DEVICE_COMBO_BOX (self));
++ 
++-  if (self->mixer_control != NULL)
++-    {
++-      g_signal_handler_disconnect (self->mixer_control, self->added_handler_id);
++-      self->added_handler_id = 0;
++-      g_signal_handler_disconnect (self->mixer_control, self->removed_handler_id);
++-      self->removed_handler_id = 0;
++-      g_signal_handler_disconnect (self->mixer_control, self->active_update_handler_id);
++-      self->active_update_handler_id = 0;
++-    }
++   g_clear_object (&self->mixer_control);
++ 
++   self->mixer_control = g_object_ref (mixer_control);
++   self->is_output = is_output;
++-  if (is_output)
++-    {
++-      added_signal = "output-added";
++-      removed_signal = "output-removed";
++-      active_update_signal = "active-output-update";
++-    }
++-  else
++-    {
++-      added_signal = "input-added";
++-      removed_signal = "input-removed";
++-      active_update_signal = "active-input-update";
++-    }
++-
++-  self->added_handler_id = g_signal_connect_object (self->mixer_control,
++-                                                    added_signal,
++-                                                    G_CALLBACK (device_added_cb),
++-                                                    self, G_CONNECT_SWAPPED);
++-  self->removed_handler_id = g_signal_connect_object (self->mixer_control,
++-                                                      removed_signal,
++-                                                      G_CALLBACK (device_removed_cb),
++-                                                      self, G_CONNECT_SWAPPED);
++-  self->active_update_handler_id = g_signal_connect_object (self->mixer_control,
++-                                                            active_update_signal,
++-                                                            G_CALLBACK (active_device_update_cb),
++-                                                            self, G_CONNECT_SWAPPED);
++ }
++ 
++ GvcMixerUIDevice *
++diff --git a/panels/sound/cc-device-combo-box.h b/panels/sound/cc-device-combo-box.h
++index ac3985c1e..5c20c4efc 100644
++--- a/panels/sound/cc-device-combo-box.h
+++++ b/panels/sound/cc-device-combo-box.h
++@@ -32,4 +32,13 @@ void                   cc_device_combo_box_set_mixer_control (CcDeviceComboBox *
++ 
++ GvcMixerUIDevice      *cc_device_combo_box_get_device        (CcDeviceComboBox *combo_box);
++ 
+++void cc_device_combo_box_device_added (CcDeviceComboBox *self,
+++                                       guint             id);
+++
+++void cc_device_combo_box_device_removed (CcDeviceComboBox *self,
+++                                         guint             id);
+++
+++void cc_device_combo_box_active_device_changed (CcDeviceComboBox *self,
+++                                                guint             id);
+++
++ G_END_DECLS
++diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
++index f3058cf34..7444228ac 100644
++--- a/panels/sound/cc-sound-panel.c
+++++ b/panels/sound/cc-sound-panel.c
++@@ -176,6 +176,8 @@ output_device_update_cb (CcSoundPanel *self,
++   gboolean has_multi_profiles;
++   GvcMixerStream *stream = NULL;
++ 
+++  cc_device_combo_box_active_device_changed (self->output_device_combo_box, id);
+++
++   device = cc_device_combo_box_get_device (self->output_device_combo_box);
++   cc_profile_combo_box_set_device (self->output_profile_combo_box, self->mixer_control, device);
++   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->output_profile_combo_box) > 1);
++@@ -196,6 +198,8 @@ input_device_update_cb (CcSoundPanel *self,
++   gboolean has_multi_profiles;
++   GvcMixerStream *stream = NULL;
++ 
+++  cc_device_combo_box_active_device_changed (self->input_device_combo_box, id);
+++
++   device = cc_device_combo_box_get_device (self->input_device_combo_box);
++   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);
++   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->input_profile_combo_box) > 1);
++@@ -354,10 +358,16 @@ cc_sound_panel_init (CcSoundPanel *self)
++   cc_subwoofer_slider_set_mixer_control (self->subwoofer_slider, self->mixer_control);
++   cc_device_combo_box_set_mixer_control (self->input_device_combo_box, self->mixer_control, FALSE);
++   cc_device_combo_box_set_mixer_control (self->output_device_combo_box, self->mixer_control, TRUE);
+++
++   g_signal_connect_object (self->mixer_control,
++-                           "active-output-update",
++-                           G_CALLBACK (output_device_update_cb),
++-                           self,
+++                           "input-added",
+++                           G_CALLBACK (cc_device_combo_box_device_added),
+++                           self->input_device_combo_box,
+++                           G_CONNECT_SWAPPED);
+++  g_signal_connect_object (self->mixer_control,
+++                           "input-removed",
+++                           G_CALLBACK (cc_device_combo_box_device_removed),
+++                           self->input_device_combo_box,
++                            G_CONNECT_SWAPPED);
++   g_signal_connect_object (self->mixer_control,
++                            "active-input-update",
++@@ -365,5 +375,23 @@ cc_sound_panel_init (CcSoundPanel *self)
++                            self,
++                            G_CONNECT_SWAPPED);
++ 
+++  g_signal_connect_object (self->mixer_control,
+++                           "output-added",
+++                           G_CALLBACK (cc_device_combo_box_device_added),
+++                           self->output_device_combo_box,
+++                           G_CONNECT_SWAPPED);
+++  g_signal_connect_object (self->mixer_control,
+++                           "output-removed",
+++                           G_CALLBACK (cc_device_combo_box_device_removed),
+++                           self->output_device_combo_box,
+++                           G_CONNECT_SWAPPED);
+++  g_signal_connect_object (self->mixer_control,
+++                           "active-output-update",
+++                           G_CALLBACK (output_device_update_cb),
+++                           self,
+++                           G_CONNECT_SWAPPED);
+++
+++  gvc_mixer_control_open (self->mixer_control);
+++
++   update_alert_sound_label (self);
++ }
+diff -Nru gnome-control-center-46.7/debian/patches/02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch gnome-control-center-46.7/debian/patches/02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch
+--- gnome-control-center-46.7/debian/patches/02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,43 @@
++Description: sound: Block our own signal handlers while updating the active-device combo box
++ When we get notified of an "active-input/output-device" change by gvc, we have
++ to update our respective combo box to reflect that change. Obviously, this in
++ turn shouldn't trigger our own signal handler for changes on that combo box,
++ that signal handler is only meant to handle the user interacting with the combo
++ box.
++ .
++ So block our signal handlers when we update the combo box to respond to changes
++ from the gvc side.
++ .
++ This fixes a recursive call to gvc_mixer_control_change_input/output() when we
++ get notified about an input/output change from gvc itself.
++Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/a74bc5a84d4510ec1479d215db783a482a2afdad
++Applied-Upstream: 47.0, commit:a74bc5a84d4510ec1479d215db783a482a2afdad
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
++index 7444228ac..5314744e3 100644
++--- a/panels/sound/cc-sound-panel.c
+++++ b/panels/sound/cc-sound-panel.c
++@@ -176,7 +176,9 @@ output_device_update_cb (CcSoundPanel *self,
++   gboolean has_multi_profiles;
++   GvcMixerStream *stream = NULL;
++ 
+++  g_signal_handlers_block_by_func(self->output_device_combo_box, output_device_changed_cb, self);
++   cc_device_combo_box_active_device_changed (self->output_device_combo_box, id);
+++  g_signal_handlers_unblock_by_func(self->output_device_combo_box, output_device_changed_cb, self);
++ 
++   device = cc_device_combo_box_get_device (self->output_device_combo_box);
++   cc_profile_combo_box_set_device (self->output_profile_combo_box, self->mixer_control, device);
++@@ -198,7 +200,9 @@ input_device_update_cb (CcSoundPanel *self,
++   gboolean has_multi_profiles;
++   GvcMixerStream *stream = NULL;
++ 
+++  g_signal_handlers_block_by_func(self->input_device_combo_box, input_device_changed_cb, self);
++   cc_device_combo_box_active_device_changed (self->input_device_combo_box, id);
+++  g_signal_handlers_unblock_by_func(self->input_device_combo_box, input_device_changed_cb, self);
++ 
++   device = cc_device_combo_box_get_device (self->input_device_combo_box);
++   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);
+diff -Nru gnome-control-center-46.7/debian/patches/03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch gnome-control-center-46.7/debian/patches/03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch
+--- gnome-control-center-46.7/debian/patches/03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,98 @@
++Description: sound: Update active-device UI on signals from gvc, not on combo box changes
++ Gvc is the actual "source of truth" when it comes to the currently active input
++ or output device, so we should update widget visibility and the input/output
++ meter stream based on the information from gvc, not on changes to the combo box.
++ .
++ The flow when the selects a different device in the combo box now is:
++ "user change" -> gvc_mixer_control_change_output() -> receive
++ "active-output-changed" signal from gvc -> update active device and get it
++ using the DeviceComboBox -> set widget visibility and update stream based
++ on this device.
++ .
++ This fixes a few bugs where the stream for the input/output meter wouldn't
++ get updated properly on active device changes.
++Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/bf6f72278e5b6168ab13b774d4e20ca2cc3fadee
++Applied-Upstream: 47.0, commit:bf6f72278e5b6168ab13b774d4e20ca2cc3fadee
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
++index 5314744e3..2d4472332 100644
++--- a/panels/sound/cc-sound-panel.c
+++++ b/panels/sound/cc-sound-panel.c
++@@ -124,18 +124,9 @@ static void
++ output_device_changed_cb (CcSoundPanel *self)
++ {
++   GvcMixerUIDevice *device;
++-  GvcMixerStream *stream = NULL;
++ 
++   device = cc_device_combo_box_get_device (self->output_device_combo_box);
++ 
++-  gtk_widget_set_visible (GTK_WIDGET (self->output_group), device != NULL);
++-  gtk_widget_set_visible (GTK_WIDGET (self->output_no_devices_group), device == NULL);
++-
++-  if (device != NULL)
++-    stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++-
++-  set_output_stream (self, stream);
++-
++   if (device != NULL)
++     gvc_mixer_control_change_output (self->mixer_control, device);
++ }
++@@ -152,18 +143,9 @@ static void
++ input_device_changed_cb (CcSoundPanel *self)
++ {
++   GvcMixerUIDevice *device;
++-  GvcMixerStream *stream = NULL;
++ 
++   device = cc_device_combo_box_get_device (self->input_device_combo_box);
++ 
++-  gtk_widget_set_visible (GTK_WIDGET (self->input_group), device != NULL);
++-  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device == NULL);
++-
++-  if (device != NULL)
++-    stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++-
++-  set_input_stream (self, stream);
++-
++   if (device != NULL)
++     gvc_mixer_control_change_input (self->mixer_control, device);
++ }
++@@ -181,12 +163,16 @@ output_device_update_cb (CcSoundPanel *self,
++   g_signal_handlers_unblock_by_func(self->output_device_combo_box, output_device_changed_cb, self);
++ 
++   device = cc_device_combo_box_get_device (self->output_device_combo_box);
+++
+++  gtk_widget_set_visible (GTK_WIDGET (self->output_group), device != NULL);
+++  gtk_widget_set_visible (GTK_WIDGET (self->output_no_devices_group), device == NULL);
+++
++   cc_profile_combo_box_set_device (self->output_profile_combo_box, self->mixer_control, device);
++   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->output_profile_combo_box) > 1);
++   gtk_widget_set_visible (GTK_WIDGET (self->output_profile_row),
++                           has_multi_profiles);
++ 
++-  if (cc_volume_slider_get_stream (self->output_volume_slider) == NULL)
+++  if (device)
++     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++   if (stream != NULL)
++     set_output_stream (self, stream);
++@@ -205,12 +191,16 @@ input_device_update_cb (CcSoundPanel *self,
++   g_signal_handlers_unblock_by_func(self->input_device_combo_box, input_device_changed_cb, self);
++ 
++   device = cc_device_combo_box_get_device (self->input_device_combo_box);
+++
+++  gtk_widget_set_visible (GTK_WIDGET (self->input_group), device != NULL);
+++  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device != NULL);
+++
++   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);
++   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->input_profile_combo_box) > 1);
++   gtk_widget_set_visible (GTK_WIDGET (self->input_profile_row),
++                           has_multi_profiles);
++ 
++-  if (cc_volume_slider_get_stream (self->input_volume_slider) == NULL)
+++  if (device)
++     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++   if (stream != NULL)
++     set_input_stream (self, stream);
+diff -Nru gnome-control-center-46.7/debian/patches/04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch gnome-control-center-46.7/debian/patches/04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch
+--- gnome-control-center-46.7/debian/patches/04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,34 @@
++Description: sound: Unset active entry on the device comboBox when there's no active device
++ When gvc gives us an active-input/output-device ID we don't know or sets the ID
++ to 0, that means there's no device currently active. While this seems unlikely
++ to be the case without the device getting removed at the same time, it can happen:
++ When the bluetooth profile gets changed from handset (input+output) to
++ headphone (output only), the input device remains available, but there's no
++ more active-input-device anymore.
++ .
++ In this case, we shouldn't leave the active entry on the device combo box as-is,
++ instead we should set it to NULL to indicate that no input device is set.
++ .
++ This fixes a bug where the input switcher is not updated when there's no
++ internal microphone but there's a bluetooth headset connected, and the
++ bluetooth profile gets switched from Handset to Headphone.
++Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/afec106a8b6690ea04475a8bb27232b118dd69b3
++Applied-Upstream: 47.0, commit:afec106a8b6690ea04475a8bb27232b118dd69b3
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-device-combo-box.c b/panels/sound/cc-device-combo-box.c
++index 85e29268c..cbcb2d50d 100644
++--- a/panels/sound/cc-device-combo-box.c
+++++ b/panels/sound/cc-device-combo-box.c
++@@ -112,6 +112,8 @@ cc_device_combo_box_active_device_changed (CcDeviceComboBox *self,
++ 
++   if (get_iter (self, id, &iter))
++     gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
+++  else
+++    gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), NULL);
++ }
++ 
++ static void
+diff -Nru gnome-control-center-46.7/debian/patches/05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch gnome-control-center-46.7/debian/patches/05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch
+--- gnome-control-center-46.7/debian/patches/05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,41 @@
++Description: sound: Set input/output meter stream to NULL when there's no active device
++ When there's no active input or output device, the input/output meter shouldn't
++ have a stream set, so call set_input_stream() with a NULL stream
++ (cc_volume_slider_set_stream() and cc_level_bar_set_stream() are already handling
++ NULL as expected) in case there's no active input or output device.
++ .
++ This fixes a bug where the input/output meter doesn't get updated when the active
++ input or output device gets unset.
++Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/3aeb837cb0936cfa448923b479e658477e7ed512
++Applied-Upstream: 47.0, commit:3aeb837cb0936cfa448923b479e658477e7ed512
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
++index 2d4472332..59c752413 100644
++--- a/panels/sound/cc-sound-panel.c
+++++ b/panels/sound/cc-sound-panel.c
++@@ -174,8 +174,8 @@ output_device_update_cb (CcSoundPanel *self,
++ 
++   if (device)
++     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++-  if (stream != NULL)
++-    set_output_stream (self, stream);
+++
+++  set_output_stream (self, stream);
++ }
++ 
++ static void
++@@ -202,8 +202,8 @@ input_device_update_cb (CcSoundPanel *self,
++ 
++   if (device)
++     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
++-  if (stream != NULL)
++-    set_input_stream (self, stream);
+++
+++  set_input_stream (self, stream);
++ }
++ 
++ static void
+diff -Nru gnome-control-center-46.7/debian/patches/06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch gnome-control-center-46.7/debian/patches/06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch
+--- gnome-control-center-46.7/debian/patches/06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch	1970-01-01 00:00:00.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch	2026-11-14 08:33:37.000000000 +0000
+@@ -0,0 +1,28 @@
++Description: sound: Don't show "No Input Devices" if an input device is present
++ In [1], the "input_no_devices_group" group, which contains the
++ "No Input Devices" row, was incorrectly set as visible even if
++ cc_device_combo_box_get_device returns an input device.
++ .
++ [1] https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/bf6f72278e5b6168ab13b774d4e20ca2cc3fadee#70e2cb14ab74f7db514bb2315ba0112a97aee1b8_208_196
++ .
++ Closes https://gitlab.gnome.org/GNOME/gnome-control-center/-/issues/3070
++Author: Automeris naranja <automerisnaranja@tutanota.com>
++Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/0da10f03ad27d5f1822ac1a15fcc8de9faead595
++Applied-Upstream: 47.0, commit:0da10f03ad27d5f1822ac1a15fcc8de9faead595
++Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
++Forwarded: not-needed
++Last-Update: 2026-11-14
++---
++diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
++index bf8228a07..93abf3cb6 100644
++--- a/panels/sound/cc-sound-panel.c
+++++ b/panels/sound/cc-sound-panel.c
++@@ -193,7 +193,7 @@ input_device_update_cb (CcSoundPanel *self,
++   device = cc_device_combo_box_get_device (self->input_device_combo_box);
++ 
++   gtk_widget_set_visible (GTK_WIDGET (self->input_group), device != NULL);
++-  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device != NULL);
+++  gtk_widget_set_visible (GTK_WIDGET (self->input_no_devices_group), device == NULL);
++ 
++   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);
++   has_multi_profiles = (cc_profile_combo_box_get_profile_count (self->input_profile_combo_box) > 1);
+diff -Nru gnome-control-center-46.7/debian/patches/series gnome-control-center-46.7/debian/patches/series
+--- gnome-control-center-46.7/debian/patches/series	2026-08-14 00:32:34.000000000 +0000
++++ gnome-control-center-46.7/debian/patches/series	2026-11-14 08:33:37.000000000 +0000
+@@ -39,3 +39,9 @@
+ ubuntu/remote-desktop-sharing-handle-locked-keyring.patch
+ lp2161027-fix-domain-validate-timeout.patch
+ ubuntu/system-users-Keep-fingerprint-add-print-popover-visible-w.patch
++01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch
++02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch
++03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch
++04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch
++05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch
++06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch

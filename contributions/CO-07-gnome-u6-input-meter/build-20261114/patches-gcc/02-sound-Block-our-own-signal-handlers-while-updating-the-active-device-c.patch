@@ -1,0 +1,43 @@
+Description: sound: Block our own signal handlers while updating the active-device combo box
+ When we get notified of an "active-input/output-device" change by gvc, we have
+ to update our respective combo box to reflect that change. Obviously, this in
+ turn shouldn't trigger our own signal handler for changes on that combo box,
+ that signal handler is only meant to handle the user interacting with the combo
+ box.
+ .
+ So block our signal handlers when we update the combo box to respond to changes
+ from the gvc side.
+ .
+ This fixes a recursive call to gvc_mixer_control_change_input/output() when we
+ get notified about an input/output change from gvc itself.
+Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
+Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/a74bc5a84d4510ec1479d215db783a482a2afdad
+Applied-Upstream: 47.0, commit:a74bc5a84d4510ec1479d215db783a482a2afdad
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
+index 7444228ac..5314744e3 100644
+--- a/panels/sound/cc-sound-panel.c
++++ b/panels/sound/cc-sound-panel.c
+@@ -176,7 +176,9 @@ output_device_update_cb (CcSoundPanel *self,
+   gboolean has_multi_profiles;
+   GvcMixerStream *stream = NULL;
+ 
++  g_signal_handlers_block_by_func(self->output_device_combo_box, output_device_changed_cb, self);
+   cc_device_combo_box_active_device_changed (self->output_device_combo_box, id);
++  g_signal_handlers_unblock_by_func(self->output_device_combo_box, output_device_changed_cb, self);
+ 
+   device = cc_device_combo_box_get_device (self->output_device_combo_box);
+   cc_profile_combo_box_set_device (self->output_profile_combo_box, self->mixer_control, device);
+@@ -198,7 +200,9 @@ input_device_update_cb (CcSoundPanel *self,
+   gboolean has_multi_profiles;
+   GvcMixerStream *stream = NULL;
+ 
++  g_signal_handlers_block_by_func(self->input_device_combo_box, input_device_changed_cb, self);
+   cc_device_combo_box_active_device_changed (self->input_device_combo_box, id);
++  g_signal_handlers_unblock_by_func(self->input_device_combo_box, input_device_changed_cb, self);
+ 
+   device = cc_device_combo_box_get_device (self->input_device_combo_box);
+   cc_profile_combo_box_set_device (self->input_profile_combo_box, self->mixer_control, device);

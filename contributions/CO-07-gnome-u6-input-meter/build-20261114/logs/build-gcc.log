@@ -1,0 +1,96 @@
+== os
+VERSION="24.04.5 LTS (Noble Numbat)"
+build-dep ok
+== new tree: unpack without patches, add ours
+-- dry run 01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch
+checking file panels/sound/cc-device-combo-box.c
+checking file panels/sound/cc-device-combo-box.h
+checking file panels/sound/cc-sound-panel.c
+-- dry run 02-sound-Block-our-own-signal-handlers-while-updating-the-active-device-c.patch
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 FAILED at 176.
+Hunk #2 FAILED at 198.
+2 out of 2 hunks FAILED
+NOTE: does not apply on the unpatched tree (expected for a patch that builds on Ubuntu's)
+-- dry run 03-sound-Update-active-device-UI-on-signals-from-gvc-not-on-combo-box-cha.patch
+checking file panels/sound/cc-sound-panel.c
+Hunk #3 succeeded at 159 with fuzz 1 (offset -4 lines).
+Hunk #4 succeeded at 183 with fuzz 1 (offset -8 lines).
+-- dry run 04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch
+checking file panels/sound/cc-device-combo-box.c
+Hunk #1 succeeded at 115 (offset 3 lines).
+-- dry run 05-sound-Set-input-output-meter-stream-to-NULL-when-there-s-no-active-dev.patch
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 succeeded at 184 with fuzz 2 (offset 10 lines).
+Hunk #2 succeeded at 204 with fuzz 2 (offset 2 lines).
+-- dry run 06-sound-Don-t-show-No-Input-Devices-if-an-input-device-is-present.patch
+checking file panels/sound/cc-sound-panel.c
+Reversed (or previously applied) patch detected!  Assume -R? [n] 
+Apply anyway? [n] 
+Skipping patch.
+1 out of 1 hunk ignored
+NOTE: does not apply on the unpatched tree (expected for a patch that builds on Ubuntu's)
+checking file panels/sound/cc-device-combo-box.c
+checking file panels/sound/cc-device-combo-box.h
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 succeeded at 177 (offset 1 line).
+Hunk #2 succeeded at 199 (offset 1 line).
+Hunk #3 succeeded at 371 (offset 13 lines).
+Hunk #4 succeeded at 388 (offset 13 lines).
+applies on top of the full 5.x series: 01-sound-Listen-to-signals-from-GvcMixerControl-only-in-sound-panel.patch
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 FAILED at 176.
+Hunk #2 FAILED at 198.
+2 out of 2 hunks FAILED
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 succeeded at 125 (offset 1 line).
+Hunk #2 succeeded at 144 (offset 1 line).
+Hunk #3 FAILED at 163.
+Hunk #4 FAILED at 187.
+2 out of 4 hunks FAILED
+checking file panels/sound/cc-device-combo-box.c
+Hunk #1 succeeded at 115 (offset 3 lines).
+applies on top of the full 5.x series: 04-sound-Unset-active-entry-on-the-device-comboBox-when-there-s-no-active.patch
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 FAILED at 174.
+Hunk #2 FAILED at 202.
+2 out of 2 hunks FAILED
+checking file panels/sound/cc-sound-panel.c
+Hunk #1 FAILED at 193.
+1 out of 1 hunk FAILED
+1:46.7-0ubuntu0.24.04.7
+== source package and debdiff
+dpkg-source -b rc=0
+debdiff rc=1 (1 = differences)
+== builds (stock first, then new), tests run by the package's own dh_auto_test
+stock rc 0  new rc 0
+== test lines
+-- stock
+   dh_auto_test
+	cd obj-x86_64-linux-gnu && DEB_PYTHON_INSTALL_LAYOUT=deb LC_ALL=C.UTF-8 MESON_TESTTHREADS=4 meson test
+2/5 test-hostname       OK              0.06s
+3/5 test-shift          OK              0.10s
+4/5 test-wif-panel-text OK              0.27s
+5/5 test-keyboard       OK              2.20s
+1/5 test-network-panel  OK             11.09s
+Ok:                 5   
+Expected Fail:      0   
+Fail:               0   
+Unexpected Pass:    0   
+Skipped:            0   
+Timeout:            0   
+-- new
+   dh_auto_test
+	cd obj-x86_64-linux-gnu && DEB_PYTHON_INSTALL_LAYOUT=deb LC_ALL=C.UTF-8 MESON_TESTTHREADS=4 meson test
+2/5 test-hostname       OK              0.02s
+3/5 test-shift          OK              0.03s
+4/5 test-wif-panel-text OK              0.11s
+5/5 test-keyboard       OK              0.90s
+1/5 test-network-panel  OK              5.07s
+Ok:                 5   
+Expected Fail:      0   
+Fail:               0   
+Unexpected Pass:    0   
+Skipped:            0   
+Timeout:            0   
+== done

@@ -1,0 +1,34 @@
+Description: sound: Unset active entry on the device comboBox when there's no active device
+ When gvc gives us an active-input/output-device ID we don't know or sets the ID
+ to 0, that means there's no device currently active. While this seems unlikely
+ to be the case without the device getting removed at the same time, it can happen:
+ When the bluetooth profile gets changed from handset (input+output) to
+ headphone (output only), the input device remains available, but there's no
+ more active-input-device anymore.
+ .
+ In this case, we shouldn't leave the active entry on the device combo box as-is,
+ instead we should set it to NULL to indicate that no input device is set.
+ .
+ This fixes a bug where the input switcher is not updated when there's no
+ internal microphone but there's a bluetooth headset connected, and the
+ bluetooth profile gets switched from Handset to Headphone.
+Author: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <verdre@v0yd.nl>
+Origin: upstream, https://gitlab.gnome.org/GNOME/gnome-control-center/-/commit/afec106a8b6690ea04475a8bb27232b118dd69b3
+Applied-Upstream: 47.0, commit:afec106a8b6690ea04475a8bb27232b118dd69b3
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/<LP-GCC-METER>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+---
+diff --git a/panels/sound/cc-device-combo-box.c b/panels/sound/cc-device-combo-box.c
+index 85e29268c..cbcb2d50d 100644
+--- a/panels/sound/cc-device-combo-box.c
++++ b/panels/sound/cc-device-combo-box.c
+@@ -112,6 +112,8 @@ cc_device_combo_box_active_device_changed (CcDeviceComboBox *self,
+ 
+   if (get_iter (self, id, &iter))
+     gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
++  else
++    gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), NULL);
+ }
+ 
+ static void

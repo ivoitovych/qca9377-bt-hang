@@ -1,0 +1,30 @@
+Description: Do not mark a stream as handled when its link was skipped
+ lp-2122640-bluetooth-audio-glitch.patch skips the link of a new stream to a
+ non-Bluetooth target during the two seconds after a Bluetooth node was
+ removed, but handleLinkable() still sets was_handled for that stream. A stream
+ opened with "don't move" (PA_STREAM_DONT_MOVE, which pipewire-pulse turns into
+ dont-reconnect) is then treated, at the rescan that ends the two seconds, as
+ "already linked before": its target is dropped and the stream is destroyed
+ ("target not found", "destroy node"). GNOME Settings' Sound panel opens its
+ input level meter this way and does not retry, so after a headset leaves
+ Handsfree for A2DP the meter on the laptop's microphone stays dead.
+ Set was_handled only when a link was made, so that the rescan after the two
+ seconds links the stream.
+Author: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Origin: other, written for this update; corrects lp-2122640-bluetooth-audio-glitch.patch
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/wireplumber/+bug/<LP-WP-METER>
+Forwarded: not-needed
+Last-Update: 2026-11-14
+
+--- a/src/scripts/policy-node.lua
++++ b/src/scripts/policy-node.lua
+@@ -818,8 +818,8 @@
+   else
+     if skip_this_target == false then
+       createLink (si, si_target, can_passthrough, exclusive)
++      si_flags[si.id].was_handled = true
+     end
+-    si_flags[si.id].was_handled = true
+ 
+     checkFollowDefault (si, si_target, has_node_defined_target)
+   end

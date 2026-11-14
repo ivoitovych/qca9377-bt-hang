@@ -1,0 +1,71 @@
+== os
+VERSION="24.04.5 LTS (Noble Numbat)"
+build-dep ok
+== new tree: unpack without patches, add ours
+-- dry run lp-2122640-do-not-mark-skipped-stream-handled.patch
+checking file src/scripts/policy-node.lua
+Hunk #1 FAILED at 818.
+1 out of 1 hunk FAILED
+NOTE: does not apply on the unpatched tree (expected for a patch that builds on Ubuntu's)
+checking file src/scripts/policy-node.lua
+applies on top of the full 5.x series: lp-2122640-do-not-mark-skipped-stream-handled.patch
+0.4.17-1ubuntu4.2
+== source package and debdiff
+dpkg-source -b rc=0
+debdiff rc=1 (1 = differences)
+== builds (stock first, then new), tests run by the package's own dh_auto_test
+stock rc 0  new rc 0
+== test lines
+-- stock
+ 9/27 test-spa-type             OK              0.03s
+10/27 test-proxy                OK              0.25s
+11/27 test-state                OK              0.12s
+12/27 test-transition           OK              0.03s
+13/27 test-dbus                 OK              0.15s
+14/27 test-factory              OK              0.09s
+15/27 test-wplua                OK              0.10s
+16/27 test-session-item         OK              0.46s
+17/27 test-lua-pod              OK              0.21s
+18/27 test-lua-monitor-rules    OK              0.19s
+19/27 test-lua-json             OK              0.23s
+20/27 test-lua-require          OK              0.09s
+21/27 test-file-monitor         OK              0.04s
+22/27 test-si-audio-adapter     OK              0.04s
+23/27 test-si-node              OK              0.24s
+24/27 test-lua-async-activation OK              0.35s
+25/27 test-si-audio-endpoint    OK              0.22s
+26/27 test-reserve-device       OK              0.41s
+27/27 test-si-standard-link     OK              0.16s
+Ok:                 27  
+Expected Fail:      0   
+Fail:               0   
+Unexpected Pass:    0   
+Skipped:            0   
+Timeout:            0   
+-- new
+ 9/27 test-spa-type             OK              0.04s
+10/27 test-proxy                OK              0.31s
+11/27 test-state                OK              0.13s
+12/27 test-transition           OK              0.04s
+13/27 test-session-item         OK              0.40s
+14/27 test-dbus                 OK              0.29s
+15/27 test-wplua                OK              0.20s
+16/27 test-factory              OK              0.22s
+17/27 test-lua-monitor-rules    OK              0.04s
+18/27 test-lua-json             OK              0.09s
+19/27 test-lua-pod              OK              0.15s
+20/27 test-lua-require          OK              0.11s
+21/27 test-file-monitor         OK              0.05s
+22/27 test-si-node              OK              0.10s
+23/27 test-reserve-device       OK              0.21s
+24/27 test-si-audio-adapter     OK              0.17s
+25/27 test-lua-async-activation OK              0.38s
+26/27 test-si-audio-endpoint    OK              0.18s
+27/27 test-si-standard-link     OK              0.17s
+Ok:                 27  
+Expected Fail:      0   
+Fail:               0   
+Unexpected Pass:    0   
+Skipped:            0   
+Timeout:            0   
+== done
