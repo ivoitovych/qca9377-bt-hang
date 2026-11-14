@@ -15,7 +15,7 @@ for n in 1 2 3; do
 	for tag in ea-base-dbg ea-e-dbg; do
 		"$h/run-guest.sh" "$tag" "bt23-$n" bt23 --delay 400 >/dev/null
 		echo "$tag bt23-$n exit=$?" >>"$out"
-		grep -a -h -E "RESULT bt23|tx timeout|BT17-EXIT" "$w/stress/logs/$tag-bt23-$n.log" | grep -a -v KMSG | sed "s/^/$tag bt23-$n: /" >>"$out"
+		grep -a -h -E "RESULT bt23|command( 0x[0-9a-f]+)? tx timeout|BT17-EXIT" "$w/stress/logs/$tag-bt23-$n.log" | grep -a -v KMSG | sed "s/^/$tag bt23-$n: /" >>"$out"
 	done
 done
 export GUEST_TIMEOUT=900

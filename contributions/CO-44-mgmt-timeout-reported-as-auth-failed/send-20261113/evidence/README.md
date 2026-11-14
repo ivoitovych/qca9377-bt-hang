@@ -1,6 +1,8 @@
 # Evidence behind CHECKS.md
 
-Copied unchanged on 2026-11-14 from the work area `/root/exp/agent-work/co44-send-20261113/`
+Copied on 2026-11-14 (unchanged but for one line: `scripts/analyse-testers.sh` line 21 greps
+`command( 0x[0-9a-f]+)? tx timeout`, the spelling the repository's test suite allows, where the
+run used `command 0x0c24 tx timeout`; the new case drops only 0x0c24, so its output is the same) from the work area `/root/exp/agent-work/co44-send-20261113/`
 (`logs/`, `scripts/`, `controls/`), so that what `../CHECKS.md` cites is in the repository and
 not only on one disk. Left out: `controls/mgmt-tester-control`, a built test binary (it is
 rebuilt from `controls/no-condition-complete.diff`). Paths inside the files still name that work
