@@ -1,0 +1,190 @@
+Add-clamp-1: Total: 128, Passed: 127 (99.2%), Failed: 1, Not Run: 0
+Add-clamp-2: Total: 128, Passed: 127 (99.2%), Failed: 1, Not Run: 0
+Add-clamp-3: Total: 128, Passed: 127 (99.2%), Failed: 1, Not Run: 0
+Add-clampfix-1: Total: 128, Passed: 128 (100.0%), Failed: 0, Not Run: 0
+Add-clampfix-2: Total: 128, Passed: 128 (100.0%), Failed: 0, Not Run: 0
+Add-clampfix-3: Total: 128, Passed: 128 (100.0%), Failed: 0, Not Run: 0
+Add-fix-1: Total: 128, Passed: 120 (93.8%), Failed: 8, Not Run: 0
+Add-fix-2: Total: 128, Passed: 120 (93.8%), Failed: 8, Not Run: 0
+Add-fix-3: Total: 128, Passed: 120 (93.8%), Failed: 8, Not Run: 0
+Add-plain-1: Total: 128, Passed: 119 (93.0%), Failed: 9, Not Run: 0
+Add-plain-2: Total: 128, Passed: 119 (93.0%), Failed: 9, Not Run: 0
+Add-plain-3: Total: 128, Passed: 119 (93.0%), Failed: 9, Not Run: 0
+Adv-clamp-1: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+Adv-clamp-2: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+Adv-clamp-3: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+AdvDur-clamp-1: Total: 22, Passed: 20 (90.9%), Failed: 2, Not Run: 0
+AdvDur-clamp-2: Total: 22, Passed: 20 (90.9%), Failed: 2, Not Run: 0
+AdvDur-clamp-3: Total: 22, Passed: 20 (90.9%), Failed: 2, Not Run: 0
+AdvDur-plain-1: Total: 22, Passed: 10 (45.5%), Failed: 12, Not Run: 0
+AdvDur-plain-2: Total: 22, Passed: 9 (40.9%), Failed: 13, Not Run: 0
+AdvDur-plain-3: Total: 22, Passed: 9 (40.9%), Failed: 13, Not Run: 0
+Adv-plain-1: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+Adv-plain-2: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+Adv-plain-3: Total: 125, Passed: 124 (99.2%), Failed: 1, Not Run: 0
+== AdvDur plain vs clamp, run 1
+A: 22 cases Failed=12 Passed=10
+B: 22 cases Failed=2 Passed=20
+cases with different verdicts: 10
+  AdvDur - Duration 1000 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 120 s                                 A=Failed     B=Passed
+  AdvDur - Duration 3600 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 6357 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 655 s                                 A=Failed     B=Passed
+  AdvDur - Duration 65535 s (clamp)                       A=Failed     B=Passed
+  AdvDur - Duration 656 s (clamp)                         A=Failed     B=Passed
+  AdvDur - Duration 66 s                                  A=Failed     B=Passed
+  AdvDur - Duration 8192 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Removal 66 s                                   A=Failed     B=Passed
+not-passed sets identical: False (A 12, B 2)
+== Add plain vs clamp, run 1
+A: 128 cases Failed=9 Passed=119
+B: 128 cases Failed=1 Passed=127
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 9, B 1)
+== Add fix vs clampfix, run 1
+A: 128 cases Failed=8 Passed=120
+B: 128 cases Passed=128
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 8, B 0)
+== Advertising plain vs clamp, run 1
+A: 125 cases Passed=124 Timed out=1
+B: 125 cases Passed=124 Timed out=1
+cases with different verdicts: 0
+not-passed sets identical: True (A 1, B 1)
+== AdvDur plain vs clamp, run 2
+A: 22 cases Failed=13 Passed=9
+B: 22 cases Failed=2 Passed=20
+cases with different verdicts: 11
+  AdvDur - Duration 1000 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 120 s                                 A=Failed     B=Passed
+  AdvDur - Duration 3600 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 6357 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 655 s                                 A=Failed     B=Passed
+  AdvDur - Duration 65535 s (clamp)                       A=Failed     B=Passed
+  AdvDur - Duration 656 s (clamp)                         A=Failed     B=Passed
+  AdvDur - Duration 66 s                                  A=Failed     B=Passed
+  AdvDur - Duration 8192 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Removal 656 s (clamp)                          A=Failed     B=Passed
+  AdvDur - Removal 66 s                                   A=Failed     B=Passed
+not-passed sets identical: False (A 13, B 2)
+== Add plain vs clamp, run 2
+A: 128 cases Failed=9 Passed=119
+B: 128 cases Failed=1 Passed=127
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 9, B 1)
+== Add fix vs clampfix, run 2
+A: 128 cases Failed=8 Passed=120
+B: 128 cases Passed=128
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 8, B 0)
+== Advertising plain vs clamp, run 2
+A: 125 cases Passed=124 Timed out=1
+B: 125 cases Passed=124 Timed out=1
+cases with different verdicts: 0
+not-passed sets identical: True (A 1, B 1)
+== AdvDur plain vs clamp, run 3
+A: 22 cases Failed=13 Passed=9
+B: 22 cases Failed=2 Passed=20
+cases with different verdicts: 11
+  AdvDur - Duration 1000 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 120 s                                 A=Failed     B=Passed
+  AdvDur - Duration 3600 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 6357 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Duration 655 s                                 A=Failed     B=Passed
+  AdvDur - Duration 65535 s (clamp)                       A=Failed     B=Passed
+  AdvDur - Duration 656 s (clamp)                         A=Failed     B=Passed
+  AdvDur - Duration 66 s                                  A=Failed     B=Passed
+  AdvDur - Duration 8192 s (clamp)                        A=Failed     B=Passed
+  AdvDur - Removal 656 s (clamp)                          A=Failed     B=Passed
+  AdvDur - Removal 66 s                                   A=Failed     B=Passed
+not-passed sets identical: False (A 13, B 2)
+== Add plain vs clamp, run 3
+A: 128 cases Failed=9 Passed=119
+B: 128 cases Failed=1 Passed=127
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 9, B 1)
+== Add fix vs clampfix, run 3
+A: 128 cases Failed=8 Passed=120
+B: 128 cases Passed=128
+cases with different verdicts: 8
+  Add Ext Advertising - Timeout 6357 s (limit)            A=Failed     B=Passed
+  Add Ext Advertising - Timeout 655 s                     A=Failed     B=Passed
+  Add Ext Advertising - Timeout 65535 s (limit)           A=Failed     B=Passed
+  Add Ext Advertising - Timeout 656 s (limit)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s                      A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s (Params)             A=Failed     B=Passed
+  Add Ext Advertising - Timeout 66 s and 1 s              A=Failed     B=Passed
+  Add Ext Advertising - Timeout 8192 s (limit)            A=Failed     B=Passed
+not-passed sets identical: False (A 8, B 0)
+== Advertising plain vs clamp, run 3
+A: 125 cases Passed=124 Timed out=1
+B: 125 cases Passed=124 Timed out=1
+cases with different verdicts: 0
+not-passed sets identical: True (A 1, B 1)
+== kernel-report-scan
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clamp-1.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clamp-2.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clamp-3.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clampfix-1.log  kernel=7.3.0-gce160d14e116  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clampfix-2.log  kernel=7.3.0-gce160d14e116  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-clampfix-3.log  kernel=7.3.0-gce160d14e116  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-fix-1.log  kernel=7.3.0-g1fb5fb3351f9  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-fix-2.log  kernel=7.3.0-g1fb5fb3351f9  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-fix-3.log  kernel=7.3.0-g1fb5fb3351f9  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-plain-1.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-plain-2.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Add-plain-3.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-clamp-1.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-clamp-2.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-clamp-3.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-clamp-1.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-clamp-2.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-clamp-3.log  kernel=7.3.0-g4b321eb77227  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-plain-1.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-plain-2.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/AdvDur-plain-3.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-plain-1.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-plain-2.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/lane3-mgmt-20261114/CO-12/logs/Adv-plain-3.log  kernel=7.3.0-gda3cc02587c6  clean
+rc=0

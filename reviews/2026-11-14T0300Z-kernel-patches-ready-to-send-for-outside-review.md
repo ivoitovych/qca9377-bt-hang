@@ -1044,9 +1044,9 @@ advertising-duration clamp, not in this document).
 change is the new case "Add Ext Advertising - Instance 2 listed alone", Failed → Passed 3 of 3
 (the other 8 not-passed are the duration cases of the separate CO-12 fix, failing on both kernels);
 mesh-tester 8/10 on both. The bot's kernel checks pass on both sides with identical tester
-results. On the BlueZ side the bot's TestFunctional failed 2 of 3 patched runs (two different BAP
-cases) and passed 2 of 2 base runs; the series touches only two tester sources, so it looks like a
-flake on a loaded host, but that is not shown. A newer patch, "mgmt: drop advertising instances
+results. On the BlueZ side the bot's TestFunctional is flaky in two BAP cases on a loaded host:
+across all runs, patched failed 2 of 8 and base 1 of 7, the same BAP case on base as on patched,
+and the series touches only two tester sources. A newer patch, "mgmt: drop advertising instances
 the controller cannot carry" (patchwork 14976301), fixes a different bug.
 
 **`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/patch/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch`** (SHA-256 `abe944ee82213c5954bbd3314d0c2578e78e7823585b374471a69bc15f154aa4`)
@@ -1869,7 +1869,7 @@ index 896cfd1f2..febcb91c4 100644
 
 ```
 
-**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/CHECKS.md`** (SHA-256 `809a5d3295970c09af5ad841c9af9c1f146ac932697efa86d15c328558c1e29f`)
+**`contributions/CO-38-read-adv-features-hidden-instances/send-20261114/CHECKS.md`** (SHA-256 `931b6006ee8bc83fed211cebbc8576ab12ff5f4736b033ea01b615aae0ff5712`)
 
 ```markdown
 # CO-38 refresh, 2026-11-14: checks
@@ -1918,6 +1918,20 @@ Run from my clone of the project. The kernel mail used for the full run is the r
 
 ## Surprises
 - The kernel fix compiled without change; nothing in the touched function moved.
+
+## 5. TestFunctional settled (task 2.1, 2026-11-14 06:20 to 10:17 local; `tf-summary.txt`, `logs/bot-tf-1` to `-5`, `logs/tf-progress.log`)
+Five alternating invocations of `bot-ci-local.sh --space user --side both --only TestFunctional` (patched side, then base side, then the next invocation), same tree without alternates, same kernel image, same BlueZ commit; host load average 13 to 22 during the runs [measured]:
+
+| run | patched | base |
+|---|---|---|
+| 1 | PASS | **FAIL**: `test_bap.py::test_bass_past_transport_acquire[hosts9-vm2]` "Failed to acquire: org.bluez.Error.Failed" |
+| 2 | PASS | PASS |
+| 3 | PASS | PASS |
+| 4 | PASS | PASS |
+| 5 | PASS | PASS |
+
+- Over all 8 runs of the day: patched 2 FAIL of 8 (two different BAP/BASS cases), base 1 FAIL of 7 (the same case `test_bass_past_transport_acquire` that failed on patched in the first run) [measured]. So the failure appears on base, with no patch: a flake of the BAP/BASS acquire tests, not caused by the series.
+- The patched build does not differ elsewhere: `git diff --stat base..series` = `tools/mesh-tester.c` 32 and `tools/mgmt-tester.c` 526 insertions, nothing else (the emulator `emulator/`, `test/functional/` and the daemon are the same files on both sides) [measured]. TestFunctional runs `test/functional` through `btvirt` and the daemon, not the two testers [inferred from the bot's command line in `TestFunctional.log`: `test-functional -vv ... -m 'not tester'`].
 ```
 
 ---

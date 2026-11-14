@@ -1,0 +1,13 @@
+There are three ways to handle a timeout above 655 s on a controller
+that uses extended advertising:
+
+ 1. Clamp it, as this patch does: the instance ends after 655.35 s.
+ 2. Reject it with Invalid Parameters. The MGMT timeout then always
+    holds, but a request that is accepted today becomes an error.
+ 3. Keep a host deadline per instance and remove the instance when it
+    expires. The existing expiry work serves legacy advertising, which
+    advertises one instance at a time, so this needs a timer for each
+    instance.
+
+This patch takes 1 as the smallest change that stops the wrap; I can
+rework it to 2 or 3 if either is preferred.

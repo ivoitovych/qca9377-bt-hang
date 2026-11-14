@@ -1,0 +1,29 @@
+Bluetooth: hci_sync: Fix extended advertising duration overflow
+
+hci_enable_ext_advertising_sync() passes the instance timeout to the
+controller as the Duration of LE Set Extended Advertising Enable. The
+timeout comes from MGMT Add Advertising or Add Extended Advertising
+Parameters in seconds, but it is converted to milliseconds in a u16, so
+every timeout above 65 s wraps:
+
+ - 66 s is sent as a Duration of 46 (460 ms), and the instance is
+   removed after less than half a second
+ - 655 s is sent as 6517 (65.17 s)
+ - timeouts congruent to 0 or 6357 modulo 8192, 8192 s among them, are
+   sent as 0, which the controller reads as no limit, so the instance
+   is never removed
+
+The conversion has been done this way since commit 10bbffa3e88e
+("Bluetooth: Fix using advertising instance duration as timeout").
+
+Compute the duration in a u32 and limit the encoded value to 0xffff.
+Timeouts of up to 655 s are now passed exactly. The Duration field
+cannot express more than 655.35 s, so an instance with a longer
+timeout now ends after 655.35 s instead of the requested time. Mesh
+instances, whose timeout is already in milliseconds, are unchanged.
+
+bluetoothd is not affected: it runs the Timeout property of an
+advertisement on its own timer and leaves the MGMT timeout at 0. Other
+MGMT clients that pass a timeout, such as btmgmt add-adv -t, are.
+
+Fixes: 10bbffa3e88e ("Bluetooth: Fix using advertising instance duration as timeout")

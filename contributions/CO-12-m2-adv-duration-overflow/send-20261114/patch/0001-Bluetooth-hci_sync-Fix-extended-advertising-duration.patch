@@ -1,0 +1,75 @@
+From 4b321eb77227b4cb3966e939c93f3dd471e9a0e2 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 07:20:38 +0100
+Subject: [PATCH] Bluetooth: hci_sync: Fix extended advertising duration
+ overflow
+
+hci_enable_ext_advertising_sync() passes the instance timeout to the
+controller as the Duration of LE Set Extended Advertising Enable. The
+timeout comes from MGMT Add Advertising or Add Extended Advertising
+Parameters in seconds, but it is converted to milliseconds in a u16, so
+every timeout above 65 s wraps:
+
+ - 66 s is sent as a Duration of 46 (460 ms), and the instance is
+   removed after less than half a second
+ - 655 s is sent as 6517 (65.17 s)
+ - timeouts congruent to 0 or 6357 modulo 8192, 8192 s among them, are
+   sent as 0, which the controller reads as no limit, so the instance
+   is never removed
+
+The conversion has been done this way since commit 10bbffa3e88e
+("Bluetooth: Fix using advertising instance duration as timeout").
+
+Compute the duration in a u32 and limit the encoded value to 0xffff.
+Timeouts of up to 655 s are now passed exactly. The Duration field
+cannot express more than 655.35 s, so an instance with a longer
+timeout now ends after 655.35 s instead of the requested time. Mesh
+instances, whose timeout is already in milliseconds, are unchanged.
+
+bluetoothd is not affected: it runs the Timeout property of an
+advertisement on its own timer and leaves the MGMT timeout at 0. Other
+MGMT clients that pass a timeout, such as btmgmt add-adv -t, are.
+
+Fixes: 10bbffa3e88e ("Bluetooth: Fix using advertising instance duration as timeout")
+---
+There are three ways to handle a timeout above 655 s on a controller
+that uses extended advertising:
+
+ 1. Clamp it, as this patch does: the instance ends after 655.35 s.
+ 2. Reject it with Invalid Parameters. The MGMT timeout then always
+    holds, but a request that is accepted today becomes an error.
+ 3. Keep a host deadline per instance and remove the instance when it
+    expires. The existing expiry work serves legacy advertising, which
+    advertises one instance at a time, so this needs a timer for each
+    instance.
+
+This patch takes 1 as the smallest change that stops the wrap; I can
+rework it to 2 or 3 if either is preferred.
+
+ net/bluetooth/hci_sync.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index 931494348325e..ea57a1b988f55 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -1744,11 +1744,11 @@ int hci_enable_ext_advertising_sync(struct hci_dev *hdev, u8 instance)
+ 	 * scheduling it.
+ 	 */
+ 	if (adv && adv->timeout) {
+-		u16 duration = adv->mesh ? adv->timeout :
++		u32 duration = adv->mesh ? adv->timeout :
+ 					   adv->timeout * MSEC_PER_SEC;
+ 
+-		/* Time = N * 10 ms */
+-		set->duration = cpu_to_le16(duration / 10);
++		/* Time = N * 10 ms, at most 0xffff (655.35 s) */
++		set->duration = cpu_to_le16(min_t(u32, duration / 10, U16_MAX));
+ 	}
+ 
+ 	/* Track which instance owns the advertising set since the handle
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

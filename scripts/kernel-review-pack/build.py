@@ -105,9 +105,9 @@ advertising-duration clamp, not in this document).
 change is the new case "Add Ext Advertising - Instance 2 listed alone", Failed → Passed 3 of 3
 (the other 8 not-passed are the duration cases of the separate CO-12 fix, failing on both kernels);
 mesh-tester 8/10 on both. The bot's kernel checks pass on both sides with identical tester
-results. On the BlueZ side the bot's TestFunctional failed 2 of 3 patched runs (two different BAP
-cases) and passed 2 of 2 base runs; the series touches only two tester sources, so it looks like a
-flake on a loaded host, but that is not shown. A newer patch, "mgmt: drop advertising instances
+results. On the BlueZ side the bot's TestFunctional is flaky in two BAP cases on a loaded host:
+across all runs, patched failed 2 of 8 and base 1 of 7, the same BAP case on base as on patched,
+and the series touches only two tester sources. A newer patch, "mgmt: drop advertising instances
 the controller cannot carry" (patchwork 14976301), fixes a different bug.
 """, [
         (f"{C38}/0001-Bluetooth-MGMT-Fix-Read-Advertising-Features-hiding-.patch", "diff"),
