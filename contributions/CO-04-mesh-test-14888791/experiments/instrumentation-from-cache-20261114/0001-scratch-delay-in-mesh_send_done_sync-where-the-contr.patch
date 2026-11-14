@@ -1,0 +1,44 @@
+From 737fc2bde9672607b2668e14028f205d39ad1199 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 07:35:06 +0200
+Subject: [PATCH] scratch: delay in mesh_send_done_sync() where the controller
+ would be asked (not for submission)
+
+Research instrumentation only. Module parameter
+bluetooth.scratch_done_delay_ms (default 0: no change) makes
+mesh_send_done_sync() sleep at the place of hci_disable_advertising_sync(),
+which is the window in which a Mesh Send sees HCI_MESH_SENDING clear
+(unpatched) while mesh_next() has not run yet. On bluetooth-next the
+mesh instance stays on the list, so the real command is not sent and the
+window does not exist without this.
+---
+ net/bluetooth/mgmt.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 31f6be2fe2db0..ba8ff447877ed 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1094,10 +1094,19 @@ static void mesh_send_complete(struct hci_dev *hdev,
+ 	mgmt_mesh_remove(mesh_tx);
+ }
+ 
++/* scratch (not for submission): stands in for the time hci_disable_advertising_sync()
++ * takes when the controller is slow to answer; sleeps in mesh_send_done_sync() at
++ * the place of that command, whether or not it would be sent.
++ */
++static unsigned int scratch_done_delay_ms;
++module_param(scratch_done_delay_ms, uint, 0644);
++
+ static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ {
+ 	struct mgmt_mesh_tx *mesh_tx;
+ 
++	if (READ_ONCE(scratch_done_delay_ms))
++		msleep(READ_ONCE(scratch_done_delay_ms));
+ 	if (list_empty(&hdev->adv_instances))
+ 		hci_disable_advertising_sync(hdev);
+ 
+-- 
+2.43.0
+

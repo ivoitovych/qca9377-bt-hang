@@ -1,0 +1,66 @@
+From 0cf19a62f275ac78477c471a66689cd50fd241c9 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:25:34 +0200
+Subject: [PATCH] scratch: widen the unregister window for the mesh tear-down
+ entry (not for submission)
+
+Research instrumentation only. Module parameter
+bluetooth.scratch_teardown_hold_ms (default 0: no change) keeps the
+ordered req_workqueue busy that long after mesh_send_done() queued the
+tear-down entry, so that a controller removal in that window finds the
+entry still on cmd_sync_work_list and hci_cmd_sync_clear() runs its
+destroy callback, mesh_next(), under cmd_sync_work_lock. Port of the
+2026-10-05 scratch commit b45d5115783e to the current tree, without the
+extra prints (the kprobe trace carries them).
+---
+ net/bluetooth/mgmt.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 681d70419b8a4..31f6be2fe2db0 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -22,6 +22,7 @@
+ /* Bluetooth HCI Management interface */
+ 
+ #include <linux/module.h>
++#include <linux/delay.h>
+ #include <linux/unaligned.h>
+ 
+ #include <net/bluetooth/bluetooth.h>
+@@ -1140,15 +1141,31 @@ static void mesh_next(struct hci_dev *hdev, void *data, int err)
+ 	hci_dev_unlock(hdev);
+ }
+ 
++/* scratch (not for submission): keep the ordered req_workqueue busy for this
++ * long after the tear-down entry was queued, so that an unregister in that
++ * window finds the entry still on cmd_sync_work_list.
++ */
++static unsigned int scratch_teardown_hold_ms;
++module_param(scratch_teardown_hold_ms, uint, 0644);
++
+ static void mesh_send_done(struct work_struct *work)
+ {
+ 	struct hci_dev *hdev = container_of(work, struct hci_dev,
+ 					    mesh_send_done.work);
++	unsigned int hold = READ_ONCE(scratch_teardown_hold_ms);
++	int err;
+ 
+ 	if (!hci_dev_test_flag(hdev, HCI_MESH_SENDING))
+ 		return;
+ 
+-	hci_cmd_sync_queue(hdev, mesh_send_done_sync, NULL, mesh_next);
++	err = hci_cmd_sync_queue(hdev, mesh_send_done_sync, NULL, mesh_next);
++
++	if (hold) {
++		pr_info("scratch: tear-down entry queued (%d), holding req_workqueue %u ms\n",
++			err, hold);
++		msleep(hold);
++		pr_info("scratch: hold over\n");
++	}
+ }
+ 
+ static void mgmt_init_hdev(struct sock *sk, struct hci_dev *hdev)
+-- 
+2.43.0
+

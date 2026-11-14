@@ -1,0 +1,31 @@
+From 87dd6150af2fdef68fca525ab4d6107a1cae5d2a Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 22 Oct 2026 05:21:44 +0200
+Subject: [PATCH] scratch: park only once (diagnostic, not for submission)
+
+---
+ net/bluetooth/hci_conn.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 0252da9fd3e93..1e2c3e51406cc 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -666,9 +666,12 @@ static void hci_conn_timeout(struct work_struct *work)
+ 		return;
+ 
+ 	if (w2c_park_ms && (conn->type == SCO_LINK || conn->type == ESCO_LINK)) {
++		unsigned int park = w2c_park_ms;
++
++		w2c_park_ms = 0;	/* park once only */
+ 		pr_warn("w2c: hcon %p saw refcnt 0, parking %u ms\n", conn,
+-			w2c_park_ms);
+-		msleep(w2c_park_ms);
++			park);
++		msleep(park);
+ 		pr_warn("w2c: hcon %p released: refcnt %d abort_reason %u\n",
+ 			conn, atomic_read(&conn->refcnt), conn->abort_reason);
+ 	}
+-- 
+2.43.0
+

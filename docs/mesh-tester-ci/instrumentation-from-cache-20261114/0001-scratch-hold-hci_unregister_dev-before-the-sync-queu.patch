@@ -1,0 +1,60 @@
+From c6f8773522fbf22368ade2d731f577e6de28e25f Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 5 Oct 2026 12:51:45 +0200
+Subject: [PATCH] scratch: hold hci_unregister_dev() before the sync queue is
+ cleared
+
+Not for submission. Module parameter bluetooth.scratch_unreg_hold_ms
+(default 0, unchanged behaviour): when set, hci_unregister_dev() sleeps
+that long after HCI_UNREGISTER is set and the command work is disabled,
+before hci_cmd_sync_clear() and mgmt_index_removed(), so that a mesh done
+work armed shortly before the removal fires inside the removal, where
+hci_cmd_sync_submit() returns -ENODEV. Power-off comparison, case 5.
+---
+ net/bluetooth/hci_core.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/net/bluetooth/hci_core.c b/net/bluetooth/hci_core.c
+index 05d1ca25f44f3..90ba40c50cde5 100644
+--- a/net/bluetooth/hci_core.c
++++ b/net/bluetooth/hci_core.c
+@@ -31,6 +31,8 @@
+ #include <linux/suspend.h>
+ #include <linux/wait.h>
+ #include <linux/unaligned.h>
++#include <linux/delay.h>
++#include <linux/moduleparam.h>
+ 
+ #include <net/bluetooth/bluetooth.h>
+ #include <net/bluetooth/hci_core.h>
+@@ -2662,6 +2664,14 @@ int hci_register_dev(struct hci_dev *hdev)
+ }
+ EXPORT_SYMBOL(hci_register_dev);
+ 
++/* scratch (power-off comparison, not for submission): hold the
++ * unregistering thread after HCI_UNREGISTER is set and the command work is
++ * disabled, before the sync queue is cleared and mgmt_index_removed()
++ * cancels the mesh done work.
++ */
++static unsigned int scratch_unreg_hold_ms;
++module_param(scratch_unreg_hold_ms, uint, 0644);
++
+ /* Unregister HCI device */
+ void hci_unregister_dev(struct hci_dev *hdev)
+ {
+@@ -2687,6 +2697,12 @@ void hci_unregister_dev(struct hci_dev *hdev)
+ 	disable_delayed_work_sync(&hdev->ncmd_timer);
+ 	hci_devcd_shutdown(hdev);
+ 
++	if (scratch_unreg_hold_ms) {
++		pr_info("scratch: unregister held %u ms\n",
++			scratch_unreg_hold_ms);
++		msleep(scratch_unreg_hold_ms);
++	}
++
+ 	hci_cmd_sync_clear(hdev);
+ 
+ 	hci_unregister_suspend_notifier(hdev);
+-- 
+2.43.0
+
