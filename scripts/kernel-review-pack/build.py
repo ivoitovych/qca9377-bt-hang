@@ -286,6 +286,18 @@ leaked HCI command skbs in 11 of 12 fault runs without the fix, none with it. **
 system-suspend path, which `vhci_hcd` cannot exercise; D v2 queues its reset only inside a runtime
 resume, and that the system path is unchanged rests on reading `drivers/usb/core/driver.c`.
 
+**Known problem (2026-11-14, from source; `reviews/2026-11-14T1300Z-bt17-open-work-reviewer-3-checks.md`
+§1).** That reading was wrong. Once btusb has a `reset_resume` callback, `usb_resume_interface()`
+calls it on every reset-resume and no longer sets `needs_binding`. A reset-resume during a
+*system* resume therefore only runs `btusb_resume()`: there is no rebind and no new firmware
+setup. This is the behaviour reverted in 2013 (`b1a8014471b0`). It affects two groups that btusb
+itself resets on a system resume and that rely on the rebind to reload firmware. One is the QCA
+ROME devices of `btusb_needs_reset_resume_table`. The other, wider group is the Realtek devices
+suspended with wakeup disabled: `btusb_suspend()` says they "lose the loaded fw".
+The callback also lifts `autosuspend_check()`'s refusal for those devices. So D v2 (patch 3) is
+not to be sent as it is, and B2 (patch 2), which depends on it, waits with it. Reviews of
+patches 1, 4 and 5, and of the approach, are still wanted.
+
 **Questions for you.** D v2's `RPM_RESUMING` test as the way to tell a runtime reset-resume from a
 system one; whether D belongs in btusb at all, or BT-18 is the USB core's to fix (a question to
 linux-usb is drafted); B2's handling of the command credit.

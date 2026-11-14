@@ -71,6 +71,19 @@ module for the laptop's `-43` would need `-43`'s btusb source and the operator's
   what exercises the code.
 
 **Open before any send:**
+0. **2026-11-14: D v2 (patch 3 of `send-series-20261114/`) breaks the system-resume rebind**
+   (`reviews/2026-11-14T1300Z-bt17-open-work-reviewer-3-checks.md` §1, from source; not run).
+   - With any `reset_resume` callback, `usb_resume_interface()` no longer sets `needs_binding`.
+   - So the two groups below would be resumed after a system reset-resume, not rebound, and
+     would lose their firmware reload. This is the behaviour reverted in 2013 (`b1a8014471b0`).
+   - Item 1's "a rebinding they already got" does not hold once the callback exists.
+   - Patch 3, and patch 2 which needs it, are held: ask linux-usb first (BT-18), or mirror the
+     core's `needs_binding` on a system resume (operator's choice).
+   - New from the same review, for B2:
+     - a send gate while recovery is pending, against item 2's "each command times out on its
+       own";
+     - a timed-out deferred command that is submitted late when the resume succeeds (research
+       item; an emulator mode is needed).
 1. **D changes the system-resume path** of every btusb device that is reset-resumed at a
    system resume. That is one USB reset more, before a rebinding they already got.
    - **Affected:** the devices of `btusb_needs_reset_resume_table`, and **all Realtek

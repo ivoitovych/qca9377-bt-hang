@@ -323,6 +323,7 @@ journalctl read 5.4 GB from the journal files and wrote 1.29 GB of text before i
   - At 553 files it is 703 lines/s, against 196 451 for one file.
   - So the cost grows with the square of the journal's size.
   - Not yet checked against systemd main or in a VM; the cause has not been read in the source.
+    Contribution candidate [CO-46](../contributions/CO-46-systemd-journalctl-file-count-slowdown/README.md).
 
 **CI green again 2026-11-07 from `8bbd04a`** (checks run `42377712229`, every job ✓). It was red
 from 2026-11-02 13:26 UTC (`83ec2f4`) on every push to 11-07, unread (found by the documentation

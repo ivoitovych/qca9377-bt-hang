@@ -26,6 +26,9 @@ line added, one below-`---` paragraph removed).
   Write Class of Device timeout as ours), which fits "a real bug that bothers people".
 - Reviewer 7 calls it a reasonable stable candidate after normal review.
 - With `Fixes:` the stable team's automatic selection may pick it up anyway (reviewer 6).
+- Reviewer 3 (answer of 2026-11-13, stored 11-14) adds it as a trailer. It cites the stable
+  rules: a tiny, tested, user-visible fix with a clear origin, where `Fixes:` alone does not
+  replace the stable Cc.
 
 **Against:**
 - The two previous changes to this same function went in without it: `65683fbed5c8` RFKILLED
