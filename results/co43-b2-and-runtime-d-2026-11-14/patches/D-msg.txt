@@ -1,0 +1,36 @@
+Bluetooth: btusb: Recover after a runtime reset-resume
+
+When a runtime resume fails and USB persist is enabled, the USB core
+resets the device (a reset-resume). btusb has no reset_resume
+callback, so usb_resume_interface() only marks its interfaces for
+rebinding. Marked interfaces are rebound after a system resume
+(usb_resume_complete()) and after usb_reset_device(), but not after a
+runtime resume. btusb therefore stays bound without ever being
+resumed: BTUSB_SUSPENDING stays set, its suspend count is off by one,
+and every URB it sends from then on is parked on the deferred anchor.
+The controller answers USB requests, but Bluetooth is dead until the
+device is unplugged or the machine rebooted.
+
+With an emulated QCA9377 (13d3:3503) that answered again only after
+the USB reset, closing hci0 (which runtime-resumes the device) left it
+in that state: the next power-on failed with HCI Reset timeouts that
+never reached the device.
+
+Add a reset_resume callback that resumes as usual and, if the device
+was runtime-suspended, queues a USB reset. btusb has no pre_reset and
+post_reset callbacks, so the core then unbinds and rebinds it, and the
+controller, which the reset may have cleared, is set up again.
+
+The reset is queued even if btusb_resume() failed, because
+usb_resume_both() ignores its result. usb_lock_device_for_reset()
+refuses a device that is suspended, and the work then drops the
+request without a message, so take the runtime PM reference that
+btusb_reset() takes, guarded by BTUSB_RESET; btusb_disconnect()
+releases it after the rebinding.
+
+The system resume path is not meant to change: the reset is queued only
+if btusb_suspend() saw a runtime suspend (PMSG_IS_AUTO()). That was not
+tested, as the emulated device cannot take part in a system sleep. A
+device that was already runtime-suspended when the system went to sleep
+keeps that record, so its reset-resume at the system resume queues the
+reset too.

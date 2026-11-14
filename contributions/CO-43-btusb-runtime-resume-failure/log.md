@@ -58,3 +58,17 @@ D (not as a fix); a lane is working on the harness fixes, B2 and a narrowed D (`
 - The linux-usb question (11-13) is in `drafts/bt18-linux-usb-question-20261113/`. Its lore links
   were broken (lore answers "not found" for both 2014 Message-IDs); they now point at
   mail-archive.com, whose pages carry those Message-IDs.
+
+## 2026-11-14 — B2 and a runtime-only D (`results/co43-b2-and-runtime-d-2026-11-14/`)
+
+- Harness fixed as reviewer 7 asked (recover on reset, judge by a command round trip, a failed
+  case fails the run), each fix seen to fail when broken.
+- **B2** removes BT-19's block (5.380 s → 0.002 s) and keeps the reset a wedged-but-awake
+  controller needs (`dropcmd-wedge` 3/3, where B stayed dead 6/6). It does not stand alone: a
+  recovering device stays dead without D (0/3). B2's commit message still carries B's wording
+  about the rebinding and must be reworded.
+- **D narrowed** to a runtime suspend, with a PM reference held: runtime path 18/18; with the
+  queued reset delayed past the autosuspend delay, wide D lost the reset 3/3 (Bluetooth still
+  worked, without the reset and rebinding), narrowed D kept it 3/3.
+  Open: a device already runtime-suspended at system sleep still queues the reset at system
+  resume (source reading), so the system path is not yet unchanged; untestable on `vhci_hcd`.

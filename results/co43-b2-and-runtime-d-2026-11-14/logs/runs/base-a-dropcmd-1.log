@@ -1,0 +1,69 @@
+start 2026-11-14 01:50:59 kernel base label a-dropcmd-1 args dropcmd cpus 4
+b6026653cba5c8bed45b3520e0fc4931a5e154abb8fb03c8930ab4659e207217  /root/exp/agent-work/bt17-emu-20261113/img/bzImage-base
+bb1fc35567daccc40e1b2db2a706fd66519720a549dc9ec0ea792b193b1305fb  /root/exp/agent-work/lane1-btusb-20261114/task1/harness/bt17-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x0000000004ba12c4
+input_len: 0x000000000103a0bc
+output: 0x0000000001000000
+output_len: 0x000000000382e53c
+kernel_total_size: 0x0000000004c1e000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030a82d0).
+Linux version 7.3.0-gda3cc02587c6 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Fri Nov 13 04:19:39 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/lane1-btusb-20261114/task1/harness/bt17-emu.py dropcmd'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/lane1-btusb-20261114/task1/harness/bt17-emu.py dropcmd
+Changing into directory /root/exp
+New process 60 created
+random: crng init done
+  File "/root/exp/agent-work/lane1-btusb-20261114/task1/harness/bt17-emu.py", line 934
+    ok = True                       # scenarios without a success condition (provoke, up)
+IndentationError: expected an indented block after 'for' statement on line 934
+Process 60 exited with status 1
+exit=0 end 2026-11-14 01:51:19

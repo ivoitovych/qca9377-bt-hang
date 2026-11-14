@@ -1,0 +1,115 @@
+From cdae6322cd29eaacbae6bb07ae89c58db5c72034 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 01:49:17 +0100
+Subject: [PATCH 3/3] Bluetooth: btusb: Recover after a runtime reset-resume
+
+When a runtime resume fails and USB persist is enabled, the USB core
+resets the device (a reset-resume). btusb has no reset_resume
+callback, so usb_resume_interface() only marks its interfaces for
+rebinding. Marked interfaces are rebound after a system resume
+(usb_resume_complete()) and after usb_reset_device(), but not after a
+runtime resume. btusb therefore stays bound without ever being
+resumed: BTUSB_SUSPENDING stays set, its suspend count is off by one,
+and every URB it sends from then on is parked on the deferred anchor.
+The controller answers USB requests, but Bluetooth is dead until the
+device is unplugged or the machine rebooted.
+
+With an emulated QCA9377 (13d3:3503) that answered again only after
+the USB reset, closing hci0 (which runtime-resumes the device) left it
+in that state: the next power-on failed with HCI Reset timeouts that
+never reached the device.
+
+Add a reset_resume callback that resumes as usual and, if the device
+was runtime-suspended, queues a USB reset. btusb has no pre_reset and
+post_reset callbacks, so the core then unbinds and rebinds it, and the
+controller, which the reset may have cleared, is set up again.
+
+The reset is queued even if btusb_resume() failed, because
+usb_resume_both() ignores its result. usb_lock_device_for_reset()
+refuses a device that is suspended, and the work then drops the
+request without a message, so take the runtime PM reference that
+btusb_reset() takes, guarded by BTUSB_RESET; btusb_disconnect()
+releases it after the rebinding.
+
+The system resume path is not meant to change: the reset is queued only
+if btusb_suspend() saw a runtime suspend (PMSG_IS_AUTO()). That was not
+tested, as the emulated device cannot take part in a system sleep. A
+device that was already runtime-suspended when the system went to sleep
+keeps that record, so its reset-resume at the system resume queues the
+reset too.
+---
+ drivers/bluetooth/btusb_main.c | 37 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index ace03e11c20d3..c331c28adc27d 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1076,6 +1076,7 @@ struct btusb_data {
+ 	bool usb_alt6_packet_flow;
+ 	int isoc_altsetting;
+ 	int suspend_count;
++	bool suspend_auto;	/* the suspend in effect was a runtime suspend */
+ 	const struct usb_device_id *match_id;
+ 
+ 	int (*recv_event)(struct hci_dev *hdev, struct sk_buff *skb);
+@@ -4988,6 +4989,7 @@ static int btusb_suspend(struct usb_interface *intf, pm_message_t message)
+ 
+ 	spin_lock_irq(&data->txlock);
+ 	if (!(PMSG_IS_AUTO(message) && data->tx_in_flight)) {
++		data->suspend_auto = PMSG_IS_AUTO(message);
+ 		set_bit(BTUSB_SUSPENDING, &data->flags);
+ 		spin_unlock_irq(&data->txlock);
+ 	} else {
+@@ -5128,6 +5130,40 @@ static int btusb_resume(struct usb_interface *intf)
+ 	return err;
+ }
+ 
++static int btusb_reset_resume(struct usb_interface *intf)
++{
++	struct btusb_data *data = usb_get_intfdata(intf);
++	int err;
++
++	BT_DBG("intf %p", intf);
++
++	err = btusb_resume(intf);
++
++	/* The USB core reset the device to resume it. Without this callback it
++	 * only marks the interfaces for rebinding, which it does after a
++	 * system resume but not after a runtime resume: then btusb stays bound
++	 * and is never resumed, with BTUSB_SUSPENDING set and every later URB
++	 * parked on the deferred anchor.
++	 *
++	 * After a runtime suspend, queue a USB reset: btusb has no pre_reset
++	 * and post_reset callbacks, so the core unbinds and rebinds it, and
++	 * the controller, whose state the reset may have cleared, is set up
++	 * again. Keep a runtime PM reference until then, as btusb_reset() does:
++	 * the core drops a queued reset for a device that has suspended again.
++	 * btusb_disconnect() releases it.
++	 *
++	 * Do this even if btusb_resume() failed: usb_resume_both() ignores its
++	 * result, so this is the only recovery left.
++	 */
++	if (intf == data->intf && data->suspend_auto &&
++	    !test_and_set_bit(BTUSB_RESET, &data->flags)) {
++		usb_autopm_get_interface_no_resume(intf);
++		usb_queue_reset_device(intf);
++	}
++
++	return err;
++}
++
+ #ifdef CONFIG_DEV_COREDUMP
+ static void btusb_coredump(struct device *dev)
+ {
+@@ -5145,6 +5181,7 @@ static struct usb_driver btusb_driver = {
+ 	.disconnect	= btusb_disconnect,
+ 	.suspend	= pm_ptr(btusb_suspend),
+ 	.resume		= pm_ptr(btusb_resume),
++	.reset_resume	= pm_ptr(btusb_reset_resume),
+ 	.id_table	= btusb_table,
+ 	.supports_autosuspend = 1,
+ 	.disable_hub_initiated_lpm = 1,
+-- 
+2.43.0
+

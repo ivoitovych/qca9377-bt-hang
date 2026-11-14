@@ -1,0 +1,18 @@
+ab2dn n-dead-1 bt17 --fail-at 1
+ab2dn n-recover-1 bt17 --fail-at 1 --recover
+ab2dn n-close-1 close-recover --fail-at 1 --recover
+ab2dn n-dropcmd-1 dropcmd
+ab2dn n-wedge-1 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dn n-cycles-1 cycles --cycles 30
+ab2dn n-dead-2 bt17 --fail-at 1
+ab2dn n-recover-2 bt17 --fail-at 1 --recover
+ab2dn n-close-2 close-recover --fail-at 1 --recover
+ab2dn n-dropcmd-2 dropcmd
+ab2dn n-wedge-2 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dn n-cycles-2 cycles --cycles 30
+ab2dn n-dead-3 bt17 --fail-at 1
+ab2dn n-recover-3 bt17 --fail-at 1 --recover
+ab2dn n-close-3 close-recover --fail-at 1 --recover
+ab2dn n-dropcmd-3 dropcmd
+ab2dn n-wedge-3 dropcmd-wedge --drop-hci-event 0x0c24 --wedge-until-reset
+ab2dn n-cycles-3 cycles --cycles 30

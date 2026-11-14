@@ -1,0 +1,14 @@
+# harness self-test (task 1, step 1): each fix catches what it should
+# fix 1: --recover is keyed to the USB reset. Break: the emulator ignores the reset signal, so
+# the device never comes back; expect FAIL. Restored: f1-recover-1 (base, PASS) is in the logs.
+base st1-noreset-1 bt17 --fail-at 1 --recover --mutate-no-reset
+# fix 2: recover is judged by a command round trip. Kernel b2 has no D (BT-18): hci0 reappears
+# but Bluetooth does not work. Broken judge (old: "hci0 reappeared"): expect PASS (wrong).
+b2 st2-legacyjudge-1 bt17 --fail-at 1 --recover --mutate-legacy-judge
+# restored judge: expect FAIL
+b2 st2-judge-1 bt17 --fail-at 1 --recover
+# fix 3: a failed case fails the run. Broken: a failure is swallowed, exit 0, no FAIL line.
+b2 st3-swallow-1 bt17 --fail-at 1 --recover --mutate-swallow
+# a scenario that raises, and an unknown scenario: expect FAIL, non-zero exit
+base st3-raise-1 mutate-raise
+base st3-unknown-1 no-such-scenario

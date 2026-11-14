@@ -1,0 +1,8 @@
+base a-dropcmd-1b exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=4.974886 transfer_done=4.976403 autosuspended=5.479679 tx_timeout=6.984 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+ab2d-dbg d-delay-1 exit=1 FAIL RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x00
+ab2dn-dbg d-delay-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+ab2d-dbg d-delay-2 exit=1 FAIL RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x00
+ab2dn-dbg d-delay-2 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+ab2d-dbg d-delay-3 exit=1 FAIL RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x00
+ab2dn-dbg d-delay-3 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+batch: 7 runs, 3 FAIL

@@ -1,0 +1,157 @@
+From 9e1141956a6e737dd02b8378c71b418e5eedf528 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 18:50:17 +0100
+Subject: [PATCH 2/3] Bluetooth: btusb: Don't wait for a resume in the HCI
+ command timeout
+
+hci_cmd_timeout() calls hdev->reset() on the ordered HCI workqueue and
+restores the command credit only when it returns. btusb_reset() first
+takes a runtime PM reference with usb_autopm_get_interface(). If the
+command timed out because the device is still resuming, that call
+waits for the resume to end. When the device does not answer, the USB
+core spends more than five seconds on it, and the HCI workqueue,
+including RX and TX work, is blocked all that time.
+
+A command that is parked on the deferred anchor never reached the
+controller, and the failed resume belongs to the USB core. A command
+whose transfer completed is different: the controller did not answer
+it, and the reset is the recovery for that, even if the device has
+autosuspended since.
+
+Mark a command that is parked on the deferred anchor with
+BTUSB_CMD_DEFERRED, set and cleared under txlock where the anchor is
+filled and drained. btusb_reset() then returns at once when the flag
+is set. Otherwise it queues a work item, which takes the runtime PM
+reference, where waiting is harmless, and resets the device as before.
+The work is cancelled in btusb_disconnect() once hci_unregister_dev()
+has stopped the HCI workqueues, before BTUSB_RESET is examined and the
+data is freed.
+---
+ drivers/bluetooth/btusb_main.c | 45 +++++++++++++++++++++++++++++++---
+ 1 file changed, 42 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index a7d36e84a7dc4..ace03e11c20d3 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1016,6 +1016,7 @@ struct btqca_data {
+ #define BTUSB_HW_SSR_ACTIVE	17
+ #define BTUSB_WAKEUP_BROKEN	18
+ #define BTUSB_RESET		19
++#define BTUSB_CMD_DEFERRED	20
+ 
+ #define BTUSB_PROTO_LEGACY	0x00
+ #define BTUSB_PROTO_H4		0x01
+@@ -1034,6 +1035,7 @@ struct btusb_data {
+ 	int intr_interval;
+ 	struct work_struct  work;
+ 	struct work_struct  waker;
++	struct work_struct  reset_work;
+ 	struct delayed_work rx_work;
+ 
+ 	struct sk_buff_head acl_q;
+@@ -1092,12 +1094,13 @@ struct btusb_data {
+ 	struct dentry *force_poll_sync_dentry;
+ };
+ 
+-static void btusb_reset(struct hci_dev *hdev)
++static void btusb_reset_work(struct work_struct *work)
+ {
+-	struct btusb_data *data;
++	struct btusb_data *data = container_of(work, struct btusb_data,
++					       reset_work);
++	struct hci_dev *hdev = data->hdev;
+ 	int err;
+ 
+-	data = hci_get_drvdata(hdev);
+ 	err = usb_autopm_get_interface(data->intf);
+ 	if (err) {
+ 		bt_dev_err(hdev, "Failed usb_autopm_get_interface: %d", err);
+@@ -1111,6 +1114,28 @@ static void btusb_reset(struct hci_dev *hdev)
+ 	usb_queue_reset_device(data->intf);
+ }
+ 
++static void btusb_reset(struct hci_dev *hdev)
++{
++	struct btusb_data *data = hci_get_drvdata(hdev);
++	unsigned long flags;
++	bool deferred;
++
++	/* A command that is still deferred never reached the device, which
++	 * is being resumed. The USB core owns that failure, and waiting for
++	 * the resume here would block the HCI workqueue.
++	 */
++	spin_lock_irqsave(&data->txlock, flags);
++	deferred = test_bit(BTUSB_CMD_DEFERRED, &data->flags);
++	spin_unlock_irqrestore(&data->txlock, flags);
++
++	if (deferred) {
++		bt_dev_warn(hdev, "Command not sent; not resetting");
++		return;
++	}
++
++	schedule_work(&data->reset_work);
++}
++
+ static void btusb_intel_reset(struct hci_dev *hdev)
+ {
+ 	struct btusb_data *data = hci_get_drvdata(hdev);
+@@ -2236,6 +2261,9 @@ static int btusb_close(struct hci_dev *hdev)
+ 
+ failed:
+ 	usb_scuttle_anchored_urbs(&data->deferred);
++	spin_lock_irq(&data->txlock);
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
++	spin_unlock_irq(&data->txlock);
+ 	return 0;
+ }
+ 
+@@ -2395,6 +2423,8 @@ static int submit_or_queue_tx_urb(struct hci_dev *hdev, struct urb *urb)
+ 	suspending = test_bit(BTUSB_SUSPENDING, &data->flags);
+ 	if (!suspending)
+ 		data->tx_in_flight++;
++	else if (hci_skb_pkt_type((struct sk_buff *)urb->context) == HCI_COMMAND_PKT)
++		set_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	spin_unlock_irqrestore(&data->txlock, flags);
+ 
+ 	if (!suspending)
+@@ -4482,6 +4512,7 @@ static int btusb_probe(struct usb_interface *intf,
+ 
+ 	INIT_WORK(&data->work, btusb_work);
+ 	INIT_WORK(&data->waker, btusb_waker);
++	INIT_WORK(&data->reset_work, btusb_reset_work);
+ 	INIT_DELAYED_WORK(&data->rx_work, btusb_rx_work);
+ 
+ 	skb_queue_head_init(&data->acl_q);
+@@ -4889,6 +4920,11 @@ static void btusb_disconnect(struct usb_interface *intf)
+ 
+ 	hci_unregister_dev(hdev);
+ 
++	/* No new reset can be scheduled once the HCI workqueues are gone; wait
++	 * for a pending one before BTUSB_RESET is examined and data is freed.
++	 */
++	cancel_work_sync(&data->reset_work);
++
+ 	if (data->oob_wake_irq) {
+ 		device_init_wakeup(&data->udev->dev, false);
+ 		free_irq(data->oob_wake_irq, data);
+@@ -5021,6 +5057,8 @@ static void play_deferred(struct btusb_data *data)
+ 		kfree(urb->setup_packet);
+ 		usb_free_urb(urb);
+ 	}
++
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ }
+ 
+ static int btusb_resume(struct usb_interface *intf)
+@@ -5083,6 +5121,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 	usb_scuttle_anchored_urbs(&data->deferred);
+ done:
+ 	spin_lock_irq(&data->txlock);
++	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,7 @@
+base st1-noreset-1 exit=1 FAIL RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+b2 st2-legacyjudge-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x05
+b2 st2-judge-1 exit=1 FAIL RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x05
+b2 st3-swallow-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=False back=True powered=True class_write_after=0x05
+base st3-raise-1 exit=1 FAIL 
+base st3-unknown-1 exit=1 FAIL 
+batch: 6 runs, 4 FAIL
