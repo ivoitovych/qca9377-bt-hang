@@ -1,0 +1,5 @@
+docker run --rm --name lane4-co39-master-patched-5 --device /dev/kvm -v /root/exp/agent-work/lane4-bluez-20261114/co39:/root/exp/agent-work/lane4-bluez-20261114/co39 -w /root/exp/agent-work/lane4-bluez-20261114/co39/runs/master-patched-5 \
+  -e FUNCTIONAL_TESTING_CONTROLLERS=none \
+  co03-noble-vm:1 python3 -m pytest -c /root/exp/agent-work/lane4-bluez-20261114/co39/work/master-patched/test/pytest.ini --rootdir /root/exp/agent-work/lane4-bluez-20261114/co39/work/master-patched/test  /root/exp/agent-work/lane4-bluez-20261114/co39/work/master-patched/test/functional/test_device.py \
+  --kernel /bluez-kernel/bzImage --bluez-src-dir /root/exp/agent-work/lane4-bluez-20261114/co39/work/master-patched -ra -vv -p no:cacheprovider \
+  -o log_file=/root/exp/agent-work/lane4-bluez-20261114/co39/runs/master-patched-5/pytest.log -o log_file_level=0

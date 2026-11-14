@@ -1,0 +1,9 @@
+mgmt-tester: Check the status of Authentication Failed in SSP 4
+
+The host refuses the pairing with Pairing Not Allowed, which the
+kernel reports as MGMT_STATUS_REJECTED and bluetoothd turns into
+org.bluez.Error.AuthenticationRejected. The test only checked the
+length of the event, so it could not tell that status from
+Authentication Failed.
+
+Verify the address and the status of the event.

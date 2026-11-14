@@ -1,0 +1,67 @@
+From e85debcc3aac18ac68a0036d433ac9ee9ed5385d Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 7 Nov 2026 20:15:21 +0100
+Subject: [PATCH 1/2] adapter: Don't keep temporary devices alive with
+ non-discoverable reports
+
+btd_adapter_device_found() calls device_update_last_seen() for an
+existing device before it drops a report that is not discoverable.
+For a temporary device that call also restarts the temporary timer, so
+a peer that keeps advertising with flags 0x18 (and no active discovery
+filter matching it) keeps an unpaired, unconnected device object alive
+for as long as it advertises, instead of the 30 s TemporaryTimeout.
+
+Update last seen only for reports that are not going to be dropped, or
+for devices that are not temporary or are connected, so bearer selection
+for paired devices still sees every report.
+
+Fixes: def01de02593 ("device: Add timer for removing temporary devices")
+---
+ src/adapter.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/src/adapter.c b/src/adapter.c
+index ea438375c..02b008485 100644
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -7714,6 +7714,7 @@ void btd_adapter_device_found(struct btd_adapter *adapter,
+ 	bool not_connectable;
+ 	bool name_resolve_failed;
+ 	bool scan_rsp;
++	bool seen;
+ 	bool duplicate = false;
+ 	bool auto_connect = false;
+ 	struct queue *matched_monitors = NULL;
+@@ -7795,7 +7796,17 @@ void btd_adapter_device_found(struct btd_adapter *adapter,
+ 		return;
+ 	}
+ 
+-	device_update_last_seen(dev, bdaddr_type, !not_connectable);
++	/*
++	 * A non-discoverable report that is dropped below must not restart the
++	 * temporary timer of an unconnected device, or a peer advertising without
++	 * discoverable flags keeps its object alive forever.
++	 */
++	seen = discoverable || monitoring || eir_data.rsi ||
++				!device_is_temporary(dev) ||
++				btd_device_is_connected(dev);
++
++	if (seen)
++		device_update_last_seen(dev, bdaddr_type, !not_connectable);
+ 
+ 	/*
+ 	 * FIXME: We need to check for non-zero flags first because
+@@ -7816,7 +7827,9 @@ void btd_adapter_device_found(struct btd_adapter *adapter,
+ 					!(eir_data.flags & EIR_BREDR_UNSUP)) {
+ 		device_set_bredr_support(dev);
+ 		/* Update last seen for BR/EDR in case its flag is set */
+-		device_update_last_seen(dev, BDADDR_BREDR, !not_connectable);
++		if (seen)
++			device_update_last_seen(dev, BDADDR_BREDR,
++							!not_connectable);
+ 	}
+ 
+ 	if (eir_data.name != NULL && eir_data.name_complete)
+-- 
+2.43.0
+

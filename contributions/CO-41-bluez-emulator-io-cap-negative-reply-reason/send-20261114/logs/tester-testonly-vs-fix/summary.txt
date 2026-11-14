@@ -1,0 +1,18 @@
+base cce87ff5bfb9c5173404c45bf254dddd35689dc8 2026-11-14 mgmt-tester: Check the status of Authentication Failed in SSP 4
+kernel /root/exp/agent-work/lane4-bluez-20261114/project/tmp/kernel/bzImage-base
+patch 0001-emulator-Use-the-reason-of-IO-Capability-Request-Neg.patch
+kvm: yes
+
+mgmt-tester    base     run 1: Total: 526, Passed: 525 (99.8%), Failed: 1, Not Run: 0
+mgmt-tester    base     run 2: Total: 526, Passed: 525 (99.8%), Failed: 1, Not Run: 0
+mgmt-tester    base     run 3: Total: 526, Passed: 525 (99.8%), Failed: 1, Not Run: 0
+mgmt-tester    patched  run 1: Total: 526, Passed: 526 (100.0%), Failed: 0, Not Run: 0
+mgmt-tester    patched  run 2: Total: 526, Passed: 526 (100.0%), Failed: 0, Not Run: 0
+mgmt-tester    patched  run 3: Total: 526, Passed: 526 (100.0%), Failed: 0, Not Run: 0
+
+== mgmt-tester: 526 case names; base runs 3, patched runs 3
+   Pairing Acceptor - SSP 4: base ['Failed', 'Failed', 'Failed'] patched ['Passed', 'Passed', 'Passed']
+   cases with identical verdicts on both sides: 525
+   REGRESSIONS: 0
+
+RESULT: no case passes on the base and fails with the patches

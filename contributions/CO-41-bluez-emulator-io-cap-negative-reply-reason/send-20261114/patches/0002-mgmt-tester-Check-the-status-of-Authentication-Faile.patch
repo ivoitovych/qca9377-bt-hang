@@ -1,0 +1,72 @@
+From d5f8977a9d0f09b948685d7cf1aea058547ab992 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 01:40:13 +0100
+Subject: [PATCH 2/2] mgmt-tester: Check the status of Authentication Failed in
+ SSP 4
+
+The host refuses the pairing with Pairing Not Allowed, which the
+kernel reports as MGMT_STATUS_REJECTED and bluetoothd turns into
+org.bluez.Error.AuthenticationRejected. The test only checked the
+length of the event, so it could not tell that status from
+Authentication Failed.
+
+Verify the address and the status of the event.
+---
+ tools/mgmt-tester.c | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index b7126dc36..cc6b49949 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -4165,6 +4165,39 @@ static const void *client_io_cap_reject_param_func(uint8_t *len)
+ 	return param;
+ }
+ 
++static bool verify_auth_failed_rejected(const void *param, uint16_t length)
++{
++	struct test_data *data = tester_get_data();
++	const struct mgmt_ev_auth_failed *ev = param;
++	const uint8_t *expected_addr;
++
++	if (length != sizeof(*ev)) {
++		tester_warn("Invalid Authentication Failed length %u != %zu",
++						length, sizeof(*ev));
++		return false;
++	}
++
++	expected_addr = hciemu_get_client_bdaddr(data->hciemu);
++	if (!expected_addr) {
++		tester_warn("No central bdaddr");
++		return false;
++	}
++
++	if (memcmp(ev->addr.bdaddr.b, expected_addr, 6) ||
++					ev->addr.type != BDADDR_BREDR) {
++		tester_warn("Unexpected Authentication Failed address");
++		return false;
++	}
++
++	if (ev->status != MGMT_STATUS_REJECTED) {
++		tester_warn("Authentication Failed status 0x%02x != 0x%02x",
++					ev->status, MGMT_STATUS_REJECTED);
++		return false;
++	}
++
++	return true;
++}
++
+ static uint16_t settings_powered_connectable_ssp[] = {
+ 						MGMT_OP_SET_CONNECTABLE,
+ 						MGMT_OP_SET_SSP,
+@@ -4175,6 +4208,7 @@ static const struct generic_data pairing_acceptor_ssp_4 = {
+ 	.client_enable_ssp = true,
+ 	.expect_alt_ev = MGMT_EV_AUTH_FAILED,
+ 	.expect_alt_ev_len = 8,
++	.verify_alt_ev_func = verify_auth_failed_rejected,
+ 	.expect_hci_command = BT_HCI_CMD_IO_CAPABILITY_REQUEST_NEG_REPLY,
+ 	.expect_hci_func = client_io_cap_reject_param_func,
+ 	.io_cap = 0x01, /* DisplayYesNo */
+-- 
+2.43.0
+
