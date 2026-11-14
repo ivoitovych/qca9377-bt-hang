@@ -1,0 +1,83 @@
+From b7df6ff0a81755c09edcf5e5751bf1edc409b257 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:19:58 +0100
+Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
+ MGMT_STATUS_TIMEOUT
+
+mgmt_errno_status() maps -ETIMEDOUT to MGMT_STATUS_AUTH_FAILED. The
+sync command path returns -ETIMEDOUT when the controller does not
+answer a command in time, and for the two HCI statuses that
+bt_to_errno() maps to ETIMEDOUT, Connection Timeout (0x08) and Host
+Timeout (0x10). None of these is an authentication failure, and
+mgmt_status_table[] maps both HCI statuses to MGMT_STATUS_TIMEOUT.
+
+So when the controller stops answering, commands such as Set Powered,
+Add UUID, Remove UUID or Set Device Class fail with Authentication
+Failed although no authentication took place. With a Write Class of
+Device timing out during Remove UUID, btmon showed "Remove UUID
+(0x0011) ... Status: Authentication Failed (0x05)" and bluetoothd
+logged "Failed to remove UUID: Authentication Failed (0x05)", which
+points at pairing and keys instead of at the controller.
+
+A timed out LE connection attempt is already reported as
+MGMT_STATUS_TIMEOUT: create_le_conn_complete() calls
+hci_conn_failed(conn, bt_status(err)), bt_status(-ETIMEDOUT) is 0x08,
+and mgmt_status_table[] maps 0x08 to MGMT_STATUS_TIMEOUT.
+
+Map -ETIMEDOUT to MGMT_STATUS_TIMEOUT in mgmt_errno_status().
+
+Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+Link: https://lore.kernel.org/linux-bluetooth/20220823121541.Bluez.v2.1.I541cbea9d6295f531c796bf3bda96b22db76bc19@changeid/
+---
+User-visible change: an MGMT command that fails with -ETIMEDOUT now
+completes with Timeout (0x08) instead of Authentication Failed (0x05).
+In BlueZ only the text changes for these commands: bluetoothd and
+btmgmt print the status with mgmt_errstr(), and bluetoothd's D-Bus
+error for a failed mode change stays org.bluez.Error.Failed. Pairing
+results take HCI statuses through mgmt_status_table[] and are
+unchanged.
+
+A command that gets no answer has no entry in mgmt_status_table[]: it
+reaches mgmt_errno_status() directly as -ETIMEDOUT. This change makes
+that outcome agree with the table's entries for HCI 0x08 and 0x10.
+161510ccf91c gives no reason for the old value; if it was deliberate,
+please say.
+
+The mgmt-tester case is sent to BlueZ separately as "mgmt-tester: Add
+Set Device Class timeout test". Its emulated controller drops Write
+Class of Device.
+
+With BlueZ's doc/tester.config, on bluetooth-next da3cc02587c6 and
+BlueZ master plus that case, in QEMU:
+  mgmt-tester:  526 of 527 pass without this patch (the new case gets
+                Authentication Failed (0x05)), 527 of 527 with it
+  l2cap-tester: 144 of 144 pass, with and without
+  smp-tester:   8 of 8 pass, with and without
+One other case sees the new status: in "Get Conn Info - Power off" a
+Read RSSI times out during the power off, and the reply carries 0x08
+instead of 0x05. That case is fail_tolerant and passes either way.
+
+Not marked for stable, since the status is visible to user space; a
+backport is left to your judgment.
+
+ net/bluetooth/mgmt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 6ed3bf6f17..0056e34842 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -295,7 +295,7 @@ static u8 mgmt_errno_status(int err)
+ 	case -EBUSY:
+ 		return MGMT_STATUS_BUSY;
+ 	case -ETIMEDOUT:
+-		return MGMT_STATUS_AUTH_FAILED;
++		return MGMT_STATUS_TIMEOUT;
+ 	case -ENOMEM:
+ 		return MGMT_STATUS_NO_RESOURCES;
+ 	case -EISCONN:
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

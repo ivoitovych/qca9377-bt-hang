@@ -1,0 +1,107 @@
+===== mgmt-full: compare-tester-verdicts.py base patched
+A: 527 cases Failed=1 Passed=526
+B: 527 cases Passed=527
+cases with different verdicts: 1
+  Set Device Class - Timeout 1                            A=Failed     B=Passed
+not-passed sets identical: False (A 1, B 0)
+exit 0
+----- totals
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-base.log:Total: 527, [0;32mPassed: 526 (99.8%)[0m, [0;31mFailed: 1[0m, [0;33mNot Run: 0[0m
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-patched.log:Total: 527, [0;32mPassed: 527 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+===== l2cap-full: compare-tester-verdicts.py base patched
+A: 144 cases Passed=144
+B: 144 cases Passed=144
+cases with different verdicts: 0
+not-passed sets identical: True (A 0, B 0)
+exit 0
+----- totals
+/root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-base.log:Total: 144, [0;32mPassed: 144 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+/root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-patched.log:Total: 144, [0;32mPassed: 144 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+===== smp-full: compare-tester-verdicts.py base patched
+A: 8 cases Passed=8
+B: 8 cases Passed=8
+cases with different verdicts: 0
+not-passed sets identical: True (A 0, B 0)
+exit 0
+----- totals
+/root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-base.log:Total: 8, [0;32mPassed: 8 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+/root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-patched.log:Total: 8, [0;32mPassed: 8 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+===== kernel-report-scan.py (all tester logs)
+/root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-base.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-patched.log  kernel=7.3.0-gb7df6ff0a817  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-base.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-patched.log  kernel=7.3.0-gb7df6ff0a817  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-newcase-base.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-newcase-patched.log  kernel=7.3.0-gb7df6ff0a817  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-base.log  kernel=7.3.0-gda3cc02587c6  clean
+/root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-patched.log  kernel=7.3.0-gb7df6ff0a817  clean
+exit 0
+===== new case, base (mgmt-full-base.log)
+6705:[1;39mSet Device Class - Timeout 1[0m - [0;30minit[0m
+6728:[1;39mSet Device Class - Timeout 1[0m - [0;34msetup[0m
+6734:[1;39mSet Device Class - Timeout 1[0m - [0;34msetup complete[0m
+6735:[1;39mSet Device Class - Timeout 1[0m - [0;30mrun[0m
+6739:  [0;37mDropping HCI command, no response from emulator[0m
+6741:Bluetooth: hci0: Opcode 0x0c24 failed: -110
+6742:Bluetooth: hci0: command 0x0c24 tx timeout
+6744:  [0;37mUnexpected status got Authentication Failed (0x05) expected Timeout (0x08)[0m
+6745:[1;39mSet Device Class - Timeout 1[0m - [0;31mtest failed[0m
+6746:[1;39mSet Device Class - Timeout 1[0m - [0;35mteardown[0m
+6749:[1;39mSet Device Class - Timeout 1[0m - [0;35mteardown complete[0m
+6750:[1;39mSet Device Class - Timeout 1[0m - [0;30mdone[0m
+8099:  [0;37mUnexpected status got 15 expected 14[0m
+11735:  [0;37mUnexpected status got 5 expected 15[0m
+24836:Set Device Class - Timeout 1                         [0;31mFailed    [0m   2.050 seconds
+----- every hook firing in the full run
+1
+----- Get Conn Info - Power off
+6744:  [0;37mUnexpected status got Authentication Failed (0x05) expected Timeout (0x08)[0m
+8099:  [0;37mUnexpected status got 15 expected 14[0m
+11692:[1;39mGet Conn Info - Power off[0m - [0;30minit[0m
+11715:[1;39mGet Conn Info - Power off[0m - [0;34msetup[0m
+11724:[1;39mGet Conn Info - Power off[0m - [0;34msetup complete[0m
+11725:[1;39mGet Conn Info - Power off[0m - [0;30mrun[0m
+11735:  [0;37mUnexpected status got 5 expected 15[0m
+11737:[1;39mGet Conn Info - Power off[0m - [0;32mtest passed[0m
+11738:[1;39mGet Conn Info - Power off[0m - [0;35mteardown[0m
+11741:[1;39mGet Conn Info - Power off[0m - [0;35mteardown complete[0m
+11742:[1;39mGet Conn Info - Power off[0m - [0;30mdone[0m
+24944:Get Conn Info - Power off                            [0;32mPassed    [0m   2.028 seconds
+===== new case, patched (mgmt-full-patched.log)
+6705:[1;39mSet Device Class - Timeout 1[0m - [0;30minit[0m
+6728:[1;39mSet Device Class - Timeout 1[0m - [0;34msetup[0m
+6734:[1;39mSet Device Class - Timeout 1[0m - [0;34msetup complete[0m
+6735:[1;39mSet Device Class - Timeout 1[0m - [0;30mrun[0m
+6739:  [0;37mDropping HCI command, no response from emulator[0m
+6741:Bluetooth: hci0: Opcode 0x0c24 failed: -110
+6742:Bluetooth: hci0: command 0x0c24 tx timeout
+6745:[1;39mSet Device Class - Timeout 1[0m - [0;32mtest passed[0m
+6746:[1;39mSet Device Class - Timeout 1[0m - [0;35mteardown[0m
+6749:[1;39mSet Device Class - Timeout 1[0m - [0;35mteardown complete[0m
+6750:[1;39mSet Device Class - Timeout 1[0m - [0;30mdone[0m
+8099:  [0;37mUnexpected status got 15 expected 14[0m
+11735:  [0;37mUnexpected status got 8 expected 15[0m
+24836:Set Device Class - Timeout 1                         [0;32mPassed    [0m   2.032 seconds
+----- every hook firing in the full run
+1
+----- Get Conn Info - Power off
+8099:  [0;37mUnexpected status got 15 expected 14[0m
+11692:[1;39mGet Conn Info - Power off[0m - [0;30minit[0m
+11715:[1;39mGet Conn Info - Power off[0m - [0;34msetup[0m
+11724:[1;39mGet Conn Info - Power off[0m - [0;34msetup complete[0m
+11725:[1;39mGet Conn Info - Power off[0m - [0;30mrun[0m
+11735:  [0;37mUnexpected status got 8 expected 15[0m
+11737:[1;39mGet Conn Info - Power off[0m - [0;32mtest passed[0m
+11738:[1;39mGet Conn Info - Power off[0m - [0;35mteardown[0m
+11741:[1;39mGet Conn Info - Power off[0m - [0;35mteardown complete[0m
+11742:[1;39mGet Conn Info - Power off[0m - [0;30mdone[0m
+24944:Get Conn Info - Power off                            [0;32mPassed    [0m   2.039 seconds
+===== SHA-256
+75b112537a057a70299aee16893fe0ad1b62ff24b75283a3c039bf051366cb69  /root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-base.log
+948a253476479bbd430ee8eea79893b142f1504108e6d09a14c3b24efab729ad  /root/exp/agent-work/co44-send-20261113/logs/testers/l2cap-full-patched.log
+33ab6d08470a1167e39468057c67792b8911d1906a1c15471dc24bbafd1180c3  /root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-base.log
+0983abd4d265c968849897ba078d99270916abbaa43002dc17381896d4580e5b  /root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-full-patched.log
+c70cd4bb6146c009d5e4ed8184d6b2704b2bc3d51b7c2ca76cd16ec8f17b6dbf  /root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-newcase-base.log
+3c12d30bc1100dcd28729071f554bba7b3c2e51a89aece22fb6a6d7f93e2ee24  /root/exp/agent-work/co44-send-20261113/logs/testers/mgmt-newcase-patched.log
+1a10f0fdac7fdb387a2c32d1916a4f710c7aafeb6b3acb282f37aa38494f11f8  /root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-base.log
+b4f24327b6c1faed7a47569eb455e135dcb93168cf40df184df20ba7fdb3bb0c  /root/exp/agent-work/co44-send-20261113/logs/testers/smp-full-patched.log

@@ -1,0 +1,80 @@
+CO-44: the send commands (for the operator; nothing has been sent)
+===================================================================
+
+Order: kernel mail first; then fill the BlueZ mail's link; then the BlueZ mail, the same day.
+Before either: fetch bluetooth-next, bluetooth and BlueZ master again (CHECKS.md, "Tips"). If a
+tip moved, the package is regenerated and rechecked first.
+
+SMTP: the global git config has no sendemail.smtpserver, but the project checkout's own config
+does (smtp.gmail.com), so run the commands with `git -C /root/exp/qca9377-bt-hang send-email …`
+(or from that directory), as the dry runs of 2026-11-14 did.
+
+-------------------------------------------------------------------------------------------------
+1. Kernel mail
+-------------------------------------------------------------------------------------------------
+
+Where your Signed-off-by goes: open
+  kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch
+and add one line directly under the Link: line, above the '---' line:
+
+  Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+  Link: https://lore.kernel.org/linux-bluetooth/20220823121541.Bluez.v2.1.I541cbea9d6295f531c796bf3bda96b22db76bc19@changeid/
+  Signed-off-by: <your legal name> <yaroslav.voytovych@gmail.com>
+  ---
+
+(Cc: stable variant: cc-stable-variant.txt; its trailer goes between Fixes: and Link:.)
+
+The command (asks before sending):
+
+git send-email --confirm=always --suppress-cc=self \
+	--from "Iaroslav Voitovych <yaroslav.voytovych@gmail.com>" \
+	--to "linux-bluetooth@vger.kernel.org" \
+	--cc "Marcel Holtmann <marcel@holtmann.org>" \
+	--cc "Luiz Augusto von Dentz <luiz.dentz@gmail.com>" \
+	--cc "linux-kernel@vger.kernel.org" \
+	kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch
+
+Not --suppress-cc=all: it drops header Cc's. Keep the Message-ID it prints.
+
+RCPT TO, as observed in the dry runs of 2026-11-14 (below):
+  form A (as packaged, plus your Signed-off-by):
+    linux-bluetooth@vger.kernel.org, marcel@holtmann.org, luiz.dentz@gmail.com,
+    linux-kernel@vger.kernel.org
+  form B (Cc: stable variant, plus your Signed-off-by): the same four plus
+    stable@vger.kernel.org
+  Your own address is not a recipient (--suppress-cc=self).
+
+-------------------------------------------------------------------------------------------------
+2. BlueZ mail, after the kernel mail is on lore
+-------------------------------------------------------------------------------------------------
+
+No Signed-off-by: BlueZ rejects it (HACKING, rule 1; doc/maintainer-guidelines.rst, rule 2).
+
+In bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch replace the line
+  @KERNEL_PATCH_LINK@
+with
+  https://lore.kernel.org/linux-bluetooth/<the kernel mail's Message-ID>/
+and open that link once lore shows the patch.
+
+git send-email --confirm=always --suppress-cc=self \
+	--from "Iaroslav Voitovych <yaroslav.voytovych@gmail.com>" \
+	--to "linux-bluetooth@vger.kernel.org" \
+	--cc "Luiz Augusto von Dentz <luiz.dentz@gmail.com>" \
+	bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch
+
+RCPT TO, as observed: linux-bluetooth@vger.kernel.org, luiz.dentz@gmail.com.
+
+-------------------------------------------------------------------------------------------------
+Dry runs (2026-11-14, nothing sent)
+-------------------------------------------------------------------------------------------------
+
+dry-run-20261114/run.sh ran exactly the commands above, with --dry-run --confirm=never instead of
+--confirm=always, from the project checkout. Each log is in dry-run-20261114/; every one ends
+"Result: OK", exit 0, Server smtp.gmail.com, MAIL FROM yaroslav.voytovych@gmail.com:
+  dry-run-co44-kernel.txt              as packaged: the four recipients of form A
+  dry-run-co44-kernel-with-sob.txt     form A with a Signed-off-by (a local copy): the same four
+  dry-run-co44-kernel-ccstable-with-sob.txt
+                                       form B: the same four plus stable@vger.kernel.org
+  dry-run-co44-bluez.txt               the BlueZ mail: linux-bluetooth, luiz.dentz
+--dry-run opens no connection. Run your own dry run once more after adding your Signed-off-by,
+and compare its RCPT TO lines with these.

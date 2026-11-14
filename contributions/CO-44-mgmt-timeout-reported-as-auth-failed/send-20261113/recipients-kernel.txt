@@ -1,0 +1,23 @@
+Recipients for the kernel mail (kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch)
+=================================================================================================
+
+From the kernel's own script, run inside the bluetooth-next tree at the patch commit
+(b7df6ff0a817, on bluetooth-next master da3cc02587c6), on the packaged mail, 2026-11-13:
+
+$ scripts/get_maintainer.pl /root/exp/agent-work/co44-send-20261113/package/kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch
+Marcel Holtmann <marcel@holtmann.org> (maintainer:BLUETOOTH SUBSYSTEM,blamed_fixes:1/1=100%)
+Luiz Augusto von Dentz <luiz.dentz@gmail.com> (maintainer:BLUETOOTH SUBSYSTEM,blamed_fixes:1/1=100%)
+linux-bluetooth@vger.kernel.org (open list:BLUETOOTH SUBSYSTEM)
+linux-kernel@vger.kernel.org (open list)
+exit 0
+
+(Full output with the tree line: logs/final-kernel-get_maintainer.txt in the work directory.)
+
+So the command in send-commands.txt sends:
+  To: linux-bluetooth@vger.kernel.org
+  Cc: Marcel Holtmann <marcel@holtmann.org>
+  Cc: Luiz Augusto von Dentz <luiz.dentz@gmail.com>   (also the author of the Fixes: commit)
+  Cc: linux-kernel@vger.kernel.org
+Not netdev: MAINTAINERS' NETWORKING [GENERAL] excludes net/bluetooth/ (docs/kernel-send-package.md §2).
+Not stable@vger.kernel.org, unless you take the Cc: stable variant (cc-stable-variant.txt); then
+git send-email adds it from the trailer.

@@ -1,0 +1,27 @@
+A — the send commands. Nothing has been sent. Run them yourself, from this directory, after your
+Signed-off-by is in the patch (NOTES-FOR-OPERATOR.md).
+
+1. The dry run (sends nothing):
+
+git send-email --dry-run \
+  --to="Marcel Holtmann <marcel@holtmann.org>" \
+  --to="Luiz Augusto von Dentz <luiz.dentz@gmail.com>" \
+  --to=linux-bluetooth@vger.kernel.org \
+  --cc=linux-kernel@vger.kernel.org \
+  0001-Bluetooth-btusb-Report-a-failed-runtime-resume-for-d.patch
+
+   Check its "Dry-OK. Log says" block. Expected RCPT TO lines, five:
+     RCPT TO:<marcel@holtmann.org>
+     RCPT TO:<luiz.dentz@gmail.com>
+     RCPT TO:<linux-bluetooth@vger.kernel.org>
+     RCPT TO:<linux-kernel@vger.kernel.org>
+     RCPT TO:<yaroslav.voytovych@gmail.com>    (you: git adds the From: and Signed-off-by:
+                                                addresses to Cc by default)
+   Do not add --suppress-cc=all: it also drops header Cc's.
+
+2. The send: the same command without --dry-run. Keep the Message-ID it prints.
+
+The dry run (2026-11-14, from the project checkout, whose git config carries the SMTP server):
+../dry-run-20261114/dry-run-co43-A.txt, "Result: OK", exit 0. Its RCPT TO lines are the five
+above; as packaged the patch has no Signed-off-by yet, and the fifth (your address) comes from
+the From: line. Run the dry run once more after adding your Signed-off-by.

@@ -1,0 +1,11 @@
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -12718,7 +12718,7 @@ static bool hook_drop_cmd(const void *data, uint16_t len, void *user_data)
+ 	struct test_data *test_data = user_data;
+
+ 	tester_print("Dropping HCI command, no response from emulator");
+-	test_condition_complete(test_data);
++	(void) test_data;
+
+ 	return false;
+ }

@@ -158,4 +158,16 @@ The bot's user-space checks do not run mgmt-tester; the new case's runs are the 
 - **Sends:** the kernel patch and the BlueZ test on the same day, as two sends, the test naming
   the kernel fix. The operator's word for both.
 
+**State (2026-11-14): send package ready, nothing sent** — [`send-20261113/`](send-20261113/).
+The "Next" items above are done there, on bluetooth-next `da3cc02587c6` and BlueZ master:
+- the kernel patch (`kernel/`), with the `Cc: stable` alternative (`cc-stable-variant.txt`), and
+  the BlueZ test, which now asserts that the hook saw Write Class of Device (`bluez/`);
+- `CHECKS.md`: checkpatch, get_maintainer; the list bot's checks run locally, base vs patched
+  (the difference is only the three Signed-off-by checks, from the line the operator adds); the
+  BlueZ bot's checks, all PASS; mgmt-tester 526 + 1 → 527, l2cap-tester and smp-tester unchanged;
+- the dry runs of `git send-email` (2026-11-14, `dry-run-20261114/`): four forms, all `Result: OK`,
+  recipients as listed in `send-commands.txt`;
+- `NOTES-FOR-OPERATOR.md`: the decisions (Cc: stable, the `Link:`, the subject, the
+  "deliberate" sentence, the order of the two sends). The cited logs are in `evidence/`.
+
 **Decides:** the operator, for the send.

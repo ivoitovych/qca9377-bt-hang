@@ -1,0 +1,33 @@
+E — the send commands. Nothing has been sent. Run them yourself, from this directory, after your
+Signed-off-by (and, if you decide so, the Cc: stable trailer) is in the patch
+(NOTES-FOR-OPERATOR.md).
+
+1. The dry run (sends nothing):
+
+git send-email --dry-run \
+  --to="Marcel Holtmann <marcel@holtmann.org>" \
+  --to="Luiz Augusto von Dentz <luiz.dentz@gmail.com>" \
+  --to=linux-bluetooth@vger.kernel.org \
+  --cc="Oliver Neukum <oliver@neukum.org>" \
+  --cc=linux-kernel@vger.kernel.org \
+  0001-Bluetooth-btusb-Anchor-a-deferred-URB-under-txlock.patch
+
+   Check its "Dry-OK. Log says" block. Expected RCPT TO lines, six:
+     RCPT TO:<marcel@holtmann.org>
+     RCPT TO:<luiz.dentz@gmail.com>
+     RCPT TO:<linux-bluetooth@vger.kernel.org>
+     RCPT TO:<oliver@neukum.org>
+     RCPT TO:<linux-kernel@vger.kernel.org>
+     RCPT TO:<yaroslav.voytovych@gmail.com>    (you: git adds the From: and Signed-off-by:
+                                                addresses to Cc by default)
+   and a seventh, RCPT TO:<stable@vger.kernel.org>, only if you added "Cc: stable@vger.kernel.org"
+   to the trailers (git takes Cc: lines from the body by default).
+   Do not add --suppress-cc=all: it also drops header Cc's.
+
+2. The send: the same command without --dry-run. Keep the Message-ID it prints.
+
+The dry run (2026-11-14, from the project checkout, whose git config carries the SMTP server):
+../dry-run-20261114/dry-run-co43-E.txt, "Result: OK", exit 0. Its RCPT TO lines are the six
+above; as packaged the patch has no Signed-off-by yet, and the sixth (your address) comes from
+the From: line. dry-run.txt in this directory is an earlier attempt in a container whose git had
+no send-email; it is not a dry run. Run the dry run once more after adding your Signed-off-by.

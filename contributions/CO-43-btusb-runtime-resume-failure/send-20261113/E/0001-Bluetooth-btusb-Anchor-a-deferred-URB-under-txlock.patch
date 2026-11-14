@@ -1,0 +1,62 @@
+From d4b60eb0fcf71f84e4019c7178639e175c9357ee Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:42:06 +0100
+Subject: [PATCH] Bluetooth: btusb: Anchor a deferred URB under txlock
+
+submit_or_queue_tx_urb() tests BTUSB_SUSPENDING under txlock, drops
+the lock, and only then anchors the URB on data->deferred.
+btusb_resume() sends the deferred URBs and clears BTUSB_SUSPENDING
+under txlock. A resume that completes in between leaves the URB
+anchored on an active device: the waker it schedules finds nothing to
+resume, and the URB waits for the next suspend and resume. An HCI
+command in it times out.
+
+Anchor the URB in the same critical section as the flag test, so that
+it is ordered against the replay and the clearing of the flag.
+btusb_resume() already takes the anchor's lock inside txlock, so the
+lock order does not change.
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+---
+Tested with an emulated device attached over usbip in a QEMU guest. With
+the window widened by a debug-only delay and a resume forced inside it,
+a command was parked and timed out without this change, and was sent at
+that resume with it. A stress run with concurrent senders, forced
+resumes, power cycles and disconnects showed no lockdep, KASAN or
+hung-task report and left nothing parked.
+
+ drivers/bluetooth/btusb_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca..5f6d90d43 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2391,16 +2391,21 @@ static int submit_or_queue_tx_urb(struct hci_dev *hdev, struct urb *urb)
+ 	unsigned long flags;
+ 	bool suspending;
+ 
++	/* Decide and anchor under txlock: btusb_resume() sends the deferred
++	 * URBs and clears BTUSB_SUSPENDING under the same lock, so a URB
++	 * anchored after that would wait for the next resume.
++	 */
+ 	spin_lock_irqsave(&data->txlock, flags);
+ 	suspending = test_bit(BTUSB_SUSPENDING, &data->flags);
+ 	if (!suspending)
+ 		data->tx_in_flight++;
++	else
++		usb_anchor_urb(urb, &data->deferred);
+ 	spin_unlock_irqrestore(&data->txlock, flags);
+ 
+ 	if (!suspending)
+ 		return submit_tx_urb(hdev, urb);
+ 
+-	usb_anchor_urb(urb, &data->deferred);
+ 	schedule_work(&data->waker);
+ 
+ 	usb_free_urb(urb);
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

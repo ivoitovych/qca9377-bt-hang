@@ -1,0 +1,95 @@
+From 0e5d0c431cb113015ac6f5d8349f0190c729c576 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 05:07:23 +0100
+Subject: [PATCH BlueZ] mgmt-tester: Add Set Device Class timeout test
+
+The emulated controller drops Write Class of Device, so the kernel's
+HCI command times out and Set Device Class shall complete with Timeout
+(0x08). The hook completes a test condition, so the test cannot pass
+unless the command was sent and dropped.
+
+Without the kernel fix "Bluetooth: MGMT: Report a timed out command as
+MGMT_STATUS_TIMEOUT" the command completes with Authentication Failed
+(0x05), which is what mgmt_errno_status() returns for -ETIMEDOUT.
+---
+This test needs the kernel fix named above, which is sent to
+linux-bluetooth separately:
+@KERNEL_PATCH_LINK@
+
+Without it the new case fails with "Unexpected status got
+Authentication Failed (0x05) expected Timeout (0x08)"; with it the
+case passes and the rest of mgmt-tester is unchanged.
+
+ tools/mgmt-tester.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index b7126dc36..42e2a6837 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -2493,6 +2493,16 @@ static const struct generic_data set_dev_class_invalid_param_test_1 = {
+ 	.expect_status = MGMT_STATUS_INVALID_PARAMS,
+ };
+ 
++static const struct generic_data set_dev_class_timeout_test_1 = {
++	.setup_settings = settings_powered,
++	.send_opcode = MGMT_OP_SET_DEV_CLASS,
++	.send_param = set_dev_class_valid_param,
++	.send_len = sizeof(set_dev_class_valid_param),
++	.expect_status = MGMT_STATUS_TIMEOUT,
++	.expect_param = set_dev_class_zero_rsp,
++	.expect_len = sizeof(set_dev_class_zero_rsp),
++};
++
+ static const char add_spp_uuid_param[] = {
+ 			0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,
+ 			0x00, 0x10, 0x00, 0x00, 0x01, 0x11, 0x00, 0x00,
+@@ -12703,6 +12713,33 @@ static bool hook_delay_cmd(const void *data, uint16_t len, void *user_data)
+ 	return true;
+ }
+ 
++static bool hook_drop_cmd(const void *data, uint16_t len, void *user_data)
++{
++	struct test_data *test_data = user_data;
++
++	tester_print("Dropping HCI command, no response from emulator");
++	test_condition_complete(test_data);
++
++	return false;
++}
++
++static void test_set_dev_class_timeout(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	/* The controller never answers Write Class of Device, so the
++	 * kernel's HCI command times out and the MGMT command shall
++	 * complete with Timeout rather than Authentication Failed.
++	 * The condition makes sure the command was actually dropped.
++	 */
++	test_add_condition(data);
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_PRE_CMD,
++					BT_HCI_CMD_WRITE_CLASS_OF_DEV,
++					hook_drop_cmd, data);
++
++	test_command_generic(test_data);
++}
++
+ static void test_add_remove_device_nowait(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -14926,6 +14963,9 @@ int main(int argc, char *argv[])
+ 	test_bredrle("Set Device Class - Invalid parameters 1",
+ 				&set_dev_class_invalid_param_test_1,
+ 				NULL, test_command_generic);
++	test_bredrle_full("Set Device Class - Timeout 1",
++				&set_dev_class_timeout_test_1,
++				NULL, test_set_dev_class_timeout, 5);
+ 
+ 	test_bredrle("Add UUID - UUID-16 1",
+ 				&add_uuid16_test_1,
+
+base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
+-- 
+2.43.0
+

@@ -1,0 +1,569 @@
+--- /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.orig.py	2026-11-13 20:05:44.908834164 +0100
++++ /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py	2026-11-13 20:21:24.413526096 +0100
+@@ -28,7 +28,9 @@
+ cycles with a class write each), up (bring-up only).
+ """
+ import ctypes
++import errno
+ import os
++import random
+ import socket
+ import struct
+ import sys
+@@ -38,6 +40,10 @@
+ 
+ T0 = time.time()
+ LOG_LOCK = threading.Lock()
++# stress (co43-ea-send-20261113): the packets the emulated device received, from every emulator
++# instance of the run (a USB disconnect and re-attach makes a new one): (kind, key) -> (mono, emu, resumes)
++RX = {}
++EMUS = []
+ 
+ 
+ def mono():
+@@ -109,6 +115,11 @@
+         self.held = {}                   # seq -> description
+         self.events = []                 # (mono, what)
+         self.hci_cmds = []               # (mono, opcode)
++        self.quiet = "stress" in sys.argv  # stress: no per-command log lines
++        self.intr_sent = {}              # seq -> event bytes completed on that interrupt URB
++        self.fix_unlinked_intr = "--keep-unlink-loss" not in sys.argv
++        self.ident = len(EMUS)           # stress: one emulator per attach
++        EMUS.append(self)
+ 
+     def note(self, what):
+         self.events.append((mono(), what))
+@@ -118,9 +129,17 @@
+     def attach(self):
+         base = "/sys/devices/platform/vhci_hcd.0"
+         kfd, self.sock = socket.socketpair()
+-        with open(base + "/attach", "w") as f:
+-            f.write("0 %d %d 2" % (kfd.fileno(), (1 << 16) | 2))   # full speed
+-        log("attached to vhci_hcd port 0")
++        for attempt in range(40):          # after a detach the port is free again only shortly later
++            try:
++                with open(base + "/attach", "w") as f:
++                    f.write("0 %d %d 2" % (kfd.fileno(), (1 << 16) | 2))   # full speed
++                break
++            except OSError as e:
++                if attempt == 39:
++                    raise
++                log("attach refused (%r), retrying" % (e,))
++                time.sleep(0.25)
++        log("attached to vhci_hcd port 0 (emulator %d)" % self.ident)
+         self.kfd = kfd
+         threading.Thread(target=self.loop, daemon=True).start()
+ 
+@@ -175,6 +194,18 @@
+                 if item[0] == victim:
+                     self.intr_pending.remove(item)
+                     hit = True
++            # co43-ea-send-20261113: an interrupt IN URB this emulator already completed with event
++            # bytes, unlinked by the host (a suspend killing it) before vhci processed that
++            # completion: vhci then gives the URB back with the unlink status and btusb drops the
++            # bytes. A real device would still hold the event (it NAKs until polled), so put the
++            # bytes back in front, for the next interrupt URB. Without this the event is lost and
++            # the command it answers times out (an emulator artifact, seen in the first stress runs).
++            requeued = None
++            if not hit and victim in self.intr_sent and self.fix_unlinked_intr:
++                requeued = self.intr_sent.pop(victim)
++                self.intr_out[:0] = requeued
++        if requeued is not None:
++            self.note("unlink of completed interrupt URB %d: %d event bytes put back" % (victim, len(requeued)))
+         if victim in self.held:
+             what = self.held.pop(victim)
+             hit = True
+@@ -199,6 +230,8 @@
+             pass                                    # bulk IN: kept pending
+         elif epn == 2 and direction == 0:
+             if self.state == "healthy":
++                if len(data) >= 10 and data[4:6] == b"EA":        # stress ACL packet
++                    RX[("acl", struct.unpack("<I", data[6:10])[0])] = (mono(), self.ident, self.resumes)
+                 self.ret_submit(seq, 0, buflen)
+             elif self.state == "dead":
+                 self.ret_submit(seq, -71, 0)
+@@ -282,6 +315,12 @@
+         elif bm == 0x20 and br == 0:                           # HCI command
+             op, plen = struct.unpack("<HB", data[:3])
+             self.hci_cmds.append((mono(), op))
++            if op == 0x0C18 and plen == 2:                     # stress: Write Page Timeout, key in it
++                RX[("cmd", struct.unpack("<H", data[3:5])[0])] = (mono(), self.ident, self.resumes)
++            elif op == 0xFC55 and plen == 4:                   # stress: vendor command, no event
++                RX[("vnd", struct.unpack("<I", data[3:7])[0])] = (mono(), self.ident, self.resumes)
++                self.ret_submit(seq, 0, len(data))
++                return
+             if self.hold_hci and self.suspends and self.resumes >= self.fail_at > 0:
+                 self.held[seq] = "HCI 0x%04x" % op
+                 return
+@@ -317,13 +356,17 @@
+                 seq, buflen = self.intr_pending.popleft()
+                 chunk = bytes(self.intr_out[:min(buflen, 16)])
+                 del self.intr_out[:len(chunk)]
++                self.intr_sent[seq] = chunk
++                if len(self.intr_sent) > 256:
++                    self.intr_sent.pop(next(iter(self.intr_sent)))
+             self.ret_submit(seq, 0, len(chunk), chunk)
+ 
+     def cc(self, op, ret=b"\0"):
+         self.event(0x0E, struct.pack("<BH", 1, op) + ret)
+ 
+     def hci_cmd(self, op, p):
+-        log("HCI cmd 0x%04x %s" % (op, p.hex()))
++        if not (self.quiet and op in (0x0C18, 0x0C24)):
++            log("HCI cmd 0x%04x %s" % (op, p.hex()))
+         if op == 0x1001:
+             self.cc(op, struct.pack("<BBHBHH", 0, 6, 0x0302, 6, 0x0045, 0x0302))  # QCA, 4.0
+         elif op == 0x1002:
+@@ -893,8 +936,452 @@
+     return bad == 0
+ 
+ 
++# ---------------------------------------------------------------- stress (co43-ea-send-20261113)
++# Many concurrent senders against a device that autosuspends with a short delay and is resumed by
++# force (power/control on/auto) while they send, with hci0 power cycles and a USB disconnect in the
++# middle. Every packet carries a key the emulator records on arrival. At the end of each normal
++# cycle power/control is set to "on", so the device cannot suspend again: a packet that has not
++# arrived 2.5 s later is parked on the deferred anchor of an active device (BT-23's symptom).
++HCI_CHANNEL_RAW = 0
++VHCI = "/sys/devices/platform/vhci_hcd.0"
++REPORT_PATTERNS = ("BUG:", "WARNING:", "KASAN", "possible circular locking", "possible recursive locking",
++                   "inconsistent lock state", "blocked for more than", "soft lockup", "workqueue lockup",
++                   "general protection fault", "Oops", "suspicious RCU usage", "UBSAN", "refcount_t:",
++                   "list_add corruption", "list_del corruption", "use-after-free", "INFO: task",
++                   "kernel BUG", "DEADLOCK", "lock held when returning", "sleeping function called")
++
++
++class Kmsg:
++    """every kernel record, read from /dev/kmsg as it is written (the guest's ring buffer is 128 KiB
++    and its console is quiet, so a dmesg at the end could lose early lines); printed as KMSG lines"""
++
++    def __init__(self):
++        self.lines = []
++        self.fd = os.open("/dev/kmsg", os.O_RDONLY)
++        threading.Thread(target=self.run, daemon=True).start()
++
++    def run(self):
++        while True:
++            try:
++                b = os.read(self.fd, 8192)
++            except OSError as e:
++                if e.errno == errno.EPIPE:
++                    self.lines.append((-1.0, "<kmsg overrun: records lost>"))
++                    log("KMSG <overrun: records lost>")
++                    continue
++                log("kmsg read ended: %r" % (e,))
++                return
++            s = b.decode("utf-8", "replace")
++            head, _, rest = s.partition(";")
++            f = head.split(",")
++            try:
++                ts = int(f[2]) / 1e6
++            except (IndexError, ValueError):
++                ts = -1.0
++            msg = rest.split("\n")[0]          # later lines starting with a space are the dictionary
++            self.lines.append((ts, msg))
++            log("KMSG [%12.6f] %s" % (ts, msg))
++
++    def matching(self, *pats):
++        return [(ts, l) for ts, l in list(self.lines) if any(p in l for p in pats)]
++
++
++class RawHci:
++    """an HCI raw socket bound to hci<dev>: commands (to cmd_q, or raw_q for OGF 0x3f) and ACL data
++    (raw_q), both sent by the kernel through btusb_send_frame()"""
++
++    def __init__(self, dev_id=0):
++        libc = ctypes.CDLL(None, use_errno=True)
++        self.fd = libc.socket(AF_BLUETOOTH, socket.SOCK_RAW | socket.SOCK_CLOEXEC, BTPROTO_HCI)
++        if self.fd < 0:
++            raise OSError(ctypes.get_errno(), "raw socket")
++        addr = struct.pack("<HHH", AF_BLUETOOTH, dev_id, HCI_CHANNEL_RAW)
++        if libc.bind(self.fd, addr, len(addr)) < 0:
++            e = ctypes.get_errno()
++            os.close(self.fd)
++            raise OSError(e, "raw bind")
++
++    def close(self):
++        try:
++            os.close(self.fd)
++        except OSError:
++            pass
++
++
++KINDS = ["cmd"] * 3 + ["vnd"] * 2 + ["acl"] * 2   # one raw socket and one thread each
++PER_SENDER = 2                                     # packets per sender thread and burst
++WAVES = 3                                          # bursts per normal cycle
++
++
++def in_windows(ts, windows):
++    """a kernel time inside one of the (start, end) windows of a USB disconnect: from the detach
++    write until hci0 was seen removed, plus 1 s"""
++    return any(a - 0.2 <= ts <= b + 1.0 for a, b in windows)
++
++
++def kml_classify(rep):
++    """kmemleak objects: 'bt25' = the skb or the setup packet that a deferred URB owns (BT-25's
++    signature: allocated by the HCI socket or command path, or by btusb's alloc_ctrl_urb()), else 'other'"""
++    n_bt25, other = 0, []
++    for o in rep.split("unreferenced object")[1:]:
++        if "alloc_ctrl_urb" in o or ("__alloc_skb" in o and any(k in o for k in (
++                "hci_sock_sendmsg", "hci_cmd_sync_alloc", "hci_prepare_cmd", "bt_skb_send_alloc",
++                "hci_send_cmd"))):
++            n_bt25 += 1
++        else:
++            other.append(o.strip().splitlines()[0] if o.strip() else "?")
++    return n_bt25, other
++
++
++class Stress:
++    def __init__(self, m, dev, seed):
++        self.m = m
++        self.dev = dev
++        self.rng = random.Random(seed)
++        self.seq = 0
++        self.seq_lock = threading.Lock()
++        self.socks = []
++        self.forced = 0
++        self.windows = []            # (detach write, hci0 seen removed), mono
++        self.open_socks()
++
++    def open_socks(self):
++        for s in self.socks:
++            s.close()
++        self.socks = []
++        for k in KINDS:
++            try:
++                self.socks.append(RawHci(0))
++            except OSError as e:
++                log("raw socket for %s: %r" % (k, e))
++
++    def next_key(self):
++        with self.seq_lock:
++            self.seq += 1
++            return self.seq
++
++    def ctl(self, value):
++        try:
++            with open(os.path.join(self.dev, "power", "control"), "w") as f:
++                f.write(value)
++            return True
++        except OSError:
++            return False
++
++    def set_delay(self, ms):
++        try:
++            with open(os.path.join(self.dev, "power", "autosuspend_delay_ms"), "w") as f:
++                f.write(str(ms))
++        except OSError as e:
++            log("autosuspend_delay_ms: %r" % (e,))
++
++    def status(self):
++        return rd(os.path.join(self.dev, "power", "runtime_status"))
++
++    # -- the threads of one burst
++    def sender(self, sock, kind, n, barrier, sent):
++        try:
++            barrier.wait(10)
++        except threading.BrokenBarrierError:
++            return
++        for j in range(n):
++            time.sleep(self.rng.uniform(0, 0.04))
++            key = self.next_key()
++            if kind == "cmd":
++                key &= 0xFFFF
++                pkt = b"\x01" + struct.pack("<HBH", 0x0C18, 2, key)          # Write Page Timeout
++            elif kind == "vnd":
++                pkt = b"\x01" + struct.pack("<HBI", 0xFC55, 4, key)          # vendor, raw_q
++            else:
++                payload = b"EA" + struct.pack("<I", key) + b"\0\0"
++                pkt = b"\x02" + struct.pack("<HH", 0x2001, len(payload)) + payload
++            t = mono()
++            try:
++                os.write(sock.fd, pkt)
++                sent.append((kind, key, t, None))
++            except OSError as e:
++                sent.append((kind, key, t, e.errno))
++
++    def forcer(self, barrier, stop):
++        try:
++            barrier.wait(10)
++        except threading.BrokenBarrierError:
++            return
++        while not stop.is_set():
++            time.sleep(self.rng.uniform(0, 0.025))
++            if self.ctl("on"):
++                self.forced += 1
++            time.sleep(self.rng.uniform(0, 0.01))
++            self.ctl("auto")
++            time.sleep(self.rng.uniform(0, 0.06))
++
++    def mgmt_writer(self, barrier, box, minor):
++        try:
++            barrier.wait(10)
++        except threading.BrokenBarrierError:
++            return
++        time.sleep(self.rng.uniform(0, 0.03))
++        t = class_write(self.m, minor)
++        box["mgmt"] = (t, self.m.wait_reply(0x000E, 5))
++
++    def disruptor(self, barrier, what, box):
++        try:
++            barrier.wait(10)
++        except threading.BrokenBarrierError:
++            return
++        time.sleep(self.rng.uniform(0, 0.05))
++        box["t_" + what] = mono()
++        if what == "power":
++            kmsg_mark("stress: Set Powered off during the burst")
++            self.m.send(0x0005, 0, b"\x00")
++            box["off"] = self.m.wait_reply(0x0005, 15)
++        else:
++            kmsg_mark("stress: usbip detach during the burst")
++            try:
++                with open(VHCI + "/detach", "w") as f:
++                    f.write("0")
++            except OSError as e:
++                box["detach_err"] = repr(e)
++
++    def burst(self, i, disrupt=None, sent=None):
++        sent = [] if sent is None else sent
++        box = {}
++        stop = threading.Event()
++        pairs = list(zip(self.socks, KINDS))
++        n = len(pairs) + 2 + (1 if disrupt else 0)
++        barrier = threading.Barrier(n)
++        ths = [threading.Thread(target=self.sender, args=(s, k, PER_SENDER, barrier, sent)) for s, k in pairs]
++        self.minor = getattr(self, "minor", 0) + 1     # a new class each time, so a command goes out
++        ths.append(threading.Thread(target=self.mgmt_writer, args=(barrier, box, (self.minor % 3 + 1) * 4)))
++        if disrupt:
++            ths.append(threading.Thread(target=self.disruptor, args=(barrier, disrupt, box)))
++        f = threading.Thread(target=self.forcer, args=(barrier, stop))
++        for th in ths:
++            th.start()
++        f.start()
++        for th in ths:
++            th.join(30)
++        stop.set()
++        f.join(10)
++        return sent, box
++
++    # -- one cycle
++    def cycle(self, i, disrupt=None):
++        delay = self.rng.choice((20, 50, 100, 250))
++        self.set_delay(delay)
++        self.ctl("auto")
++        susp = wait_for(lambda: self.status() == "suspended", 5, 0.01)
++        e0 = EMUS[-1]
++        s0, r0 = e0.suspends, e0.resumes
++        if disrupt:
++            sent, box = self.burst(i, disrupt)
++            mgmt = []
++        else:
++            # WAVES bursts, each started on a suspended device, so that every wave's first packets
++            # are deferred and race the resume they start (and the forced one)
++            sent, mgmt = [], []
++            for w_ in range(WAVES):
++                if w_:
++                    self.ctl("auto")
++                    wait_for(lambda: self.status() == "suspended", 2, 0.01)
++                _, box = self.burst(i, None, sent)
++                mgmt.append(box.get("mgmt"))
++        good = [x for x in sent if x[3] is None]
++        errs = [x for x in sent if x[3] is not None]
++        res = {"i": i, "kind": disrupt or "normal", "delay": delay, "suspended_before": susp,
++               "sent": len(good), "send_errors": len(errs)}
++        if disrupt == "power":
++            r_off = box.get("off")
++            res["power_off"] = ("0x%02x" % r_off[3]) if r_off else "none"
++            res["ok"] = power_on(self.m, tries=10)
++            res["recovered"] = res["ok"]
++        elif disrupt == "detach":
++            res["ok"] = self.reattach(box)
++            res["recovered"] = res["ok"]
++        else:
++            self.ctl("on")              # no suspend from here on: what has not arrived is parked
++            wait_for(lambda: all((k, key) in RX for k, key, t, er in good), 2.5, 0.01)
++            missing = [(k, key, t) for k, key, t, er in good if (k, key) not in RX]
++            late = []
++            if missing:
++                # a parked URB goes out only at the next resume: allow one, and see whether it then arrives
++                time.sleep(0.5)
++                self.ctl("auto")
++                wait_for(lambda: self.status() == "suspended", 5, 0.01)
++                self.ctl("on")
++                time.sleep(0.5)
++                late = [(k, key, t) for k, key, t in missing if (k, key) in RX]
++                for k, key, t in missing:
++                    rx = RX.get((k, key))
++                    log("PARKED cycle %d: %s key %d sent %.6f %s" %
++                        (i, k, key, t, ("arrived %.6f after the next resume" % rx[0]) if rx else "never arrived"))
++            lat = [RX[(k, key)][0] - t for k, key, t, er in good if (k, key) in RX]
++            sts = [("0x%02x" % mg[1][3]) if mg and mg[1] else "none" for mg in mgmt]
++            mst = "0x00" if sts and all(s == "0x00" for s in sts) else ",".join(sts) or "none"
++            res.update({"parked": len(missing), "parked_late": len(late), "mgmt": mst,
++                        "max_latency": round(max(lat), 3) if lat else -1})
++            res["ok"] = not missing and not errs and mst == "0x00"
++        e1 = EMUS[-1]
++        res["device_suspends"] = (e1.suspends - s0) if e1 is e0 else "new-emu"
++        res["device_resumes"] = (e1.resumes - r0) if e1 is e0 else "new-emu"
++        log("CYCLE %s" % " ".join("%s=%s" % (k, v) for k, v in res.items()))
++        return res
++
++    def reattach(self, box):
++        if "detach_err" in box:
++            log("detach failed: %s" % box["detach_err"])
++            return False
++        gone = wait_for(lambda: not os.path.exists("/sys/class/bluetooth/hci0"), 20)
++        self.windows.append((box.get("t_detach", mono()), mono()))
++        log("after detach: hci0 removed=%s" % gone)
++        for s in self.socks:
++            s.close()
++        self.socks = []
++        time.sleep(0.5)
++        emu = Emu(fail_at=0)
++        emu.attach()
++        back = wait_for(lambda: os.path.exists("/sys/class/bluetooth/hci0"), 30)
++        powered = power_on(self.m, tries=20) if back else False
++        self.dev = usb_dev() or self.dev
++        self.open_socks()
++        log("re-attached: hci0=%s powered=%s usb device %s raw sockets %d" % (back, powered, self.dev, len(self.socks)))
++        return bool(gone and back and powered and len(self.socks) == len(KINDS))
++
++
++def d_state_tasks():
++    out = []
++    for pid in os.listdir("/proc"):
++        if not pid.isdigit():
++            continue
++        try:
++            st = open("/proc/%s/stat" % pid).read()
++            comm = st[st.index("(") + 1:st.rindex(")")]
++            state = st[st.rindex(")") + 2]
++            if state == "D":
++                out.append("%s/%s wchan=%s" % (pid, comm, rd("/proc/%s/wchan" % pid)))
++        except (OSError, ValueError):
++            pass
++    return out
++
++
++def scenario_stress(m, dev, kmsg, n_cycles, seed):
++    with open("/proc/sys/kernel/hung_task_timeout_secs", "w") as f:
++        f.write("20")
++    log("hung_task_timeout_secs %s, seed %d" % (rd("/proc/sys/kernel/hung_task_timeout_secs"), seed))
++    if arg("--bt23-delay"):
++        # positive control, debug-only kernels: widen BT-23's window during the whole run
++        p = "/sys/module/btusb/parameters/bt23_delay_ms"
++        with open(p, "w") as f:
++            f.write(arg("--bt23-delay"))
++        log("bt23_delay_ms = %s (debug-only kernel, positive control)" % rd(p))
++    have_kml = os.path.exists(KML)
++    if have_kml:
++        with open(KML, "w") as f:
++            f.write("scan")
++        with open(KML, "w") as f:
++            f.write("clear")
++        log("kmemleak: boot objects cleared")
++    st = Stress(m, dev, seed)
++    plan = {n_cycles * 10 // 100: "power", n_cycles * 30 // 100: "power", n_cycles // 2: "detach",
++            n_cycles * 70 // 100: "power", n_cycles * 90 // 100: "power"}
++    results = []
++    for i in range(n_cycles):
++        results.append(st.cycle(i, plan.get(i)))
++    # the end: one more burst with a USB disconnect in it, nothing re-attached (teardown with traffic)
++    st.set_delay(50)
++    st.ctl("auto")
++    wait_for(lambda: st.status() == "suspended", 5, 0.01)
++    sent, box = st.burst(n_cycles, "detach")
++    gone = wait_for(lambda: not os.path.exists("/sys/class/bluetooth/hci0"), 20)
++    st.windows.append((box.get("t_detach", mono()), mono()))
++    log("final burst with detach: sent %d, hci0 removed=%s %s" %
++        (len([x for x in sent if x[3] is None]), gone, box.get("detach_err", "")))
++    t_end = mono()
++    kml_n, kml_bt, kml_other = -1, -1, []
++    if have_kml:
++        rep = kml_scan("after stress")
++        kml_n = rep.count("unreferenced object")
++        kml_bt, kml_other = kml_classify(rep)
++        for o in kml_other:
++            log("KMEMLEAK-OTHER %s" % o)
++    # give the hung-task detector (20 s) time to see a task blocked by the last cycles
++    while mono() - t_end < 25:
++        time.sleep(1)
++    dst = d_state_tasks()
++    log("tasks in D state at the end: %d %s" % (len(dst), dst))
++    normal = [r for r in results if r["kind"] == "normal"]
++    disr = [r for r in results if r["kind"] != "normal"]
++    reports = kmsg.matching(*REPORT_PATTERNS)
++    tmo_all = kmsg.matching("tx timeout", "Resetting usb device")
++    # a command outstanding when the device is detached times out before the USB core has
++    # disconnected btusb (vhci reports the disconnect about 2.4 s later): expected, reported apart
++    tmo = [(ts, l) for ts, l in tmo_all if not in_windows(ts, st.windows)]
++    tmo_teardown = [(ts, l) for ts, l in tmo_all if in_windows(ts, st.windows)]
++    log("detach windows: %s" % ["%.3f-%.3f" % w_ for w_ in st.windows])
++    for ts, l in reports:
++        log("KERNEL-REPORT [%12.6f] %s" % (ts, l))
++    for ts, l in tmo:
++        log("KERNEL-TIMEOUT [%12.6f] %s" % (ts, l))
++    for ts, l in tmo_teardown:
++        log("TEARDOWN-TIMEOUT [%12.6f] %s" % (ts, l))
++    n_sent = sum(r["sent"] for r in results)
++    parked = sum(r.get("parked", 0) for r in results)
++    lat = [r["max_latency"] for r in normal if r.get("max_latency", -1) >= 0]
++    ok = (all(r["ok"] for r in results) and gone and not reports and not tmo)
++    log("RESULT stress cycles=%d normal=%d normal_ok=%d parked=%d mgmt_not_ok=%d send_errors_normal=%d "
++        "not_suspended_before=%d disruptions=%d recovered=%d final_detach_removed=%s packets_sent=%d "
++        "max_latency=%.3f forced_resume_writes=%d kernel_reports=%d tx_timeouts=%d teardown_timeouts=%d "
++        "kmemleak_objects=%d kmemleak_bt25_signature=%d kmemleak_other=%d d_state_end=%d kmsg_overruns=%d "
++        "device_suspends=%d device_resumes=%d seed=%d" %
++        (n_cycles, len(normal), len([r for r in normal if r["ok"]]), parked,
++         len([r for r in normal if r.get("mgmt") != "0x00"]), sum(r["send_errors"] for r in normal),
++         len([r for r in results if not r["suspended_before"]]), len(disr),
++         len([r for r in disr if r["recovered"]]), gone, n_sent, max(lat) if lat else -1, st.forced,
++         len(reports), len(tmo), len(tmo_teardown), kml_n, kml_bt, len(kml_other), len(dst),
++         len([1 for ts, l in kmsg.lines if l.startswith("<kmsg overrun")]),
++         sum(e.suspends for e in EMUS), sum(e.resumes for e in EMUS), seed))
++    return ok
++
++
++def watchdog(seconds, kmsg):
++    def fire():
++        time.sleep(seconds)
++        log("WATCHDOG: the scenario did not finish in %d s" % seconds)
++        for ts, l in kmsg.matching(*REPORT_PATTERNS):
++            log("KERNEL-REPORT [%12.6f] %s" % (ts, l))
++        log("tasks in D state: %s" % d_state_tasks())
++        try:
++            with open("/proc/sysrq-trigger", "w") as f:
++                f.write("w")
++        except OSError:
++            pass
++        time.sleep(3)
++        log("BT17-EXIT 1")
++        os._exit(1)
++    threading.Thread(target=fire, daemon=True).start()
++
++
+ def main():
+     sc = sys.argv[1]
++    if sc == "stress":
++        kmsg = Kmsg()
++        watchdog(int(arg("--deadline", "840")), kmsg)
++        dyndbg(["func btusb_suspend +p", "func btusb_resume +p", "func btusb_disconnect +p"])
++        m = Mgmt()
++        Emu(fail_at=0).attach()
++        dev = bring_up(EMUS[-1], m)
++        ok = False
++        try:
++            ok = scenario_stress(m, dev, kmsg, int(arg("--cycles", "100")), int(arg("--seed", "1")))
++        except Exception as e:
++            import traceback
++            log("scenario raised %r" % (e,))
++            for l in traceback.format_exc().splitlines():
++                log("TRACE " + l)
++            ok = False
++        log("BT17-EXIT %d" % (0 if ok else 1))
++        sys.exit(0 if ok else 1)
++    sc = sys.argv[1]
+     emu = Emu(fail_at=int(arg("--fail-at", "0")), recover="--recover" in sys.argv,
+               hold_hci="--hold-hci" in sys.argv)
+     # USB core resume/reset path (what the laptop lacked), btusb's PM callbacks and the HCI

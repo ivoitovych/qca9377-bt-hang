@@ -1,0 +1,27 @@
+Cc: stable variant of kernel/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch
+==========================================================================================
+
+The patch as packaged carries no Cc: stable. If you decide for it, make two edits in the patch
+file, nothing else:
+
+1. Add this one line directly under the Fixes: line (above Link:):
+
+Cc: stable@vger.kernel.org
+
+   The trailers then read:
+
+Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+Cc: stable@vger.kernel.org
+Link: https://lore.kernel.org/linux-bluetooth/20220823121541.Bluez.v2.1.I541cbea9d6295f531c796bf3bda96b22db76bc19@changeid/
+Signed-off-by: <your name and address>
+
+2. Below the '---' line, delete the last paragraph (it says the opposite):
+
+Not marked for stable, since the status is visible to user space; a
+backport is left to your judgment.
+
+git send-email turns the trailer into a Cc to stable@vger.kernel.org (the dry run in
+send-commands.txt, variant B, shows it as an extra RCPT TO). Do not send to the stable list
+separately.
+
+For and against, with the precedents: NOTES-FOR-OPERATOR.md, "Cc: stable".

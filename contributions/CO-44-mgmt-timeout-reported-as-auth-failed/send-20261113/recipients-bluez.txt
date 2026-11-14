@@ -1,0 +1,18 @@
+Recipients for the BlueZ mail (bluez/0001-mgmt-tester-Add-Set-Device-Class-timeout-test.patch)
+==============================================================================================
+
+get_maintainer.pl does not apply: bluez.git has no MAINTAINERS file and no get_maintainer.pl
+($ git ls-files MAINTAINERS* scripts/get_maintainer* -> nothing). The kernel's get_maintainer.pl
+does not cover tools/mgmt-tester.c, a BlueZ path.
+
+What BlueZ itself says, HACKING, "Submitting patches":
+  # git config sendemail.to linux-bluetooth@vger.kernel.org
+
+Who applies mgmt-tester changes:
+$ git shortlog -sn -c --since=2026-01-01 origin/master -- tools/mgmt-tester.c    (BlueZ 20ffd285b)
+    18	Luiz Augusto von Dentz
+
+So, as for this project's earlier BlueZ test mails (CO-23, CO-02):
+  To: linux-bluetooth@vger.kernel.org
+  Cc: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
+Never linux-kernel@vger.kernel.org for a BlueZ mail.

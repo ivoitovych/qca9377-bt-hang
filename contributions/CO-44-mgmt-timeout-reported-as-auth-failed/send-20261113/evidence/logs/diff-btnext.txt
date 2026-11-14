@@ -1,0 +1,13 @@
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 6ed3bf6f17..0056e34842 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -295,7 +295,7 @@ static u8 mgmt_errno_status(int err)
+ 	case -EBUSY:
+ 		return MGMT_STATUS_BUSY;
+ 	case -ETIMEDOUT:
+-		return MGMT_STATUS_AUTH_FAILED;
++		return MGMT_STATUS_TIMEOUT;
+ 	case -ENOMEM:
+ 		return MGMT_STATUS_NO_RESOURCES;
+ 	case -EISCONN:

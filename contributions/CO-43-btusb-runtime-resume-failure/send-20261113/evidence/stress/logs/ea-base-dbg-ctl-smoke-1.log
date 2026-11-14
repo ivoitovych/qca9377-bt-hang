@@ -1,0 +1,1680 @@
+start 2026-11-13 20:13:57 kernel ea-base-dbg label ctl-smoke-1 args stress --cycles 10 --seed 103 --bt23-delay 30 cpus 4
+9878c0b86df15a4dd78273449aee46b1f43549a59c678c65315fa756ae513805  /root/exp/agent-work/co43-ea-send-20261113/img/bzImage-ea-base-dbg
+3294e42ff922259a42ec0f52c6dd36c5f90fb47fe3e57c996f83c236b6d95a89  /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py
+/usr/libexec/virtiofsd not available: virtiofs disabled
+early console in extract_kernel
+input_data: 0x000000000703f2c4
+input_len: 0x000000000104836d
+output: 0x0000000001000000
+output_len: 0x000000000383e054
+kernel_total_size: 0x00000000070ca000
+needed_size: 0x0000000007200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x00000000030b32e0).
+Linux version 7.3.0-g0b9b673826f5 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Fri Nov 13 20:10:28 CET 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py stress --cycles 10 --seed 103 --bt23-delay 30'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Creating /etc/bluetooth
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command python3 -I /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py stress --cycles 10 --seed 103 --bt23-delay 30
+Changing into directory /root/exp
+New process 60 created
+random: crng init done
+   0.006 [mono   4.128930] KMSG [    0.000000] Linux version 7.3.0-g0b9b673826f5 (root@n) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #3 SMP PREEMPT_DYNAMIC Fri Nov 13 20:10:28 CET 2026
+   0.007 [mono   4.129166] KMSG [    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py stress --cycles 10 --seed 103 --bt23-delay 30'
+   0.007 [mono   4.129350] KMSG [    0.000000] BIOS-provided physical RAM map:
+   0.007 [mono   4.129509] KMSG [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+   0.008 [mono   4.129667] KMSG [    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+   0.008 [mono   4.129839] KMSG [    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+   0.008 [mono   4.129995] KMSG [    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+   0.008 [mono   4.130156] KMSG [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+   0.008 [mono   4.130314] KMSG [    0.000000] BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+   0.008 [mono   4.130467] KMSG [    0.000000] BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+   0.009 [mono   4.130619] KMSG [    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+   0.009 [mono   4.130792] dyndbg: func btusb_suspend +p | func btusb_resume +p | func btusb_disconnect +p
+   0.013 [mono   4.134602] KMSG [    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+   0.013 [mono   4.134791] KMSG [    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+   0.013 [mono   4.135013] KMSG [    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff]
+   0.013 [mono   4.135180] KMSG [    0.000000] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved
+   0.013 [mono   4.135397] KMSG [    0.000000] BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff]
+   0.014 [mono   4.135560] KMSG [    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+   0.014 [mono   4.135714] KMSG [    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+   0.014 [mono   4.135891] KMSG [    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+   0.014 [mono   4.136047] KMSG [    0.000000] printk: legacy bootconsole [earlyser0] enabled
+   0.014 [mono   4.136279] KMSG [    0.000000] Hash pointers mode set to never.
+   0.014 [mono   4.136443] KMSG [    0.000000] NX (Execute Disable) protection: active
+   0.015 [mono   4.137311] KMSG [    0.000000] APIC: Static calls initialized
+   0.016 [mono   4.137593] KMSG [    0.000000] DMI: SMBIOS 3.0.0 present.
+   0.016 [mono   4.137847] KMSG [    0.000000] DMI: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+   0.016 [mono   4.138061] KMSG [    0.000000] DMI: Memory slots populated: 1/1
+   0.017 [mono   4.138681] KMSG [    0.000000] Hypervisor detected: KVM
+   0.017 [mono   4.138877] KMSG [    0.000000] last_pfn = 0xffe0 max_arch_pfn = 0x400000000
+   0.017 [mono   4.139047] KMSG [    0.000000] kvm-clock: Using msrs 4b564d01 and 4b564d00
+   0.017 [mono   4.139215] KMSG [    0.000001] kvm-clock: using sched offset of 306448718 cycles
+   0.017 [mono   4.139379] KMSG [    0.000005] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+   0.017 [mono   4.139550] KMSG [    0.000012] tsc: Detected 1996.245 MHz processor
+   0.018 [mono   4.139715] KMSG [    0.000454] e820: update [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+   0.018 [mono   4.139889] KMSG [    0.000463] e820: remove [mem 0x000a0000-0x000fffff] System RAM
+   0.018 [mono   4.140044] KMSG [    0.000471] last_pfn = 0xffe0 max_arch_pfn = 0x400000000
+   0.018 [mono   4.140192] KMSG [    0.000518] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+   0.018 [mono   4.140332] KMSG [    0.000523] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+   0.018 [mono   4.140486] KMSG [    0.002366] found SMP MP-table at [mem 0x000f5470-0x000f547f]
+   0.019 [mono   4.140662] KMSG [    0.002669] ACPI: Early table checksum verification disabled
+   0.019 [mono   4.140902] attached to vhci_hcd port 0 (emulator 0)
+   0.019 [mono   4.141234] KMSG [    0.002674] ACPI: RSDP 0x00000000000F52B0 000014 (v00 BOCHS )
+   0.019 [mono   4.141437] KMSG [    0.002685] ACPI: RSDT 0x000000000FFE23D6 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.020 [mono   4.141632] KMSG [    0.002694] ACPI: FACP 0x000000000FFE21B6 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.020 [mono   4.142224] KMSG [    0.002704] ACPI: DSDT 0x000000000FFE0040 002176 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.020 [mono   4.142398] KMSG [    0.002710] ACPI: FACS 0x000000000FFE0000 000040
+   0.020 [mono   4.142544] KMSG [    0.002715] ACPI: APIC 0x000000000FFE22AA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.021 [mono   4.142690] KMSG [    0.002721] ACPI: HPET 0x000000000FFE233A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.021 [mono   4.142857] KMSG [    0.002727] ACPI: MCFG 0x000000000FFE2372 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.021 [mono   4.143004] KMSG [    0.002732] ACPI: WAET 0x000000000FFE23AE 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+   0.021 [mono   4.143147] KMSG [    0.002738] ACPI: Reserving FACP table memory at [mem 0xffe21b6-0xffe22a9]
+   0.021 [mono   4.143290] KMSG [    0.002741] ACPI: Reserving DSDT table memory at [mem 0xffe0040-0xffe21b5]
+   0.021 [mono   4.143431] KMSG [    0.002743] ACPI: Reserving FACS table memory at [mem 0xffe0000-0xffe003f]
+   0.022 [mono   4.143588] KMSG [    0.002745] ACPI: Reserving APIC table memory at [mem 0xffe22aa-0xffe2339]
+   0.022 [mono   4.143730] KMSG [    0.002747] ACPI: Reserving HPET table memory at [mem 0xffe233a-0xffe2371]
+   0.022 [mono   4.143883] KMSG [    0.002750] ACPI: Reserving MCFG table memory at [mem 0xffe2372-0xffe23ad]
+   0.022 [mono   4.144024] KMSG [    0.002752] ACPI: Reserving WAET table memory at [mem 0xffe23ae-0xffe23d5]
+   0.022 [mono   4.144167] KMSG [    0.010262] KernelAddressSanitizer initialized (generic)
+   0.022 [mono   4.144309] KMSG [    0.010902] ACPI: PM-Timer IO Port: 0x608
+   0.022 [mono   4.144451] KMSG [    0.010923] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+   0.023 [mono   4.144594] KMSG [    0.010972] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+   0.023 [mono   4.144997] KMSG [    0.010978] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+   0.023 [mono   4.145143] KMSG [    0.010982] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+   0.023 [mono   4.145284] KMSG [    0.010985] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+   0.023 [mono   4.145424] KMSG [    0.010988] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+   0.024 [mono   4.145563] KMSG [    0.010991] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+   0.024 [mono   4.145704] KMSG [    0.010997] ACPI: Using ACPI (MADT) for SMP configuration information
+   0.024 [mono   4.145858] KMSG [    0.010999] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+   0.024 [mono   4.146004] KMSG [    0.011013] CPU topo: Max. logical packages:   1
+   0.024 [mono   4.146144] KMSG [    0.011015] CPU topo: Max. logical nodes:      1
+   0.024 [mono   4.146284] KMSG [    0.011017] CPU topo: Num. nodes per package:  1
+   0.024 [mono   4.146425] KMSG [    0.011026] CPU topo: Max. logical dies:       1
+   0.025 [mono   4.146566] KMSG [    0.011028] CPU topo: Max. dies per package:   1
+   0.025 [mono   4.146705] KMSG [    0.011046] CPU topo: Max. threads per core:   1
+   0.025 [mono   4.146856] KMSG [    0.011048] CPU topo: Num. cores per package:     4
+   0.025 [mono   4.146997] KMSG [    0.011050] CPU topo: Num. threads per package:   4
+   0.025 [mono   4.147136] KMSG [    0.011052] CPU topo: Allowing 4 present CPUs plus 0 hotplug CPUs
+   0.025 [mono   4.147277] KMSG [    0.011103] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+   0.025 [mono   4.147437] KMSG [    0.011139] [gap 0x10000000-0xafffffff] available for PCI devices
+   0.026 [mono   4.147587] KMSG [    0.011143] Booting paravirtualized kernel on KVM
+   0.026 [mono   4.147730] KMSG [    0.011146] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+   0.026 [mono   4.147883] KMSG [    0.018828] Zone ranges:
+   0.026 [mono   4.148030] KMSG [    0.018833]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+   0.026 [mono   4.148184] KMSG [    0.018839]   DMA32    [mem 0x0000000001000000-0x000000000ffdffff]
+   0.026 [mono   4.148355] KMSG [    0.018842]   Normal   empty
+   0.026 [mono   4.148504] KMSG [    0.018846] Movable zone start for each node
+   0.027 [mono   4.148662] KMSG [    0.018848] Early memory node ranges
+   0.027 [mono   4.148816] KMSG [    0.018849]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+   0.027 [mono   4.148961] KMSG [    0.018852]   node   0: [mem 0x0000000000100000-0x000000000ffdffff]
+   0.027 [mono   4.149102] KMSG [    0.018855] Initmem setup node 0 [mem 0x0000000000001000-0x000000000ffdffff]
+   0.027 [mono   4.149243] KMSG [    0.019161] On node 0, zone DMA: 1 pages in unavailable ranges
+   0.027 [mono   4.149385] KMSG [    0.019239] On node 0, zone DMA: 97 pages in unavailable ranges
+   0.027 [mono   4.149525] KMSG [    0.020633] On node 0, zone DMA32: 32 pages in unavailable ranges
+   0.028 [mono   4.149666] KMSG [    0.020643] setup_percpu: NR_CPUS:4 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+   0.028 [mono   4.149816] KMSG [    0.020986] percpu: Embedded 62 pages/cpu s223440 r0 d30512 u524288
+   0.028 [mono   4.149958] KMSG [    0.020994] pcpu-alloc: s223440 r0 d30512 u524288 alloc=1*2097152
+   0.028 [mono   4.150111] KMSG [    0.021000] pcpu-alloc: [0] 0 1 2 3 
+   0.028 [mono   4.150265] KMSG [    0.021034] Kernel command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=/root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3 -I /root/exp/agent-work/co43-ea-send-20261113/stress/harness/bt17-emu.py stress --cycles 10 --seed 103 --bt23-delay 30'
+   0.028 [mono   4.150415] KMSG [    0.021228] Unknown kernel command line parameters "-I stress --cycles 10 --seed 103 --bt23-delay 30' TESTHOME=/root/exp TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='python3", will be passed to user space.
+   0.028 [mono   4.150559] KMSG [    0.021238] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+   0.029 [mono   4.150700] KMSG [    0.021262] Dentry cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+   0.029 [mono   4.150858] KMSG [    0.021285] Inode-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+   0.029 [mono   4.151001] KMSG [    0.021419] Built 1 zonelists, mobility grouping on.  Total pages: 65406
+   0.029 [mono   4.151142] KMSG [    0.021424] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+   0.029 [mono   4.151283] KMSG [    0.021427] stackdepot: allocating hash table via alloc_large_system_hash
+   0.029 [mono   4.151426] KMSG [    0.021431] stackdepot hash table entries: 1048576 (order: 12, 16777216 bytes, linear)
+   0.030 [mono   4.151569] KMSG [    0.024237] stackdepot: allocating space for 8192 stack pools via memblock
+   0.030 [mono   4.151710] KMSG [    0.027473] **********************************************************
+   0.030 [mono   4.151863] KMSG [    0.027480] **   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **
+   0.030 [mono   4.152011] KMSG [    0.027483] **                                                      **
+   0.030 [mono   4.152154] KMSG [    0.027485] ** This system shows unhashed kernel memory addresses   **
+   0.030 [mono   4.152325] KMSG [    0.027487] ** via the console, logs, and other interfaces. This    **
+   0.030 [mono   4.152490] KMSG [    0.027488] ** might reduce the security of your system.            **
+   0.031 [mono   4.152674] KMSG [    0.027490] **                                                      **
+   0.031 [mono   4.152850] KMSG [    0.027492] ** If you see this message and you are not debugging    **
+   0.031 [mono   4.153003] KMSG [    0.027493] ** the kernel, report this immediately to your system   **
+   0.031 [mono   4.153158] KMSG [    0.027495] ** administrator!                                       **
+   0.031 [mono   4.153299] KMSG [    0.027497] **                                                      **
+   0.031 [mono   4.153441] KMSG [    0.027498] ** Use hash_pointers=always to force this mode off      **
+   0.032 [mono   4.153581] KMSG [    0.027500] **                                                      **
+   0.032 [mono   4.153721] KMSG [    0.027502] **   NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE   **
+   0.032 [mono   4.153877] KMSG [    0.027504] **********************************************************
+   0.032 [mono   4.154028] KMSG [    0.028468] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+   0.032 [mono   4.154169] KMSG [    0.030258] Dynamic Preempt: lazy
+   0.032 [mono   4.154311] KMSG [    0.032858] Running RCU self tests
+   0.032 [mono   4.154452] KMSG [    0.032861] Running RCU synchronous self tests
+   0.033 [mono   4.154594] KMSG [    0.032865] rcu: Preemptible hierarchical RCU implementation.
+   0.033 [mono   4.154736] KMSG [    0.032867] rcu: \x09RCU event tracing is enabled.
+   0.033 [mono   4.154890] KMSG [    0.032869] rcu: \x09RCU lockdep checking is enabled.
+   0.033 [mono   4.155040] KMSG [    0.032872] \x09Trampoline variant of Tasks RCU enabled.
+   0.033 [mono   4.155187] KMSG [    0.032874] \x09Tracing variant of Tasks RCU enabled.
+   0.033 [mono   4.155336] KMSG [    0.032876] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+   0.033 [mono   4.155485] KMSG [    0.033222] Running RCU synchronous self tests
+   0.034 [mono   4.155626] KMSG [    0.033234] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+   0.034 [mono   4.155770] KMSG [    0.060015] NR_IRQS: 4352, nr_irqs: 72, preallocated irqs: 16
+   0.034 [mono   4.155934] KMSG [    0.060731] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+   0.034 [mono   4.156076] KMSG [    0.060746] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+   0.034 [mono   4.156219] KMSG [    0.061601] Console: colour *CGA 80x25
+   0.034 [mono   4.156392] KMSG [    0.061684] Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+   0.034 [mono   4.156545] KMSG [    0.061687] ... MAX_LOCKDEP_SUBCLASSES:  8
+   0.035 [mono   4.156711] KMSG [    0.061689] ... MAX_LOCK_DEPTH:          48
+   0.035 [mono   4.156872] KMSG [    0.061691] ... MAX_LOCKDEP_KEYS:        8192
+   0.035 [mono   4.157016] KMSG [    0.061693] ... CLASSHASH_SIZE:          4096
+   0.035 [mono   4.157157] KMSG [    0.061695] ... MAX_LOCKDEP_ENTRIES:     32768
+   0.035 [mono   4.157298] KMSG [    0.061697] ... MAX_LOCKDEP_CHAINS:      65536
+   0.035 [mono   4.157439] KMSG [    0.061699] ... CHAINHASH_SIZE:          32768
+   0.036 [mono   4.157581] KMSG [    0.061701]  memory used by lock dependency info: 6429 kB
+   0.036 [mono   4.157723] KMSG [    0.061703]  memory used for stack traces: 16896 kB
+   0.036 [mono   4.157877] KMSG [    0.061705]  per task-struct memory footprint: 1920 bytes
+   0.036 [mono   4.158039] KMSG [    0.061748] ACPI: Core revision 20260408
+   0.036 [mono   4.158185] KMSG [    0.062981] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+   0.036 [mono   4.158357] KMSG [    0.063299] APIC: Switch to symmetric I/O mode setup
+   0.036 [mono   4.158507] KMSG [    0.063541] x2apic enabled
+   0.037 [mono   4.158675] KMSG [    0.063946] APIC: Switched APIC routing to: physical x2apic
+   0.037 [mono   4.158850] KMSG [    0.066013] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+   0.037 [mono   4.159002] KMSG [    0.066046] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+   0.037 [mono   4.159155] KMSG [    0.066057] Calibrating delay loop (skipped) preset value.. 3992.49 BogoMIPS (lpj=7984980)
+   0.037 [mono   4.159304] KMSG [    0.066361] Last level iTLB entries: 4KB 512, 2MB 255, 4MB 127
+   0.037 [mono   4.159455] KMSG [    0.066366] Last level dTLB entries: 4KB 512, 2MB 255, 4MB 127, 1GB 0
+   0.038 [mono   4.159598] KMSG [    0.066372] mitigations: Enabled attack vectors: user_kernel, user_user, SMT mitigations: auto
+   0.038 [mono   4.159741] KMSG [    0.066381] Spectre V2 : Mitigation: Retpolines
+   0.038 [mono   4.159904] KMSG [    0.066385] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+   0.038 [mono   4.160049] KMSG [    0.066388] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+   0.038 [mono   4.160200] KMSG [    0.066402] x86/fpu: x87 FPU will use FXSAVE
+   0.038 [mono   4.160342] KMSG [    0.087306] pid_max: default: 32768 minimum: 301
+   0.038 [mono   4.160483] KMSG [    0.089013] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+   0.039 [mono   4.160625] KMSG [    0.089024] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+   0.039 [mono   4.160794] KMSG [    0.090620] VFS: Finished mounting rootfs on nullfs
+   0.039 [mono   4.160972] KMSG [    0.092768] Running RCU synchronous self tests
+   0.039 [mono   4.161172] KMSG [    0.092775] Running RCU synchronous self tests
+   0.039 [mono   4.161335] KMSG [    0.201306] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+   0.039 [mono   4.161500] KMSG [    0.202057] Performance Events: AMD PMU driver.
+   0.040 [mono   4.161652] KMSG [    0.202057] ... version:                   0
+   0.040 [mono   4.161808] KMSG [    0.202057] ... bit width:                 48
+   0.040 [mono   4.161956] KMSG [    0.202057] ... generic counters:          4
+   0.040 [mono   4.162108] KMSG [    0.202057] ... generic bitmap:            000000000000000f
+   0.040 [mono   4.162275] KMSG [    0.202057] ... fixed-purpose counters:    0
+   0.040 [mono   4.162423] KMSG [    0.202057] ... fixed-purpose bitmap:      0000000000000000
+   0.041 [mono   4.162591] KMSG [    0.202057] ... value mask:                0000ffffffffffff
+   0.041 [mono   4.162750] KMSG [    0.202057] ... max period:                00007fffffffffff
+   0.041 [mono   4.162915] KMSG [    0.202057] ... global_ctrl mask:          000000000000000f
+   0.041 [mono   4.163059] KMSG [    0.202057] signal: max sigframe size: 1040
+   0.041 [mono   4.163200] KMSG [    0.202057] rcu: Hierarchical SRCU implementation.
+   0.041 [mono   4.163346] KMSG [    0.202057] rcu: \x09Max phase no-delay instances is 1000.
+   0.041 [mono   4.163489] KMSG [    0.203609] smp: Bringing up secondary CPUs ...
+   0.042 [mono   4.163636] KMSG [    0.204551] smpboot: x86: Booting SMP configuration:
+   0.042 [mono   4.163790] KMSG [    0.204559] .... node  #0, CPUs:      #1 #2 #3
+   0.042 [mono   4.163942] KMSG [    0.214177] smp: Brought up 1 node, 4 CPUs
+   0.042 [mono   4.164086] KMSG [    0.214184] smpboot: Total of 4 processors activated (15969.96 BogoMIPS)
+   0.042 [mono   4.164229] KMSG [    0.215660] Memory: 70472K/261624K available (29487K kernel code, 5856K rwdata, 6924K rodata, 4132K init, 61456K bss, 185236K reserved, 0K cma-reserved)
+   0.042 [mono   4.164376] KMSG [    0.217330] devtmpfs: initialized
+   0.042 [mono   4.164517] KMSG [    0.225326] Running RCU synchronous self tests
+   0.043 [mono   4.164673] KMSG [    0.225349] Running RCU synchronous self tests
+   0.043 [mono   4.164827] KMSG [    0.225644] Running RCU Tasks wait API self tests
+   0.043 [mono   4.164971] KMSG [    0.225838] Running RCU Tasks Trace wait API self tests
+   0.043 [mono   4.165114] KMSG [    0.226169] posixtimers hash table entries: 2048 (order: 6, 147456 bytes, linear)
+   0.043 [mono   4.165265] KMSG [    0.226235] futex hash table entries: 1024 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+   0.043 [mono   4.165408] KMSG [    0.229086] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+   0.043 [mono   4.165551] KMSG [    0.233496] thermal_sys: Registered thermal governor 'step_wise'
+   0.044 [mono   4.165693] KMSG [    0.233652] cpuidle: using governor ladder
+   0.044 [mono   4.165850] KMSG [    0.235757] PCI: ECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff]
+   0.044 [mono   4.166002] KMSG [    0.235767] PCI: ECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry
+   0.044 [mono   4.166149] KMSG [    0.235827] PCI: Using configuration type 1 for base access
+   0.044 [mono   4.166291] KMSG [    0.240359] ACPI: Added _OSI(Module Device)
+   0.044 [mono   4.166470] KMSG [    0.240364] ACPI: Added _OSI(Processor Device)
+   0.045 [mono   4.166631] KMSG [    0.240367] ACPI: Added _OSI(Processor Aggregator Device)
+   0.045 [mono   4.166795] KMSG [    0.246072] Callback from call_rcu_tasks_trace() invoked.
+   0.045 [mono   4.166954] KMSG [    0.328320] Callback from call_rcu_tasks() invoked.
+   0.045 [mono   4.167118] KMSG [    0.395079] ACPI: 1 ACPI AML tables successfully acquired and loaded
+   0.045 [mono   4.167308] KMSG [    0.409789] ACPI: \x5c_SB_: platform _OSC: OS support mask [000a7eee]
+   0.045 [mono   4.167459] KMSG [    0.420274] ACPI: Interpreter enabled
+   0.046 [mono   4.167601] KMSG [    0.425618] ACPI: PM: (supports S0 S3 S5)
+   0.046 [mono   4.167746] KMSG [    0.425632] ACPI: Using IOAPIC for interrupt routing
+   0.046 [mono   4.167901] KMSG [    0.426318] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+   0.046 [mono   4.168073] KMSG [    0.426322] PCI: Using E820 reservations for host bridge windows
+   0.046 [mono   4.168237] KMSG [    0.431385] ACPI: Enabled 2 GPEs in block 00 to 3F
+   0.046 [mono   4.168383] KMSG [    0.595968] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+   0.046 [mono   4.168531] KMSG [    0.596045] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments HPX-Type3]
+   0.047 [mono   4.168685] KMSG [    0.596050] acpi PNP0A08:00: PCIe port services disabled; not requesting _OSC control
+   0.047 [mono   4.168843] KMSG [    0.603817] PCI host bridge to bus 0000:00
+   0.047 [mono   4.168996] KMSG [    0.604127] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+   0.047 [mono   4.169153] KMSG [    0.604149] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+   0.047 [mono   4.169322] KMSG [    0.604168] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+   0.047 [mono   4.169466] KMSG [    0.604187] pci_bus 0000:00: root bus resource [mem 0x10000000-0xafffffff window]
+   0.048 [mono   4.169610] KMSG [    0.604205] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+   0.048 [mono   4.169752] KMSG [    0.604224] pci_bus 0000:00: root bus resource [mem 0x100000000-0x8ffffffff window]
+   0.048 [mono   4.169943] KMSG [    0.604245] pci_bus 0000:00: root bus resource [bus 00-ff]
+   0.048 [mono   4.170100] KMSG [    0.604260] acpi PNP0A08:00: OS native features: SHPCHotplug- PCIeHotplug- PME- AER- DPC- LTR-
+   0.048 [mono   4.170255] KMSG [    0.604480] pci 0000:00:00.0: [8086:29c0] type 00 class 0x060000 conventional PCI endpoint
+   0.048 [mono   4.170407] KMSG [    0.611008] pci 0000:00:01.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+   0.048 [mono   4.170551] KMSG [    0.612737] pci 0000:00:01.0: BAR 0 [io  0xc000-0xc03f]
+   0.049 [mono   4.170696] KMSG [    0.612764] pci 0000:00:01.0: BAR 1 [mem 0xfebfd000-0xfebfdfff]
+   0.049 [mono   4.170883] KMSG [    0.612836] pci 0000:00:01.0: BAR 4 [mem 0xfebf4000-0xfebf7fff 64bit pref]
+   0.049 [mono   4.171047] KMSG [    0.618992] pci 0000:00:02.0: [1af4:1009] type 00 class 0x000200 conventional PCI endpoint
+   0.049 [mono   4.171204] KMSG [    0.620515] pci 0000:00:02.0: BAR 0 [io  0xc040-0xc07f]
+   0.049 [mono   4.171347] KMSG [    0.620539] pci 0000:00:02.0: BAR 1 [mem 0xfebfe000-0xfebfefff]
+   0.049 [mono   4.171491] KMSG [    0.620609] pci 0000:00:02.0: BAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]
+   0.050 [mono   4.171635] KMSG [    0.626637] pci 0000:00:1f.0: [8086:2918] type 00 class 0x060100 conventional PCI endpoint
+   0.050 [mono   4.171787] KMSG [    0.627550] pci 0000:00:1f.0: quirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO
+   0.050 [mono   4.172184] KMSG [    0.631343] pci 0000:00:1f.2: [8086:2922] type 00 class 0x010601 conventional PCI endpoint
+   0.050 [mono   4.172373] KMSG [    0.632379] pci 0000:00:1f.2: BAR 4 [io  0xc0c0-0xc0df]
+   0.051 [mono   4.172564] KMSG [    0.632402] pci 0000:00:1f.2: BAR 5 [mem 0xfebff000-0xfebfffff]
+   0.051 [mono   4.172770] KMSG [    0.636611] pci 0000:00:1f.3: [8086:2930] type 00 class 0x0c0500 conventional PCI endpoint
+   0.051 [mono   4.173048] KMSG [    0.637562] pci 0000:00:1f.3: BAR 4 [io  0x0700-0x073f]
+   0.051 [mono   4.173211] KMSG [    0.641801] pci_bus 0000:00: on NUMA node 0
+   0.051 [mono   4.173365] KMSG [    0.653584] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+   0.051 [mono   4.173516] KMSG [    0.658913] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+   0.052 [mono   4.173666] KMSG [    0.663642] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+   0.052 [mono   4.173836] KMSG [    0.668891] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+   0.052 [mono   4.174006] KMSG [    0.674752] ACPI: PCI: Interrupt link LNKE configured for IRQ 10
+   0.052 [mono   4.174160] KMSG [    0.679701] ACPI: PCI: Interrupt link LNKF configured for IRQ 10
+   0.052 [mono   4.174313] KMSG [    0.684960] ACPI: PCI: Interrupt link LNKG configured for IRQ 11
+   0.052 [mono   4.174465] KMSG [    0.691221] ACPI: PCI: Interrupt link LNKH configured for IRQ 11
+   0.053 [mono   4.174610] KMSG [    0.692245] ACPI: PCI: Interrupt link GSIA configured for IRQ 16
+   0.053 [mono   4.174758] KMSG [    0.692871] ACPI: PCI: Interrupt link GSIB configured for IRQ 17
+   0.053 [mono   4.175140] KMSG [    0.693475] ACPI: PCI: Interrupt link GSIC configured for IRQ 18
+   0.053 [mono   4.175302] KMSG [    0.694446] ACPI: PCI: Interrupt link GSID configured for IRQ 19
+   0.053 [mono   4.175448] KMSG [    0.695040] ACPI: PCI: Interrupt link GSIE configured for IRQ 20
+   0.054 [mono   4.175595] KMSG [    0.695617] ACPI: PCI: Interrupt link GSIF configured for IRQ 21
+   0.054 [mono   4.175741] KMSG [    0.696205] ACPI: PCI: Interrupt link GSIG configured for IRQ 22
+   0.054 [mono   4.175902] KMSG [    0.696781] ACPI: PCI: Interrupt link GSIH configured for IRQ 23
+   0.054 [mono   4.176049] KMSG [    0.717378] iommu: Default domain type: Translated
+   0.054 [mono   4.176193] KMSG [    0.717385] iommu: DMA domain TLB invalidation policy: lazy mode
+   0.054 [mono   4.176336] KMSG [    0.718455] ACPI: bus type USB registered
+   0.054 [mono   4.176480] KMSG [    0.718859] usbcore: registered new interface driver usbfs
+   0.055 [mono   4.176623] KMSG [    0.719069] usbcore: registered new interface driver hub
+   0.055 [mono   4.176796] KMSG [    0.719356] usbcore: registered new device driver usb
+   0.055 [mono   4.176946] KMSG [    0.719931] pps_core: LinuxPPS API ver. 1 registered
+   0.055 [mono   4.177090] KMSG [    0.719934] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+   0.055 [mono   4.177238] KMSG [    0.720008] PTP clock support registered
+   0.055 [mono   4.177384] KMSG [    0.724867] Bluetooth: Core ver 2.22
+   0.055 [mono   4.177532] KMSG [    0.724984] NET: Registered PF_BLUETOOTH protocol family
+   0.056 [mono   4.177729] KMSG [    0.724987] Bluetooth: HCI device and connection manager initialized
+   0.056 [mono   4.177910] KMSG [    0.725017] Bluetooth: HCI socket layer initialized
+   0.056 [mono   4.178111] KMSG [    0.725034] Bluetooth: L2CAP socket layer initialized
+   0.056 [mono   4.178268] KMSG [    0.725090] Bluetooth: SCO socket layer initialized
+   0.056 [mono   4.178471] KMSG [    0.725952] PCI: Using ACPI for IRQ routing
+   0.057 [mono   4.178631] KMSG [    0.847388] PCI: pci_cache_line_size set to 64 bytes
+   0.057 [mono   4.178935] KMSG [    0.847594] e820: register RAM buffer resource [mem 0x0009fc00-0x0009ffff]
+   0.057 [mono   4.179174] KMSG [    0.847657] e820: register RAM buffer resource [mem 0x0ffe0000-0x0fffffff]
+   0.057 [mono   4.179362] KMSG [    0.848246] vgaarb: loaded
+   0.058 [mono   4.179638] KMSG [    0.848885] clocksource: Switched to clocksource kvm-clock
+   0.058 [mono   4.179864] KMSG [    0.887041] acpi PNP0C01:00: Reserved [mem 0xb0000000-0xbfffffff]
+   0.058 [mono   4.180062] KMSG [    0.887336] pnp: PnP ACPI init
+   0.058 [mono   4.180232] KMSG [    0.901418] pnp: PnP ACPI: found 3 devices
+   0.058 [mono   4.180427] KMSG [    0.906595] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+   0.059 [mono   4.180591] KMSG [    0.907316] NET: Registered PF_INET protocol family
+   0.059 [mono   4.180808] KMSG [    0.907588] IP idents hash table entries: 2048 (order: 2, 16384 bytes, linear)
+   0.059 [mono   4.181047] KMSG [    0.908982] tcp_listen_portaddr_hash hash table entries: 64 (order: 1, 4608 bytes, linear)
+   0.059 [mono   4.181273] KMSG [    0.908999] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+   0.059 [mono   4.181436] KMSG [    0.909173] TCP established hash table entries: 1024 (order: 1, 8192 bytes, linear)
+   0.060 [mono   4.181596] KMSG [    0.909206] TCP bind hash table entries: 1024 (order: 6, 147456 bytes, linear)
+   0.060 [mono   4.181756] KMSG [    0.909424] TCP: Hash tables configured (established 1024 bind 1024)
+   0.060 [mono   4.181923] KMSG [    0.909664] UDP hash table entries: 256 (order: 4, 65536 bytes, linear)
+   0.060 [mono   4.182078] KMSG [    0.910216] NET: Registered PF_UNIX/PF_LOCAL protocol family
+   0.060 [mono   4.182232] KMSG [    0.910324] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+   0.060 [mono   4.182386] KMSG [    0.910330] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+   0.060 [mono   4.182534] KMSG [    0.910334] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+   0.061 [mono   4.182680] KMSG [    0.910338] pci_bus 0000:00: resource 7 [mem 0x10000000-0xafffffff window]
+   0.061 [mono   4.182842] KMSG [    0.910341] pci_bus 0000:00: resource 8 [mem 0xc0000000-0xfebfffff window]
+   0.061 [mono   4.182988] KMSG [    0.910344] pci_bus 0000:00: resource 9 [mem 0x100000000-0x8ffffffff window]
+   0.061 [mono   4.183134] KMSG [    0.910777] PCI: CLS 0 bytes, default 64
+   0.061 [mono   4.183278] KMSG [    0.911426] NET: Registered PF_INET6 protocol family
+   0.061 [mono   4.183424] KMSG [    0.914387] Segment Routing with IPv6
+   0.062 [mono   4.183572] KMSG [    0.914561] In-situ OAM (IOAM) with IPv6
+   0.062 [mono   4.183725] KMSG [    0.915035] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x398ca5c3e2a, max_idle_ns: 881590548659 ns
+   0.062 [mono   4.183890] KMSG [    0.922457] workingset: timestamp_bits=62 (anon: 57) max_order=15 bucket_order=0 (anon: 0)
+   0.062 [mono   4.184085] KMSG [    0.923989] fuse: init (API version 7.47)
+   0.062 [mono   4.184257] KMSG [    0.924802] 9p: Installing v9fs 9p2000 file system support
+   0.062 [mono   4.184445] KMSG [    0.924962] NET: Registered PF_ALG protocol family
+   0.063 [mono   4.184675] KMSG [    0.925168] io scheduler mq-deadline registered
+   0.066 [mono   4.188172] KMSG [    0.925171] io scheduler kyber registered
+   0.066 [mono   4.188355] KMSG [    0.926950] input: Power Button as /devices/platform/LNXPWRBN:00/input/input0
+   0.066 [mono   4.188521] KMSG [    0.927819] ACPI: button: Power Button [PWRF]
+   0.067 [mono   4.189412] KMSG [    0.966940] ACPI: \x5c_SB_.GSIF: Enabled at IRQ 21
+   0.068 [mono   4.189578] KMSG [    1.007271] ACPI: \x5c_SB_.GSIG: Enabled at IRQ 22
+   0.068 [mono   4.189732] KMSG [    1.207777] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+   0.068 [mono   4.189912] KMSG [    1.210649] 00:02: ttyS0 I/O:0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+   0.068 [mono   4.190059] KMSG [    1.249328] printk: legacy console [hvc0] enabled
+   0.068 [mono   4.190206] KMSG [    1.249335] printk: legacy bootconsole [earlyser0] disabled
+   0.069 [mono   4.190800] KMSG [    1.249789] dummy_hcd dummy_hcd.0: USB Host+Gadget Emulator, driver 02 May 2005
+   0.069 [mono   4.190967] KMSG [    1.249842] dummy_hcd dummy_hcd.0: Dummy host controller
+   0.069 [mono   4.191142] KMSG [    1.251197] dummy_hcd dummy_hcd.0: new USB bus registered, assigned bus number 1
+   0.069 [mono   4.191294] KMSG [    1.251579] usb usb1: New USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+   0.069 [mono   4.191440] KMSG [    1.252503] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+   0.070 [mono   4.191597] KMSG [    1.252508] usb usb1: Product: Dummy host controller
+   0.070 [mono   4.191799] KMSG [    1.252512] usb usb1: Manufacturer: Linux 7.3.0-g0b9b673826f5 dummy_hcd
+   0.070 [mono   4.191987] KMSG [    1.252515] usb usb1: SerialNumber: dummy_hcd.0
+   0.070 [mono   4.192154] KMSG [    1.255736] hub 1-0:1.0: USB hub found
+   0.070 [mono   4.192313] KMSG [    1.256025] hub 1-0:1.0: 1 port detected
+   0.070 [mono   4.192466] KMSG [    1.262065] vhci_hcd vhci_hcd.0: USB/IP Virtual Host Controller
+   0.071 [mono   4.192613] KMSG [    1.262891] vhci_hcd vhci_hcd.0: new USB bus registered, assigned bus number 2
+   0.071 [mono   4.192794] KMSG [    1.263105] vhci_hcd vhci_hcd.0: created sysfs vhci_hcd.0
+   0.071 [mono   4.192948] KMSG [    1.263464] usb usb2: New USB device found: idVendor=1d6b, idProduct=0002, bcdDevice=7.03
+   0.071 [mono   4.193106] KMSG [    1.264411] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+   0.071 [mono   4.193315] KMSG [    1.264416] usb usb2: Product: USB/IP Virtual Host Controller
+   0.071 [mono   4.193469] KMSG [    1.264420] usb usb2: Manufacturer: Linux 7.3.0-g0b9b673826f5 vhci_hcd
+   0.072 [mono   4.193616] KMSG [    1.264423] usb usb2: SerialNumber: vhci_hcd.0
+   0.072 [mono   4.193764] KMSG [    1.267027] hub 2-0:1.0: USB hub found
+   0.072 [mono   4.193921] KMSG [    1.267333] hub 2-0:1.0: 8 ports detected
+   0.072 [mono   4.194130] KMSG [    1.277139] vhci_hcd vhci_hcd.0: USB/IP Virtual Host Controller
+   0.072 [mono   4.194297] KMSG [    1.278413] vhci_hcd vhci_hcd.0: new USB bus registered, assigned bus number 3
+   0.072 [mono   4.194512] KMSG [    1.278852] usb usb3: We don't know the algorithms for LPM for this host, disabling LPM.
+   0.073 [mono   4.194678] KMSG [    1.278856] usb usb3: New USB device found: idVendor=1d6b, idProduct=0003, bcdDevice=7.03
+   0.073 [mono   4.194856] KMSG [    1.280276] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+   0.073 [mono   4.195020] KMSG [    1.280282] usb usb3: Product: USB/IP Virtual Host Controller
+   0.073 [mono   4.195181] KMSG [    1.280285] usb usb3: Manufacturer: Linux 7.3.0-g0b9b673826f5 vhci_hcd
+   0.073 [mono   4.195338] KMSG [    1.280288] usb usb3: SerialNumber: vhci_hcd.0
+   0.073 [mono   4.195487] KMSG [    1.283036] hub 3-0:1.0: USB hub found
+   0.074 [mono   4.195629] KMSG [    1.283415] hub 3-0:1.0: 8 ports detected
+   0.074 [mono   4.195787] KMSG [    1.294139] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+   0.074 [mono   4.195940] KMSG [    1.296873] serio: i8042 KBD port at 0x60,0x64 irq 1
+   0.074 [mono   4.196091] KMSG [    1.296973] serio: i8042 AUX port at 0x60,0x64 irq 12
+   0.074 [mono   4.196243] KMSG [    1.300170] Bluetooth: HCI UART driver ver 2.3
+   0.074 [mono   4.196391] KMSG [    1.300179] Bluetooth: HCI UART protocol H4 registered
+   0.074 [mono   4.196539] KMSG [    1.300182] Bluetooth: HCI UART protocol BCSP registered
+   0.075 [mono   4.196699] KMSG [    1.300311] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+   0.075 [mono   4.196861] KMSG [    1.300312] Bluetooth: HCI UART protocol LL registered
+   0.075 [mono   4.197018] KMSG [    1.300315] Bluetooth: HCI UART protocol ATH3K registered
+   0.075 [mono   4.197163] KMSG [    1.300430] Bluetooth: HCI UART protocol Three-wire (H5) registered
+   0.075 [mono   4.197307] KMSG [    1.300538] Bluetooth: HCI UART protocol QCA registered
+   0.075 [mono   4.197451] KMSG [    1.300540] Bluetooth: HCI UART protocol AG6XX registered
+   0.076 [mono   4.197594] KMSG [    1.300653] Bluetooth: HCI UART protocol Marvell registered
+   0.076 [mono   4.197736] KMSG [    1.300760] Bluetooth: HCI UART protocol AML registered
+   0.076 [mono   4.197894] KMSG [    1.300915] usbcore: registered new interface driver bcm203x
+   0.076 [mono   4.198041] KMSG [    1.301174] usbcore: registered new interface driver bpa10x
+   0.076 [mono   4.198184] KMSG [    1.301301] usbcore: registered new interface driver bfusb
+   0.076 [mono   4.198331] KMSG [    1.301545] usbcore: registered new interface driver btusb
+   0.076 [mono   4.198476] KMSG [    1.301791] usbcore: registered new interface driver ath3k
+   0.077 [mono   4.198621] KMSG [    1.302579] hid: raw HID events driver (C) Jiri Kosina
+   0.077 [mono   4.198765] KMSG [    1.303930] usbcore: registered new interface driver usbhid
+   0.077 [mono   4.198941] KMSG [    1.303935] usbhid: USB HID core driver
+   0.077 [mono   4.199088] KMSG [    1.304812] sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+   0.077 [mono   4.199237] KMSG [    1.308673] NET: Registered PF_PACKET protocol family
+   0.077 [mono   4.199394] KMSG [    1.308936] Bluetooth: RFCOMM socket layer initialized
+   0.078 [mono   4.199561] KMSG [    1.308987] Bluetooth: RFCOMM ver 1.11
+   0.078 [mono   4.199715] KMSG [    1.309025] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+   0.078 [mono   4.199876] KMSG [    1.309078] Bluetooth: BNEP socket layer initialized
+   0.078 [mono   4.200024] KMSG [    1.309081] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+   0.078 [mono   4.200171] KMSG [    1.309110] Bluetooth: HIDP socket layer initialized
+   0.078 [mono   4.200318] KMSG [    1.309293] 9pnet: Installing 9P2000 support
+   0.078 [mono   4.200463] KMSG [    1.314951] IPI shorthand broadcast: enabled
+   0.079 [mono   4.200609] KMSG [    1.359592] sched_clock: Marking stable (1355387430, 1311021)->(1359875876, -3177425)
+   0.082 [mono   4.204382] KMSG [    1.431278] kmemleak: Kernel memory leak detector initialized (mem pool available: 158507)
+   0.083 [mono   4.204624] KMSG [    1.714159] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+   0.083 [mono   4.204961] KMSG [    1.714623] 9p: Bad value for 'source'
+   0.083 [mono   4.205137] KMSG [    1.718585] VFS: Mounted root (9p filesystem) readonly on device 0:18.
+   0.083 [mono   4.205289] KMSG [    1.718778] VFS: Pivoted into new rootfs
+   0.083 [mono   4.205435] KMSG [    1.720047] Freeing unused kernel image (initmem) memory: 4132K
+   0.084 [mono   4.205582] KMSG [    1.720052] Write protecting the kernel read-only data: 38912k
+   0.084 [mono   4.205729] KMSG [    1.720895] Freeing unused kernel image (text/rodata gap) memory: 1232K
+   0.084 [mono   4.205890] KMSG [    1.721373] Freeing unused kernel image (rodata/data gap) memory: 1268K
+   0.084 [mono   4.206038] KMSG [    1.768280] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+   0.084 [mono   4.206181] KMSG [    1.768324] Run /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3 as init process
+   0.084 [mono   4.206326] KMSG [    1.768328]   with arguments:
+   0.084 [mono   4.206471] KMSG [    1.768331]     /root/exp/agent-work/co20-diag-20261101/bin/test-runner-r3
+   0.085 [mono   4.206614] KMSG [    1.768334]     -I
+   0.085 [mono   4.206760] KMSG [    1.768336]     stress
+   0.085 [mono   4.206919] KMSG [    1.768338]     --cycles
+   0.085 [mono   4.207069] KMSG [    1.768340]     10
+   0.085 [mono   4.207214] KMSG [    1.768342]     --seed
+   0.085 [mono   4.207417] KMSG [    1.768344]     103
+   0.086 [mono   4.207587] KMSG [    1.768346]     --bt23-delay
+   0.086 [mono   4.207762] KMSG [    1.768348]     30'
+   0.086 [mono   4.207927] KMSG [    1.768350]   with environment:
+   0.086 [mono   4.208128] KMSG [    1.768352]     HOME=/
+   0.086 [mono   4.208282] KMSG [    1.768354]     TERM=linux
+   0.086 [mono   4.208428] KMSG [    1.768356]     TESTHOME=/root/exp
+   0.087 [mono   4.208576] KMSG [    1.768359]     TESTDBUS=0
+   0.087 [mono   4.209329] KMSG [    1.768361]     TESTDAEMON=0
+   0.088 [mono   4.209580] KMSG [    1.768363]     TESTDBUSSESSION=0
+   0.088 [mono   4.209748] KMSG [    1.768365]     XDG_RUNTIME_DIR=/run/user/0
+   0.088 [mono   4.209922] KMSG [    1.768367]     TESTMONITOR=0
+   0.088 [mono   4.210081] KMSG [    1.768369]     TESTEMULATOR=0
+   0.088 [mono   4.210263] KMSG [    1.768371]     TESTDEVS=0
+   0.088 [mono   4.210429] KMSG [    1.768373]     TESTAUTO=0
+   0.089 [mono   4.210598] KMSG [    1.768375]     TESTAUDIO=''
+   0.089 [mono   4.210762] KMSG [    1.768377]     TESTARGS='python3
+   0.089 [mono   4.210931] KMSG [    3.068840] random: crng init done
+   0.089 [mono   4.211163] KMSG [    4.141137] vhci_hcd vhci_hcd.0: pdev(0) rhport(0) sockfd(5)
+   0.089 [mono   4.211334] KMSG [    4.141151] vhci_hcd vhci_hcd.0: devid(65538) speed(2) speed_str(full-speed)
+   0.089 [mono   4.211500] KMSG [    4.141365] vhci_hcd vhci_hcd.0: Device attached
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+   0.186 [mono   4.308129] KMSG [    4.308834] vhci_hcd vhci_hcd.0: vhci_device speed not set
+   0.245 [mono   4.367434] KMSG [    4.364784] usb 2-1: new full-speed USB device number 2 using vhci_hcd
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+   0.306 [mono   4.428041] KMSG [    4.428783] vhci_hcd vhci_hcd.0: vhci_device speed not set
+   0.365 [mono   4.487476] KMSG [    4.484781] usb 2-1: SetAddress Request (2) to port 0
+   0.381 [mono   4.503428] KMSG [    4.501226] usb 2-1: New USB device found: idVendor=13d3, idProduct=3503, bcdDevice=0.01
+   0.382 [mono   4.503739] KMSG [    4.501978] usb 2-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Bluetooth: hci0:   0.386 [mono   4.507667] hci0 present HCI Enhanced Se
+tup Synchronous Connection command is advertised, but not supported.
+   0.387 [mono   4.509133] HCI cmd 0x0c03 
+   0.387 [mono   4.509291] HCI command 0x0c03: generic Command Complete
+   0.387 [mono   4.509452] KMSG [    4.508924] Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+   0.388 [mono   4.510065] HCI cmd 0x1003 
+   0.389 [mono   4.510631] HCI cmd 0x1001 
+   0.389 [mono   4.511298] HCI cmd 0x1009 
+   0.390 [mono   4.512017] HCI cmd 0x1002 
+   0.391 [mono   4.513060] HCI cmd 0x0c45 01
+   0.391 [mono   4.513276] HCI command 0x0c45: generic Command Complete
+   0.392 [mono   4.513839] HCI cmd 0x1005 
+   0.392 [mono   4.514400] HCI cmd 0x0c23 
+   0.393 [mono   4.514880] HCI cmd 0x0c14 
+   0.396 [mono   4.517646] HCI cmd 0x0c25 
+   0.396 [mono   4.518284] HCI cmd 0x0c38 
+   0.397 [mono   4.518898] HCI cmd 0x0c39 
+   0.398 [mono   4.519638] HCI cmd 0x0c16 007d
+   0.398 [mono   4.519797] HCI command 0x0c16: generic Command Complete
+   0.398 [mono   4.520279] HCI cmd 0x0c01 fffffbff03180000
+   0.398 [mono   4.520442] HCI command 0x0c01: generic Command Complete
+   0.400 [mono   4.521755] MGMT Index Added index 0 
+   0.440 [mono   4.561977] MGMT send opcode 0x0005 index 0 params 01
+   0.441 [mono   4.563189] HCI cmd 0x0c1c 00081200
+   0.441 [mono   4.563389] HCI command 0x0c1c: generic Command Complete
+   0.442 [mono   4.563583] KMSG [    4.563764] Bluetooth: MGMT ver 1.23
+   0.442 [mono   4.564195] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   0.442 [mono   4.564368] HCI command 0x0c13: generic Command Complete
+   0.443 [mono   4.564872] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+   0.464 [mono   4.585973] Set Powered reply: (4.564867458, 1, 5, 0, 0)
+   0.469 [mono   4.590621] usb device /sys/bus/usb/devices/2-1 power {'control': 'auto', 'runtime_status': 'active', 'autosuspend_delay_ms': '2000', 'persist': '1', 'wakeup': 'disabled'}
+   0.469 [mono   4.591135] hung_task_timeout_secs 20, seed 103
+   0.470 [mono   4.591749] bt23_delay_ms = 30 (debug-only kernel, positive control)
+   0.771 [mono   4.893424] kmemleak: boot objects cleared
+   1.029 [mono   5.151489] EMU suspend #1 (SET_FEATURE remote wakeup)
+   1.030 [mono   5.152020] KMSG [    5.151354] intf ffff8880039dd000
+   1.030 [mono   5.152410] KMSG [    5.151974] vhci_hcd: unlink->seqnum 63
+   1.031 [mono   5.152656] KMSG [    5.152007] vhci_hcd: urb->status -104
+   1.031 [mono   5.152890] KMSG [    5.152255] vhci_hcd: unlink->seqnum 64
+   1.031 [mono   5.153056] KMSG [    5.152273] vhci_hcd: urb->status 0
+   1.031 [mono   5.153286] KMSG [    5.152446] vhci_hcd: unlink->seqnum 65
+   1.032 [mono   5.153593] KMSG [    5.152460] vhci_hcd: urb->status 0
+   1.032 [mono   5.153853] KMSG [    5.152499] intf ffff8880039de000
+bt17-emu: Set Device Class minor 8 sent at mono 5.209989
+   1.089 [mono   5.210959] MGMT send opcode 0x000e index 0 params 0108
+   1.089 [mono   5.211307] KMSG [    5.211624] bt17-emu: Set Device Class minor 8 sent at mono 5.209989
+   1.150 [mono   5.272199] EMU resume #1: GET_STATUS answered
+   1.153 [mono   5.275437] KMSG [    5.274693] intf ffff8880039de000
+   1.154 [mono   5.275814] KMSG [    5.274713] intf ffff8880039dd000
+   1.169 [mono   5.290702] HCI command 0x0c18: generic Command Complete
+   1.169 [mono   5.291522] HCI command 0x0c24: generic Command Complete
+   1.170 [mono   5.292246] MGMT Class Of Device Changed index 0 080100
+   1.171 [mono   5.292636] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   1.428 [mono   5.550035] KMSG [    5.550048] intf ffff8880039dd000
+   1.428 [mono   5.550508] KMSG [    5.550435] vhci_hcd: unlink->seqnum 93
+   1.429 [mono   5.550827] EMU suspend #2 (SET_FEATURE remote wakeup)
+   1.429 [mono   5.551021] KMSG [    5.550469] vhci_hcd: urb->status -104
+   1.429 [mono   5.551265] KMSG [    5.550751] vhci_hcd: unlink->seqnum 94
+   1.429 [mono   5.551515] KMSG [    5.550776] vhci_hcd: urb->status 0
+   1.430 [mono   5.551748] KMSG [    5.551024] vhci_hcd: unlink->seqnum 95
+   1.430 [mono   5.551990] KMSG [    5.551045] vhci_hcd: urb->status 0
+   1.430 [mono   5.552220] KMSG [    5.551127] intf ffff8880039de000
+bt17-emu: Set Device Class minor 12 sent at mono 5.605976
+   1.485 [mono   5.606571] MGMT send opcode 0x000e index 0 params 010c
+   1.485 [mono   5.606788] KMSG [    5.607462] bt17-emu: Set Device Class minor 12 sent at mono 5.605976
+   1.530 [mono   5.651760] EMU resume #2: GET_STATUS answered
+   1.533 [mono   5.655459] KMSG [    5.653929] intf ffff8880039de000
+   1.534 [mono   5.655760] KMSG [    5.653945] intf ffff8880039dd000
+   1.564 [mono   5.685708] MGMT Class Of Device Changed index 0 0c0100
+   1.564 [mono   5.686283] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   1.821 [mono   5.942857] KMSG [    5.943397] intf ffff8880039dd000
+   1.821 [mono   5.943264] KMSG [    5.943857] vhci_hcd: unlink->seqnum 124
+   1.822 [mono   5.944117] KMSG [    5.943924] vhci_hcd: urb->status -104
+   1.822 [mono   5.944392] KMSG [    5.944466] vhci_hcd: unlink->seqnum 125
+   1.823 [mono   5.944601] KMSG [    5.944498] vhci_hcd: urb->status 0
+   1.823 [mono   5.944865] EMU suspend #3 (SET_FEATURE remote wakeup)
+   1.823 [mono   5.945169] KMSG [    5.944964] vhci_hcd: unlink->seqnum 126
+   1.823 [mono   5.945375] KMSG [    5.944994] vhci_hcd: urb->status 0
+   1.824 [mono   5.945563] KMSG [    5.945113] intf ffff8880039de000
+bt17-emu: Set Device Class minor 4 sent at mono 5.973978
+   1.853 [mono   5.975119] MGMT send opcode 0x000e index 0 params 0104
+   1.853 [mono   5.975482] KMSG [    5.975590] bt17-emu: Set Device Class minor 4 sent at mono 5.973978
+   1.925 [mono   6.046609] EMU resume #3: GET_STATUS answered
+   1.931 [mono   6.052711] KMSG [    6.049959] intf ffff8880039de000
+   1.931 [mono   6.053366] KMSG [    6.049978] intf ffff8880039dd000
+   1.945 [mono   6.067271] MGMT Class Of Device Changed index 0 040100
+   1.946 [mono   6.067820] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   2.469 [mono   6.590825] KMSG [    6.587515] clocksource: Watchdog remote CPU 3 read timed out
+   5.262 [mono   9.383929] KMSG [    9.384821] intf ffff8880039dd000
+   5.262 [mono   9.384305] KMSG [    9.385167] vhci_hcd: unlink->seqnum 155
+   5.262 [mono   9.384552] KMSG [    9.385201] vhci_hcd: urb->status -104
+   5.263 [mono   9.384786] KMSG [    9.385539] vhci_hcd: unlink->seqnum 156
+   5.263 [mono   9.385013] KMSG [    9.385575] vhci_hcd: urb->status 0
+   5.263 [mono   9.385228] EMU suspend #4 (SET_FEATURE remote wakeup)
+   5.263 [mono   9.385498] KMSG [    9.385819] vhci_hcd: unlink->seqnum 157
+   5.264 [mono   9.385708] KMSG [    9.385839] vhci_hcd: urb->status 0
+   5.264 [mono   9.385919] KMSG [    9.385899] intf ffff8880039de000
+   5.344 [mono   9.466299] EMU resume #4: GET_STATUS answered
+   5.348 [mono   9.470013] KMSG [    9.468541] intf ffff8880039de000
+   5.348 [mono   9.470302] KMSG [    9.468555] intf ffff8880039dd000
+   5.848 [mono   9.970131] PARKED cycle 0: acl key 30 sent 5.978073 arrived 9.467623 after the next resume
+   5.849 [mono   9.970841] CYCLE i=0 kind=normal delay=250 suspended_before=True sent=42 send_errors=0 parked=1 parked_late=1 mgmt=0x00 max_latency=3.49 ok=False device_suspends=3 device_resumes=4
+   6.103 [mono  10.225178] EMU suspend #5 (SET_FEATURE remote wakeup)
+   6.104 [mono  10.225721] KMSG [   10.224809] intf ffff8880039dd000
+   6.104 [mono  10.226080] KMSG [   10.225337] vhci_hcd: unlink->seqnum 165
+   6.104 [mono  10.226352] KMSG [   10.225381] vhci_hcd: urb->status -104
+   6.105 [mono  10.226622] KMSG [   10.225722] vhci_hcd: unlink->seqnum 166
+   6.105 [mono  10.226919] KMSG [   10.225752] vhci_hcd: urb->status 0
+   6.105 [mono  10.227193] KMSG [   10.226116] vhci_hcd: unlink->seqnum 167
+   6.105 [mono  10.227469] KMSG [   10.226143] vhci_hcd: urb->status 0
+   6.106 [mono  10.227737] KMSG [   10.226207] intf ffff8880039de000
+bt17-emu: stress: Set Powered off during the burst
+   6.163 [mono  10.284560] MGMT send opcode 0x0005 index 0 params 00
+   6.163 [mono  10.285082] KMSG [   10.284999] bt17-emu: stress: Set Powered off during the burst
+bt17-emu: Set Device Class minor 8 sent at mono 10.285927
+   6.165 [mono  10.286595] MGMT send opcode 0x000e index 0 params 0108
+   6.165 [mono  10.286936] KMSG [   10.287429] bt17-emu: Set Device Class minor 8 sent at mono 10.285927
+   6.166 [mono  10.287795] MGMT Command Status opcode 0x000e status 0x0a index 0
+   6.211 [mono  10.333361] EMU resume #5: GET_STATUS answered
+   6.215 [mono  10.336671] KMSG [   10.335840] intf ffff8880039de000
+   6.215 [mono  10.336988] KMSG [   10.335854] intf ffff8880039dd000
+   6.237 [mono  10.359529] HCI cmd 0x0c03 
+   6.254 [mono  10.376075] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+   6.255 [mono  10.377169] MGMT Class Of Device Changed index 0 000000
+   6.256 [mono  10.377616] KMSG [   10.378697] vhci_hcd: unlink->seqnum 193
+   6.256 [mono  10.378106] KMSG [   10.378770] vhci_hcd: urb->status -104
+   6.256 [mono  10.378370] KMSG [   10.379253] vhci_hcd: unlink->seqnum 194
+   6.257 [mono  10.378627] KMSG [   10.379279] vhci_hcd: urb->status 0
+   6.257 [mono  10.378911] KMSG [   10.379632] vhci_hcd: unlink->seqnum 195
+   6.257 [mono  10.379187] KMSG [   10.379662] vhci_hcd: urb->status 0
+   6.263 [mono  10.385189] MGMT send opcode 0x0005 index 0 params 01
+   6.266 [mono  10.388195] HCI cmd 0x0c03 
+   6.267 [mono  10.389457] HCI cmd 0x1003 
+   6.269 [mono  10.390973] HCI cmd 0x1001 
+   6.270 [mono  10.392058] HCI cmd 0x1009 
+   6.271 [mono  10.393169] HCI cmd 0x1002 
+   6.273 [mono  10.395545] HCI cmd 0x0c45 01
+   6.275 [mono  10.396695] HCI cmd 0x1005 
+   6.276 [mono  10.397759] HCI cmd 0x0c23 
+   6.277 [mono  10.399282] HCI cmd 0x0c14 
+   6.282 [mono  10.404346] HCI cmd 0x0c25 
+   6.283 [mono  10.405437] HCI cmd 0x0c38 
+   6.284 [mono  10.406358] HCI cmd 0x0c39 
+   6.285 [mono  10.407308] HCI cmd 0x0c16 007d
+   6.286 [mono  10.408314] HCI cmd 0x0c01 fffffbff03180000
+   6.288 [mono  10.409959] MGMT Class Of Device Changed index 0 040100
+   6.288 [mono  10.410412] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   6.289 [mono  10.411194] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+   6.305 [mono  10.427469] Set Powered reply: (10.411189095, 1, 5, 0, 0)
+   6.306 [mono  10.428344] CYCLE i=1 kind=power delay=250 suspended_before=True sent=14 send_errors=0 power_off=0x00 ok=True recovered=True device_suspends=0 device_resumes=1
+   6.563 [mono  10.684698] KMSG [   10.684781] intf ffff8880039dd000
+   6.563 [mono  10.685137] EMU suspend #6 (SET_FEATURE remote wakeup)
+   6.563 [mono  10.685388] KMSG [   10.685176] vhci_hcd: unlink->seqnum 253
+   6.564 [mono  10.685656] KMSG [   10.685220] vhci_hcd: urb->status -104
+   6.564 [mono  10.685956] KMSG [   10.685535] vhci_hcd: unlink->seqnum 254
+   6.564 [mono  10.686219] KMSG [   10.685568] vhci_hcd: urb->status 0
+   6.564 [mono  10.686472] KMSG [   10.685861] vhci_hcd: unlink->seqnum 255
+   6.565 [mono  10.686737] KMSG [   10.685884] vhci_hcd: urb->status 0
+   6.565 [mono  10.687016] KMSG [   10.686011] intf ffff8880039de000
+bt17-emu: Set Device Class minor 12 sent at mono 10.716072
+   6.595 [mono  10.717080] MGMT send opcode 0x000e index 0 params 010c
+   6.595 [mono  10.717374] KMSG [   10.717681] bt17-emu: Set Device Class minor 12 sent at mono 10.716072
+   6.652 [mono  10.774455] EMU resume #6: GET_STATUS answered
+   6.655 [mono  10.776697] KMSG [   10.776870] intf ffff8880039de000
+   6.655 [mono  10.777090] KMSG [   10.776890] intf ffff8880039dd000
+   6.684 [mono  10.806186] MGMT Class Of Device Changed index 0 0c0100
+   6.685 [mono  10.806623] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   6.949 [mono  11.071206] EMU suspend #7 (SET_FEATURE remote wakeup)
+   6.950 [mono  11.071668] KMSG [   11.071362] intf ffff8880039dd000
+   6.950 [mono  11.072033] KMSG [   11.071754] vhci_hcd: unlink->seqnum 283
+   6.950 [mono  11.072296] KMSG [   11.071784] vhci_hcd: urb->status -104
+   6.950 [mono  11.072540] KMSG [   11.072047] vhci_hcd: unlink->seqnum 284
+   6.951 [mono  11.072798] KMSG [   11.072075] vhci_hcd: urb->status 0
+   6.951 [mono  11.073029] KMSG [   11.072274] vhci_hcd: unlink->seqnum 285
+   6.951 [mono  11.073247] KMSG [   11.072291] vhci_hcd: urb->status 0
+   6.951 [mono  11.073455] KMSG [   11.072325] intf ffff8880039de000
+bt17-emu: Set Device Class minor 4 sent at mono 11.122027
+   7.001 [mono  11.123007] MGMT send opcode 0x000e index 0 params 0104
+   7.001 [mono  11.123306] KMSG [   11.123641] bt17-emu: Set Device Class minor 4 sent at mono 11.122027
+   7.053 [mono  11.174616] EMU resume #7: GET_STATUS answered
+   7.057 [mono  11.179450] KMSG [   11.177535] intf ffff8880039de000
+   7.058 [mono  11.179860] KMSG [   11.177556] intf ffff8880039dd000
+   7.075 [mono  11.197483] MGMT Class Of Device Changed index 0 040100
+   7.076 [mono  11.197877] MGMT Command Complete opcode 0x000e status 0x00 index 0
+   7.357 [mono  11.479066] KMSG [   11.479596] intf ffff8880039dd000
+   7.358 [mono  11.479577] KMSG [   11.480190] vhci_hcd: unlink->seqnum 314
+   7.358 [mono  11.479831] EMU suspend #8 (SET_FEATURE remote wakeup)
+   7.358 [mono  11.480046] KMSG [   11.480244] vhci_hcd: urb->status -104
+   7.358 [mono  11.480211] KMSG [   11.480498] vhci_hcd: unlink->seqnum 315
+   7.358 [mono  11.480353] KMSG [   11.480515] vhci_hcd: urb->status 0
+   7.358 [mono  11.480517] KMSG [   11.480739] vhci_hcd: unlink->seqnum 316
+   7.359 [mono  11.480677] KMSG [   11.480760] vhci_hcd: urb->status 0
+   7.359 [mono  11.480876] KMSG [   11.480814] intf ffff8880039de000
+bt17-emu: Set Device Class minor 8 sent at mono 11.519378
+   7.398 [mono  11.519953] MGMT send opcode 0x000e index 0 params 0108
+   7.398 [mono  11.520178] KMSG [   11.520844] bt17-emu: Set Device Class minor 8 sent at mono 11.519378
+   7.467 [mono  11.588935] EMU resume #8: GET_STATUS answered
+   7.471 [mono  11.592643] KMSG [   11.590987] intf ffff8880039de000
+   7.471 [mono  11.592947] KMSG [   11.590998] intf ffff8880039dd000
+   7.478 [mono  11.600533] MGMT Class Of Device Changed index 0 080100
+   7.479 [mono  11.600871] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  10.811 [mono  14.933181] EMU suspend #9 (SET_FEATURE remote wakeup)
+  10.813 [mono  14.935450] KMSG [   14.932737] intf ffff8880039dd000
+  10.814 [mono  14.935986] KMSG [   14.933324] vhci_hcd: unlink->seqnum 345
+  10.814 [mono  14.936210] KMSG [   14.933368] vhci_hcd: urb->status -104
+  10.814 [mono  14.936404] KMSG [   14.933730] vhci_hcd: unlink->seqnum 346
+  10.815 [mono  14.936608] KMSG [   14.933759] vhci_hcd: urb->status 0
+  10.815 [mono  14.936802] KMSG [   14.934104] vhci_hcd: unlink->seqnum 347
+  10.815 [mono  14.937031] KMSG [   14.934133] vhci_hcd: urb->status 0
+  10.815 [mono  14.937235] KMSG [   14.934203] intf ffff8880039de000
+  10.892 [mono  15.014367] EMU resume #9: GET_STATUS answered
+  10.896 [mono  15.018005] KMSG [   15.016788] intf ffff8880039de000
+  10.896 [mono  15.018325] KMSG [   15.016804] intf ffff8880039dd000
+  11.396 [mono  15.517977] PARKED cycle 2: acl key 88 sent 11.533919 arrived 15.015860 after the next resume
+  11.396 [mono  15.518350] CYCLE i=2 kind=normal delay=250 suspended_before=True sent=42 send_errors=0 parked=1 parked_late=1 mgmt=0x00 max_latency=3.482 ok=False device_suspends=3 device_resumes=4
+  11.418 [mono  15.540383] EMU suspend #10 (SET_FEATURE remote wakeup)
+  11.419 [mono  15.540711] KMSG [   15.540698] intf ffff8880039dd000
+  11.419 [mono  15.540909] KMSG [   15.540961] vhci_hcd: unlink->seqnum 355
+  11.419 [mono  15.541045] KMSG [   15.540984] vhci_hcd: urb->status -104
+  11.419 [mono  15.541173] KMSG [   15.541306] vhci_hcd: unlink->seqnum 356
+  11.419 [mono  15.541301] KMSG [   15.541320] vhci_hcd: urb->status 0
+  11.419 [mono  15.541427] KMSG [   15.541508] vhci_hcd: unlink->seqnum 357
+  11.419 [mono  15.541553] KMSG [   15.541521] vhci_hcd: urb->status 0
+  11.420 [mono  15.541680] KMSG [   15.541547] intf ffff8880039de000
+bt17-emu: stress: Set Powered off during the burst
+  11.467 [mono  15.589233] MGMT send opcode 0x0005 index 0 params 00
+  11.467 [mono  15.589542] KMSG [   15.590032] bt17-emu: stress: Set Powered off during the burst
+bt17-emu: Set Device Class minor 12 sent at mono 15.595351
+  11.474 [mono  15.595952] MGMT send opcode 0x000e index 0 params 010c
+  11.474 [mono  15.596243] KMSG [   15.596788] bt17-emu: Set Device Class minor 12 sent at mono 15.595351
+  11.474 [mono  15.596547] MGMT Command Status opcode 0x000e status 0x0a index 0
+  11.524 [mono  15.646218] EMU resume #10: GET_STATUS answered
+  11.528 [mono  15.649961] KMSG [   15.648204] intf ffff8880039de000
+  11.528 [mono  15.650223] KMSG [   15.648215] intf ffff8880039dd000
+  11.543 [mono  15.665383] HCI cmd 0x0c03 
+  11.552 [mono  15.674089] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  11.552 [mono  15.674367] MGMT Class Of Device Changed index 0 000000
+  11.553 [mono  15.674737] KMSG [   15.675978] vhci_hcd: unlink->seqnum 383
+  11.553 [mono  15.674945] KMSG [   15.676016] vhci_hcd: urb->status -104
+  11.553 [mono  15.675097] KMSG [   15.676234] vhci_hcd: unlink->seqnum 384
+  11.553 [mono  15.675260] KMSG [   15.676252] vhci_hcd: urb->status 0
+  11.553 [mono  15.675404] KMSG [   15.676461] vhci_hcd: unlink->seqnum 385
+  11.553 [mono  15.675538] KMSG [   15.676484] vhci_hcd: urb->status 0
+  11.572 [mono  15.694187] MGMT send opcode 0x0005 index 0 params 01
+  11.574 [mono  15.696299] HCI cmd 0x0c03 
+  11.575 [mono  15.697004] HCI cmd 0x1003 
+  11.576 [mono  15.697576] HCI cmd 0x1001 
+  11.576 [mono  15.698227] HCI cmd 0x1009 
+  11.577 [mono  15.698860] HCI cmd 0x1002 
+  11.578 [mono  15.700183] HCI cmd 0x0c45 01
+  11.579 [mono  15.700970] HCI cmd 0x1005 
+  11.580 [mono  15.701598] HCI cmd 0x0c23 
+  11.580 [mono  15.702392] HCI cmd 0x0c14 
+  11.583 [mono  15.705217] HCI cmd 0x0c25 
+  11.584 [mono  15.706500] HCI cmd 0x0c38 
+  11.585 [mono  15.707208] HCI cmd 0x0c39 
+  11.586 [mono  15.707934] HCI cmd 0x0c16 007d
+  11.587 [mono  15.708630] HCI cmd 0x0c01 fffffbff03180000
+  11.588 [mono  15.709944] MGMT Class Of Device Changed index 0 080100
+  11.588 [mono  15.710313] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  11.589 [mono  15.710853] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  11.595 [mono  15.717232] Set Powered reply: (15.710849656, 1, 5, 0, 0)
+  11.596 [mono  15.717675] CYCLE i=3 kind=power delay=20 suspended_before=True sent=14 send_errors=0 power_off=0x00 ok=True recovered=True device_suspends=0 device_resumes=1
+  11.852 [mono  15.973752] EMU suspend #11 (SET_FEATURE remote wakeup)
+  11.852 [mono  15.974041] KMSG [   15.973984] intf ffff8880039dd000
+  11.852 [mono  15.974197] KMSG [   15.974332] vhci_hcd: unlink->seqnum 443
+  11.852 [mono  15.974328] KMSG [   15.974360] vhci_hcd: urb->status -104
+  11.852 [mono  15.974454] KMSG [   15.974635] vhci_hcd: unlink->seqnum 444
+  11.853 [mono  15.974579] KMSG [   15.974657] vhci_hcd: urb->status 0
+  11.853 [mono  15.974708] KMSG [   15.974863] vhci_hcd: unlink->seqnum 445
+  11.853 [mono  15.974864] KMSG [   15.974879] vhci_hcd: urb->status 0
+  11.853 [mono  15.974988] KMSG [   15.974910] intf ffff8880039de000
+bt17-emu: Set Device Class minor 4 sent at mono 16.027363
+  11.906 [mono  16.028110] MGMT send opcode 0x000e index 0 params 0104
+  11.906 [mono  16.028374] KMSG [   16.028884] bt17-emu: Set Device Class minor 4 sent at mono 16.027363
+  11.956 [mono  16.078365] EMU resume #11: GET_STATUS answered
+  11.960 [mono  16.081957] KMSG [   16.080570] intf ffff8880039de000
+  11.960 [mono  16.082275] KMSG [   16.080587] intf ffff8880039dd000
+  11.976 [mono  16.097689] MGMT Class Of Device Changed index 0 040100
+  11.976 [mono  16.098100] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  12.239 [mono  16.361053] KMSG [   16.361972] intf ffff8880039dd000
+  12.239 [mono  16.361359] KMSG [   16.362295] vhci_hcd: unlink->seqnum 473
+  12.239 [mono  16.361530] KMSG [   16.362328] vhci_hcd: urb->status -104
+  12.240 [mono  16.361694] KMSG [   16.362595] vhci_hcd: unlink->seqnum 474
+  12.240 [mono  16.361926] EMU suspend #12 (SET_FEATURE remote wakeup)
+  12.240 [mono  16.362202] KMSG [   16.362615] vhci_hcd: urb->status 0
+  12.240 [mono  16.362440] KMSG [   16.362877] vhci_hcd: unlink->seqnum 475
+  12.241 [mono  16.362633] KMSG [   16.362934] vhci_hcd: urb->status 0
+  12.241 [mono  16.362822] KMSG [   16.362983] intf ffff8880039de000
+bt17-emu: Set Device Class minor 8 sent at mono 16.408649
+  12.287 [mono  16.409381] MGMT send opcode 0x000e index 0 params 0108
+  12.288 [mono  16.409660] KMSG [   16.410146] bt17-emu: Set Device Class minor 8 sent at mono 16.408649
+  12.334 [mono  16.455707] EMU resume #12: GET_STATUS answered
+  12.337 [mono  16.459405] KMSG [   16.457949] intf ffff8880039de000
+  12.338 [mono  16.459674] KMSG [   16.457967] intf ffff8880039dd000
+  12.364 [mono  16.486114] MGMT Class Of Device Changed index 0 080100
+  12.364 [mono  16.486470] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  12.658 [mono  16.780291] EMU suspend #13 (SET_FEATURE remote wakeup)
+  12.659 [mono  16.780614] KMSG [   16.780690] intf ffff8880039dd000
+  12.659 [mono  16.780822] KMSG [   16.780978] vhci_hcd: unlink->seqnum 504
+  12.659 [mono  16.780964] KMSG [   16.780999] vhci_hcd: urb->status -104
+  12.659 [mono  16.781088] KMSG [   16.781188] vhci_hcd: unlink->seqnum 505
+  12.659 [mono  16.781238] KMSG [   16.781203] vhci_hcd: urb->status 0
+  12.659 [mono  16.781361] KMSG [   16.781344] vhci_hcd: unlink->seqnum 506
+  12.659 [mono  16.781481] KMSG [   16.781356] vhci_hcd: urb->status 0
+  12.660 [mono  16.781601] KMSG [   16.781386] intf ffff8880039de000
+bt17-emu: Set Device Class minor 12 sent at mono 16.807338
+  12.686 [mono  16.807897] MGMT send opcode 0x000e index 0 params 010c
+  12.686 [mono  16.808129] KMSG [   16.808777] bt17-emu: Set Device Class minor 12 sent at mono 16.807338
+  12.759 [mono  16.880962] EMU resume #13: GET_STATUS answered
+  12.763 [mono  16.884643] KMSG [   16.883145] intf ffff8880039de000
+  12.763 [mono  16.884890] KMSG [   16.883157] intf ffff8880039dd000
+  12.773 [mono  16.895043] MGMT Class Of Device Changed index 0 0c0100
+  12.773 [mono  16.895492] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  16.093 [mono  20.214919] EMU suspend #14 (SET_FEATURE remote wakeup)
+  16.096 [mono  20.217948] KMSG [   20.215254] intf ffff8880039dd000
+  16.096 [mono  20.218208] KMSG [   20.215541] vhci_hcd: unlink->seqnum 535
+  16.096 [mono  20.218421] KMSG [   20.215564] vhci_hcd: urb->status -104
+  16.097 [mono  20.218629] KMSG [   20.215777] vhci_hcd: unlink->seqnum 536
+  16.097 [mono  20.218859] KMSG [   20.215791] vhci_hcd: urb->status 0
+  16.097 [mono  20.219027] KMSG [   20.215998] vhci_hcd: unlink->seqnum 537
+  16.097 [mono  20.219197] KMSG [   20.216019] vhci_hcd: urb->status 0
+  16.097 [mono  20.219338] KMSG [   20.216053] intf ffff8880039de000
+  16.172 [mono  20.294203] EMU resume #14: GET_STATUS answered
+  16.176 [mono  20.297901] KMSG [   20.296335] intf ffff8880039de000
+  16.176 [mono  20.298203] KMSG [   20.296347] intf ffff8880039dd000
+  16.676 [mono  20.797911] PARKED cycle 4: vnd key 143 sent 16.821895 arrived 20.295330 after the next resume
+  16.676 [mono  20.798328] CYCLE i=4 kind=normal delay=250 suspended_before=True sent=42 send_errors=0 parked=1 parked_late=1 mgmt=0x00 max_latency=3.473 ok=False device_suspends=3 device_resumes=4
+  16.700 [mono  20.822317] KMSG [   20.823233] intf ffff8880039dd000
+  16.701 [mono  20.822614] KMSG [   20.823563] vhci_hcd: unlink->seqnum 545
+  16.701 [mono  20.822841] KMSG [   20.823597] vhci_hcd: urb->status -104
+  16.701 [mono  20.823061] KMSG [   20.823926] vhci_hcd: unlink->seqnum 546
+  16.701 [mono  20.823271] KMSG [   20.823948] vhci_hcd: urb->status 0
+  16.701 [mono  20.823489] EMU suspend #15 (SET_FEATURE remote wakeup)
+  16.702 [mono  20.823692] KMSG [   20.824181] vhci_hcd: unlink->seqnum 547
+  16.702 [mono  20.823905] KMSG [   20.824200] vhci_hcd: urb->status 0
+  16.702 [mono  20.824105] KMSG [   20.824244] intf ffff8880039de000
+bt17-emu: Set Device Class minor 4 sent at mono 20.859314
+  16.738 [mono  20.859834] MGMT send opcode 0x000e index 0 params 0104
+  16.738 [mono  20.860136] KMSG [   20.860750] bt17-emu: Set Device Class minor 4 sent at mono 20.859314
+bt17-emu: stress: usbip detach during the burst
+  16.764 [mono  20.886315] usbip socket ended: EOFError()
+  16.765 [mono  20.886707] KMSG [   20.886027] bt17-emu: stress: usbip detach during the burst
+  16.765 [mono  20.886935] KMSG [   20.886988] vhci_hcd: connection closed
+  16.765 [mono  20.887109] KMSG [   20.887247] vhci_hcd vhci_hcd.0: stop threads
+  16.765 [mono  20.887279] KMSG [   20.887258] vhci_hcd vhci_hcd.0: release socket
+  16.765 [mono  20.887450] KMSG [   20.887333] vhci_hcd vhci_hcd.0: disconnect device
+Bluetooth: hci0: Opcode 0x0c24 failed: -110
+  18.752 [mono  22.874529] MGMT Command Complete opcode 0x000e status 0x05 index 0
+  18.756 [mono  22.877928] KMSG [   22.875208] Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Bluetooth: hci0: command 0x0c24 tx timeout
+  19.012 [mono  23.133945] KMSG [   23.133978] Bluetooth: hci0: command 0x0c24 tx timeout
+Bluetooth: hci0: Failed usb_autopm_get_interface: -16
+  19.219 [mono  23.341280] KMSG [   23.341047] Bluetooth: hci0: Failed usb_autopm_get_interface: -16
+  19.219 [mono  23.341483] KMSG [   23.341357] usb 2-1: USB disconnect, device number 2
+  19.220 [mono  23.341614] KMSG [   23.342318] intf ffff8880039de000
+  19.266 [mono  23.387703] MGMT Class Of Device Changed index 0 000000
+  19.266 [mono  23.388090] MGMT New Settings index 0 80000000
+  19.266 [mono  23.388463] MGMT Index Removed index 0 
+  19.268 [mono  23.389861] KMSG [   23.390687] intf ffff8880039dd000
+  19.286 [mono  23.407684] after detach: hci0 removed=True
+  19.789 [mono  23.910863] attached to vhci_hcd port 0 (emulator 1)
+  19.789 [mono  23.911308] KMSG [   23.912010] vhci_hcd vhci_hcd.0: pdev(0) rhport(0) sockfd(7)
+  19.789 [mono  23.911539] KMSG [   23.912022] vhci_hcd vhci_hcd.0: devid(65538) speed(2) speed_str(full-speed)
+  19.790 [mono  23.911710] KMSG [   23.912051] vhci_hcd vhci_hcd.0: Device attached
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  19.956 [mono  24.078394] KMSG [   24.079215] vhci_hcd vhci_hcd.0: vhci_device speed not set
+  20.016 [mono  24.137894] KMSG [   24.135160] usb 2-1: new full-speed USB device number 3 using vhci_hcd
+vhci_hcd vhci_hcd.0: vhci_device speed not set
+  20.076 [mono  24.198375] KMSG [   24.199217] vhci_hcd vhci_hcd.0: vhci_device speed not set
+  20.136 [mono  24.257899] KMSG [   24.255212] usb 2-1: SetAddress Request (3) to port 0
+  20.152 [mono  24.273876] KMSG [   24.271623] usb 2-1: New USB device found: idVendor=13d3, idProduct=3503, bcdDevice=0.01
+  20.152 [mono  24.274174] KMSG [   24.272395] usb 2-1: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+  20.157 [mono  24.278677] HCI cmd 0x0c03 
+  20.157 [mono  24.278855] HCI command 0x0c03: generic Command Complete
+  20.157 [mono  24.279317] KMSG [   24.278780] Bluetooth: hci0: HCI Enhanced Setup Synchronous Connection command is advertised, but not supported.
+  20.158 [mono  24.279877] MGMT send opcode 0x0005 index 0 params 01
+  20.158 [mono  24.280168] HCI cmd 0x1003 
+  20.158 [mono  24.280441] MGMT Command Status opcode 0x0005 status 0x11 index 0
+  20.159 [mono  24.280934] HCI cmd 0x1001 
+  20.159 [mono  24.281505] HCI cmd 0x1009 
+  20.160 [mono  24.282189] HCI cmd 0x1002 
+  20.161 [mono  24.283520] HCI cmd 0x0c45 01
+  20.162 [mono  24.283667] HCI command 0x0c45: generic Command Complete
+  20.162 [mono  24.284183] HCI cmd 0x1005 
+  20.163 [mono  24.284725] HCI cmd 0x0c23 
+  20.163 [mono  24.285361] HCI cmd 0x0c14 
+  20.166 [mono  24.288352] HCI cmd 0x0c25 
+  20.167 [mono  24.288967] HCI cmd 0x0c38 
+  20.168 [mono  24.289595] HCI cmd 0x0c39 
+  20.169 [mono  24.291034] HCI cmd 0x0c16 007d
+  20.169 [mono  24.291296] HCI command 0x0c16: generic Command Complete
+  20.170 [mono  24.291957] HCI cmd 0x0c01 fffffbff03180000
+  20.170 [mono  24.292190] HCI command 0x0c01: generic Command Complete
+  20.172 [mono  24.293647] MGMT Index Added index 0 
+  20.180 [mono  24.301910] Set Powered reply: (24.280213424, 2, 5, 17, 0)
+  20.684 [mono  24.805964] MGMT send opcode 0x0005 index 0 params 01
+  20.685 [mono  24.807494] HCI cmd 0x0c1c 00081200
+  20.686 [mono  24.807864] HCI command 0x0c1c: generic Command Complete
+  20.687 [mono  24.809246] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  20.688 [mono  24.809735] HCI command 0x0c13: generic Command Complete
+  20.688 [mono  24.810181] KMSG [   24.807915] Bluetooth: MGMT ver 1.23
+  20.689 [mono  24.810984] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  20.708 [mono  24.829950] Set Powered reply: (24.810979046, 1, 5, 0, 0)
+  20.711 [mono  24.832687] re-attached: hci0=True powered=True usb device /sys/bus/usb/devices/2-1 raw sockets 7
+  20.711 [mono  24.832970] CYCLE i=5 kind=detach delay=20 suspended_before=True sent=14 send_errors=0 ok=True recovered=True device_suspends=new-emu device_resumes=new-emu
+  20.820 [mono  24.942533] KMSG [   24.943281] intf ffff888003d1e000
+  20.821 [mono  24.942969] KMSG [   24.943737] vhci_hcd: unlink->seqnum 611
+  20.821 [mono  24.943269] KMSG [   24.943787] vhci_hcd: urb->status -104
+  20.822 [mono  24.943567] EMU suspend #1 (SET_FEATURE remote wakeup)
+  20.822 [mono  24.943882] KMSG [   24.944184] vhci_hcd: unlink->seqnum 612
+  20.822 [mono  24.944156] KMSG [   24.944215] vhci_hcd: urb->status 0
+  20.822 [mono  24.944432] KMSG [   24.944502] vhci_hcd: unlink->seqnum 613
+  20.823 [mono  24.944691] KMSG [   24.944540] vhci_hcd: urb->status 0
+  20.823 [mono  24.944976] KMSG [   24.944598] intf ffff888003489000
+bt17-emu: Set Device Class minor 8 sent at mono 24.975332
+  20.854 [mono  24.976239] MGMT send opcode 0x000e index 0 params 0108
+  20.855 [mono  24.976599] KMSG [   24.976869] bt17-emu: Set Device Class minor 8 sent at mono 24.975332
+  20.927 [mono  25.048981] EMU resume #1: GET_STATUS answered
+  20.931 [mono  25.052604] KMSG [   25.051258] intf ffff888003489000
+  20.931 [mono  25.052948] KMSG [   25.051274] intf ffff888003d1e000
+  20.945 [mono  25.067523] HCI command 0x0c24: generic Command Complete
+  20.946 [mono  25.068418] MGMT Class Of Device Changed index 0 080100
+  20.947 [mono  25.068792] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  20.947 [mono  25.069182] HCI command 0x0c18: generic Command Complete
+  21.054 [mono  25.175741] KMSG [   25.176651] intf ffff888003d1e000
+  21.054 [mono  25.176101] KMSG [   25.176973] vhci_hcd: unlink->seqnum 641
+  21.054 [mono  25.176328] KMSG [   25.177005] vhci_hcd: urb->status -104
+  21.055 [mono  25.176623] EMU suspend #2 (SET_FEATURE remote wakeup)
+  21.055 [mono  25.176915] KMSG [   25.177295] vhci_hcd: unlink->seqnum 642
+  21.055 [mono  25.177117] KMSG [   25.177317] vhci_hcd: urb->status 0
+  21.055 [mono  25.177275] KMSG [   25.177567] vhci_hcd: unlink->seqnum 643
+  21.055 [mono  25.177416] KMSG [   25.177585] vhci_hcd: urb->status 0
+  21.055 [mono  25.177554] KMSG [   25.177635] intf ffff888003489000
+bt17-emu: Set Device Class minor 12 sent at mono 25.229885
+  21.108 [mono  25.230475] MGMT send opcode 0x000e index 0 params 010c
+  21.109 [mono  25.230677] KMSG [   25.231354] bt17-emu: Set Device Class minor 12 sent at mono 25.229885
+  21.154 [mono  25.275609] EMU resume #2: GET_STATUS answered
+  21.157 [mono  25.279343] KMSG [   25.277714] intf ffff888003489000
+  21.158 [mono  25.279652] KMSG [   25.277729] intf ffff888003d1e000
+  21.173 [mono  25.295436] MGMT Class Of Device Changed index 0 0c0100
+  21.174 [mono  25.295891] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  21.276 [mono  25.397721] EMU suspend #3 (SET_FEATURE remote wakeup)
+  21.276 [mono  25.397999] KMSG [   25.397941] intf ffff888003d1e000
+  21.276 [mono  25.398170] KMSG [   25.398283] vhci_hcd: unlink->seqnum 672
+  21.276 [mono  25.398319] KMSG [   25.398311] vhci_hcd: urb->status -104
+  21.276 [mono  25.398473] KMSG [   25.398657] vhci_hcd: unlink->seqnum 673
+  21.277 [mono  25.398612] KMSG [   25.398672] vhci_hcd: urb->status 0
+  21.277 [mono  25.398747] KMSG [   25.398839] vhci_hcd: unlink->seqnum 674
+  21.277 [mono  25.398894] KMSG [   25.398853] vhci_hcd: urb->status 0
+  21.277 [mono  25.399037] KMSG [   25.398884] intf ffff888003489000
+bt17-emu: Set Device Class minor 4 sent at mono 25.445862
+  21.325 [mono  25.446708] MGMT send opcode 0x000e index 0 params 0104
+  21.325 [mono  25.446947] KMSG [   25.447551] bt17-emu: Set Device Class minor 4 sent at mono 25.445862
+  21.391 [mono  25.512915] EMU resume #3: GET_STATUS answered
+  21.395 [mono  25.516585] KMSG [   25.514926] intf ffff888003489000
+  21.395 [mono  25.516825] KMSG [   25.514939] intf ffff888003d1e000
+  21.398 [mono  25.520336] MGMT Class Of Device Changed index 0 040100
+  21.399 [mono  25.520605] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  24.565 [mono  28.686926] EMU suspend #4 (SET_FEATURE remote wakeup)
+  24.565 [mono  28.687363] KMSG [   28.687203] intf ffff888003d1e000
+  24.566 [mono  28.687602] KMSG [   28.687546] vhci_hcd: unlink->seqnum 703
+  24.566 [mono  28.687820] KMSG [   28.687572] vhci_hcd: urb->status -104
+  24.566 [mono  28.688021] KMSG [   28.687777] vhci_hcd: unlink->seqnum 704
+  24.566 [mono  28.688221] KMSG [   28.687795] vhci_hcd: urb->status 0
+  24.566 [mono  28.688407] KMSG [   28.687971] vhci_hcd: unlink->seqnum 705
+  24.567 [mono  28.688562] KMSG [   28.687985] vhci_hcd: urb->status 0
+  24.567 [mono  28.688703] KMSG [   28.688014] intf ffff888003489000
+  24.647 [mono  28.768970] EMU resume #4: GET_STATUS answered
+  24.651 [mono  28.772597] KMSG [   28.771327] intf ffff888003489000
+  24.651 [mono  28.772920] KMSG [   28.771348] intf ffff888003d1e000
+  25.151 [mono  29.272611] PARKED cycle 6: vnd key 199 sent 25.444576 arrived 28.770349 after the next resume
+  25.151 [mono  29.273039] CYCLE i=6 kind=normal delay=100 suspended_before=True sent=42 send_errors=0 parked=1 parked_late=1 mgmt=0x00 max_latency=3.326 ok=False device_suspends=3 device_resumes=4
+  25.177 [mono  29.299024] EMU suspend #5 (SET_FEATURE remote wakeup)
+  25.177 [mono  29.299420] KMSG [   29.299168] intf ffff888003d1e000
+  25.178 [mono  29.299708] KMSG [   29.299550] vhci_hcd: unlink->seqnum 713
+  25.178 [mono  29.299950] KMSG [   29.299576] vhci_hcd: urb->status -104
+  25.178 [mono  29.300115] KMSG [   29.299832] vhci_hcd: unlink->seqnum 714
+  25.178 [mono  29.300282] KMSG [   29.299851] vhci_hcd: urb->status 0
+  25.178 [mono  29.300441] KMSG [   29.300102] vhci_hcd: unlink->seqnum 715
+  25.179 [mono  29.300623] KMSG [   29.300119] vhci_hcd: urb->status 0
+  25.179 [mono  29.300786] KMSG [   29.300151] intf ffff888003489000
+bt17-emu: stress: Set Powered off during the burst
+bt17-emu: Set De  25.224 [mono  29.346476] MGMT send opcode 0x0005 index 0 params 00vice Class minor
+ 8 sent at mono 29.345831
+  25.225 [mono  29.346707] KMSG [   29.347326] bt17-emu: stress: Set Powered off during the burst
+  25.226 [mono  29.347660] MGMT send opcode 0x000e index 0 params 0108
+  25.226 [mono  29.347876] KMSG [   29.347385] bt17-emu: Set Device Class minor 8 sent at mono 29.345831
+  25.226 [mono  29.348169] MGMT Command Status opcode 0x000e status 0x0a index 0
+  25.288 [mono  29.410218] EMU resume #5: GET_STATUS answered
+  25.292 [mono  29.413902] KMSG [   29.412508] intf ffff888003489000
+  25.292 [mono  29.414310] KMSG [   29.412522] intf ffff888003d1e000
+  25.300 [mono  29.422502] HCI cmd 0x0c03 
+  25.310 [mono  29.431659] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  25.310 [mono  29.432010] MGMT Class Of Device Changed index 0 000000
+  25.310 [mono  29.432365] KMSG [   29.433613] vhci_hcd: unlink->seqnum 743
+  25.311 [mono  29.432987] KMSG [   29.433645] vhci_hcd: urb->status -104
+  25.311 [mono  29.433161] KMSG [   29.433887] vhci_hcd: unlink->seqnum 744
+  25.311 [mono  29.433324] KMSG [   29.433906] vhci_hcd: urb->status 0
+  25.311 [mono  29.433484] KMSG [   29.434097] vhci_hcd: unlink->seqnum 745
+  25.312 [mono  29.433643] KMSG [   29.434113] vhci_hcd: urb->status 0
+  25.336 [mono  29.458074] MGMT send opcode 0x0005 index 0 params 01
+  25.337 [mono  29.459322] KMSG [   29.456624] intf ffff888003d1e000
+  25.337 [mono  29.459528] KMSG [   29.456644] intf ffff888003489000
+  25.410 [mono  29.532279] HCI cmd 0x0c03 
+  25.411 [mono  29.533209] HCI cmd 0x1003 
+  25.412 [mono  29.533825] KMSG [   29.532256] intf ffff888003489000
+  25.412 [mono  29.534083] KMSG [   29.532272] intf ffff888003d1e000
+  25.412 [mono  29.534353] HCI cmd 0x1001 
+  25.413 [mono  29.534902] HCI cmd 0x1009 
+  25.413 [mono  29.535388] HCI cmd 0x1002 
+  25.414 [mono  29.536403] HCI cmd 0x0c45 01
+  25.415 [mono  29.536951] HCI cmd 0x1005 
+  25.415 [mono  29.537463] HCI cmd 0x0c23 
+  25.416 [mono  29.538017] HCI cmd 0x0c14 
+  25.418 [mono  29.540417] HCI cmd 0x0c25 
+  25.419 [mono  29.540954] HCI cmd 0x0c38 
+  25.419 [mono  29.541453] HCI cmd 0x0c39 
+  25.420 [mono  29.541971] HCI cmd 0x0c16 007d
+  25.420 [mono  29.542486] HCI cmd 0x0c01 fffffbff03180000
+  25.421 [mono  29.543424] MGMT Class Of Device Changed index 0 040100
+  25.422 [mono  29.543737] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  25.422 [mono  29.544209] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  25.431 [mono  29.552632] Set Powered reply: (29.544206729, 1, 5, 0, 0)
+  25.431 [mono  29.553360] CYCLE i=7 kind=power delay=20 suspended_before=True sent=14 send_errors=0 power_off=0x00 ok=True recovered=True device_suspends=0 device_resumes=1
+  25.455 [mono  29.577035] KMSG [   29.577918] intf ffff888003d1e000
+  25.455 [mono  29.577324] KMSG [   29.578239] vhci_hcd: unlink->seqnum 805
+  25.455 [mono  29.577507] KMSG [   29.578271] vhci_hcd: urb->status -104
+  25.456 [mono  29.577661] KMSG [   29.578507] vhci_hcd: unlink->seqnum 806
+  25.456 [mono  29.577823] KMSG [   29.578532] vhci_hcd: urb->status 0
+  25.456 [mono  29.578003] EMU suspend #6 (SET_FEATURE remote wakeup)
+  25.456 [mono  29.578187] KMSG [   29.578815] vhci_hcd: unlink->seqnum 807
+  25.456 [mono  29.578393] KMSG [   29.578832] vhci_hcd: urb->status 0
+  25.457 [mono  29.578566] KMSG [   29.578867] intf ffff888003489000
+bt17-emu: Set Device Class minor 12 sent at mono 29.629844
+  25.508 [mono  29.630543] MGMT send opcode 0x000e index 0 params 010c
+  25.509 [mono  29.630829] KMSG [   29.631319] bt17-emu: Set Device Class minor 12 sent at mono 29.629844
+  25.563 [mono  29.685226] EMU resume #6: GET_STATUS answered
+  25.567 [mono  29.688582] KMSG [   29.687269] intf ffff888003489000
+  25.567 [mono  29.688851] KMSG [   29.687281] intf ffff888003d1e000
+  25.576 [mono  29.697682] MGMT Class Of Device Changed index 0 0c0100
+  25.576 [mono  29.698073] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  25.601 [mono  29.722841] EMU suspend #7 (SET_FEATURE remote wakeup)
+  25.601 [mono  29.723301] KMSG [   29.723166] intf ffff888003d1e000
+  25.601 [mono  29.723544] KMSG [   29.723476] vhci_hcd: unlink->seqnum 835
+  25.602 [mono  29.723704] KMSG [   29.723504] vhci_hcd: urb->status -104
+  25.602 [mono  29.723877] KMSG [   29.723728] vhci_hcd: unlink->seqnum 836
+  25.602 [mono  29.724021] KMSG [   29.723747] vhci_hcd: urb->status 0
+  25.602 [mono  29.724169] KMSG [   29.723913] vhci_hcd: unlink->seqnum 837
+  25.602 [mono  29.724317] KMSG [   29.723927] vhci_hcd: urb->status 0
+  25.602 [mono  29.724459] KMSG [   29.723966] intf ffff888003489000
+bt17-emu: Set Device Class minor 4 sent at mono 29.779281
+  25.658 [mono  29.780075] MGMT send opcode 0x000e index 0 params 0104
+  25.658 [mono  29.780355] KMSG [   29.780749] bt17-emu: Set Device Class minor 4 sent at mono 29.779281
+  25.710 [mono  29.831640] EMU resume #7: GET_STATUS answered
+  25.713 [mono  29.835309] KMSG [   29.833756] intf ffff888003489000
+  25.713 [mono  29.835548] KMSG [   29.833768] intf ffff888003d1e000
+  25.732 [mono  29.854449] MGMT Class Of Device Changed index 0 040100
+  25.733 [mono  29.854778] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  25.756 [mono  29.878268] KMSG [   29.879157] intf ffff888003d1e000
+  25.757 [mono  29.878694] KMSG [   29.879489] vhci_hcd: unlink->seqnum 866
+  25.757 [mono  29.878911] KMSG [   29.879531] vhci_hcd: urb->status -104
+  25.757 [mono  29.879102] KMSG [   29.879775] vhci_hcd: unlink->seqnum 867
+  25.757 [mono  29.879297] EMU suspend #8 (SET_FEATURE remote wakeup)
+  25.757 [mono  29.879478] KMSG [   29.879795] vhci_hcd: urb->status 0
+  25.758 [mono  29.879674] KMSG [   29.880044] vhci_hcd: unlink->seqnum 868
+  25.758 [mono  29.879884] KMSG [   29.880066] vhci_hcd: urb->status 0
+  25.758 [mono  29.880063] KMSG [   29.880119] intf ffff888003489000
+bt17-emu: Set Device Class minor 8 sent at mono 29.923303
+  25.802 [mono  29.923922] MGMT send opcode 0x000e index 0 params 0108
+  25.802 [mono  29.924252] KMSG [   29.924760] bt17-emu: Set Device Class minor 8 sent at mono 29.923303
+  25.862 [mono  29.983670] EMU resume #8: GET_STATUS answered
+  25.864 [mono  29.985833] KMSG [   29.985755] intf ffff888003489000
+  25.864 [mono  29.986065] KMSG [   29.985768] intf ffff888003d1e000
+  25.876 [mono  29.997983] MGMT Class Of Device Changed index 0 080100
+  25.876 [mono  29.998276] MGMT Command Complete opcode 0x000e status 0x00 index 0
+  25.901 [mono  30.022912] EMU suspend #9 (SET_FEATURE remote wakeup)
+  25.904 [mono  30.025891] KMSG [   30.023197] intf ffff888003d1e000
+  25.904 [mono  30.026105] KMSG [   30.023486] vhci_hcd: unlink->seqnum 897
+  25.904 [mono  30.026287] KMSG [   30.023515] vhci_hcd: urb->status -104
+  25.904 [mono  30.026461] KMSG [   30.023745] vhci_hcd: unlink->seqnum 898
+  25.905 [mono  30.026632] KMSG [   30.023764] vhci_hcd: urb->status 0
+  25.905 [mono  30.026817] KMSG [   30.023959] vhci_hcd: unlink->seqnum 899
+  25.905 [mono  30.026988] KMSG [   30.023975] vhci_hcd: urb->status 0
+  25.905 [mono  30.027132] KMSG [   30.024017] intf ffff888003489000
+  25.979 [mono  30.100880] EMU resume #9: GET_STATUS answered
+  25.980 [mono  30.101867] KMSG [   30.102970] intf ffff888003489000
+  25.980 [mono  30.102123] KMSG [   30.102982] intf ffff888003d1e000
+  25.992 [mono  30.114008] CYCLE i=8 kind=normal delay=20 suspended_before=True sent=42 send_errors=0 parked=0 parked_late=0 mgmt=0x00 max_latency=0.211 ok=True device_suspends=3 device_resumes=4
+  26.046 [mono  30.167734] KMSG [   30.168622] intf ffff888003d1e000
+  26.046 [mono  30.168153] KMSG [   30.168963] vhci_hcd: unlink->seqnum 907
+  26.046 [mono  30.168413] KMSG [   30.168997] vhci_hcd: urb->status -104
+  26.047 [mono  30.168647] KMSG [   30.169431] vhci_hcd: unlink->seqnum 908
+  26.047 [mono  30.168888] KMSG [   30.169459] vhci_hcd: urb->status 0
+  26.047 [mono  30.169098] EMU suspend #10 (SET_FEATURE remote wakeup)
+  26.047 [mono  30.169321] KMSG [   30.169741] vhci_hcd: unlink->seqnum 909
+  26.047 [mono  30.169527] KMSG [   30.169757] vhci_hcd: urb->status 0
+  26.048 [mono  30.169728] KMSG [   30.169802] intf ffff888003489000
+bt17-emu: stress: Set Powered off during the burst
+bt17-emu: Set De  26.088 [mono  30.210429] MGMT send opcode 0x0005 index 0 params 00vice Class minor
+ 12 sent at mono  26.089 [mono  30.210638] KMSG [   30.211279] bt17-emu: stress: Set Powered off during the burst 30.209867
+
+  26.089 [mono  30.210868] KMSG [   30.211322] bt17-emu: Set Device Class minor 12 sent at mono 30.209867
+  26.089 [mono  30.211039] MGMT send opcode 0x000e index 0 params 010c
+  26.089 [mono  30.211387] MGMT Command Status opcode 0x000e status 0x0a index 0
+  26.144 [mono  30.266248] EMU resume #10: GET_STATUS answered
+  26.148 [mono  30.269967] KMSG [   30.268482] intf ffff888003489000
+  26.148 [mono  30.270214] KMSG [   30.268498] intf ffff888003d1e000
+  26.165 [mono  30.286595] HCI cmd 0x0c03 
+  26.175 [mono  30.296860] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  26.175 [mono  30.297237] MGMT Class Of Device Changed index 0 000000
+  26.176 [mono  30.297705] KMSG [   30.298945] vhci_hcd: unlink->seqnum 931
+  26.176 [mono  30.298119] KMSG [   30.298979] vhci_hcd: urb->status -104
+  26.176 [mono  30.298438] KMSG [   30.299310] vhci_hcd: unlink->seqnum 932
+  26.177 [mono  30.298648] KMSG [   30.299336] vhci_hcd: urb->status 0
+  26.177 [mono  30.298914] KMSG [   30.299576] vhci_hcd: unlink->seqnum 933
+  26.177 [mono  30.299145] KMSG [   30.299597] vhci_hcd: urb->status 0
+  26.229 [mono  30.351517] MGMT send opcode 0x0005 index 0 params 01
+  26.230 [mono  30.351904] KMSG [   30.351211] intf ffff888003d1e000
+  26.230 [mono  30.352214] KMSG [   30.351232] intf ffff888003489000
+  26.307 [mono  30.429518] HCI cmd 0x0c03 
+  26.308 [mono  30.430387] HCI cmd 0x1003 
+  26.309 [mono  30.430988] HCI cmd 0x1001 
+  26.309 [mono  30.431211] KMSG [   30.429416] intf ffff888003489000
+  26.309 [mono  30.431423] KMSG [   30.429430] intf ffff888003d1e000
+  26.310 [mono  30.431644] HCI cmd 0x1009 
+  26.310 [mono  30.432284] HCI cmd 0x1002 
+  26.311 [mono  30.433374] HCI cmd 0x0c45 01
+  26.312 [mono  30.433924] HCI cmd 0x1005 
+  26.312 [mono  30.434447] HCI cmd 0x0c23 
+  26.313 [mono  30.434951] HCI cmd 0x0c14 
+  26.315 [mono  30.437530] HCI cmd 0x0c25 
+  26.316 [mono  30.438242] HCI cmd 0x0c38 
+  26.317 [mono  30.438902] HCI cmd 0x0c39 
+  26.317 [mono  30.439503] HCI cmd 0x0c16 007d
+  26.318 [mono  30.440174] HCI cmd 0x0c01 fffffbff03180000
+  26.319 [mono  30.441274] MGMT Class Of Device Changed index 0 080100
+  26.320 [mono  30.441595] HCI cmd 0x0c13 627431372d656d75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  26.320 [mono  30.442103] MGMT Command Complete opcode 0x0005 status 0x00 index 0
+  26.323 [mono  30.444572] Set Powered reply: (30.442100525, 1, 5, 0, 0)
+  26.323 [mono  30.444882] CYCLE i=9 kind=power delay=50 suspended_before=True sent=14 send_errors=0 power_off=0x00 ok=True recovered=True device_suspends=0 device_resumes=1
+  26.376 [mono  30.498293] KMSG [   30.499174] intf ffff888003d1e000
+  26.377 [mono  30.498625] KMSG [   30.499516] vhci_hcd: unlink->seqnum 993
+  26.377 [mono  30.498836] KMSG [   30.499552] vhci_hcd: urb->status -104
+  26.377 [mono  30.499024] KMSG [   30.499815] vhci_hcd: unlink->seqnum 994
+  26.377 [mono  30.499211] EMU suspend #11 (SET_FEATURE remote wakeup)
+  26.377 [mono  30.499417] KMSG [   30.499846] vhci_hcd: urb->status 0
+  26.378 [mono  30.499587] KMSG [   30.500200] vhci_hcd: unlink->seqnum 995
+  26.378 [mono  30.499753] KMSG [   30.500222] vhci_hcd: urb->status 0
+  26.378 [mono  30.499938] KMSG [   30.500277] intf ffff888003489000
+bt17-emu: Set Device Class minor 4 sent at mono 30.540566
+  26.419 [mono  30.541300] MGMT send opcode 0x000e index 0 params 0104
+  26.419 [mono  30.541523] KMSG [   30.542126] bt17-emu: Set Device Class minor 4 sent at mono 30.540566
+bt17-emu: stress: usbip detach during the burst
+  26.429 [mono  30.551129] usbip socket ended: EOFError()
+  26.432 [mono  30.553897] KMSG [   30.551348] bt17-emu: stress: usbip detach during the burst
+  26.432 [mono  30.554157] KMSG [   30.552310] vhci_hcd vhci_hcd.0: stop threads
+  26.432 [mono  30.554369] KMSG [   30.552319] vhci_hcd vhci_hcd.0: release socket
+  26.433 [mono  30.554584] KMSG [   30.552343] vhci_hcd vhci_hcd.0: disconnect device
+Bluetooth: hci0: Opcode 0x0c24 failed: -110
+  28.452 [mono  32.574485] MGMT Command Complete opcode 0x000e status 0x05 index 0
+  28.456 [mono  32.577880] KMSG [   32.575178] Bluetooth: hci0: Opcode 0x0c24 failed: -110
+Bluetooth: hci0: command 0x0c18 tx timeout
+  28.676 [mono  32.797931] KMSG [   32.797904] Bluetooth: hci0: command 0x0c18 tx timeout
+Bluetooth: hci0: Failed usb_autopm_get_interface: -16
+  28.885 [mono  33.007298] KMSG [   33.007572] Bluetooth: hci0: Failed usb_autopm_get_interface: -16
+  28.885 [mono  33.007537] KMSG [   33.007666] usb 2-1: USB disconnect, device number 3
+  28.886 [mono  33.007722] KMSG [   33.008905] intf ffff888003489000
+  28.940 [mono  33.062227] MGMT Class Of Device Changed index 0 000000
+  28.941 [mono  33.062603] MGMT New Settings index 0 80000000
+  28.941 [mono  33.062968] MGMT Index Removed index 0 
+  28.945 [mono  33.067292] KMSG [   33.065104] intf ffff888003d1e000
+  28.964 [mono  33.086262] final burst with detach: sent 14, hci0 removed=True 
+  40.068 [mono  44.189974] KMSG [   44.189021] kmemleak: 31 new suspected memory leaks (see /sys/kernel/debug/kmemleak)
+  40.093 [mono  44.214946] KMEMLEAK after stress: 31 unreferenced objects
+  40.094 [mono  44.216201] KMEMLEAK after stress | unreferenced object 0xffff888003d83900 (size 208):
+  40.094 [mono  44.216455] KMEMLEAK after stress |   comm "python3", pid 103, jiffies 4294894850
+  40.095 [mono  44.216647] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.095 [mono  44.216864] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.095 [mono  44.217059] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.095 [mono  44.217257] KMEMLEAK after stress |   backtrace (crc f109a523):
+  40.095 [mono  44.217452] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.096 [mono  44.217642] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.096 [mono  44.217886] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.096 [mono  44.218074] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.096 [mono  44.218261] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.096 [mono  44.218449] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.097 [mono  44.218640] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.097 [mono  44.218879] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.097 [mono  44.219088] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.097 [mono  44.219283] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.097 [mono  44.219475] KMEMLEAK after stress | unreferenced object 0xffff888003bd5e00 (size 640):
+  40.098 [mono  44.219667] KMEMLEAK after stress |   comm "python3", pid 103, jiffies 4294894850
+  40.098 [mono  44.219901] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.098 [mono  44.220134] KMEMLEAK after stress |     3d 00 00 00 17 01 18 07 01 55 fc 04 2d 00 00 00  =........U..-...
+  40.098 [mono  44.220383] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.099 [mono  44.220583] KMEMLEAK after stress |   backtrace (crc c0488aa7):
+  40.099 [mono  44.220790] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.099 [mono  44.221050] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.099 [mono  44.221246] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.099 [mono  44.221434] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.100 [mono  44.221617] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.100 [mono  44.221851] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.100 [mono  44.222033] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.100 [mono  44.222215] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.100 [mono  44.222406] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.101 [mono  44.222588] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.101 [mono  44.222782] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.101 [mono  44.222971] KMEMLEAK after stress | unreferenced object 0xffff8880038a75c0 (size 8):
+  40.101 [mono  44.223154] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294894863
+  40.101 [mono  44.223351] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.101 [mono  44.223558] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.102 [mono  44.223746] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.102 [mono  44.223949] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.102 [mono  44.224198] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.102 [mono  44.224377] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.103 [mono  44.224858] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.103 [mono  44.225112] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.103 [mono  44.225304] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.103 [mono  44.225496] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.104 [mono  44.225692] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.104 [mono  44.225940] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.104 [mono  44.226136] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.104 [mono  44.226330] KMEMLEAK after stress | unreferenced object 0xffff888003ace8c0 (size 208):
+  40.104 [mono  44.226524] KMEMLEAK after stress |   comm "python3", pid 180, jiffies 4294897496
+  40.105 [mono  44.226714] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.105 [mono  44.226920] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.105 [mono  44.227116] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.105 [mono  44.227301] KMEMLEAK after stress |   backtrace (crc bdbce5af):
+  40.105 [mono  44.227485] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.106 [mono  44.227670] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.106 [mono  44.227889] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.106 [mono  44.228089] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.106 [mono  44.228277] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.106 [mono  44.228465] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.107 [mono  44.228646] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.107 [mono  44.228855] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.107 [mono  44.229041] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.107 [mono  44.229304] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.108 [mono  44.229580] KMEMLEAK after stress | unreferenced object 0xffff888003cda8c0 (size 208):
+  40.108 [mono  44.229895] KMEMLEAK after stress |   comm "kworker/u17:0", pid 68, jiffies 4294897496
+  40.108 [mono  44.230170] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.108 [mono  44.230433] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.109 [mono  44.230630] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.109 [mono  44.230871] KMEMLEAK after stress |   backtrace (crc 8d969d94):
+  40.109 [mono  44.231079] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.109 [mono  44.231264] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.109 [mono  44.231452] KMEMLEAK after stress |     hci_cmd_sync_alloc+0x34/0x350
+  40.110 [mono  44.231700] KMEMLEAK after stress |     __hci_cmd_sync_sk+0x134/0xb40
+  40.110 [mono  44.231934] KMEMLEAK after stress |     __hci_cmd_sync_status_sk+0x24/0x120
+  40.110 [mono  44.232133] KMEMLEAK after stress |     hci_update_class_sync+0x2de/0x440
+  40.110 [mono  44.232341] KMEMLEAK after stress |     hci_cmd_sync_work+0x161/0x3e0
+  40.110 [mono  44.232543] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.111 [mono  44.232856] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.111 [mono  44.233123] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.111 [mono  44.233383] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.112 [mono  44.233642] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.112 [mono  44.233963] KMEMLEAK after stress | unreferenced object 0xffff888003703300 (size 640):
+  40.112 [mono  44.234162] KMEMLEAK after stress |   comm "kworker/u17:0", pid 68, jiffies 4294897496
+  40.112 [mono  44.234355] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.112 [mono  44.234549] KMEMLEAK after stress |     00 3e c1 03 80 88 ff ff 24 0c 03 04 01 00 26 02  .>......$.....&.
+  40.113 [mono  44.234739] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.113 [mono  44.234985] KMEMLEAK after stress |   backtrace (crc 9bf95dd9):
+  40.113 [mono  44.235185] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.113 [mono  44.235380] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.114 [mono  44.235570] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.114 [mono  44.235786] KMEMLEAK after stress |     hci_cmd_sync_alloc+0x34/0x350
+  40.114 [mono  44.236031] KMEMLEAK after stress |     __hci_cmd_sync_sk+0x134/0xb40
+  40.114 [mono  44.236225] KMEMLEAK after stress |     __hci_cmd_sync_status_sk+0x24/0x120
+  40.114 [mono  44.236416] KMEMLEAK after stress |     hci_update_class_sync+0x2de/0x440
+  40.115 [mono  44.236607] KMEMLEAK after stress |     hci_cmd_sync_work+0x161/0x3e0
+  40.115 [mono  44.236815] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.115 [mono  44.237111] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.115 [mono  44.237310] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.115 [mono  44.237507] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.116 [mono  44.237692] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.116 [mono  44.237938] KMEMLEAK after stress | unreferenced object 0xffff888003cda500 (size 208):
+  40.116 [mono  44.238141] KMEMLEAK after stress |   comm "python3", pid 178, jiffies 4294897497
+  40.116 [mono  44.238335] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.116 [mono  44.238528] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.117 [mono  44.238713] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.117 [mono  44.238924] KMEMLEAK after stress |   backtrace (crc 65156df5):
+  40.117 [mono  44.239115] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.117 [mono  44.239317] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.117 [mono  44.239508] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.118 [mono  44.239727] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.118 [mono  44.239950] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.118 [mono  44.240141] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.118 [mono  44.240329] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.118 [mono  44.240554] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.119 [mono  44.240777] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.119 [mono  44.240981] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.119 [mono  44.241170] KMEMLEAK after stress | unreferenced object 0xffff888003702d00 (size 640):
+  40.119 [mono  44.241358] KMEMLEAK after stress |   comm "python3", pid 178, jiffies 4294897497
+  40.119 [mono  44.241546] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.120 [mono  44.241776] KMEMLEAK after stress |     40 d0 d9 03 80 88 ff ff 01 55 fc 04 9c 00 00 00  @........U......
+  40.120 [mono  44.241976] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.120 [mono  44.242166] KMEMLEAK after stress |   backtrace (crc 3b25a5e3):
+  40.120 [mono  44.242353] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.120 [mono  44.242545] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.121 [mono  44.242744] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.121 [mono  44.243001] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.121 [mono  44.243190] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.121 [mono  44.243377] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.122 [mono  44.243563] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.122 [mono  44.243759] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.122 [mono  44.243983] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.122 [mono  44.244180] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.122 [mono  44.244370] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.123 [mono  44.244564] KMEMLEAK after stress | unreferenced object 0xffff888003acf540 (size 208):
+  40.123 [mono  44.244797] KMEMLEAK after stress |   comm "python3", pid 180, jiffies 4294897498
+  40.123 [mono  44.245402] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.124 [mono  44.245663] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.124 [mono  44.245972] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.124 [mono  44.246176] KMEMLEAK after stress |   backtrace (crc 48372285):
+  40.124 [mono  44.246367] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.125 [mono  44.246562] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.125 [mono  44.246790] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.125 [mono  44.246991] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.125 [mono  44.247184] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.125 [mono  44.247377] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.126 [mono  44.247567] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.126 [mono  44.247772] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.126 [mono  44.247970] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.126 [mono  44.248162] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.126 [mono  44.248359] KMEMLEAK after stress | unreferenced object 0xffff888003ace140 (size 208):
+  40.126 [mono  44.248553] KMEMLEAK after stress |   comm "python3", pid 176, jiffies 4294897500
+  40.127 [mono  44.248746] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.127 [mono  44.248971] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.127 [mono  44.249266] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.127 [mono  44.249495] KMEMLEAK after stress |   backtrace (crc f2460674):
+  40.128 [mono  44.249680] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.128 [mono  44.249917] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.128 [mono  44.250099] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.128 [mono  44.250293] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.128 [mono  44.250472] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.129 [mono  44.250650] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.129 [mono  44.250843] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.129 [mono  44.251047] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.129 [mono  44.251267] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.129 [mono  44.251455] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.130 [mono  44.251713] KMEMLEAK after stress | unreferenced object 0xffff888003cdb180 (size 208):
+  40.130 [mono  44.251991] KMEMLEAK after stress |   comm "python3", pid 178, jiffies 4294897501
+  40.130 [mono  44.252250] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.130 [mono  44.252504] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.131 [mono  44.252775] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.131 [mono  44.253034] KMEMLEAK after stress |   backtrace (crc eb9eab20):
+  40.131 [mono  44.253230] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.131 [mono  44.253424] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.132 [mono  44.253614] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.132 [mono  44.253836] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.132 [mono  44.254023] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.132 [mono  44.254209] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.132 [mono  44.254393] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.133 [mono  44.254576] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.133 [mono  44.254792] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.133 [mono  44.254993] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.133 [mono  44.255181] KMEMLEAK after stress | unreferenced object 0xffff888003702100 (size 640):
+  40.133 [mono  44.255371] KMEMLEAK after stress |   comm "python3", pid 178, jiffies 4294897501
+  40.134 [mono  44.255568] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.134 [mono  44.255778] KMEMLEAK after stress |     80 91 91 03 80 88 ff ff 01 55 fc 04 a1 00 00 00  .........U......
+  40.134 [mono  44.256058] KMEMLEAK after stress |     00 08 01 00 00 00 00 00 00 00 00 08 00 00 00 00  ................
+  40.134 [mono  44.256304] KMEMLEAK after stress |   backtrace (crc 6d7be4c5):
+  40.134 [mono  44.256494] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.135 [mono  44.256710] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.135 [mono  44.256934] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.135 [mono  44.257145] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.135 [mono  44.257414] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.136 [mono  44.257613] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.136 [mono  44.257857] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.136 [mono  44.258053] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.136 [mono  44.258240] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.136 [mono  44.258457] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.137 [mono  44.258698] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.137 [mono  44.258997] KMEMLEAK after stress | unreferenced object 0xffff888003cdbe00 (size 208):
+  40.137 [mono  44.259262] KMEMLEAK after stress |   comm "python3", pid 177, jiffies 4294897502
+  40.137 [mono  44.259482] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.138 [mono  44.259673] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.138 [mono  44.259895] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.138 [mono  44.260093] KMEMLEAK after stress |   backtrace (crc 84c6e555):
+  40.138 [mono  44.260276] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.138 [mono  44.260471] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.139 [mono  44.260667] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.139 [mono  44.260906] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.139 [mono  44.261110] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.139 [mono  44.261301] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.140 [mono  44.261594] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.140 [mono  44.261958] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.140 [mono  44.262250] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.140 [mono  44.262516] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.141 [mono  44.262769] KMEMLEAK after stress | unreferenced object 0xffff888003700c00 (size 640):
+  40.141 [mono  44.262992] KMEMLEAK after stress |   comm "python3", pid 177, jiffies 4294897502
+  40.141 [mono  44.263184] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.141 [mono  44.263410] KMEMLEAK after stress |     80 87 cc 03 80 88 ff ff 01 55 fc 04 a2 00 00 00  .........U......
+  40.142 [mono  44.263738] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 06 00 00 00 00  ................
+  40.142 [mono  44.263983] KMEMLEAK after stress |   backtrace (crc 44525e2e):
+  40.142 [mono  44.264189] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.142 [mono  44.264400] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.143 [mono  44.264595] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.143 [mono  44.264802] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.143 [mono  44.265034] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.143 [mono  44.265241] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.143 [mono  44.265525] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.144 [mono  44.265852] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.144 [mono  44.266126] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.144 [mono  44.266402] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.145 [mono  44.266602] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.145 [mono  44.266823] KMEMLEAK after stress | unreferenced object 0xffff8880038a7ca0 (size 8):
+  40.145 [mono  44.267035] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294897503
+  40.145 [mono  44.267232] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.145 [mono  44.267423] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.146 [mono  44.267619] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.146 [mono  44.267828] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.146 [mono  44.268148] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.146 [mono  44.268413] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.147 [mono  44.268666] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.147 [mono  44.268912] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.147 [mono  44.269138] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.147 [mono  44.269332] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.147 [mono  44.269522] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.148 [mono  44.269731] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.148 [mono  44.269952] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.148 [mono  44.270142] KMEMLEAK after stress | unreferenced object 0xffff888003d15400 (size 208):
+  40.148 [mono  44.270343] KMEMLEAK after stress |   comm "python3", pid 179, jiffies 4294897504
+  40.149 [mono  44.270569] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.149 [mono  44.270861] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.149 [mono  44.271128] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.149 [mono  44.271374] KMEMLEAK after stress |   backtrace (crc 36fb0d44):
+  40.150 [mono  44.271569] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.150 [mono  44.271778] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.150 [mono  44.271979] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.150 [mono  44.272169] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.150 [mono  44.272357] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.150 [mono  44.272547] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.151 [mono  44.272734] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.151 [mono  44.272940] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.151 [mono  44.273201] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.151 [mono  44.273490] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.152 [mono  44.273872] KMEMLEAK after stress | unreferenced object 0xffff888003700300 (size 640):
+  40.152 [mono  44.274174] KMEMLEAK after stress |   comm "python3", pid 179, jiffies 4294897504
+  40.152 [mono  44.274403] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.153 [mono  44.274606] KMEMLEAK after stress |     40 f5 ac 03 80 88 ff ff 02 01 20 08 00 45 41 a4  @......... ..EA.
+  40.153 [mono  44.274903] KMEMLEAK after stress |     00 00 00 00 00 00 03 00 00 00 01 04 00 00 00 00  ................
+  40.153 [mono  44.275147] KMEMLEAK after stress |   backtrace (crc 51b7e8c6):
+  40.153 [mono  44.275389] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.154 [mono  44.275632] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.154 [mono  44.275885] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.154 [mono  44.276126] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.154 [mono  44.276363] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.155 [mono  44.276609] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.155 [mono  44.276873] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.155 [mono  44.277103] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.155 [mono  44.277331] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.156 [mono  44.277565] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.156 [mono  44.277843] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.156 [mono  44.278084] KMEMLEAK after stress | unreferenced object 0xffff888003d152c0 (size 208):
+  40.156 [mono  44.278322] KMEMLEAK after stress |   comm "python3", pid 177, jiffies 4294897506
+  40.157 [mono  44.278690] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.157 [mono  44.278965] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.157 [mono  44.279201] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.157 [mono  44.279434] KMEMLEAK after stress |   backtrace (crc 9a0ed0ff):
+  40.158 [mono  44.279668] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.158 [mono  44.279983] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.158 [mono  44.280312] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.159 [mono  44.280585] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.159 [mono  44.280888] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.159 [mono  44.281207] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.159 [mono  44.281496] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.160 [mono  44.281831] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.160 [mono  44.282105] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.160 [mono  44.282410] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.161 [mono  44.282716] KMEMLEAK after stress | unreferenced object 0xffff888003700600 (size 640):
+  40.161 [mono  44.283039] KMEMLEAK after stress |   comm "python3", pid 177, jiffies 4294897506
+  40.161 [mono  44.283330] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.162 [mono  44.283618] KMEMLEAK after stress |     40 e1 ac 03 80 88 ff ff 01 55 fc 04 a6 00 00 00  @........U......
+  40.162 [mono  44.283916] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 fb 00 00 00 00  ................
+  40.162 [mono  44.284202] KMEMLEAK after stress |   backtrace (crc 31f7dd23):
+  40.162 [mono  44.284468] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.163 [mono  44.284771] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.163 [mono  44.285071] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.163 [mono  44.285343] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.164 [mono  44.285631] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.164 [mono  44.285961] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.164 [mono  44.286267] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.164 [mono  44.286552] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.165 [mono  44.286853] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.165 [mono  44.287144] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.165 [mono  44.287447] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.166 [mono  44.287732] KMEMLEAK after stress | unreferenced object 0xffff888003d15180 (size 208):
+  40.166 [mono  44.288049] KMEMLEAK after stress |   comm "python3", pid 179, jiffies 4294897509
+  40.166 [mono  44.288334] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.167 [mono  44.288621] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.167 [mono  44.288927] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.167 [mono  44.289214] KMEMLEAK after stress |   backtrace (crc 5dea4903):
+  40.167 [mono  44.289501] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.168 [mono  44.289822] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.168 [mono  44.290117] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.168 [mono  44.290405] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.169 [mono  44.290693] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.169 [mono  44.290995] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.169 [mono  44.291318] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.170 [mono  44.291567] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.170 [mono  44.291798] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.170 [mono  44.292071] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.170 [mono  44.292361] KMEMLEAK after stress | unreferenced object 0xffff888003701e00 (size 640):
+  40.171 [mono  44.292652] KMEMLEAK after stress |   comm "python3", pid 179, jiffies 4294897509
+  40.171 [mono  44.292964] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.171 [mono  44.293248] KMEMLEAK after stress |     00 f4 d9 03 80 88 ff ff 02 01 20 08 00 45 41 a8  .......... ..EA.
+  40.171 [mono  44.293534] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 00  ................
+  40.172 [mono  44.293923] KMEMLEAK after stress |   backtrace (crc 13a44870):
+  40.172 [mono  44.294213] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.173 [mono  44.294849] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.173 [mono  44.295141] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.173 [mono  44.295427] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.174 [mono  44.295683] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.174 [mono  44.295993] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.174 [mono  44.296305] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.175 [mono  44.296586] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.175 [mono  44.296840] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.175 [mono  44.297134] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.175 [mono  44.297424] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.176 [mono  44.297741] KMEMLEAK after stress | unreferenced object 0xffff888002c1df00 (size 8):
+  40.176 [mono  44.298068] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294897518
+  40.176 [mono  44.298388] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.177 [mono  44.298681] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.177 [mono  44.299090] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.177 [mono  44.299421] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.178 [mono  44.299714] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.178 [mono  44.300076] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.178 [mono  44.300364] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.179 [mono  44.300589] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.179 [mono  44.300879] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.179 [mono  44.301174] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.179 [mono  44.301422] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.180 [mono  44.301636] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.180 [mono  44.301891] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.180 [mono  44.302116] KMEMLEAK after stress | unreferenced object 0xffff888002c1dec0 (size 8):
+  40.180 [mono  44.302371] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294897525
+  40.181 [mono  44.302679] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.181 [mono  44.302991] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.181 [mono  44.303286] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.182 [mono  44.303594] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.182 [mono  44.303902] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.182 [mono  44.304194] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.182 [mono  44.304438] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.183 [mono  44.304662] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.183 [mono  44.304985] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.183 [mono  44.305216] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.183 [mono  44.305421] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.184 [mono  44.305688] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.184 [mono  44.306035] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.184 [mono  44.306335] KMEMLEAK after stress | unreferenced object 0xffff888002c1dea0 (size 8):
+  40.185 [mono  44.306598] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294897540
+  40.185 [mono  44.306835] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.185 [mono  44.307136] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.185 [mono  44.307435] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.186 [mono  44.307723] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.186 [mono  44.308032] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.186 [mono  44.308326] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.187 [mono  44.308613] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.187 [mono  44.308916] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.187 [mono  44.309207] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.187 [mono  44.309493] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.188 [mono  44.309809] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.188 [mono  44.310107] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.188 [mono  44.310392] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.189 [mono  44.310727] KMEMLEAK after stress | unreferenced object 0xffff888002c1de80 (size 8):
+  40.189 [mono  44.311056] KMEMLEAK after stress |   comm "kworker/u17:1", pid 69, jiffies 4294897555
+  40.189 [mono  44.311348] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.190 [mono  44.311638] KMEMLEAK after stress |     20 00 00 00 00 00 06 00                           .......
+  40.190 [mono  44.312039] KMEMLEAK after stress |   backtrace (crc af2cc5d0):
+  40.190 [mono  44.312340] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.191 [mono  44.312633] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.191 [mono  44.312971] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.191 [mono  44.313268] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.191 [mono  44.313539] KMEMLEAK after stress |     hci_cmd_work+0x2cb/0x7d0
+  40.192 [mono  44.313856] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.192 [mono  44.314128] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.192 [mono  44.314397] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.193 [mono  44.314667] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.193 [mono  44.314958] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.193 [mono  44.315261] KMEMLEAK after stress | unreferenced object 0xffff888003106500 (size 8):
+  40.193 [mono  44.315555] KMEMLEAK after stress |   comm "kworker/u17:0", pid 68, jiffies 4294898116
+  40.194 [mono  44.315880] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.194 [mono  44.316193] KMEMLEAK after stress |     20 00 00 00 00 00 05 00                           .......
+  40.194 [mono  44.316466] KMEMLEAK after stress |   backtrace (crc 84019613):
+  40.195 [mono  44.316734] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.195 [mono  44.317053] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.195 [mono  44.317330] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.195 [mono  44.317536] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.196 [mono  44.317831] KMEMLEAK after stress |     hci_cmd_work+0x2cb/0x7d0
+  40.196 [mono  44.318127] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.196 [mono  44.318412] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.197 [mono  44.318715] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.197 [mono  44.319030] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.197 [mono  44.319306] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.198 [mono  44.319612] KMEMLEAK after stress | unreferenced object 0xffff8880036de280 (size 208):
+  40.198 [mono  44.319926] KMEMLEAK after stress |   comm "python3", pid 220, jiffies 4294899619
+  40.198 [mono  44.320197] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.198 [mono  44.320467] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.199 [mono  44.320741] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.199 [mono  44.321030] KMEMLEAK after stress |   backtrace (crc 908d9771):
+  40.199 [mono  44.321315] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.200 [mono  44.321602] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.200 [mono  44.321942] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.200 [mono  44.322215] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.200 [mono  44.322492] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.201 [mono  44.322776] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.201 [mono  44.323067] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.201 [mono  44.323338] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.202 [mono  44.323608] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.202 [mono  44.323901] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.202 [mono  44.324123] KMEMLEAK after stress | unreferenced object 0xffff8880036b8600 (size 640):
+  40.202 [mono  44.324362] KMEMLEAK after stress |   comm "python3", pid 220, jiffies 4294899619
+  40.203 [mono  44.324631] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.203 [mono  44.324949] KMEMLEAK after stress |     40 e1 d5 03 80 88 ff ff 01 55 fc 04 da 00 00 00  @........U......
+  40.203 [mono  44.325247] KMEMLEAK after stress |     40 bb 0b a1 ff ff ff ff 00 00 00 00 00 00 00 00  @...............
+  40.203 [mono  44.325532] KMEMLEAK after stress |   backtrace (crc ef5a0c70):
+  40.204 [mono  44.325872] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.204 [mono  44.326188] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.204 [mono  44.326473] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.205 [mono  44.326771] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.205 [mono  44.327058] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.205 [mono  44.327343] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.206 [mono  44.327631] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.206 [mono  44.327932] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.206 [mono  44.328217] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.206 [mono  44.328508] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.207 [mono  44.328802] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.207 [mono  44.329089] KMEMLEAK after stress | unreferenced object 0xffff8880039b1680 (size 8):
+  40.207 [mono  44.329378] KMEMLEAK after stress |   comm "kworker/u17:0", pid 187, jiffies 4294899628
+  40.208 [mono  44.329661] KMEMLEAK after stress |   hex dump (first 8 bytes):
+  40.208 [mono  44.330024] KMEMLEAK after stress |     20 00 00 00 00 00 07 00                           .......
+  40.208 [mono  44.330308] KMEMLEAK after stress |   backtrace (crc b637f491):
+  40.209 [mono  44.330589] KMEMLEAK after stress |     __kmalloc_cache_noprof+0x323/0x510
+  40.209 [mono  44.330895] KMEMLEAK after stress |     alloc_ctrl_urb+0xc6/0x5b0
+  40.209 [mono  44.331180] KMEMLEAK after stress |     btusb_send_frame+0x223/0x350
+  40.209 [mono  44.331485] KMEMLEAK after stress |     hci_send_frame+0x215/0x480
+  40.210 [mono  44.331815] KMEMLEAK after stress |     hci_tx_work+0xd0/0x1010
+  40.210 [mono  44.332042] KMEMLEAK after stress |     process_one_work+0x8b5/0x1ba0
+  40.210 [mono  44.332462] KMEMLEAK after stress |     worker_thread+0x630/0x1180
+  40.211 [mono  44.332675] KMEMLEAK after stress |     kthread+0x34f/0x480
+  40.211 [mono  44.332900] KMEMLEAK after stress |     ret_from_fork+0x485/0x700
+  40.211 [mono  44.333127] KMEMLEAK after stress |     ret_from_fork_asm+0x1a/0x30
+  40.211 [mono  44.333352] KMEMLEAK after stress | unreferenced object 0xffff888003d16500 (size 208):
+  40.211 [mono  44.333559] KMEMLEAK after stress |   comm "python3", pid 259, jiffies 4294899836
+  40.212 [mono  44.334131] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.212 [mono  44.334352] KMEMLEAK after stress |     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.212 [mono  44.334549] KMEMLEAK after stress |     00 80 d3 03 80 88 ff ff 00 00 00 00 00 00 00 00  ................
+  40.213 [mono  44.334739] KMEMLEAK after stress |   backtrace (crc 95f0f25):
+  40.213 [mono  44.335040] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.213 [mono  44.335232] KMEMLEAK after stress |     __alloc_skb+0x10a/0x5d0
+  40.213 [mono  44.335414] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.214 [mono  44.335590] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.214 [mono  44.335779] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.214 [mono  44.335995] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.214 [mono  44.336206] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.214 [mono  44.336398] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.215 [mono  44.336666] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.215 [mono  44.336880] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  40.215 [mono  44.337071] KMEMLEAK after stress | unreferenced object 0xffff888003e8a100 (size 640):
+  40.215 [mono  44.337266] KMEMLEAK after stress |   comm "python3", pid 259, jiffies 4294899836
+  40.215 [mono  44.337453] KMEMLEAK after stress |   hex dump (first 32 bytes):
+  40.216 [mono  44.337638] KMEMLEAK after stress |     40 a6 cd 03 80 88 ff ff 02 01 20 08 00 45 41 0e  @......... ..EA.
+  40.216 [mono  44.337881] KMEMLEAK after stress |     01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  40.216 [mono  44.338083] KMEMLEAK after stress |   backtrace (crc e1e6a29c):
+  40.216 [mono  44.338285] KMEMLEAK after stress |     kmem_cache_alloc_node_noprof+0x368/0x4b0
+  40.216 [mono  44.338491] KMEMLEAK after stress |     kmalloc_reserve+0x103/0x2b0
+  40.217 [mono  44.338677] KMEMLEAK after stress |     __alloc_skb+0x14a/0x5d0
+  40.217 [mono  44.338882] KMEMLEAK after stress |     alloc_skb_with_frags+0x7e/0x740
+  40.217 [mono  44.339067] KMEMLEAK after stress |     sock_alloc_send_pskb+0x65e/0x800
+  40.217 [mono  44.339258] KMEMLEAK after stress |     hci_sock_sendmsg+0x17d/0x2300
+  40.217 [mono  44.339443] KMEMLEAK after stress |     sock_write_iter+0x456/0x4f0
+  40.218 [mono  44.339628] KMEMLEAK after stress |     vfs_write+0xbb6/0xfa0
+  40.218 [mono  44.339826] KMEMLEAK after stress |     ksys_write+0x17c/0x1c0
+  40.218 [mono  44.340013] KMEMLEAK after stress |     do_syscall_64+0xaf/0x520
+  40.218 [mono  44.340257] KMEMLEAK after stress |     entry_SYSCALL_64_after_hwframe+0x76/0x7e
+  54.287 [mono  58.409314] tasks in D state at the end: 0 []
+  54.289 [mono  58.411154] detach windows: ['20.885-23.408', '30.550-33.086']
+  54.289 [mono  58.411306] TEARDOWN-TIMEOUT [   23.133978] Bluetooth: hci0: command 0x0c24 tx timeout
+  54.289 [mono  58.411436] TEARDOWN-TIMEOUT [   32.797904] Bluetooth: hci0: command 0x0c18 tx timeout
+  54.290 [mono  58.411646] RESULT stress cycles=10 normal=5 normal_ok=1 parked=4 mgmt_not_ok=0 send_errors_normal=0 not_suspended_before=0 disruptions=5 recovered=5 final_detach_removed=True packets_sent=280 max_latency=3.490 forced_resume_writes=26 kernel_reports=0 tx_timeouts=0 teardown_timeouts=2 kmemleak_objects=31 kmemleak_bt25_signature=31 kmemleak_other=0 d_state_end=0 kmsg_overruns=0 device_suspends=26 device_resumes=24 seed=103
+  54.290 [mono  58.411856] BT17-EXIT 1
+Process 60 exited with status 1
+exit=0 end 2026-11-13 20:14:56
