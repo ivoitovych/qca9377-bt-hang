@@ -1,6 +1,13 @@
 # CO-09 — The QCA9377 entry in Ubuntu's kernel
 
-> **Current state, 2026-11-12** (the index `../README.md` is the current record): **solved by
+> **Current state, 2026-11-14: done.** The laptop runs `7.0.0-43-generic` with the stock btusb
+> (no `/lib/modules/7.0.0-43-generic/updates/`; `docs/issues.md` records `-43` stock boots from
+> 2026-11-12 22:57, boot `46cc4812`). Checked today on the installed module:
+> `scripts/btusb-has-device.py /lib/modules/7.0.0-43-generic/kernel/drivers/bluetooth/btusb.ko.zst`
+> → `FOUND 13d3:3503 x1`; control `… 0cf3 e300` → `FOUND 0cf3:e300 x1`. E3 is retired for this
+> kernel; nothing is left to contribute here.
+>
+> **Earlier, 2026-11-12:** **solved by
 > Ubuntu's own cycle.** `7.0.0-43.43~24.04.1` carries `13d3:3503` in its stock btusb (checked on
 > the noble-proposed build, 2026-11-11, `results/laptop-only-work-2026-11-11/e3-kernel-hook/`) and is
 > published in noble-updates and noble-security (`apt-cache policy`, 2026-11-12), not installed.

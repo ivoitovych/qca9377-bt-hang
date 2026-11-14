@@ -174,6 +174,19 @@ machine, evidence in [`results/laptop-only-work-2026-11-11/`](../results/laptop-
 
 ## The investigation machine
 
+- ⚠️ **Read 2026-11-14 00:46 UTC (sysfs, journal and module-file reads only). The machine runs
+  Ubuntu's `7.0.0-43-generic` with the stock btusb and the stock `bluetooth.ko`; E3 is retired.**
+  `uname -r` → `7.0.0-43-generic`; no `/lib/modules/7.0.0-43-generic/updates/`;
+  `/sys/module/btusb/srcversion` → `4B2BD2C14BA4918C28E7208` and `/sys/module/bluetooth/srcversion`
+  → `585A17E26A09081072E4FEC`, equal to the stock files' (`modinfo -F srcversion` on
+  `…/kernel/drivers/bluetooth/btusb.ko.zst` and `…/kernel/net/bluetooth/bluetooth.ko.zst`).
+  `scripts/btusb-has-device.py` on the stock btusb → `FOUND 13d3:3503 x1` (control `0cf3 e300`
+  FOUND). The current boot `af3f9840` (2026-11-13 11:24:15 CET) loaded the patch with it:
+  `QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302 build 0x111` (11:24:15). `-43` boots:
+  `46cc4812` (11-12 22:55), `680c448c` (11-13 10:41, BT-16's third occurrence) and `af3f9840`
+  (`journalctl --list-boots`). Kernel debug output for `hci0` is on (BT-17's arming). CO-03's
+  `bluetoothd` is staged on disk since 11-13, not running (the next bluetoothd start loads it).
+  The older reads below describe `-42` with E3.
 - ⚠️ **Read 2026-11-07 ~05:30 (sysfs, journal and file reads only).** Boot `045caff5` since
   2026-11-06 15:51:22; `uname -r` → `7.0.0-42-generic`; `modinfo -F srcversion btusb` →
   `DDB92562D1890FC3D262993` (E3, as below). Boots since `738e228b`: 10-30 19:22 (`46cb5188`), 10-30

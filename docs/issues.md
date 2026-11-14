@@ -26,8 +26,9 @@ since 10-28.
   (U7) has no human reply as of 11-12 (`reviews/2026-11-12T1508Z-upstream-contributions-status.md`).
 - **Answered from the recordings on 11-11** (`results/laptop-only-work-2026-11-11/`): U8, U12,
   U14, U15, U19, U20, BT-4 and BT-6, each noted in its row or section below.
-- **The machine** runs `7.0.0-42` with E3 since 10-30; Ubuntu's `7.0.0-43` carries the entry and
-  is published in noble-updates and noble-security (seen 11-12), not installed.
+- **The machine** runs Ubuntu's `7.0.0-43` with the stock btusb since 11-12 22:55 (boot
+  `46cc4812`); its stock btusb carries the entry and loads the patch (`docs/STATUS.md`, the machine
+  section, read 11-14). Until then `7.0.0-42` with E3, from 10-30.
 
 ## Current state — 2026-10-28 (what changed since the 2026-10-11 state below)
 
