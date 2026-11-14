@@ -1,0 +1,100 @@
+From 5f84d231c726fd85367d3a3481ad52199ce4119a Mon Sep 17 00:00:00 2001
+From: Pauli Virtanen <pav@iki.fi>
+Date: Sat, 29 Aug 2026 17:19:57 +0300
+Subject: [PATCH 1/2] Bluetooth: L2CAP: add l2cap_chan_lock_conn() and
+ l2cap_chan_unlock_conn()
+
+[ Upstream commit 608e0b7a675b2affbbf38167cad0fa63d8e064f7 ]
+
+l2cap_chan_close() requires holding chan->lock and chan->conn->lock if
+associated chan->conn exists, to guard eg. conn->chan_l. Taking the
+locks with right ordering requires handling a race condition.
+
+Add helper function l2cap_chan_(un)lock_conn that do the locking right.
+
+[ Only the two helpers are taken from the commit. The split of
+  l2cap_chan_close() and l2cap_chan_close_unlocked() are not needed by
+  the next patch. The context-analysis annotations (__cond_acquires,
+  __context_unsafe) are dropped as this tree lacks them; code
+  unchanged ]
+
+Link: https://syzkaller.appspot.com/bug?extid=0e4ebcc970728e056324
+Signed-off-by: Pauli Virtanen <pav@iki.fi>
+Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+---
+ include/net/bluetooth/l2cap.h | 15 +++++++++++++++
+ net/bluetooth/l2cap_core.c    | 34 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 49 insertions(+)
+
+diff --git a/include/net/bluetooth/l2cap.h b/include/net/bluetooth/l2cap.h
+index f5f9137302..37e237d635 100644
+--- a/include/net/bluetooth/l2cap.h
++++ b/include/net/bluetooth/l2cap.h
+@@ -987,4 +987,19 @@ void l2cap_conn_put(struct l2cap_conn *conn);
+ int l2cap_register_user(struct l2cap_conn *conn, struct l2cap_user *user);
+ void l2cap_unregister_user(struct l2cap_conn *conn, struct l2cap_user *user);
+ 
++bool l2cap_chan_lock_conn(struct l2cap_chan *chan)
++	__acquires(&chan->lock);
++
++/* Release macro for l2cap_chan_lock_conn, so context analysis understands it */
++#define l2cap_chan_unlock_conn(chan, conn_locked)			\
++	({								\
++		struct l2cap_chan *__chan = (chan);			\
++		struct l2cap_conn *__conn = __chan->conn;		\
++		l2cap_chan_unlock(__chan);				\
++		if (conn_locked) {					\
++			mutex_unlock(&__conn->lock);			\
++			l2cap_conn_put(__conn);				\
++		}							\
++	})
++
+ #endif /* __L2CAP_H */
+diff --git a/net/bluetooth/l2cap_core.c b/net/bluetooth/l2cap_core.c
+index d8c39a4306..f42ad57bf2 100644
+--- a/net/bluetooth/l2cap_core.c
++++ b/net/bluetooth/l2cap_core.c
+@@ -897,6 +897,40 @@ void l2cap_chan_close(struct l2cap_chan *chan, int reason)
+ }
+ EXPORT_SYMBOL(l2cap_chan_close);
+ 
++/* Take chan->lock. If chan->conn is non-NULL, take new reference on it, take
++ * chan->conn->lock, and return true. Otherwise return false.
++ */
++bool l2cap_chan_lock_conn(struct l2cap_chan *chan)
++{
++	/* Handle conn->lock > chan->lock ordering + race on chan->conn */
++	for (;;) {
++		struct l2cap_conn *conn;
++
++		l2cap_chan_lock(chan);
++		conn = chan->conn;
++		if (conn)
++			l2cap_conn_get(conn);
++		l2cap_chan_unlock(chan);
++
++		if (conn)
++			mutex_lock(&conn->lock);
++
++		l2cap_chan_lock(chan);
++
++		if (chan->conn != conn) {
++			l2cap_chan_unlock(chan);
++			if (conn) {
++				mutex_unlock(&conn->lock);
++				l2cap_conn_put(conn);
++			}
++			schedule();
++			continue;
++		}
++
++		return chan->conn;
++	}
++}
++
+ static inline u8 l2cap_get_auth_type(struct l2cap_chan *chan)
+ {
+ 	switch (chan->chan_type) {
+-- 
+2.43.0
+

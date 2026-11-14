@@ -107,22 +107,30 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
 - **The prerequisite's size.** `608e0b7a675b` is 149 lines against stable's 100.
   - R3: backport only the two helpers `32d86e048d8e` needs, as a reduced prerequisite, on 7.3 too.
   - R7: asking for an exception, as the cover does, is fine and is the maintainers' call.
-  - **[open]** R3's variant needs building and testing. The choice between the two is the
+  - **Done 11-14** (`contributions/CO-35-…/review-fixes-20261114/`): the reduced patch is built and
+    tested on four lines. The deferred-accept case passes, and l2cap-tester gives the same verdict
+    as the full pair for all 111 cases on every line. The choice between the two is the
     operator's.
 - **The sanitizer wording.** The covers say "No lockdep or KASAN report".
   - R7 quotes a record saying the tester config had hung-task detection only. That line is ours:
     `send-20261102/results.md:157`.
   - **[verified]** BlueZ's `doc/tester.config`, which `build.sh` copies first, sets
     `CONFIG_PROVE_LOCKING=y`, `CONFIG_LOCKDEP=y` and `CONFIG_KASAN=y`.
-  - **[open]** Whether they survived into the built `.config`: the build trees are gone.
-  - Either confirm and correct the 11-02 line, or reword the covers to what is confirmed.
-- **A deviation table per backport** (R2). The data is in the covers.
-- Keep the SCI request (`5874f8d03268`) separate (R2, R7). Refresh the queues before sending (R2, R7).
+  - **[verified 11-14]** They survived into the built `.config`: recreated for v6.6.162 and v7.3.4,
+    and the four reduced builds' configs were saved; all three options are `=y`.
+  - So the covers are right, R7's point rests on our own wrong note, and the note is corrected
+    (`send-20261102/results.md`).
+- **A deviation table per backport** (R2). Done: `review-fixes-20261114/TASK2-deviation-table.md`;
+  no code line differs.
+- Keep the SCI request (`5874f8d03268`) separate (R2, R7).
+- Refresh the queues before sending (R2, R7): done 11-14, 13:08 to 13:42 UTC. Nothing is queued.
+  Repeat on the day of the send.
 
 ### 8. CO-22
 - **[verified] The request overstates how fresh its check is** (R7). The mail says "checked
   2026-11-14"; the README says 7.3 to 6.1 were checked on 11-14 at 01:05, but 5.15 and 5.10 only
-  on 11-02. Refresh all seven before sending, then state the date.
+  on 11-02. **Done 11-14:** all seven re-checked between 13:08 and 13:42 UTC, with nothing
+  queued. The mail's sentence now gives that window (`refresh-20261114/queue-refresh-20261114.md`).
 - Do not add `0cf3:e303` (R2, R7; already removed on 11-14).
 
 ### 9. CO-21

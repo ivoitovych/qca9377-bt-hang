@@ -154,6 +154,10 @@ The 6.12.115 and 6.6.161 breakdown (26/3/2/1) is the kept-out-of-the-mail number
 
 ## 6. Not done / limits
 - 7.3.1 "pair alone" full run, and the base full runs: not rerun (the pooled base verdicts are from 2026-11-01).
+- **Corrected 2026-11-14** (`../review-fixes-20261114/TASK1-sanitizer-record.md`): the kernels were built from BlueZ's
+  `doc/tester.config`, which sets `CONFIG_PROVE_LOCKING`, `CONFIG_LOCKDEP` and `CONFIG_KASAN`; `build.sh` adds only the
+  hung-task detector (recreated with `make olddefconfig` for v6.6.162 and v7.3.4: all three `=y`). The line below,
+  as first written, was wrong:
 - The tester config enables hung-task detection only; no separate lockdep/KASAN-enabled build was made today (the "no lockdep or
   KASAN report" statement rests on the scan of the patched runs, whose config is tester.config).
 - Nothing was committed or sent; the history docs listed in section 2 item 2 still carry the identity claim.

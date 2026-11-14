@@ -17,3 +17,5 @@ command and result.
   `../drafts/owners-call-qca-rome-ids-v2.eml`, without that ID (nine left; all nine checked absent
   from btusb at bluetooth-next `da3cc02587c6` on 2026-11-14, with the known entries found as a
   control).
+
+**2026-11-14, after the outside review** (`../../../../reviews/2026-11-14T1400Z-kernel-patches-review-answers-checks.md` §8): all seven lines re-checked between 13:08 and 13:42 UTC; neither commit is in a release, the queue or a stable-rc branch (`queue-refresh-20261114.md`). The mail's date sentence now says so: it had said "checked 2026-11-14" while 5.15 and 5.10 had last been checked on 11-02. `SHA256SUMS` updated for the mail and for `asus.sh`, whose entry had not been updated when the script was changed on copy at the first 11-14 port.
