@@ -1,0 +1,2508 @@
+#ci ## CI: IncrementalBuild
+#ci CI: IncrementalBuild: Run
+#ci CI: IncrementalBuild: Resetting source to origin/master (base commit)
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'reset', 'origin/master', '--hard']
+#ci PROC args: ['git', 'reset', 'origin/master', '--hard']
+HEAD is now at 20ffd285b shared/gatt-client: Track pending discovery Database Hash reads
+#ci RET: 0
+#ci ------------- CMD_RUN END (0.05 s) -------------
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['./bootstrap-configure']
+#ci PROC args: ['./bootstrap-configure']
+rm -f  client/bluetoothctl monitor/btmon tools/rctest tools/l2test tools/l2ping tools/bluemoon tools/hex2hcd tools/mpris-proxy tools/btattach tools/isotest tools/meshctl tools/mesh-cfgclient tools/mesh-cfgtest tools/hciattach tools/hciconfig tools/hcitool tools/rfcomm tools/sdptool tools/ciptool
+test -z "" || rm -f  client/bluetoothctl monitor/btmon tools/rctest tools/l2test tools/l2ping tools/bluemoon tools/hex2hcd tools/mpris-proxy tools/btattach tools/isotest tools/meshctl tools/mesh-cfgclient tools/mesh-cfgtest tools/hciattach tools/hciconfig tools/hcitool tools/rfcomm tools/sdptool tools/ciptool
+rm -f  profiles/cups/bluetooth
+test -z "" || rm -f  profiles/cups/bluetooth
+rm -f  ell/shared ell/internal ell/ell.h src/builtin.h obexd/src/builtin.h tools/97-hid2hci.rules
+rm -f  lib/libbluetooth.la
+rm -f lib/so_locations
+rm -rf .libs _libs
+rm -rf client/.libs client/_libs
+rm -rf client/btpclient/.libs client/btpclient/_libs
+rm -rf ell/.libs ell/_libs
+rm -rf emulator/.libs emulator/_libs
+rm -rf gdbus/.libs gdbus/_libs
+rm -rf lib/.libs lib/_libs
+rm -rf lib/bluetooth/.libs lib/bluetooth/_libs
+rm -rf mesh/.libs mesh/_libs
+rm -rf monitor/.libs monitor/_libs
+rm -rf obexd/src/.libs obexd/src/_libs
+rm -rf peripheral/.libs peripheral/_libs
+rm -rf profiles/cups/.libs profiles/cups/_libs
+rm -rf profiles/iap/.libs profiles/iap/_libs
+rm -rf src/.libs src/_libs
+rm -rf src/shared/.libs src/shared/_libs
+rm -rf tools/.libs tools/_libs
+rm -rf unit/.libs unit/_libs
+find . -name "*.gcno" -delete
+find . -name "*.gcda" -delete
+rm -f  
+rm -f  lib/libbluetooth-internal.la gdbus/libgdbus-internal.la ell/libell-internal.la src/libshared-glib.la src/libshared-mainloop.la src/libshared-ell.la
+rm -f ell/so_locations gdbus/so_locations lib/so_locations src/so_locations
+rm -f  emulator/btvirt emulator/b1ee emulator/hfp peripheral/btsensor tools/3dsp tools/mgmt-tester tools/gap-tester tools/l2cap-tester tools/sco-tester tools/smp-tester tools/hci-tester tools/rfcomm-tester tools/bnep-tester tools/userchan-tester tools/iso-tester tools/mesh-tester tools/ioctl-tester tools/6lowpan-tester tools/bdaddr tools/avinfo tools/avtest tools/scotest tools/hwdb tools/hcieventmask tools/hcisecfilter tools/btinfo tools/btconfig tools/btsnoop tools/btproxy tools/btiotest tools/bneptest tools/cltest tools/oobtest tools/advtest tools/seq2bseq tools/nokfw tools/rtlfw tools/bcmfw tools/create-image tools/eddystone tools/ibeacon tools/btgatt-client tools/btgatt-server tools/test-runner tools/check-selftest tools/gatt-service profiles/iap/iapd tools/btmgmt tools/obex-client-tool tools/obex-server-tool tools/bluetooth-player tools/obexctl client/btpclient/btpclient client/btpclient/btpclientctl unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto
+test -z "" || rm -f  emulator/btvirt emulator/b1ee emulator/hfp peripheral/btsensor tools/3dsp tools/mgmt-tester tools/gap-tester tools/l2cap-tester tools/sco-tester tools/smp-tester tools/hci-tester tools/rfcomm-tester tools/bnep-tester tools/userchan-tester tools/iso-tester tools/mesh-tester tools/ioctl-tester tools/6lowpan-tester tools/bdaddr tools/avinfo tools/avtest tools/scotest tools/hwdb tools/hcieventmask tools/hcisecfilter tools/btinfo tools/btconfig tools/btsnoop tools/btproxy tools/btiotest tools/bneptest tools/cltest tools/oobtest tools/advtest tools/seq2bseq tools/nokfw tools/rtlfw tools/bcmfw tools/create-image tools/eddystone tools/ibeacon tools/btgatt-client tools/btgatt-server tools/test-runner tools/check-selftest tools/gatt-service profiles/iap/iapd tools/btmgmt tools/obex-client-tool tools/obex-server-tool tools/bluetooth-player tools/obexctl client/btpclient/btpclient client/btpclient/btpclientctl unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto
+rm -f  src/bluetoothd tools/btmon-logger obexd/src/obexd mesh/bluetooth-meshd
+test -z "" || rm -f  src/bluetoothd tools/btmon-logger obexd/src/obexd mesh/bluetooth-meshd
+rm -f  
+rm -f
+rm -f  tools/hid2hci
+test -z "" || rm -f  tools/hid2hci
+rm -f *.o
+rm -f btio/*.o
+rm -f client/*.o
+rm -f client/btpclient/*.o
+rm -f ell/*.o
+rm -f ell/*.lo
+rm -f emulator/*.o
+rm -f gdbus/*.o
+rm -f gdbus/*.lo
+rm -f gobex/*.o
+rm -f lib/bluetooth/*.o
+rm -f lib/bluetooth/*.lo
+rm -f mesh/*.o
+rm -f monitor/*.o
+rm -f obexd/client/*.o
+rm -f obexd/plugins/*.o
+rm -f obexd/src/*.o
+rm -f peripheral/*.o
+rm -f plugins/*.o
+rm -f profiles/audio/*.o
+rm -f profiles/battery/*.o
+rm -f profiles/cups/*.o
+rm -f profiles/deviceinfo/*.o
+rm -f profiles/fastpair/*.o
+rm -f profiles/gap/*.o
+rm -f profiles/iap/*.o
+rm -f profiles/input/*.o
+rm -f profiles/midi/*.o
+rm -f profiles/network/*.o
+rm -f profiles/ranging/*.o
+rm -f profiles/scanparam/*.o
+rm -f src/*.o
+rm -f src/shared/*.o
+rm -f src/shared/*.lo
+rm -f tools/*.o
+rm -f tools/mesh-gatt/*.o
+rm -f tools/mesh/*.o
+rm -f unit/*.o
+rm -f  unit/test-tester.log unit/test-mainloop.log unit/test-eir.log unit/test-uuid.log unit/test-textfile.log unit/test-crc.log unit/test-crypto.log unit/test-ecc.log unit/test-ringbuf.log unit/test-queue.log unit/test-mgmt.log unit/test-uhid.log unit/test-profile.log unit/test-sdp.log unit/test-sdp-xml.log unit/test-avdtp.log unit/test-avctp.log unit/test-avrcp.log unit/test-hfp.log unit/test-gdbus-client.log unit/test-media-player.log unit/test-gobex-header.log unit/test-gobex-packet.log unit/test-gobex.log unit/test-gobex-transfer.log unit/test-gobex-apparam.log unit/test-lib.log unit/test-util.log unit/test-gatt.log unit/test-hog.log unit/test-bap.log unit/test-micp.log unit/test-bass.log unit/test-vcp.log unit/test-tmap.log unit/test-gmap.log unit/test-mcp.log unit/test-battery.log unit/test-fastpair.log unit/test-rap.log unit/test-midi.log unit/test-mesh-crypto.log
+rm -f  unit/test-tester.trs unit/test-mainloop.trs unit/test-eir.trs unit/test-uuid.trs unit/test-textfile.trs unit/test-crc.trs unit/test-crypto.trs unit/test-ecc.trs unit/test-ringbuf.trs unit/test-queue.trs unit/test-mgmt.trs unit/test-uhid.trs unit/test-profile.trs unit/test-sdp.trs unit/test-sdp-xml.trs unit/test-avdtp.trs unit/test-avctp.trs unit/test-avrcp.trs unit/test-hfp.trs unit/test-gdbus-client.trs unit/test-media-player.trs unit/test-gobex-header.trs unit/test-gobex-packet.trs unit/test-gobex.trs unit/test-gobex-transfer.trs unit/test-gobex-apparam.trs unit/test-lib.trs unit/test-util.trs unit/test-gatt.trs unit/test-hog.trs unit/test-bap.trs unit/test-micp.trs unit/test-bass.trs unit/test-vcp.trs unit/test-tmap.trs unit/test-gmap.trs unit/test-mcp.trs unit/test-battery.trs unit/test-fastpair.trs unit/test-rap.trs unit/test-midi.trs unit/test-mesh-crypto.trs
+rm -f  test-suite.log
+rm -f *.lo
+rm -f *.tab.c
+rm -f  lib/bluez.pc doc/bluetooth-meshd.rst mesh/bluetooth-mesh.service obexd/src/obex.service obexd/src/org.bluez.obex.service doc/bluetoothd.rst src/bluetooth.service tools/bluetooth-logger.service tools/mpris-proxy.service
+test . = "." || rm -f  
+rm -f  lib/bluez.pc unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto doc/bluetoothd.8 doc/hci.7 doc/mgmt.7 doc/l2cap.7 doc/rfcomm.7 doc/sco.7 doc/iso.7 doc/btsnoop.7 doc/org.bluez.Adapter.5 doc/org.bluez.Device.5 doc/org.bluez.Bearer.LE.5 doc/org.bluez.Bearer.BREDR.5 doc/org.bluez.DeviceSet.5 doc/org.bluez.AgentManager.5 doc/org.bluez.Agent.5 doc/org.bluez.ProfileManager.5 doc/org.bluez.Profile.5 doc/org.bluez.NetworkServer.5 doc/org.bluez.Network.5 doc/org.bluez.Input.5 doc/org.bluez.BatteryProviderManager.5 doc/org.bluez.BatteryProvider.5 doc/org.bluez.Battery.5 doc/org.bluez.AdminPolicySet.5 doc/org.bluez.AdminPolicyStatus.5 doc/org.bluez.Media.5 doc/org.bluez.MediaControl.5 doc/org.bluez.MediaPlayer.5 doc/org.bluez.MediaFolder.5 doc/org.bluez.MediaItem.5 doc/org.bluez.MediaEndpoint.5 doc/org.bluez.MediaTransport.5 doc/org.bluez.MediaAssistant.5 doc/org.bluez.GattManager.5 doc/org.bluez.GattProfile.5 doc/org.bluez.GattService.5 doc/org.bluez.GattCharacteristic.5 doc/org.bluez.GattDescriptor.5 doc/org.bluez.LEAdvertisingManager.5 doc/org.bluez.LEAdvertisement.5 doc/org.bluez.AdvertisementMonitorManager.5 doc/org.bluez.AdvertisementMonitor.5 doc/org.bluez.obex.Client.5 doc/org.bluez.obex.Session.5 doc/org.bluez.obex.Transfer.5 doc/org.bluez.obex.ObjectPush.5 doc/org.bluez.obex.FileTransfer.5 doc/org.bluez.obex.Synchronization.5 doc/org.bluez.obex.PhonebookAccess.5 doc/org.bluez.obex.MessageAccess.5 doc/org.bluez.obex.Message.5 doc/org.bluez.obex.AgentManager.5 doc/org.bluez.obex.Agent.5 doc/org.bluez.obex.Image.5 doc/org.bluez.Telephony.5 doc/org.bluez.Call.5 doc/org.bluez.ThermometerManager.5 doc/org.bluez.Thermometer.5 doc/org.bluez.ThermometerWatcher.5 doc/org.bluez.ChannelSounding1.5 doc/org.bluez.Ranging1.5 doc/org.bluez.RangingProvider1.5 doc/org.bluez.RangingProviderManager1.5 doc/btmon.1 doc/hciattach.1 doc/hciconfig.1 doc/hcitool.1 doc/rfcomm.1 doc/sdptool.1 doc/ciptool.1 doc/rctest.1 doc/l2ping.1 doc/btattach.1 doc/bdaddr.1 doc/isotest.1 doc/btmgmt.1 doc/bluetoothctl.1 doc/bluetoothctl-mgmt.1 doc/bluetoothctl-monitor.1 doc/bluetoothctl-admin.1 doc/bluetoothctl-advertise.1 doc/bluetoothctl-endpoint.1 doc/bluetoothctl-gatt.1 doc/bluetoothctl-player.1 doc/bluetoothctl-scan.1 doc/bluetoothctl-transport.1 doc/bluetoothctl-assistant.1 doc/bluetoothctl-hci.1 doc/bluetoothctl-telephony.1 doc/bluetoothctl-cs.1 doc/hid2hci.1 doc/bluetooth-meshd.8
+rm -f  btio/.deps/.dirstamp
+rm -f  btio/.dirstamp
+rm -f  client/.deps/.dirstamp
+rm -f  client/.dirstamp
+rm -f  client/btpclient/.deps/.dirstamp
+rm -f  client/btpclient/.dirstamp
+rm -f  ell/.deps/.dirstamp
+rm -f  ell/.dirstamp
+rm -f  emulator/.deps/.dirstamp
+rm -f  emulator/.dirstamp
+rm -f  gdbus/.deps/.dirstamp
+rm -f  gdbus/.dirstamp
+rm -f  gobex/.deps/.dirstamp
+rm -f  gobex/.dirstamp
+rm -f  lib/.dirstamp
+rm -f  lib/bluetooth/.deps/.dirstamp
+rm -f  lib/bluetooth/.dirstamp
+rm -f  mesh/.deps/.dirstamp
+rm -f  mesh/.dirstamp
+rm -f  monitor/.deps/.dirstamp
+rm -f  monitor/.dirstamp
+rm -f  obexd/client/.deps/.dirstamp
+rm -f  obexd/client/.dirstamp
+rm -f  obexd/plugins/.deps/.dirstamp
+rm -f  obexd/plugins/.dirstamp
+rm -f  obexd/src/.deps/.dirstamp
+rm -f  obexd/src/.dirstamp
+rm -f  peripheral/.deps/.dirstamp
+rm -f  peripheral/.dirstamp
+rm -f  plugins/.deps/.dirstamp
+rm -f  plugins/.dirstamp
+rm -f  profiles/audio/.deps/.dirstamp
+rm -f  profiles/audio/.dirstamp
+rm -f  profiles/battery/.deps/.dirstamp
+rm -f  profiles/battery/.dirstamp
+rm -f  profiles/cups/.deps/.dirstamp
+rm -f  profiles/cups/.dirstamp
+rm -f  profiles/deviceinfo/.deps/.dirstamp
+rm -f  profiles/deviceinfo/.dirstamp
+rm -f  profiles/fastpair/.deps/.dirstamp
+rm -f  profiles/fastpair/.dirstamp
+rm -f  profiles/gap/.deps/.dirstamp
+rm -f  profiles/gap/.dirstamp
+rm -f  profiles/iap/.deps/.dirstamp
+rm -f  profiles/iap/.dirstamp
+rm -f  profiles/input/.deps/.dirstamp
+rm -f  profiles/input/.dirstamp
+rm -f  profiles/midi/.deps/.dirstamp
+rm -f  profiles/midi/.dirstamp
+rm -f  profiles/network/.deps/.dirstamp
+rm -f  profiles/network/.dirstamp
+rm -f  profiles/ranging/.deps/.dirstamp
+rm -f  profiles/ranging/.dirstamp
+rm -f  profiles/scanparam/.deps/.dirstamp
+rm -f  profiles/scanparam/.dirstamp
+rm -f  src/.deps/.dirstamp
+rm -f  src/.dirstamp
+rm -f  src/shared/.deps/.dirstamp
+rm -f  src/shared/.dirstamp
+rm -f  tools/.deps/.dirstamp
+rm -f  tools/.dirstamp
+rm -f  tools/mesh-gatt/.deps/.dirstamp
+rm -f  tools/mesh-gatt/.dirstamp
+rm -f  tools/mesh/.deps/.dirstamp
+rm -f  tools/mesh/.dirstamp
+rm -f  unit/.deps/.dirstamp
+rm -f  unit/.dirstamp
+rm -f config.h stamp-h1
+rm -f libtool config.lt
+rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+rm -f cscope.out cscope.in.out cscope.po.out cscope.files
+This command is intended for maintainers to use
+it deletes files that may require special tools to rebuild.
+rm -f  ell/shared ell/internal ell/ell.h src/builtin.h obexd/src/builtin.h
+rm -f  Makefile.in aclocal.m4 configure config.h.in config.sub config.guess ltmain.sh depcomp compile missing install-sh mkinstalldirs test-driver
+rm -rf ell
+rm -f config.status config.cache config.log configure.lineno config.status.lineno
+rm -rf ./autom4te.cache
+rm -f btio/.deps/bluetoothd-btio.Po
+rm -f btio/.deps/btio.Po
+rm -f btio/.deps/obexd-btio.Po
+rm -f client/.deps/admin.Po
+rm -f client/.deps/adv_monitor.Po
+rm -f client/.deps/advertising.Po
+rm -f client/.deps/agent.Po
+rm -f client/.deps/assistant.Po
+rm -f client/.deps/cs.Po
+rm -f client/.deps/display.Po
+rm -f client/.deps/gatt.Po
+rm -f client/.deps/hci.Po
+rm -f client/.deps/main.Po
+rm -f client/.deps/mgmt.Po
+rm -f client/.deps/player.Po
+rm -f client/.deps/print.Po
+rm -f client/.deps/telephony.Po
+rm -f client/btpclient/.deps/ascs.Po
+rm -f client/btpclient/.deps/bap.Po
+rm -f client/btpclient/.deps/btpclient.Po
+rm -f client/btpclient/.deps/btpclientctl.Po
+rm -f client/btpclient/.deps/core.Po
+rm -f client/btpclient/.deps/gap.Po
+rm -f client/btpclient/.deps/gatt.Po
+rm -f client/btpclient/.deps/pacs.Po
+rm -f client/btpclient/.deps/vendor.Po
+rm -f ell/.deps/base64.Plo
+rm -f ell/.deps/cert-crypto.Plo
+rm -f ell/.deps/cert.Plo
+rm -f ell/.deps/checksum.Plo
+rm -f ell/.deps/cipher.Plo
+rm -f ell/.deps/dbus-client.Plo
+rm -f ell/.deps/dbus-filter.Plo
+rm -f ell/.deps/dbus-message.Plo
+rm -f ell/.deps/dbus-name-cache.Plo
+rm -f ell/.deps/dbus-service.Plo
+rm -f ell/.deps/dbus-util.Plo
+rm -f ell/.deps/dbus.Plo
+rm -f ell/.deps/ecc-external.Plo
+rm -f ell/.deps/ecc.Plo
+rm -f ell/.deps/ecdh.Plo
+rm -f ell/.deps/gvariant-util.Plo
+rm -f ell/.deps/hashmap.Plo
+rm -f ell/.deps/idle.Plo
+rm -f ell/.deps/io.Plo
+rm -f ell/.deps/key.Plo
+rm -f ell/.deps/log.Plo
+rm -f ell/.deps/main.Plo
+rm -f ell/.deps/pem.Plo
+rm -f ell/.deps/queue.Plo
+rm -f ell/.deps/random.Plo
+rm -f ell/.deps/settings.Plo
+rm -f ell/.deps/signal.Plo
+rm -f ell/.deps/siphash.Plo
+rm -f ell/.deps/string.Plo
+rm -f ell/.deps/strv.Plo
+rm -f ell/.deps/tester.Plo
+rm -f ell/.deps/time.Plo
+rm -f ell/.deps/timeout.Plo
+rm -f ell/.deps/tls-extensions.Plo
+rm -f ell/.deps/tls-record.Plo
+rm -f ell/.deps/tls-suites.Plo
+rm -f ell/.deps/tls.Plo
+rm -f ell/.deps/utf8.Plo
+rm -f ell/.deps/util.Plo
+rm -f ell/.deps/uuid.Plo
+rm -f emulator/.deps/b1ee.Po
+rm -f emulator/.deps/btdev.Po
+rm -f emulator/.deps/bthost.Po
+rm -f emulator/.deps/hciemu.Po
+rm -f emulator/.deps/hfp.Po
+rm -f emulator/.deps/le.Po
+rm -f emulator/.deps/main.Po
+rm -f emulator/.deps/phy.Po
+rm -f emulator/.deps/serial.Po
+rm -f emulator/.deps/server.Po
+rm -f emulator/.deps/smp.Po
+rm -f emulator/.deps/timeout.Po
+rm -f emulator/.deps/timetravel.Po
+rm -f emulator/.deps/ttclient.Po
+rm -f emulator/.deps/vconsole.Po
+rm -f emulator/.deps/vhci.Po
+rm -f emulator/.deps/vhost.Po
+rm -f emulator/.deps/virtio.Po
+rm -f gdbus/.deps/client.Plo
+rm -f gdbus/.deps/mainloop.Plo
+rm -f gdbus/.deps/object.Plo
+rm -f gdbus/.deps/polkit.Plo
+rm -f gdbus/.deps/watch.Plo
+rm -f gobex/.deps/gobex-apparam.Po
+rm -f gobex/.deps/gobex-defs.Po
+rm -f gobex/.deps/gobex-header.Po
+rm -f gobex/.deps/gobex-packet.Po
+rm -f gobex/.deps/gobex-transfer.Po
+rm -f gobex/.deps/gobex.Po
+rm -f gobex/.deps/obexd-gobex-apparam.Po
+rm -f gobex/.deps/obexd-gobex-defs.Po
+rm -f gobex/.deps/obexd-gobex-header.Po
+rm -f gobex/.deps/obexd-gobex-packet.Po
+rm -f gobex/.deps/obexd-gobex-transfer.Po
+rm -f gobex/.deps/obexd-gobex.Po
+rm -f lib/bluetooth/.deps/bluetooth.Plo
+rm -f lib/bluetooth/.deps/hci.Plo
+rm -f lib/bluetooth/.deps/sdp.Plo
+rm -f lib/bluetooth/.deps/uuid.Plo
+rm -f mesh/.deps/agent.Po
+rm -f mesh/.deps/appkey.Po
+rm -f mesh/.deps/cfgmod-server.Po
+rm -f mesh/.deps/crypto.Po
+rm -f mesh/.deps/dbus.Po
+rm -f mesh/.deps/friend.Po
+rm -f mesh/.deps/keyring.Po
+rm -f mesh/.deps/main.Po
+rm -f mesh/.deps/manager.Po
+rm -f mesh/.deps/mesh-config-json.Po
+rm -f mesh/.deps/mesh-io-generic.Po
+rm -f mesh/.deps/mesh-io-mgmt.Po
+rm -f mesh/.deps/mesh-io-unit.Po
+rm -f mesh/.deps/mesh-io.Po
+rm -f mesh/.deps/mesh-mgmt.Po
+rm -f mesh/.deps/mesh.Po
+rm -f mesh/.deps/model.Po
+rm -f mesh/.deps/net-keys.Po
+rm -f mesh/.deps/net.Po
+rm -f mesh/.deps/node.Po
+rm -f mesh/.deps/pb-adv.Po
+rm -f mesh/.deps/prov-acceptor.Po
+rm -f mesh/.deps/prov-initiator.Po
+rm -f mesh/.deps/prvbeac-server.Po
+rm -f mesh/.deps/remprv-server.Po
+rm -f mesh/.deps/rpl.Po
+rm -f mesh/.deps/util.Po
+rm -f monitor/.deps/a2dp.Po
+rm -f monitor/.deps/analyze.Po
+rm -f monitor/.deps/att.Po
+rm -f monitor/.deps/avctp.Po
+rm -f monitor/.deps/avdtp.Po
+rm -f monitor/.deps/bnep.Po
+rm -f monitor/.deps/broadcom.Po
+rm -f monitor/.deps/control.Po
+rm -f monitor/.deps/crc.Po
+rm -f monitor/.deps/display.Po
+rm -f monitor/.deps/ellisys.Po
+rm -f monitor/.deps/find.Po
+rm -f monitor/.deps/hcidump.Po
+rm -f monitor/.deps/hwdb.Po
+rm -f monitor/.deps/intel.Po
+rm -f monitor/.deps/jlink.Po
+rm -f monitor/.deps/keys.Po
+rm -f monitor/.deps/l2cap.Po
+rm -f monitor/.deps/ll.Po
+rm -f monitor/.deps/lmp.Po
+rm -f monitor/.deps/main.Po
+rm -f monitor/.deps/msft.Po
+rm -f monitor/.deps/packet.Po
+rm -f monitor/.deps/rfcomm.Po
+rm -f monitor/.deps/sdp.Po
+rm -f monitor/.deps/vendor.Po
+rm -f obexd/client/.deps/obexd-bip-common.Po
+rm -f obexd/client/.deps/obexd-bip.Po
+rm -f obexd/client/.deps/obexd-bluetooth.Po
+rm -f obexd/client/.deps/obexd-driver.Po
+rm -f obexd/client/.deps/obexd-ftp.Po
+rm -f obexd/client/.deps/obexd-manager.Po
+rm -f obexd/client/.deps/obexd-map-event.Po
+rm -f obexd/client/.deps/obexd-map.Po
+rm -f obexd/client/.deps/obexd-mns.Po
+rm -f obexd/client/.deps/obexd-opp.Po
+rm -f obexd/client/.deps/obexd-pbap.Po
+rm -f obexd/client/.deps/obexd-session.Po
+rm -f obexd/client/.deps/obexd-sync.Po
+rm -f obexd/client/.deps/obexd-transfer.Po
+rm -f obexd/client/.deps/obexd-transport.Po
+rm -f obexd/plugins/.deps/obexd-bluetooth.Po
+rm -f obexd/plugins/.deps/obexd-filesystem.Po
+rm -f obexd/plugins/.deps/obexd-ftp.Po
+rm -f obexd/plugins/.deps/obexd-irmc.Po
+rm -f obexd/plugins/.deps/obexd-mas.Po
+rm -f obexd/plugins/.deps/obexd-messages-dummy.Po
+rm -f obexd/plugins/.deps/obexd-opp.Po
+rm -f obexd/plugins/.deps/obexd-pbap.Po
+rm -f obexd/plugins/.deps/obexd-pcsuite.Po
+rm -f obexd/plugins/.deps/obexd-phonebook-dummy.Po
+rm -f obexd/plugins/.deps/obexd-phonebook.Po
+rm -f obexd/plugins/.deps/obexd-vcard.Po
+rm -f obexd/src/.deps/obexd-log.Po
+rm -f obexd/src/.deps/obexd-logind.Po
+rm -f obexd/src/.deps/obexd-main.Po
+rm -f obexd/src/.deps/obexd-manager.Po
+rm -f obexd/src/.deps/obexd-mimetype.Po
+rm -f obexd/src/.deps/obexd-obex.Po
+rm -f obexd/src/.deps/obexd-plugin.Po
+rm -f obexd/src/.deps/obexd-server.Po
+rm -f obexd/src/.deps/obexd-service.Po
+rm -f obexd/src/.deps/obexd-transport.Po
+rm -f peripheral/.deps/attach.Po
+rm -f peripheral/.deps/efivars.Po
+rm -f peripheral/.deps/gap.Po
+rm -f peripheral/.deps/gatt.Po
+rm -f peripheral/.deps/log.Po
+rm -f peripheral/.deps/main.Po
+rm -f plugins/.deps/bluetoothd-admin.Po
+rm -f plugins/.deps/bluetoothd-autopair.Po
+rm -f plugins/.deps/bluetoothd-hostname.Po
+rm -f plugins/.deps/bluetoothd-neard.Po
+rm -f plugins/.deps/bluetoothd-policy.Po
+rm -f plugins/.deps/bluetoothd-sixaxis.Po
+rm -f profiles/audio/.deps/avrcp-parse.Po
+rm -f profiles/audio/.deps/bluetoothd-a2dp.Po
+rm -f profiles/audio/.deps/bluetoothd-asha.Po
+rm -f profiles/audio/.deps/bluetoothd-avctp.Po
+rm -f profiles/audio/.deps/bluetoothd-avdtp.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp-parse.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp-player.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp.Po
+rm -f profiles/audio/.deps/bluetoothd-bap.Po
+rm -f profiles/audio/.deps/bluetoothd-bass.Po
+rm -f profiles/audio/.deps/bluetoothd-ccp.Po
+rm -f profiles/audio/.deps/bluetoothd-control.Po
+rm -f profiles/audio/.deps/bluetoothd-csip.Po
+rm -f profiles/audio/.deps/bluetoothd-gmap.Po
+rm -f profiles/audio/.deps/bluetoothd-hfp-hf.Po
+rm -f profiles/audio/.deps/bluetoothd-mcp.Po
+rm -f profiles/audio/.deps/bluetoothd-media.Po
+rm -f profiles/audio/.deps/bluetoothd-micp.Po
+rm -f profiles/audio/.deps/bluetoothd-player.Po
+rm -f profiles/audio/.deps/bluetoothd-sink.Po
+rm -f profiles/audio/.deps/bluetoothd-source.Po
+rm -f profiles/audio/.deps/bluetoothd-telephony.Po
+rm -f profiles/audio/.deps/bluetoothd-tmap.Po
+rm -f profiles/audio/.deps/bluetoothd-transport.Po
+rm -f profiles/audio/.deps/bluetoothd-vcp.Po
+rm -f profiles/audio/.deps/player.Po
+rm -f profiles/battery/.deps/bluetoothd-battery.Po
+rm -f profiles/cups/.deps/hcrp.Po
+rm -f profiles/cups/.deps/main.Po
+rm -f profiles/cups/.deps/sdp.Po
+rm -f profiles/cups/.deps/spp.Po
+rm -f profiles/deviceinfo/.deps/bluetoothd-deviceinfo.Po
+rm -f profiles/fastpair/.deps/bluetoothd-fastpair.Po
+rm -f profiles/fastpair/.deps/bluetoothd-message-stream.Po
+rm -f profiles/fastpair/.deps/message-stream.Po
+rm -f profiles/gap/.deps/bluetoothd-gas.Po
+rm -f profiles/iap/.deps/main.Po
+rm -f profiles/input/.deps/bluetoothd-device.Po
+rm -f profiles/input/.deps/bluetoothd-hog.Po
+rm -f profiles/input/.deps/bluetoothd-manager.Po
+rm -f profiles/input/.deps/bluetoothd-server.Po
+rm -f profiles/input/.deps/bluetoothd-suspend-none.Po
+rm -f profiles/midi/.deps/bluetoothd-libmidi.Po
+rm -f profiles/midi/.deps/bluetoothd-midi.Po
+rm -f profiles/midi/.deps/unit_test_midi-libmidi.Po
+rm -f profiles/network/.deps/bluetoothd-bnep.Po
+rm -f profiles/network/.deps/bluetoothd-connection.Po
+rm -f profiles/network/.deps/bluetoothd-manager.Po
+rm -f profiles/network/.deps/bluetoothd-server.Po
+rm -f profiles/network/.deps/bnep.Po
+rm -f profiles/ranging/.deps/bluetoothd-rap.Po
+rm -f profiles/ranging/.deps/bluetoothd-rap_hci.Po
+rm -f profiles/scanparam/.deps/bluetoothd-scan.Po
+rm -f src/.deps/adapter.Po
+rm -f src/.deps/adv_monitor.Po
+rm -f src/.deps/advertising.Po
+rm -f src/.deps/agent.Po
+rm -f src/.deps/backtrace.Po
+rm -f src/.deps/battery.Po
+rm -f src/.deps/bearer.Po
+rm -f src/.deps/bluetoothd-adapter.Po
+rm -f src/.deps/bluetoothd-adv_monitor.Po
+rm -f src/.deps/bluetoothd-advertising.Po
+rm -f src/.deps/bluetoothd-agent.Po
+rm -f src/.deps/bluetoothd-backtrace.Po
+rm -f src/.deps/bluetoothd-battery.Po
+rm -f src/.deps/bluetoothd-bearer.Po
+rm -f src/.deps/bluetoothd-dbus-common.Po
+rm -f src/.deps/bluetoothd-device.Po
+rm -f src/.deps/bluetoothd-eir.Po
+rm -f src/.deps/bluetoothd-error.Po
+rm -f src/.deps/bluetoothd-gatt-client.Po
+rm -f src/.deps/bluetoothd-gatt-database.Po
+rm -f src/.deps/bluetoothd-log.Po
+rm -f src/.deps/bluetoothd-main.Po
+rm -f src/.deps/bluetoothd-plugin.Po
+rm -f src/.deps/bluetoothd-profile.Po
+rm -f src/.deps/bluetoothd-ranging.Po
+rm -f src/.deps/bluetoothd-rfkill.Po
+rm -f src/.deps/bluetoothd-sdp-client.Po
+rm -f src/.deps/bluetoothd-sdp-xml.Po
+rm -f src/.deps/bluetoothd-sdpd-database.Po
+rm -f src/.deps/bluetoothd-sdpd-request.Po
+rm -f src/.deps/bluetoothd-sdpd-server.Po
+rm -f src/.deps/bluetoothd-sdpd-service.Po
+rm -f src/.deps/bluetoothd-service.Po
+rm -f src/.deps/bluetoothd-set.Po
+rm -f src/.deps/bluetoothd-settings.Po
+rm -f src/.deps/bluetoothd-storage.Po
+rm -f src/.deps/bluetoothd-textfile.Po
+rm -f src/.deps/bluetoothd-uuid-helper.Po
+rm -f src/.deps/dbus-common.Po
+rm -f src/.deps/device.Po
+rm -f src/.deps/eir.Po
+rm -f src/.deps/error.Po
+rm -f src/.deps/gatt-client.Po
+rm -f src/.deps/gatt-database.Po
+rm -f src/.deps/log.Po
+rm -f src/.deps/oui.Po
+rm -f src/.deps/profile.Po
+rm -f src/.deps/ranging.Po
+rm -f src/.deps/rfkill.Po
+rm -f src/.deps/sdp-client.Po
+rm -f src/.deps/sdp-xml.Po
+rm -f src/.deps/sdpd-database.Po
+rm -f src/.deps/sdpd-request.Po
+rm -f src/.deps/sdpd-server.Po
+rm -f src/.deps/sdpd-service.Po
+rm -f src/.deps/service.Po
+rm -f src/.deps/set.Po
+rm -f src/.deps/settings.Po
+rm -f src/.deps/storage.Po
+rm -f src/.deps/textfile.Po
+rm -f src/.deps/unit_test_sdp_xml-log.Po
+rm -f src/.deps/unit_test_sdp_xml-sdp-xml.Po
+rm -f src/.deps/uuid-helper.Po
+rm -f src/shared/.deps/btp.Po
+rm -f src/shared/.deps/libshared_ell_la-ad.Plo
+rm -f src/shared/.deps/libshared_ell_la-asha.Plo
+rm -f src/shared/.deps/libshared_ell_la-att.Plo
+rm -f src/shared/.deps/libshared_ell_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_ell_la-bap.Plo
+rm -f src/shared/.deps/libshared_ell_la-bass.Plo
+rm -f src/shared/.deps/libshared_ell_la-battery.Plo
+rm -f src/shared/.deps/libshared_ell_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_ell_la-ccp.Plo
+rm -f src/shared/.deps/libshared_ell_la-crypto.Plo
+rm -f src/shared/.deps/libshared_ell_la-csip.Plo
+rm -f src/shared/.deps/libshared_ell_la-ecc.Plo
+rm -f src/shared/.deps/libshared_ell_la-gap.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_ell_la-gmap.Plo
+rm -f src/shared/.deps/libshared_ell_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_ell_la-hci.Plo
+rm -f src/shared/.deps/libshared_ell_la-hfp.Plo
+rm -f src/shared/.deps/libshared_ell_la-hog.Plo
+rm -f src/shared/.deps/libshared_ell_la-io-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-log.Plo
+rm -f src/shared/.deps/libshared_ell_la-mainloop-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-mcp.Plo
+rm -f src/shared/.deps/libshared_ell_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_ell_la-micp.Plo
+rm -f src/shared/.deps/libshared_ell_la-pcap.Plo
+rm -f src/shared/.deps/libshared_ell_la-queue.Plo
+rm -f src/shared/.deps/libshared_ell_la-rap.Plo
+rm -f src/shared/.deps/libshared_ell_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_ell_la-shell.Plo
+rm -f src/shared/.deps/libshared_ell_la-timeout-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-tmap.Plo
+rm -f src/shared/.deps/libshared_ell_la-uhid.Plo
+rm -f src/shared/.deps/libshared_ell_la-uinput.Plo
+rm -f src/shared/.deps/libshared_ell_la-util.Plo
+rm -f src/shared/.deps/libshared_ell_la-vcp.Plo
+rm -f src/shared/.deps/libshared_glib_la-ad.Plo
+rm -f src/shared/.deps/libshared_glib_la-asha.Plo
+rm -f src/shared/.deps/libshared_glib_la-att.Plo
+rm -f src/shared/.deps/libshared_glib_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_glib_la-bap.Plo
+rm -f src/shared/.deps/libshared_glib_la-bass.Plo
+rm -f src/shared/.deps/libshared_glib_la-battery.Plo
+rm -f src/shared/.deps/libshared_glib_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_glib_la-ccp.Plo
+rm -f src/shared/.deps/libshared_glib_la-crypto.Plo
+rm -f src/shared/.deps/libshared_glib_la-csip.Plo
+rm -f src/shared/.deps/libshared_glib_la-ecc.Plo
+rm -f src/shared/.deps/libshared_glib_la-gap.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_glib_la-gmap.Plo
+rm -f src/shared/.deps/libshared_glib_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_glib_la-hci.Plo
+rm -f src/shared/.deps/libshared_glib_la-hfp.Plo
+rm -f src/shared/.deps/libshared_glib_la-hog.Plo
+rm -f src/shared/.deps/libshared_glib_la-io-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-log.Plo
+rm -f src/shared/.deps/libshared_glib_la-mainloop-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-mainloop-notify.Plo
+rm -f src/shared/.deps/libshared_glib_la-mcp.Plo
+rm -f src/shared/.deps/libshared_glib_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_glib_la-micp.Plo
+rm -f src/shared/.deps/libshared_glib_la-pcap.Plo
+rm -f src/shared/.deps/libshared_glib_la-queue.Plo
+rm -f src/shared/.deps/libshared_glib_la-rap.Plo
+rm -f src/shared/.deps/libshared_glib_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_glib_la-shell.Plo
+rm -f src/shared/.deps/libshared_glib_la-tester.Plo
+rm -f src/shared/.deps/libshared_glib_la-timeout-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-tmap.Plo
+rm -f src/shared/.deps/libshared_glib_la-uhid.Plo
+rm -f src/shared/.deps/libshared_glib_la-uinput.Plo
+rm -f src/shared/.deps/libshared_glib_la-util.Plo
+rm -f src/shared/.deps/libshared_glib_la-vcp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ad.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-asha.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-att.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bass.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-battery.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ccp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-crypto.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-csip.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ecc.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gmap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hci.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hfp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hog.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-io-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-log.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mainloop-notify.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mcp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-micp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-pcap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-queue.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-rap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-shell.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-tester.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-timeout-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-tmap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-uhid.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-uinput.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-util.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-vcp.Plo
+rm -f src/shared/.deps/queue.Po
+rm -f src/shared/.deps/util.Po
+rm -f tools/.deps/3dsp.Po
+rm -f tools/.deps/6lowpan-tester.Po
+rm -f tools/.deps/advtest.Po
+rm -f tools/.deps/avinfo.Po
+rm -f tools/.deps/avtest.Po
+rm -f tools/.deps/bcmfw.Po
+rm -f tools/.deps/bdaddr.Po
+rm -f tools/.deps/bluemoon.Po
+rm -f tools/.deps/bluetooth-player.Po
+rm -f tools/.deps/bnep-tester.Po
+rm -f tools/.deps/bneptest.Po
+rm -f tools/.deps/btattach.Po
+rm -f tools/.deps/btconfig.Po
+rm -f tools/.deps/btgatt-client.Po
+rm -f tools/.deps/btgatt-server.Po
+rm -f tools/.deps/btinfo.Po
+rm -f tools/.deps/btiotest.Po
+rm -f tools/.deps/btmgmt.Po
+rm -f tools/.deps/btmon-logger.Po
+rm -f tools/.deps/btproxy.Po
+rm -f tools/.deps/btsnoop.Po
+rm -f tools/.deps/check-selftest.Po
+rm -f tools/.deps/ciptool.Po
+rm -f tools/.deps/cltest.Po
+rm -f tools/.deps/create-image.Po
+rm -f tools/.deps/eddystone.Po
+rm -f tools/.deps/gap-tester.Po
+rm -f tools/.deps/gatt-service.Po
+rm -f tools/.deps/hci-tester.Po
+rm -f tools/.deps/hciattach.Po
+rm -f tools/.deps/hciattach_ath3k.Po
+rm -f tools/.deps/hciattach_bcm43xx.Po
+rm -f tools/.deps/hciattach_intel.Po
+rm -f tools/.deps/hciattach_qualcomm.Po
+rm -f tools/.deps/hciattach_st.Po
+rm -f tools/.deps/hciattach_ti.Po
+rm -f tools/.deps/hciattach_tialt.Po
+rm -f tools/.deps/hciconfig.Po
+rm -f tools/.deps/hcieventmask.Po
+rm -f tools/.deps/hcisecfilter.Po
+rm -f tools/.deps/hcitool.Po
+rm -f tools/.deps/hex2hcd.Po
+rm -f tools/.deps/hid2hci.Po
+rm -f tools/.deps/hwdb.Po
+rm -f tools/.deps/ibeacon.Po
+rm -f tools/.deps/ioctl-tester.Po
+rm -f tools/.deps/iso-tester.Po
+rm -f tools/.deps/isotest.Po
+rm -f tools/.deps/l2cap-tester.Po
+rm -f tools/.deps/l2ping.Po
+rm -f tools/.deps/l2test.Po
+rm -f tools/.deps/mesh-cfgclient.Po
+rm -f tools/.deps/mesh-cfgtest.Po
+rm -f tools/.deps/mesh-tester.Po
+rm -f tools/.deps/meshctl.Po
+rm -f tools/.deps/mgmt-tester.Po
+rm -f tools/.deps/mpris-proxy.Po
+rm -f tools/.deps/nokfw.Po
+rm -f tools/.deps/obex-client-tool.Po
+rm -f tools/.deps/obex-server-tool.Po
+rm -f tools/.deps/obexctl.Po
+rm -f tools/.deps/oobtest.Po
+rm -f tools/.deps/rctest.Po
+rm -f tools/.deps/rfcomm-tester.Po
+rm -f tools/.deps/rfcomm.Po
+rm -f tools/.deps/rtlfw.Po
+rm -f tools/.deps/sco-tester.Po
+rm -f tools/.deps/scotest.Po
+rm -f tools/.deps/sdptool.Po
+rm -f tools/.deps/seq2bseq.Po
+rm -f tools/.deps/smp-tester.Po
+rm -f tools/.deps/test_runner-test-runner.Po
+rm -f tools/.deps/tester-io.Po
+rm -f tools/.deps/userchan-tester.Po
+rm -f tools/mesh-gatt/.deps/config-client.Po
+rm -f tools/mesh-gatt/.deps/config-server.Po
+rm -f tools/mesh-gatt/.deps/crypto.Po
+rm -f tools/mesh-gatt/.deps/gatt.Po
+rm -f tools/mesh-gatt/.deps/net.Po
+rm -f tools/mesh-gatt/.deps/node.Po
+rm -f tools/mesh-gatt/.deps/onoff-model.Po
+rm -f tools/mesh-gatt/.deps/prov-db.Po
+rm -f tools/mesh-gatt/.deps/prov.Po
+rm -f tools/mesh-gatt/.deps/util.Po
+rm -f tools/mesh/.deps/agent.Po
+rm -f tools/mesh/.deps/cfgcli.Po
+rm -f tools/mesh/.deps/keys.Po
+rm -f tools/mesh/.deps/mesh-db.Po
+rm -f tools/mesh/.deps/remote.Po
+rm -f tools/mesh/.deps/util.Po
+rm -f unit/.deps/avctp.Po
+rm -f unit/.deps/avdtp.Po
+rm -f unit/.deps/avrcp-lib.Po
+rm -f unit/.deps/btd.Po
+rm -f unit/.deps/test-avctp.Po
+rm -f unit/.deps/test-avdtp.Po
+rm -f unit/.deps/test-avrcp.Po
+rm -f unit/.deps/test-bap.Po
+rm -f unit/.deps/test-bass.Po
+rm -f unit/.deps/test-battery.Po
+rm -f unit/.deps/test-crc.Po
+rm -f unit/.deps/test-crypto.Po
+rm -f unit/.deps/test-ecc.Po
+rm -f unit/.deps/test-eir.Po
+rm -f unit/.deps/test-fastpair.Po
+rm -f unit/.deps/test-gatt.Po
+rm -f unit/.deps/test-gdbus-client.Po
+rm -f unit/.deps/test-gmap.Po
+rm -f unit/.deps/test-gobex-apparam.Po
+rm -f unit/.deps/test-gobex-header.Po
+rm -f unit/.deps/test-gobex-packet.Po
+rm -f unit/.deps/test-gobex-transfer.Po
+rm -f unit/.deps/test-gobex.Po
+rm -f unit/.deps/test-hfp.Po
+rm -f unit/.deps/test-hog.Po
+rm -f unit/.deps/test-lib.Po
+rm -f unit/.deps/test-mainloop.Po
+rm -f unit/.deps/test-mcp.Po
+rm -f unit/.deps/test-media-player.Po
+rm -f unit/.deps/test-mgmt.Po
+rm -f unit/.deps/test-micp.Po
+rm -f unit/.deps/test-profile.Po
+rm -f unit/.deps/test-queue.Po
+rm -f unit/.deps/test-rap.Po
+rm -f unit/.deps/test-ringbuf.Po
+rm -f unit/.deps/test-sdp.Po
+rm -f unit/.deps/test-tester.Po
+rm -f unit/.deps/test-textfile.Po
+rm -f unit/.deps/test-tmap.Po
+rm -f unit/.deps/test-uhid.Po
+rm -f unit/.deps/test-util.Po
+rm -f unit/.deps/test-uuid.Po
+rm -f unit/.deps/test-vcp.Po
+rm -f unit/.deps/test_mesh_crypto-test-mesh-crypto.Po
+rm -f unit/.deps/test_midi-test-midi.Po
+rm -f unit/.deps/test_sdp_xml-test-sdp-xml.Po
+rm -f unit/.deps/util.Po
+rm -f Makefile
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether sleep supports fractional seconds... yes
+checking filesystem timestamp resolution... 0.01
+checking whether build environment is sane... yes
+checking for a race-free mkdir -p... /usr/bin/mkdir -p
+checking for gawk... no
+checking for mawk... mawk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking xargs -n works... yes
+checking how to create a pax tar archive... gnutar
+checking whether to enable maintainer-specific portions of Makefiles... yes
+checking for pkg-config... /usr/bin/pkg-config
+checking pkg-config is at least version 0.9.0... yes
+checking whether make supports the include directive... yes (GNU style)
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to enable C11 features... none needed
+checking whether gcc understands -c and -o together... yes
+checking dependency style of gcc... gcc3
+checking for C/C++ restrict keyword... __restrict__
+checking for gcc... (cached) gcc
+checking whether the compiler supports GNU C... (cached) yes
+checking whether gcc accepts -g... (cached) yes
+checking for gcc option to enable C11 features... (cached) none needed
+checking whether gcc understands -c and -o together... (cached) yes
+checking dependency style of gcc... (cached) gcc3
+checking whether gcc accepts -fPIE... yes
+checking whether gcc accepts -fsanitize=address... yes
+checking whether gcc accepts -fsanitize=leak... yes
+checking whether gcc accepts -fsanitize=undefined... yes
+checking build system type... x86_64-pc-linux-gnu
+checking host system type... x86_64-pc-linux-gnu
+checking how to print strings... printf
+checking for a sed that does not truncate output... /usr/bin/sed
+checking for grep that handles long lines and -e... /usr/bin/grep
+checking for egrep... /usr/bin/grep -E
+checking for fgrep... /usr/bin/grep -F
+checking for ld used by gcc... /usr/bin/x86_64-linux-gnu-ld
+checking if the linker (/usr/bin/x86_64-linux-gnu-ld) is GNU ld... yes
+checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+checking the name lister (/usr/bin/nm -B) interface... BSD nm
+checking whether ln -s works... yes
+checking the maximum length of command line arguments... 1572864
+checking how to convert x86_64-pc-linux-gnu file names to x86_64-pc-linux-gnu format... func_convert_file_noop
+checking how to convert x86_64-pc-linux-gnu file names to toolchain format... func_convert_file_noop
+checking for /usr/bin/x86_64-linux-gnu-ld option to reload object files... -r
+checking for file... file
+checking for objdump... objdump
+checking how to recognize dependent libraries... pass_all
+checking for dlltool... no
+checking how to associate runtime and link libraries... printf %s\n
+checking for ranlib... ranlib
+checking for ar... ar
+checking for archiver @FILE support... @
+checking for strip... strip
+checking command to parse /usr/bin/nm -B output from gcc object... ok
+checking for sysroot... no
+checking for a working dd... /usr/bin/dd
+checking how to truncate binary pipes... /usr/bin/dd bs=4096 count=1
+checking for mt... no
+checking if : is a manifest tool... no
+checking for stdio.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for strings.h... yes
+checking for sys/stat.h... yes
+checking for sys/types.h... yes
+checking for unistd.h... yes
+checking for dlfcn.h... yes
+checking for objdir... .libs
+checking if gcc supports -fno-rtti -fno-exceptions... no
+checking for gcc option to produce PIC... -fPIC -DPIC
+checking if gcc PIC flag -fPIC -DPIC works... yes
+checking if gcc static flag -static works... yes
+checking if gcc supports -c -o file.o... yes
+checking if gcc supports -c -o file.o... (cached) yes
+checking whether the gcc linker (/usr/bin/x86_64-linux-gnu-ld -m elf_x86_64) supports shared libraries... yes
+checking whether -lc should be explicitly linked in... no
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... yes
+checking whether to build static libraries... no
+checking for lcov... no
+checking for dbus-run-session... yes
+checking for valgrind... yes
+checking for valgrind/memcheck.h... yes
+checking for _init in -lasan... yes
+checking for _init in -llsan... yes
+checking for _init in -lubsan... yes
+checking whether gcc accepts -D_FORTIFY_SOURCE=3... yes
+checking for explicit_bzero... yes
+checking for getrandom... yes
+checking for rawmemchr... yes
+checking for signalfd... yes
+checking for clock_gettime in -lrt... yes
+checking for pthread_create in -lpthread... yes
+checking for dlopen in -ldl... yes
+checking for stdarg.h... yes
+checking for stdio.h... (cached) yes
+checking for string.h... (cached) yes
+checking for linux/types.h... yes
+checking for linux/if_alg.h... yes
+checking for linux/uinput.h... yes
+checking for linux/uhid.h... yes
+checking for sys/random.h... yes
+checking for gcc options needed to detect all undeclared functions... none needed
+checking whether basename is declared... yes
+checking for glib-2.0 >= 2.36... yes
+checking for dbus-1 >= 1.10... yes
+checking D-Bus configuration directory... /usr/share
+checking D-Bus system bus services dir... /usr/share/dbus-1/system-services
+checking D-Bus session bus services dir... /usr/share/dbus-1/services
+${prefix}/share/zsh/site-functions
+checking for elfutils/libdwfl.h... yes
+checking for libudev >= 196... yes
+checking udev directory... /usr/lib/udev
+checking cups directory... 
+checking for json-c >= 0.13... yes
+checking for alsa... yes
+checking for libicalvcal >= 4.0.0... no
+checking for libical... yes
+checking for readline/readline.h... yes
+checking systemd system unit dir... /usr/lib/systemd/system
+checking systemd user unit dir... /usr/lib/systemd/user
+checking for rst2man... rst2man
+checking whether SOF_TIMESTAMPING_TX_COMPLETION is declared... yes
+checking whether SCM_TSTAMP_COMPLETION is declared... yes
+checking that generated files are newer than configure... done
+configure: creating ./config.status
+config.status: creating lib/bluez.pc
+config.status: creating Makefile
+config.status: creating doc/bluetooth-meshd.rst
+config.status: creating mesh/bluetooth-mesh.service
+config.status: creating obexd/src/obex.service
+config.status: creating obexd/src/org.bluez.obex.service
+config.status: creating doc/bluetoothd.rst
+config.status: creating src/bluetooth.service
+config.status: creating tools/bluetooth-logger.service
+config.status: creating tools/mpris-proxy.service
+config.status: creating config.h
+config.status: executing depfiles commands
+config.status: executing libtool commands
+#ci RET: 0
+#ci ------------- CMD_RUN END (24.49 s) -------------
+#ci CI: IncrementalBuild: Patch ID: 1001
+#ci CI: IncrementalBuild: Save patch: /root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1001.patch
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'am', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1001.patch']
+#ci PROC args: ['git', 'am', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1001.patch']
+Applying: tools/sco-tester: Add SCO reconnect tests
+#ci RET: 0
+#ci ------------- CMD_RUN END (0.05 s) -------------
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', '-j4']
+#ci PROC args: ['make', '-j4']
+  GEN      src/builtin.h
+  GEN      ell/ell.h
+  GEN      ell/shared
+  GEN      ell/internal
+  GEN      obexd/src/builtin.h
+make --no-print-directory all-am
+  CC       src/shared/libshared_mainloop_la-queue.lo
+  CC       src/shared/libshared_mainloop_la-mgmt.lo
+  CC       src/shared/libshared_mainloop_la-util.lo
+  CC       src/shared/libshared_mainloop_la-crypto.lo
+  CC       src/shared/libshared_mainloop_la-ecc.lo
+  CC       src/shared/libshared_mainloop_la-ringbuf.lo
+  CC       src/shared/libshared_mainloop_la-hci.lo
+  CC       src/shared/libshared_mainloop_la-hci-crypto.lo
+  CC       src/shared/libshared_mainloop_la-hfp.lo
+  CC       src/shared/libshared_mainloop_la-uhid.lo
+  CC       src/shared/libshared_mainloop_la-pcap.lo
+  CC       src/shared/libshared_mainloop_la-btsnoop.lo
+  CC       src/shared/libshared_mainloop_la-ad.lo
+  CC       src/shared/libshared_mainloop_la-att.lo
+  CC       src/shared/libshared_mainloop_la-gatt-helpers.lo
+  CC       src/shared/libshared_mainloop_la-gatt-client.lo
+  CC       src/shared/libshared_mainloop_la-gatt-server.lo
+  CC       src/shared/libshared_mainloop_la-gatt-db.lo
+  CC       src/shared/libshared_mainloop_la-gap.lo
+  CC       src/shared/libshared_mainloop_la-log.lo
+  CC       src/shared/libshared_mainloop_la-bap.lo
+  CC       src/shared/libshared_mainloop_la-bap-debug.lo
+  CC       src/shared/libshared_mainloop_la-mcp.lo
+  CC       src/shared/libshared_mainloop_la-vcp.lo
+  CC       src/shared/libshared_mainloop_la-micp.lo
+  CC       src/shared/libshared_mainloop_la-hog.lo
+  CC       src/shared/libshared_mainloop_la-csip.lo
+  CC       src/shared/libshared_mainloop_la-bass.lo
+  CC       src/shared/libshared_mainloop_la-ccp.lo
+  CC       src/shared/libshared_mainloop_la-tmap.lo
+  CC       src/shared/libshared_mainloop_la-gmap.lo
+  CC       src/shared/libshared_mainloop_la-asha.lo
+  CC       src/shared/libshared_mainloop_la-battery.lo
+  CC       src/shared/libshared_mainloop_la-uinput.lo
+  CC       src/shared/libshared_mainloop_la-rap.lo
+  CC       src/shared/libshared_mainloop_la-shell.lo
+  CC       src/shared/libshared_mainloop_la-io-mainloop.lo
+  CC       src/shared/libshared_mainloop_la-timeout-mainloop.lo
+  CC       src/shared/libshared_mainloop_la-mainloop.lo
+  CC       src/shared/libshared_mainloop_la-mainloop-notify.lo
+  CC       src/shared/libshared_mainloop_la-tester.lo
+  CC       tools/mesh-cfgclient.o
+  CC       tools/mesh/cfgcli.o
+  CC       tools/mesh/keys.o
+  CC       tools/mesh/util.o
+  CC       tools/mesh/remote.o
+  CC       tools/mesh/mesh-db.o
+  CC       src/shared/libshared_ell_la-queue.lo
+  CC       src/shared/libshared_ell_la-util.lo
+  CC       src/shared/libshared_ell_la-mgmt.lo
+  CC       src/shared/libshared_ell_la-crypto.lo
+  CC       src/shared/libshared_ell_la-ecc.lo
+  CC       src/shared/libshared_ell_la-ringbuf.lo
+  CC       src/shared/libshared_ell_la-hci.lo
+  CC       src/shared/libshared_ell_la-hci-crypto.lo
+  CC       src/shared/libshared_ell_la-hfp.lo
+  CC       src/shared/libshared_ell_la-uhid.lo
+  CC       src/shared/libshared_ell_la-pcap.lo
+  CC       src/shared/libshared_ell_la-btsnoop.lo
+  CC       src/shared/libshared_ell_la-ad.lo
+  CC       src/shared/libshared_ell_la-att.lo
+  CC       src/shared/libshared_ell_la-gatt-helpers.lo
+  CC       src/shared/libshared_ell_la-gatt-client.lo
+  CC       src/shared/libshared_ell_la-gatt-server.lo
+  CC       src/shared/libshared_ell_la-gatt-db.lo
+  CC       src/shared/libshared_ell_la-gap.lo
+  CC       src/shared/libshared_ell_la-log.lo
+  CC       src/shared/libshared_ell_la-bap.lo
+  CC       src/shared/libshared_ell_la-bap-debug.lo
+  CC       src/shared/libshared_ell_la-mcp.lo
+  CC       src/shared/libshared_ell_la-vcp.lo
+  CC       src/shared/libshared_ell_la-micp.lo
+  CC       src/shared/libshared_ell_la-hog.lo
+  CC       src/shared/libshared_ell_la-csip.lo
+  CC       src/shared/libshared_ell_la-bass.lo
+  CC       src/shared/libshared_ell_la-ccp.lo
+  CC       src/shared/libshared_ell_la-tmap.lo
+  CC       src/shared/libshared_ell_la-gmap.lo
+  CC       src/shared/libshared_ell_la-asha.lo
+  CC       src/shared/libshared_ell_la-battery.lo
+  CC       src/shared/libshared_ell_la-uinput.lo
+  CC       src/shared/libshared_ell_la-rap.lo
+  CC       src/shared/libshared_ell_la-shell.lo
+  CC       src/shared/libshared_ell_la-io-ell.lo
+  CC       src/shared/libshared_ell_la-timeout-ell.lo
+  CC       src/shared/libshared_ell_la-mainloop-ell.lo
+  CC       tools/mesh-cfgtest.o
+  CC       tools/hciattach.o
+  CC       tools/hciattach_st.o
+  CC       tools/hciattach_ti.o
+  CC       tools/hciattach_tialt.o
+  CC       tools/hciattach_ath3k.o
+  CC       tools/hciattach_qualcomm.o
+  CC       tools/hciattach_intel.o
+  CC       tools/hciattach_bcm43xx.o
+  CC       tools/hciconfig.o
+  CC       tools/hcitool.o
+  CC       src/oui.o
+  CC       tools/rfcomm.o
+  CC       tools/sdptool.o
+  CC       src/sdp-xml.o
+  CC       src/shared/queue.o
+  CC       src/shared/util.o
+  CC       tools/ciptool.o
+  CC       tools/3dsp.o
+  CC       tools/mgmt-tester.o
+  CC       emulator/hciemu.o
+  CC       tools/gap-tester.o
+  CC       tools/l2cap-tester.o
+  CC       tools/tester-io.o
+  CC       tools/sco-tester.o
+  CC       tools/smp-tester.o
+  CC       tools/hci-tester.o
+  CC       tools/rfcomm-tester.o
+  CC       tools/bnep-tester.o
+  CC       tools/userchan-tester.o
+  CC       tools/iso-tester.o
+  CC       tools/mesh-tester.o
+  CC       tools/ioctl-tester.o
+  CC       tools/6lowpan-tester.o
+  CC       tools/bdaddr.o
+  CC       tools/avinfo.o
+  CC       tools/avtest.o
+  CC       tools/scotest.o
+  CC       tools/hwdb.o
+  CC       tools/hcieventmask.o
+  CC       tools/hcisecfilter.o
+  CC       tools/btinfo.o
+  CC       tools/btconfig.o
+  CC       tools/btsnoop.o
+  CC       tools/btproxy.o
+  CC       tools/btiotest.o
+  CC       tools/bneptest.o
+  CC       tools/cltest.o
+  CC       tools/oobtest.o
+  CC       tools/advtest.o
+  CC       tools/seq2bseq.o
+  CC       tools/nokfw.o
+  CC       tools/rtlfw.o
+  CC       tools/bcmfw.o
+  CC       tools/create-image.o
+  CC       tools/eddystone.o
+  CC       tools/ibeacon.o
+  CC       tools/btgatt-client.o
+  CC       src/uuid-helper.o
+  CC       tools/btgatt-server.o
+  CC       tools/test_runner-test-runner.o
+  CC       tools/check-selftest.o
+  CC       tools/gatt-service.o
+  CC       tools/btmgmt.o
+  CC       tools/obex-client-tool.o
+  CC       tools/obex-server-tool.o
+  CC       tools/bluetooth-player.o
+  CC       tools/obexctl.o
+  CC       src/shared/btp.o
+  CC       client/btpclient/ascs.o
+  CC       client/btpclient/bap.o
+  CC       client/btpclient/gap.o
+  CC       client/btpclient/core.o
+  CC       client/btpclient/gatt.o
+  CC       client/btpclient/pacs.o
+  CC       client/btpclient/vendor.o
+  CC       client/btpclient/btpclientctl.o
+  CC       src/eir.o
+  CC       unit/test-uuid.o
+  CC       unit/test-textfile.o
+  CC       unit/test-crc.o
+  CC       unit/test-crypto.o
+  CC       unit/test-ecc.o
+  CC       unit/test-ringbuf.o
+  CC       unit/test-queue.o
+  CC       unit/test-mgmt.o
+  CC       unit/test-uhid.o
+  CC       unit/test-profile.o
+  CC       unit/btd.o
+  CC       src/backtrace.o
+  CC       src/rfkill.o
+  CC       src/sdpd-server.o
+  CC       src/sdpd-request.o
+  CC       src/sdpd-service.o
+  CC       src/sdpd-database.o
+  CC       src/gatt-database.o
+  CC       src/sdp-client.o
+  CC       src/storage.o
+  CC       src/advertising.o
+  CC       src/agent.o
+  CC       src/error.o
+  CC       src/adapter.o
+  CC       src/profile.o
+  CC       src/service.o
+  CC       src/gatt-client.o
+  CC       src/device.o
+  CC       src/dbus-common.o
+  CC       src/adv_monitor.o
+  CC       src/battery.o
+  CC       src/ranging.o
+  CC       src/set.o
+  CC       src/bearer.o
+  CC       unit/test-sdp.o
+  CC       unit/test_sdp_xml-test-sdp-xml.o
+  CC       src/unit_test_sdp_xml-sdp-xml.o
+  CC       src/unit_test_sdp_xml-log.o
+  CC       unit/test-avdtp.o
+  CC       unit/avdtp.o
+  CC       unit/test-avctp.o
+  CC       unit/avctp.o
+  CC       unit/test-avrcp.o
+  CC       unit/avrcp-lib.o
+  CC       unit/test-hfp.o
+  CC       unit/test-gdbus-client.o
+  CC       unit/test-media-player.o
+  CC       profiles/audio/player.o
+  CC       unit/util.o
+  CC       unit/test-gobex-header.o
+  CC       unit/test-gobex-packet.o
+  CC       unit/test-gobex.o
+  CC       unit/test-gobex-transfer.o
+  CC       unit/test-gobex-apparam.o
+  CC       unit/test-lib.o
+  CC       unit/test-util.o
+  CC       unit/test-gatt.o
+  CC       unit/test-hog.o
+  CC       unit/test-bap.o
+  CC       unit/test-micp.o
+  CC       unit/test-bass.o
+  CC       unit/test-vcp.o
+  CC       unit/test-tmap.o
+  CC       unit/test-gmap.o
+  CC       unit/test-mcp.o
+  CC       unit/test-battery.o
+  CC       unit/test-fastpair.o
+  CC       unit/test-rap.o
+  CC       unit/test_midi-test-midi.o
+  CC       unit/test_mesh_crypto-test-mesh-crypto.o
+  CC       profiles/audio/bluetoothd-media.o
+  CC       profiles/audio/bluetoothd-transport.o
+  CC       profiles/audio/bluetoothd-player.o
+  CC       plugins/bluetoothd-admin.o
+  CC       plugins/bluetoothd-neard.o
+  CC       profiles/audio/bluetoothd-source.o
+  CC       profiles/audio/bluetoothd-sink.o
+  CC       profiles/audio/bluetoothd-a2dp.o
+  CC       profiles/audio/bluetoothd-avdtp.o
+  CC       profiles/audio/bluetoothd-control.o
+  CC       profiles/audio/bluetoothd-avctp.o
+  CC       profiles/audio/bluetoothd-avrcp.o
+  CC       profiles/audio/bluetoothd-avrcp-parse.o
+  CC       profiles/audio/bluetoothd-avrcp-player.o
+  CC       profiles/network/bluetoothd-manager.o
+  CC       profiles/network/bluetoothd-bnep.o
+  CC       profiles/network/bluetoothd-server.o
+  CC       profiles/network/bluetoothd-connection.o
+  CC       profiles/midi/bluetoothd-midi.o
+  CC       profiles/midi/bluetoothd-libmidi.o
+  CC       profiles/fastpair/bluetoothd-fastpair.o
+  CC       profiles/fastpair/bluetoothd-message-stream.o
+  CC       plugins/bluetoothd-sixaxis.o
+  CC       profiles/audio/bluetoothd-bap.o
+  CC       profiles/audio/bluetoothd-bass.o
+  CC       profiles/audio/bluetoothd-mcp.o
+  CC       profiles/audio/bluetoothd-vcp.o
+  CC       profiles/audio/bluetoothd-micp.o
+  CC       profiles/audio/bluetoothd-ccp.o
+  CC       profiles/audio/bluetoothd-csip.o
+  CC       profiles/audio/bluetoothd-tmap.o
+  CC       profiles/audio/bluetoothd-gmap.o
+  CC       profiles/audio/bluetoothd-asha.o
+  CC       profiles/audio/bluetoothd-telephony.o
+  CC       profiles/audio/bluetoothd-hfp-hf.o
+  CC       btio/bluetoothd-btio.o
+  CC       src/bluetoothd-log.o
+  CC       src/bluetoothd-backtrace.o
+  CC       src/bluetoothd-rfkill.o
+  CC       src/bluetoothd-sdpd-server.o
+  CC       src/bluetoothd-sdpd-request.o
+  CC       src/bluetoothd-sdpd-service.o
+  CC       src/bluetoothd-sdpd-database.o
+  CC       src/bluetoothd-gatt-database.o
+  CC       src/bluetoothd-sdp-xml.o
+  CC       src/bluetoothd-sdp-client.o
+  CC       src/bluetoothd-textfile.o
+  CC       src/bluetoothd-uuid-helper.o
+  CC       src/bluetoothd-storage.o
+  CC       src/bluetoothd-advertising.o
+  CC       src/bluetoothd-agent.o
+  CC       src/bluetoothd-error.o
+  CC       src/bluetoothd-adapter.o
+  CC       src/bluetoothd-profile.o
+  CC       src/bluetoothd-service.o
+  CC       src/bluetoothd-gatt-client.o
+  CC       src/bluetoothd-device.o
+  CC       src/bluetoothd-dbus-common.o
+  CC       src/bluetoothd-eir.o
+  CC       src/bluetoothd-adv_monitor.o
+  CC       src/bluetoothd-battery.o
+  CC       src/bluetoothd-ranging.o
+  CC       src/bluetoothd-settings.o
+  CC       src/bluetoothd-set.o
+  CC       src/bluetoothd-bearer.o
+  CC       src/bluetoothd-plugin.o
+  CC       src/bluetoothd-main.o
+  CC       tools/btmon-logger.o
+  CC       btio/obexd-btio.o
+  CC       gobex/obexd-gobex.o
+  CC       gobex/obexd-gobex-defs.o
+  CC       gobex/obexd-gobex-packet.o
+  CC       gobex/obexd-gobex-header.o
+  CC       gobex/obexd-gobex-transfer.o
+  CC       gobex/obexd-gobex-apparam.o
+  CC       obexd/client/obexd-manager.o
+  CC       obexd/client/obexd-session.o
+  CC       obexd/client/obexd-bluetooth.o
+  CC       obexd/client/obexd-sync.o
+  CC       obexd/client/obexd-pbap.o
+  CC       obexd/client/obexd-ftp.o
+  CC       obexd/client/obexd-opp.o
+  CC       obexd/client/obexd-map.o
+  CC       obexd/client/obexd-bip.o
+  CC       obexd/client/obexd-bip-common.o
+  CC       obexd/client/obexd-map-event.o
+  CC       obexd/client/obexd-transfer.o
+  CC       obexd/client/obexd-transport.o
+  CC       obexd/client/obexd-driver.o
+  CC       mesh/mesh.o
+  CC       mesh/net-keys.o
+  CC       mesh/mesh-io.o
+  CC       mesh/mesh-mgmt.o
+  CC       mesh/mesh-io-unit.o
+  CC       mesh/mesh-io-mgmt.o
+  CC       mesh/mesh-io-generic.o
+  CC       mesh/net.o
+  CC       mesh/friend.o
+  CC       mesh/appkey.o
+  CC       mesh/node.o
+  CC       mesh/model.o
+  CC       mesh/cfgmod-server.o
+  CC       mesh/remprv-server.o
+  CC       mesh/mesh-config-json.o
+  CC       mesh/dbus.o
+  CC       mesh/agent.o
+  CC       mesh/prov-acceptor.o
+  CC       mesh/prov-initiator.o
+  CC       mesh/manager.o
+  CC       mesh/pb-adv.o
+  CC       mesh/keyring.o
+  CC       mesh/rpl.o
+  CC       mesh/prvbeac-server.o
+  CC       mesh/main.o
+  CC       tools/hid2hci.o
+  GEN      doc/bluetoothd.8
+  GEN      doc/hci.7
+  GEN      doc/mgmt.7
+  GEN      doc/l2cap.7
+  GEN      doc/rfcomm.7
+  GEN      doc/sco.7
+  GEN      doc/iso.7
+  GEN      doc/btsnoop.7
+  GEN      doc/org.bluez.Adapter.5
+  GEN      doc/org.bluez.Device.5
+  GEN      doc/org.bluez.Bearer.LE.5
+  GEN      doc/org.bluez.Bearer.BREDR.5
+  GEN      doc/org.bluez.DeviceSet.5
+  GEN      doc/org.bluez.AgentManager.5
+  GEN      doc/org.bluez.Agent.5
+  GEN      doc/org.bluez.ProfileManager.5
+  GEN      doc/org.bluez.Profile.5
+  GEN      doc/org.bluez.NetworkServer.5
+  GEN      doc/org.bluez.Network.5
+  GEN      doc/org.bluez.Input.5
+  GEN      doc/org.bluez.BatteryProviderManager.5
+  GEN      doc/org.bluez.BatteryProvider.5
+  GEN      doc/org.bluez.Battery.5
+  GEN      doc/org.bluez.AdminPolicySet.5
+  GEN      doc/org.bluez.AdminPolicyStatus.5
+  GEN      doc/org.bluez.Media.5
+  GEN      doc/org.bluez.MediaControl.5
+  GEN      doc/org.bluez.MediaPlayer.5
+  GEN      doc/org.bluez.MediaFolder.5
+  GEN      doc/org.bluez.MediaItem.5
+  GEN      doc/org.bluez.MediaEndpoint.5
+  GEN      doc/org.bluez.MediaTransport.5
+  GEN      doc/org.bluez.MediaAssistant.5
+  GEN      doc/org.bluez.GattManager.5
+  GEN      doc/org.bluez.GattProfile.5
+  GEN      doc/org.bluez.GattService.5
+  GEN      doc/org.bluez.GattCharacteristic.5
+  GEN      doc/org.bluez.GattDescriptor.5
+  GEN      doc/org.bluez.LEAdvertisingManager.5
+  GEN      doc/org.bluez.LEAdvertisement.5
+  GEN      doc/org.bluez.AdvertisementMonitorManager.5
+  GEN      doc/org.bluez.AdvertisementMonitor.5
+  GEN      doc/org.bluez.obex.Client.5
+  GEN      doc/org.bluez.obex.Session.5
+  GEN      doc/org.bluez.obex.Transfer.5
+  GEN      doc/org.bluez.obex.ObjectPush.5
+  GEN      doc/org.bluez.obex.FileTransfer.5
+  GEN      doc/org.bluez.obex.Synchronization.5
+  GEN      doc/org.bluez.obex.PhonebookAccess.5
+  GEN      doc/org.bluez.obex.MessageAccess.5
+  GEN      doc/org.bluez.obex.Message.5
+  GEN      doc/org.bluez.obex.AgentManager.5
+  GEN      doc/org.bluez.obex.Agent.5
+  GEN      doc/org.bluez.obex.Image.5
+  GEN      doc/org.bluez.Telephony.5
+  GEN      doc/org.bluez.Call.5
+  GEN      doc/org.bluez.ThermometerManager.5
+  GEN      doc/org.bluez.Thermometer.5
+  GEN      doc/org.bluez.ThermometerWatcher.5
+  GEN      doc/org.bluez.ChannelSounding1.5
+  GEN      doc/org.bluez.Ranging1.5
+  GEN      doc/org.bluez.RangingProvider1.5
+  GEN      doc/org.bluez.RangingProviderManager1.5
+  GEN      doc/btmon.1
+  GEN      doc/rctest.1
+  GEN      doc/l2ping.1
+  GEN      doc/btattach.1
+  GEN      doc/isotest.1
+  GEN      doc/bluetoothctl.1
+  GEN      doc/bluetoothctl-mgmt.1
+  GEN      doc/bluetoothctl-monitor.1
+  GEN      doc/bluetoothctl-admin.1
+  GEN      doc/bluetoothctl-advertise.1
+  GEN      doc/bluetoothctl-endpoint.1
+  GEN      doc/bluetoothctl-gatt.1
+  GEN      doc/bluetoothctl-player.1
+  GEN      doc/bluetoothctl-scan.1
+  GEN      doc/bluetoothctl-transport.1
+  GEN      doc/bluetoothctl-assistant.1
+  GEN      doc/bluetoothctl-hci.1
+  GEN      doc/bluetoothctl-telephony.1
+  GEN      doc/bluetoothctl-cs.1
+  GEN      doc/hciattach.1
+  GEN      doc/hciconfig.1
+  GEN      doc/hcitool.1
+  GEN      doc/rfcomm.1
+  GEN      doc/sdptool.1
+  GEN      doc/ciptool.1
+  GEN      doc/hid2hci.1
+  GEN      doc/bluetooth-meshd.8
+  GEN      tools/97-hid2hci.rules
+  CC       client/main.o
+  CC       client/print.o
+  CC       client/display.o
+  CC       client/agent.o
+  CC       client/advertising.o
+  CC       client/adv_monitor.o
+  CC       client/gatt.o
+  CC       client/admin.o
+  CC       client/player.o
+  CC       client/mgmt.o
+  CC       client/assistant.o
+  CC       client/hci.o
+  CC       client/telephony.o
+  CC       client/cs.o
+  CC       lib/bluetooth/bluetooth.lo
+  CC       lib/bluetooth/hci.lo
+  CC       lib/bluetooth/sdp.lo
+  CC       lib/bluetooth/uuid.lo
+  CC       gdbus/mainloop.lo
+  CC       gdbus/watch.lo
+  CC       gdbus/object.lo
+  CC       gdbus/client.lo
+  CC       gdbus/polkit.lo
+  CC       src/shared/libshared_glib_la-queue.lo
+  CC       src/shared/libshared_glib_la-util.lo
+  CC       src/shared/libshared_glib_la-mgmt.lo
+  CC       src/shared/libshared_glib_la-crypto.lo
+  CC       src/shared/libshared_glib_la-ecc.lo
+  CC       src/shared/libshared_glib_la-ringbuf.lo
+  CC       src/shared/libshared_glib_la-hci.lo
+  CC       src/shared/libshared_glib_la-hci-crypto.lo
+  CC       src/shared/libshared_glib_la-hfp.lo
+  CC       src/shared/libshared_glib_la-uhid.lo
+  CC       src/shared/libshared_glib_la-pcap.lo
+  CC       src/shared/libshared_glib_la-btsnoop.lo
+  CC       src/shared/libshared_glib_la-ad.lo
+  CC       src/shared/libshared_glib_la-att.lo
+  CC       src/shared/libshared_glib_la-gatt-helpers.lo
+  CC       src/shared/libshared_glib_la-gatt-client.lo
+  CC       src/shared/libshared_glib_la-gatt-server.lo
+  CC       src/shared/libshared_glib_la-gatt-db.lo
+  CC       src/shared/libshared_glib_la-gap.lo
+  CC       src/shared/libshared_glib_la-log.lo
+  CC       src/shared/libshared_glib_la-bap.lo
+  CC       src/shared/libshared_glib_la-bap-debug.lo
+  CC       src/shared/libshared_glib_la-mcp.lo
+  CC       src/shared/libshared_glib_la-vcp.lo
+  CC       src/shared/libshared_glib_la-micp.lo
+  CC       src/shared/libshared_glib_la-hog.lo
+  CC       src/shared/libshared_glib_la-csip.lo
+  CC       src/shared/libshared_glib_la-bass.lo
+  CC       src/shared/libshared_glib_la-ccp.lo
+  CC       src/shared/libshared_glib_la-tmap.lo
+  CC       src/shared/libshared_glib_la-gmap.lo
+  CC       src/shared/libshared_glib_la-asha.lo
+  CC       src/shared/libshared_glib_la-battery.lo
+  CC       src/shared/libshared_glib_la-uinput.lo
+  CC       src/shared/libshared_glib_la-rap.lo
+  CC       src/shared/libshared_glib_la-shell.lo
+  CC       src/shared/libshared_glib_la-io-glib.lo
+  CC       src/shared/libshared_glib_la-timeout-glib.lo
+  CC       src/shared/libshared_glib_la-mainloop-glib.lo
+  CC       src/shared/libshared_glib_la-mainloop-notify.lo
+  CC       src/shared/libshared_glib_la-tester.lo
+  CC       monitor/main.o
+  CC       monitor/display.o
+  CC       monitor/hcidump.o
+  CC       monitor/ellisys.o
+  CC       monitor/control.o
+  CC       monitor/packet.o
+  CC       monitor/vendor.o
+  CC       monitor/lmp.o
+  CC       monitor/crc.o
+  CC       monitor/ll.o
+  CC       monitor/l2cap.o
+  CC       monitor/sdp.o
+  CC       monitor/avctp.o
+  CC       monitor/avdtp.o
+  CC       monitor/a2dp.o
+  CC       monitor/rfcomm.o
+  CC       monitor/bnep.o
+  CC       monitor/hwdb.o
+  CC       monitor/keys.o
+  CC       monitor/analyze.o
+  CC       monitor/intel.o
+  CC       monitor/broadcom.o
+  CC       monitor/msft.o
+  CC       monitor/jlink.o
+  CC       monitor/att.o
+  CC       monitor/find.o
+  CC       src/log.o
+  CC       src/textfile.o
+  CC       src/settings.o
+  CCLD     src/libshared-mainloop.la
+  CC       tools/rctest.o
+  CC       tools/l2test.o
+  CC       tools/l2ping.o
+  CC       tools/bluemoon.o
+  CC       tools/hex2hcd.o
+  CC       tools/mpris-proxy.o
+  CC       tools/btattach.o
+  CC       tools/isotest.o
+  CC       tools/meshctl.o
+  CC       tools/mesh/agent.o
+  CC       tools/mesh-gatt/node.o
+  CC       tools/mesh-gatt/gatt.o
+  CC       tools/mesh-gatt/crypto.o
+  CC       tools/mesh-gatt/net.o
+  CC       tools/mesh-gatt/prov.o
+  CC       tools/mesh-gatt/util.o
+  CC       tools/mesh-gatt/prov-db.o
+  CC       tools/mesh-gatt/config-client.o
+  CC       tools/mesh-gatt/config-server.o
+  CC       tools/mesh-gatt/onoff-model.o
+  CC       mesh/util.o
+  CC       mesh/crypto.o
+  CCLD     src/libshared-ell.la
+  CC       ell/util.lo
+  CC       ell/log.lo
+  CC       ell/queue.lo
+  CC       ell/hashmap.lo
+  CC       ell/random.lo
+  CC       ell/signal.lo
+  CC       ell/time.lo
+  CC       ell/timeout.lo
+  CC       ell/io.lo
+  CC       ell/idle.lo
+  CC       ell/main.lo
+  CC       ell/settings.lo
+  CC       ell/strv.lo
+  CC       ell/string.lo
+  CC       ell/cipher.lo
+  CC       ell/checksum.lo
+  CC       ell/pem.lo
+  CC       ell/cert.lo
+  CC       ell/cert-crypto.lo
+  CC       ell/key.lo
+  CC       ell/base64.lo
+  CC       ell/utf8.lo
+  CC       ell/dbus.lo
+  CC       ell/dbus-message.lo
+  CC       ell/dbus-util.lo
+  CC       ell/dbus-service.lo
+  CC       ell/dbus-client.lo
+  CC       ell/dbus-name-cache.lo
+  CC       ell/dbus-filter.lo
+  CC       ell/gvariant-util.lo
+  CC       ell/siphash.lo
+  CC       ell/uuid.lo
+  CC       ell/tester.lo
+  CC       ell/tls.lo
+  CC       ell/tls-extensions.lo
+  CC       ell/tls-suites.lo
+  CC       ell/tls-record.lo
+  CC       ell/ecc.lo
+  CC       ell/ecc-external.lo
+  CC       ell/ecdh.lo
+  CC       profiles/cups/main.o
+  CC       profiles/cups/sdp.o
+  CC       profiles/cups/spp.o
+  CC       profiles/cups/hcrp.o
+  CC       emulator/main.o
+  CC       emulator/serial.o
+  CC       emulator/server.o
+  CC       emulator/vhci.o
+  CC       emulator/btdev.o
+  CC       emulator/bthost.o
+  CC       emulator/smp.o
+  CC       emulator/phy.o
+  CC       emulator/le.o
+  CC       emulator/vhost.o
+  CC       emulator/virtio.o
+  CC       emulator/timetravel.o
+  CC       emulator/vconsole.o
+  CC       emulator/ttclient.o
+  CC       emulator/timeout.o
+  CC       emulator/b1ee.o
+  CC       emulator/hfp.o
+  CC       peripheral/main.o
+  CC       peripheral/efivars.o
+  CC       peripheral/attach.o
+  CC       peripheral/log.o
+  CC       peripheral/gap.o
+  CC       peripheral/gatt.o
+  CCLD     tools/3dsp
+  CCLD     tools/hci-tester
+  CCLD     tools/hcisecfilter
+  CCLD     tools/btinfo
+  CCLD     tools/btconfig
+  CCLD     tools/btsnoop
+  CCLD     tools/btproxy
+  CC       btio/btio.o
+  CC       profiles/network/bnep.o
+  CCLD     tools/seq2bseq
+  CCLD     tools/nokfw
+  CCLD     tools/rtlfw
+  CCLD     tools/bcmfw
+  CCLD     tools/create-image
+  CCLD     tools/eddystone
+  CCLD     tools/ibeacon
+  CCLD     tools/test-runner
+  CCLD     tools/check-selftest
+  CC       profiles/iap/main.o
+  CC       gobex/gobex.o
+  CC       gobex/gobex-defs.o
+  CC       gobex/gobex-packet.o
+  CC       gobex/gobex-header.o
+  CC       gobex/gobex-transfer.o
+  CC       gobex/gobex-apparam.o
+  CC       client/btpclient/btpclient.o
+  CC       unit/test-tester.o
+  CC       unit/test-mainloop.o
+  CC       unit/test-eir.o
+  CC       profiles/audio/avrcp-parse.o
+  CC       profiles/fastpair/message-stream.o
+  CC       profiles/midi/unit_test_midi-libmidi.o
+  CC       plugins/bluetoothd-hostname.o
+  CC       plugins/bluetoothd-autopair.o
+  CC       plugins/bluetoothd-policy.o
+  CC       profiles/input/bluetoothd-manager.o
+  CC       profiles/input/bluetoothd-server.o
+  CC       profiles/input/bluetoothd-device.o
+  CC       profiles/input/bluetoothd-hog.o
+  CC       profiles/input/bluetoothd-suspend-none.o
+  CC       profiles/gap/bluetoothd-gas.o
+  CC       profiles/scanparam/bluetoothd-scan.o
+  CC       profiles/deviceinfo/bluetoothd-deviceinfo.o
+  CC       profiles/battery/bluetoothd-battery.o
+  CC       profiles/ranging/bluetoothd-rap.o
+  CC       profiles/ranging/bluetoothd-rap_hci.o
+  CCLD     tools/btmon-logger
+  CC       obexd/plugins/obexd-filesystem.o
+  CC       obexd/plugins/obexd-bluetooth.o
+  CC       obexd/plugins/obexd-pcsuite.o
+  CC       obexd/plugins/obexd-opp.o
+  CC       obexd/plugins/obexd-ftp.o
+  CC       obexd/plugins/obexd-irmc.o
+  CC       obexd/plugins/obexd-pbap.o
+  CC       obexd/plugins/obexd-vcard.o
+  CC       obexd/plugins/obexd-phonebook.o
+  CC       obexd/plugins/obexd-phonebook-dummy.o
+  CC       obexd/plugins/obexd-mas.o
+  CC       obexd/plugins/obexd-messages-dummy.o
+  CC       obexd/client/obexd-mns.o
+  CC       obexd/src/obexd-main.o
+  CC       obexd/src/obexd-plugin.o
+  CC       obexd/src/obexd-log.o
+  CC       obexd/src/obexd-logind.o
+  CC       obexd/src/obexd-manager.o
+  CC       obexd/src/obexd-obex.o
+  CC       obexd/src/obexd-mimetype.o
+  CC       obexd/src/obexd-service.o
+  CC       obexd/src/obexd-transport.o
+  CC       obexd/src/obexd-server.o
+  CCLD     tools/hid2hci
+  CCLD     lib/libbluetooth.la
+  CCLD     lib/libbluetooth-internal.la
+  CCLD     gdbus/libgdbus-internal.la
+  CCLD     src/libshared-glib.la
+  CCLD     tools/bluemoon
+  CCLD     tools/hex2hcd
+  CCLD     tools/btattach
+  CCLD     tools/isotest
+  CCLD     ell/libell-internal.la
+  CCLD     tools/hciattach
+  CCLD     tools/hciconfig
+  CCLD     tools/hcitool
+  CCLD     tools/rfcomm
+  CCLD     tools/sdptool
+  CCLD     tools/ciptool
+  CCLD     profiles/cups/bluetooth
+  CCLD     emulator/btvirt
+  CCLD     emulator/b1ee
+  CCLD     emulator/hfp
+  CCLD     peripheral/btsensor
+  CCLD     tools/mgmt-tester
+  CCLD     tools/gap-tester
+  CCLD     tools/l2cap-tester
+  CCLD     tools/sco-tester
+  CCLD     tools/smp-tester
+  CCLD     tools/rfcomm-tester
+  CCLD     tools/bnep-tester
+  CCLD     tools/userchan-tester
+  CCLD     tools/iso-tester
+  CCLD     tools/mesh-tester
+  CCLD     tools/ioctl-tester
+  CCLD     tools/6lowpan-tester
+  CCLD     tools/bdaddr
+  CCLD     tools/avinfo
+  CCLD     tools/avtest
+  CCLD     tools/scotest
+  CCLD     tools/hwdb
+  CCLD     tools/hcieventmask
+  CCLD     tools/btiotest
+  CCLD     tools/bneptest
+  CCLD     tools/cltest
+  CCLD     tools/oobtest
+  CCLD     tools/advtest
+  CCLD     tools/btgatt-client
+  CCLD     tools/btgatt-server
+  CCLD     tools/gatt-service
+  CCLD     profiles/iap/iapd
+  CCLD     tools/btmgmt
+  CCLD     tools/obex-client-tool
+  CCLD     tools/obex-server-tool
+  CCLD     tools/bluetooth-player
+  CCLD     tools/obexctl
+  CCLD     client/btpclient/btpclient
+  CCLD     client/btpclient/btpclientctl
+  CCLD     unit/test-tester
+  CCLD     unit/test-mainloop
+  CCLD     unit/test-eir
+  CCLD     unit/test-uuid
+  CCLD     unit/test-textfile
+  CCLD     unit/test-crc
+  CCLD     unit/test-crypto
+  CCLD     unit/test-ecc
+  CCLD     unit/test-ringbuf
+  CCLD     unit/test-queue
+  CCLD     unit/test-mgmt
+  CCLD     unit/test-uhid
+  CCLD     unit/test-profile
+  CCLD     unit/test-sdp
+  CCLD     unit/test-sdp-xml
+  CCLD     unit/test-avdtp
+  CCLD     unit/test-avctp
+  CCLD     unit/test-avrcp
+  CCLD     unit/test-hfp
+  CCLD     unit/test-gdbus-client
+  CCLD     unit/test-media-player
+  CCLD     unit/test-gobex-header
+  CCLD     unit/test-gobex-packet
+  CCLD     unit/test-gobex
+  CCLD     unit/test-gobex-transfer
+  CCLD     unit/test-gobex-apparam
+  CCLD     unit/test-lib
+  CCLD     unit/test-util
+  CCLD     unit/test-gatt
+  CCLD     unit/test-hog
+  CCLD     unit/test-bap
+  CCLD     unit/test-micp
+  CCLD     unit/test-bass
+  CCLD     unit/test-vcp
+  CCLD     unit/test-tmap
+  CCLD     unit/test-gmap
+  CCLD     unit/test-mcp
+  CCLD     unit/test-battery
+  CCLD     unit/test-fastpair
+  CCLD     unit/test-rap
+  CCLD     unit/test-midi
+  CCLD     unit/test-mesh-crypto
+  CCLD     src/bluetoothd
+  CCLD     obexd/src/obexd
+  CCLD     mesh/bluetooth-meshd
+  CCLD     client/bluetoothctl
+  CCLD     monitor/btmon
+  CCLD     tools/rctest
+  CCLD     tools/l2test
+  CCLD     tools/l2ping
+  CCLD     tools/mpris-proxy
+  CCLD     tools/meshctl
+  CCLD     tools/mesh-cfgclient
+  CCLD     tools/mesh-cfgtest
+#ci RET: 0
+#ci ------------- CMD_RUN END (721.79 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci CI: IncrementalBuild: Patch ID: 1002
+#ci CI: IncrementalBuild: Save patch: /root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1002.patch
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['git', 'am', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1002.patch']
+#ci PROC args: ['git', 'am', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-final/work/patched/patch/1002.patch']
+Applying: tools/sco-tester: Add connect twice with other voice tests
+#ci RET: 0
+#ci ------------- CMD_RUN END (0.11 s) -------------
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', '-j4']
+#ci PROC args: ['make', '-j4']
+make --no-print-directory all-am
+  CC       tools/sco-tester.o
+  CCLD     tools/sco-tester
+#ci RET: 0
+#ci ------------- CMD_RUN END (8.61 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci CI: IncrementalBuild: Post Run...
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['make', 'maintainer-clean']
+#ci PROC args: ['make', 'maintainer-clean']
+rm -f  client/bluetoothctl monitor/btmon tools/rctest tools/l2test tools/l2ping tools/bluemoon tools/hex2hcd tools/mpris-proxy tools/btattach tools/isotest tools/meshctl tools/mesh-cfgclient tools/mesh-cfgtest tools/hciattach tools/hciconfig tools/hcitool tools/rfcomm tools/sdptool tools/ciptool
+test -z "" || rm -f  client/bluetoothctl monitor/btmon tools/rctest tools/l2test tools/l2ping tools/bluemoon tools/hex2hcd tools/mpris-proxy tools/btattach tools/isotest tools/meshctl tools/mesh-cfgclient tools/mesh-cfgtest tools/hciattach tools/hciconfig tools/hcitool tools/rfcomm tools/sdptool tools/ciptool
+rm -f  profiles/cups/bluetooth
+test -z "" || rm -f  profiles/cups/bluetooth
+rm -f  ell/shared ell/internal ell/ell.h src/builtin.h obexd/src/builtin.h tools/97-hid2hci.rules
+rm -f  lib/libbluetooth.la
+rm -f lib/so_locations
+rm -rf .libs _libs
+rm -rf client/.libs client/_libs
+rm -rf client/btpclient/.libs client/btpclient/_libs
+rm -rf ell/.libs ell/_libs
+rm -rf emulator/.libs emulator/_libs
+rm -rf gdbus/.libs gdbus/_libs
+rm -rf lib/.libs lib/_libs
+rm -rf lib/bluetooth/.libs lib/bluetooth/_libs
+rm -rf mesh/.libs mesh/_libs
+rm -rf monitor/.libs monitor/_libs
+rm -rf obexd/src/.libs obexd/src/_libs
+rm -rf peripheral/.libs peripheral/_libs
+rm -rf profiles/cups/.libs profiles/cups/_libs
+rm -rf profiles/iap/.libs profiles/iap/_libs
+rm -rf src/.libs src/_libs
+rm -rf src/shared/.libs src/shared/_libs
+rm -rf tools/.libs tools/_libs
+rm -rf unit/.libs unit/_libs
+find . -name "*.gcno" -delete
+find . -name "*.gcda" -delete
+rm -f  
+rm -f  lib/libbluetooth-internal.la gdbus/libgdbus-internal.la ell/libell-internal.la src/libshared-glib.la src/libshared-mainloop.la src/libshared-ell.la
+rm -f ell/so_locations gdbus/so_locations lib/so_locations src/so_locations
+rm -f  emulator/btvirt emulator/b1ee emulator/hfp peripheral/btsensor tools/3dsp tools/mgmt-tester tools/gap-tester tools/l2cap-tester tools/sco-tester tools/smp-tester tools/hci-tester tools/rfcomm-tester tools/bnep-tester tools/userchan-tester tools/iso-tester tools/mesh-tester tools/ioctl-tester tools/6lowpan-tester tools/bdaddr tools/avinfo tools/avtest tools/scotest tools/hwdb tools/hcieventmask tools/hcisecfilter tools/btinfo tools/btconfig tools/btsnoop tools/btproxy tools/btiotest tools/bneptest tools/cltest tools/oobtest tools/advtest tools/seq2bseq tools/nokfw tools/rtlfw tools/bcmfw tools/create-image tools/eddystone tools/ibeacon tools/btgatt-client tools/btgatt-server tools/test-runner tools/check-selftest tools/gatt-service profiles/iap/iapd tools/btmgmt tools/obex-client-tool tools/obex-server-tool tools/bluetooth-player tools/obexctl client/btpclient/btpclient client/btpclient/btpclientctl unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto
+test -z "" || rm -f  emulator/btvirt emulator/b1ee emulator/hfp peripheral/btsensor tools/3dsp tools/mgmt-tester tools/gap-tester tools/l2cap-tester tools/sco-tester tools/smp-tester tools/hci-tester tools/rfcomm-tester tools/bnep-tester tools/userchan-tester tools/iso-tester tools/mesh-tester tools/ioctl-tester tools/6lowpan-tester tools/bdaddr tools/avinfo tools/avtest tools/scotest tools/hwdb tools/hcieventmask tools/hcisecfilter tools/btinfo tools/btconfig tools/btsnoop tools/btproxy tools/btiotest tools/bneptest tools/cltest tools/oobtest tools/advtest tools/seq2bseq tools/nokfw tools/rtlfw tools/bcmfw tools/create-image tools/eddystone tools/ibeacon tools/btgatt-client tools/btgatt-server tools/test-runner tools/check-selftest tools/gatt-service profiles/iap/iapd tools/btmgmt tools/obex-client-tool tools/obex-server-tool tools/bluetooth-player tools/obexctl client/btpclient/btpclient client/btpclient/btpclientctl unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto
+rm -f  src/bluetoothd tools/btmon-logger obexd/src/obexd mesh/bluetooth-meshd
+test -z "" || rm -f  src/bluetoothd tools/btmon-logger obexd/src/obexd mesh/bluetooth-meshd
+rm -f  
+rm -f
+rm -f  tools/hid2hci
+test -z "" || rm -f  tools/hid2hci
+rm -f *.o
+rm -f btio/*.o
+rm -f client/*.o
+rm -f client/btpclient/*.o
+rm -f ell/*.o
+rm -f ell/*.lo
+rm -f emulator/*.o
+rm -f gdbus/*.o
+rm -f gdbus/*.lo
+rm -f gobex/*.o
+rm -f lib/bluetooth/*.o
+rm -f lib/bluetooth/*.lo
+rm -f mesh/*.o
+rm -f monitor/*.o
+rm -f obexd/client/*.o
+rm -f obexd/plugins/*.o
+rm -f obexd/src/*.o
+rm -f peripheral/*.o
+rm -f plugins/*.o
+rm -f profiles/audio/*.o
+rm -f profiles/battery/*.o
+rm -f profiles/cups/*.o
+rm -f profiles/deviceinfo/*.o
+rm -f profiles/fastpair/*.o
+rm -f profiles/gap/*.o
+rm -f profiles/iap/*.o
+rm -f profiles/input/*.o
+rm -f profiles/midi/*.o
+rm -f profiles/network/*.o
+rm -f profiles/ranging/*.o
+rm -f profiles/scanparam/*.o
+rm -f src/*.o
+rm -f src/shared/*.o
+rm -f src/shared/*.lo
+rm -f tools/*.o
+rm -f tools/mesh-gatt/*.o
+rm -f tools/mesh/*.o
+rm -f unit/*.o
+rm -f  unit/test-tester.log unit/test-mainloop.log unit/test-eir.log unit/test-uuid.log unit/test-textfile.log unit/test-crc.log unit/test-crypto.log unit/test-ecc.log unit/test-ringbuf.log unit/test-queue.log unit/test-mgmt.log unit/test-uhid.log unit/test-profile.log unit/test-sdp.log unit/test-sdp-xml.log unit/test-avdtp.log unit/test-avctp.log unit/test-avrcp.log unit/test-hfp.log unit/test-gdbus-client.log unit/test-media-player.log unit/test-gobex-header.log unit/test-gobex-packet.log unit/test-gobex.log unit/test-gobex-transfer.log unit/test-gobex-apparam.log unit/test-lib.log unit/test-util.log unit/test-gatt.log unit/test-hog.log unit/test-bap.log unit/test-micp.log unit/test-bass.log unit/test-vcp.log unit/test-tmap.log unit/test-gmap.log unit/test-mcp.log unit/test-battery.log unit/test-fastpair.log unit/test-rap.log unit/test-midi.log unit/test-mesh-crypto.log
+rm -f  unit/test-tester.trs unit/test-mainloop.trs unit/test-eir.trs unit/test-uuid.trs unit/test-textfile.trs unit/test-crc.trs unit/test-crypto.trs unit/test-ecc.trs unit/test-ringbuf.trs unit/test-queue.trs unit/test-mgmt.trs unit/test-uhid.trs unit/test-profile.trs unit/test-sdp.trs unit/test-sdp-xml.trs unit/test-avdtp.trs unit/test-avctp.trs unit/test-avrcp.trs unit/test-hfp.trs unit/test-gdbus-client.trs unit/test-media-player.trs unit/test-gobex-header.trs unit/test-gobex-packet.trs unit/test-gobex.trs unit/test-gobex-transfer.trs unit/test-gobex-apparam.trs unit/test-lib.trs unit/test-util.trs unit/test-gatt.trs unit/test-hog.trs unit/test-bap.trs unit/test-micp.trs unit/test-bass.trs unit/test-vcp.trs unit/test-tmap.trs unit/test-gmap.trs unit/test-mcp.trs unit/test-battery.trs unit/test-fastpair.trs unit/test-rap.trs unit/test-midi.trs unit/test-mesh-crypto.trs
+rm -f  test-suite.log
+rm -f *.lo
+rm -f *.tab.c
+rm -f  lib/bluez.pc doc/bluetooth-meshd.rst mesh/bluetooth-mesh.service obexd/src/obex.service obexd/src/org.bluez.obex.service doc/bluetoothd.rst src/bluetooth.service tools/bluetooth-logger.service tools/mpris-proxy.service
+test . = "." || rm -f  
+rm -f  lib/bluez.pc unit/test-tester unit/test-mainloop unit/test-eir unit/test-uuid unit/test-textfile unit/test-crc unit/test-crypto unit/test-ecc unit/test-ringbuf unit/test-queue unit/test-mgmt unit/test-uhid unit/test-profile unit/test-sdp unit/test-sdp-xml unit/test-avdtp unit/test-avctp unit/test-avrcp unit/test-hfp unit/test-gdbus-client unit/test-media-player unit/test-gobex-header unit/test-gobex-packet unit/test-gobex unit/test-gobex-transfer unit/test-gobex-apparam unit/test-lib unit/test-util unit/test-gatt unit/test-hog unit/test-bap unit/test-micp unit/test-bass unit/test-vcp unit/test-tmap unit/test-gmap unit/test-mcp unit/test-battery unit/test-fastpair unit/test-rap unit/test-midi unit/test-mesh-crypto doc/bluetoothd.8 doc/hci.7 doc/mgmt.7 doc/l2cap.7 doc/rfcomm.7 doc/sco.7 doc/iso.7 doc/btsnoop.7 doc/org.bluez.Adapter.5 doc/org.bluez.Device.5 doc/org.bluez.Bearer.LE.5 doc/org.bluez.Bearer.BREDR.5 doc/org.bluez.DeviceSet.5 doc/org.bluez.AgentManager.5 doc/org.bluez.Agent.5 doc/org.bluez.ProfileManager.5 doc/org.bluez.Profile.5 doc/org.bluez.NetworkServer.5 doc/org.bluez.Network.5 doc/org.bluez.Input.5 doc/org.bluez.BatteryProviderManager.5 doc/org.bluez.BatteryProvider.5 doc/org.bluez.Battery.5 doc/org.bluez.AdminPolicySet.5 doc/org.bluez.AdminPolicyStatus.5 doc/org.bluez.Media.5 doc/org.bluez.MediaControl.5 doc/org.bluez.MediaPlayer.5 doc/org.bluez.MediaFolder.5 doc/org.bluez.MediaItem.5 doc/org.bluez.MediaEndpoint.5 doc/org.bluez.MediaTransport.5 doc/org.bluez.MediaAssistant.5 doc/org.bluez.GattManager.5 doc/org.bluez.GattProfile.5 doc/org.bluez.GattService.5 doc/org.bluez.GattCharacteristic.5 doc/org.bluez.GattDescriptor.5 doc/org.bluez.LEAdvertisingManager.5 doc/org.bluez.LEAdvertisement.5 doc/org.bluez.AdvertisementMonitorManager.5 doc/org.bluez.AdvertisementMonitor.5 doc/org.bluez.obex.Client.5 doc/org.bluez.obex.Session.5 doc/org.bluez.obex.Transfer.5 doc/org.bluez.obex.ObjectPush.5 doc/org.bluez.obex.FileTransfer.5 doc/org.bluez.obex.Synchronization.5 doc/org.bluez.obex.PhonebookAccess.5 doc/org.bluez.obex.MessageAccess.5 doc/org.bluez.obex.Message.5 doc/org.bluez.obex.AgentManager.5 doc/org.bluez.obex.Agent.5 doc/org.bluez.obex.Image.5 doc/org.bluez.Telephony.5 doc/org.bluez.Call.5 doc/org.bluez.ThermometerManager.5 doc/org.bluez.Thermometer.5 doc/org.bluez.ThermometerWatcher.5 doc/org.bluez.ChannelSounding1.5 doc/org.bluez.Ranging1.5 doc/org.bluez.RangingProvider1.5 doc/org.bluez.RangingProviderManager1.5 doc/btmon.1 doc/hciattach.1 doc/hciconfig.1 doc/hcitool.1 doc/rfcomm.1 doc/sdptool.1 doc/ciptool.1 doc/rctest.1 doc/l2ping.1 doc/btattach.1 doc/bdaddr.1 doc/isotest.1 doc/btmgmt.1 doc/bluetoothctl.1 doc/bluetoothctl-mgmt.1 doc/bluetoothctl-monitor.1 doc/bluetoothctl-admin.1 doc/bluetoothctl-advertise.1 doc/bluetoothctl-endpoint.1 doc/bluetoothctl-gatt.1 doc/bluetoothctl-player.1 doc/bluetoothctl-scan.1 doc/bluetoothctl-transport.1 doc/bluetoothctl-assistant.1 doc/bluetoothctl-hci.1 doc/bluetoothctl-telephony.1 doc/bluetoothctl-cs.1 doc/hid2hci.1 doc/bluetooth-meshd.8
+rm -f  btio/.deps/.dirstamp
+rm -f  btio/.dirstamp
+rm -f  client/.deps/.dirstamp
+rm -f  client/.dirstamp
+rm -f  client/btpclient/.deps/.dirstamp
+rm -f  client/btpclient/.dirstamp
+rm -f  ell/.deps/.dirstamp
+rm -f  ell/.dirstamp
+rm -f  emulator/.deps/.dirstamp
+rm -f  emulator/.dirstamp
+rm -f  gdbus/.deps/.dirstamp
+rm -f  gdbus/.dirstamp
+rm -f  gobex/.deps/.dirstamp
+rm -f  gobex/.dirstamp
+rm -f  lib/.dirstamp
+rm -f  lib/bluetooth/.deps/.dirstamp
+rm -f  lib/bluetooth/.dirstamp
+rm -f  mesh/.deps/.dirstamp
+rm -f  mesh/.dirstamp
+rm -f  monitor/.deps/.dirstamp
+rm -f  monitor/.dirstamp
+rm -f  obexd/client/.deps/.dirstamp
+rm -f  obexd/client/.dirstamp
+rm -f  obexd/plugins/.deps/.dirstamp
+rm -f  obexd/plugins/.dirstamp
+rm -f  obexd/src/.deps/.dirstamp
+rm -f  obexd/src/.dirstamp
+rm -f  peripheral/.deps/.dirstamp
+rm -f  peripheral/.dirstamp
+rm -f  plugins/.deps/.dirstamp
+rm -f  plugins/.dirstamp
+rm -f  profiles/audio/.deps/.dirstamp
+rm -f  profiles/audio/.dirstamp
+rm -f  profiles/battery/.deps/.dirstamp
+rm -f  profiles/battery/.dirstamp
+rm -f  profiles/cups/.deps/.dirstamp
+rm -f  profiles/cups/.dirstamp
+rm -f  profiles/deviceinfo/.deps/.dirstamp
+rm -f  profiles/deviceinfo/.dirstamp
+rm -f  profiles/fastpair/.deps/.dirstamp
+rm -f  profiles/fastpair/.dirstamp
+rm -f  profiles/gap/.deps/.dirstamp
+rm -f  profiles/gap/.dirstamp
+rm -f  profiles/iap/.deps/.dirstamp
+rm -f  profiles/iap/.dirstamp
+rm -f  profiles/input/.deps/.dirstamp
+rm -f  profiles/input/.dirstamp
+rm -f  profiles/midi/.deps/.dirstamp
+rm -f  profiles/midi/.dirstamp
+rm -f  profiles/network/.deps/.dirstamp
+rm -f  profiles/network/.dirstamp
+rm -f  profiles/ranging/.deps/.dirstamp
+rm -f  profiles/ranging/.dirstamp
+rm -f  profiles/scanparam/.deps/.dirstamp
+rm -f  profiles/scanparam/.dirstamp
+rm -f  src/.deps/.dirstamp
+rm -f  src/.dirstamp
+rm -f  src/shared/.deps/.dirstamp
+rm -f  src/shared/.dirstamp
+rm -f  tools/.deps/.dirstamp
+rm -f  tools/.dirstamp
+rm -f  tools/mesh-gatt/.deps/.dirstamp
+rm -f  tools/mesh-gatt/.dirstamp
+rm -f  tools/mesh/.deps/.dirstamp
+rm -f  tools/mesh/.dirstamp
+rm -f  unit/.deps/.dirstamp
+rm -f  unit/.dirstamp
+rm -f config.h stamp-h1
+rm -f libtool config.lt
+rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+rm -f cscope.out cscope.in.out cscope.po.out cscope.files
+This command is intended for maintainers to use
+it deletes files that may require special tools to rebuild.
+rm -f  ell/shared ell/internal ell/ell.h src/builtin.h obexd/src/builtin.h
+rm -f  Makefile.in aclocal.m4 configure config.h.in config.sub config.guess ltmain.sh depcomp compile missing install-sh mkinstalldirs test-driver
+rm -rf ell
+rm -f config.status config.cache config.log configure.lineno config.status.lineno
+rm -rf ./autom4te.cache
+rm -f btio/.deps/bluetoothd-btio.Po
+rm -f btio/.deps/btio.Po
+rm -f btio/.deps/obexd-btio.Po
+rm -f client/.deps/admin.Po
+rm -f client/.deps/adv_monitor.Po
+rm -f client/.deps/advertising.Po
+rm -f client/.deps/agent.Po
+rm -f client/.deps/assistant.Po
+rm -f client/.deps/cs.Po
+rm -f client/.deps/display.Po
+rm -f client/.deps/gatt.Po
+rm -f client/.deps/hci.Po
+rm -f client/.deps/main.Po
+rm -f client/.deps/mgmt.Po
+rm -f client/.deps/player.Po
+rm -f client/.deps/print.Po
+rm -f client/.deps/telephony.Po
+rm -f client/btpclient/.deps/ascs.Po
+rm -f client/btpclient/.deps/bap.Po
+rm -f client/btpclient/.deps/btpclient.Po
+rm -f client/btpclient/.deps/btpclientctl.Po
+rm -f client/btpclient/.deps/core.Po
+rm -f client/btpclient/.deps/gap.Po
+rm -f client/btpclient/.deps/gatt.Po
+rm -f client/btpclient/.deps/pacs.Po
+rm -f client/btpclient/.deps/vendor.Po
+rm -f ell/.deps/base64.Plo
+rm -f ell/.deps/cert-crypto.Plo
+rm -f ell/.deps/cert.Plo
+rm -f ell/.deps/checksum.Plo
+rm -f ell/.deps/cipher.Plo
+rm -f ell/.deps/dbus-client.Plo
+rm -f ell/.deps/dbus-filter.Plo
+rm -f ell/.deps/dbus-message.Plo
+rm -f ell/.deps/dbus-name-cache.Plo
+rm -f ell/.deps/dbus-service.Plo
+rm -f ell/.deps/dbus-util.Plo
+rm -f ell/.deps/dbus.Plo
+rm -f ell/.deps/ecc-external.Plo
+rm -f ell/.deps/ecc.Plo
+rm -f ell/.deps/ecdh.Plo
+rm -f ell/.deps/gvariant-util.Plo
+rm -f ell/.deps/hashmap.Plo
+rm -f ell/.deps/idle.Plo
+rm -f ell/.deps/io.Plo
+rm -f ell/.deps/key.Plo
+rm -f ell/.deps/log.Plo
+rm -f ell/.deps/main.Plo
+rm -f ell/.deps/pem.Plo
+rm -f ell/.deps/queue.Plo
+rm -f ell/.deps/random.Plo
+rm -f ell/.deps/settings.Plo
+rm -f ell/.deps/signal.Plo
+rm -f ell/.deps/siphash.Plo
+rm -f ell/.deps/string.Plo
+rm -f ell/.deps/strv.Plo
+rm -f ell/.deps/tester.Plo
+rm -f ell/.deps/time.Plo
+rm -f ell/.deps/timeout.Plo
+rm -f ell/.deps/tls-extensions.Plo
+rm -f ell/.deps/tls-record.Plo
+rm -f ell/.deps/tls-suites.Plo
+rm -f ell/.deps/tls.Plo
+rm -f ell/.deps/utf8.Plo
+rm -f ell/.deps/util.Plo
+rm -f ell/.deps/uuid.Plo
+rm -f emulator/.deps/b1ee.Po
+rm -f emulator/.deps/btdev.Po
+rm -f emulator/.deps/bthost.Po
+rm -f emulator/.deps/hciemu.Po
+rm -f emulator/.deps/hfp.Po
+rm -f emulator/.deps/le.Po
+rm -f emulator/.deps/main.Po
+rm -f emulator/.deps/phy.Po
+rm -f emulator/.deps/serial.Po
+rm -f emulator/.deps/server.Po
+rm -f emulator/.deps/smp.Po
+rm -f emulator/.deps/timeout.Po
+rm -f emulator/.deps/timetravel.Po
+rm -f emulator/.deps/ttclient.Po
+rm -f emulator/.deps/vconsole.Po
+rm -f emulator/.deps/vhci.Po
+rm -f emulator/.deps/vhost.Po
+rm -f emulator/.deps/virtio.Po
+rm -f gdbus/.deps/client.Plo
+rm -f gdbus/.deps/mainloop.Plo
+rm -f gdbus/.deps/object.Plo
+rm -f gdbus/.deps/polkit.Plo
+rm -f gdbus/.deps/watch.Plo
+rm -f gobex/.deps/gobex-apparam.Po
+rm -f gobex/.deps/gobex-defs.Po
+rm -f gobex/.deps/gobex-header.Po
+rm -f gobex/.deps/gobex-packet.Po
+rm -f gobex/.deps/gobex-transfer.Po
+rm -f gobex/.deps/gobex.Po
+rm -f gobex/.deps/obexd-gobex-apparam.Po
+rm -f gobex/.deps/obexd-gobex-defs.Po
+rm -f gobex/.deps/obexd-gobex-header.Po
+rm -f gobex/.deps/obexd-gobex-packet.Po
+rm -f gobex/.deps/obexd-gobex-transfer.Po
+rm -f gobex/.deps/obexd-gobex.Po
+rm -f lib/bluetooth/.deps/bluetooth.Plo
+rm -f lib/bluetooth/.deps/hci.Plo
+rm -f lib/bluetooth/.deps/sdp.Plo
+rm -f lib/bluetooth/.deps/uuid.Plo
+rm -f mesh/.deps/agent.Po
+rm -f mesh/.deps/appkey.Po
+rm -f mesh/.deps/cfgmod-server.Po
+rm -f mesh/.deps/crypto.Po
+rm -f mesh/.deps/dbus.Po
+rm -f mesh/.deps/friend.Po
+rm -f mesh/.deps/keyring.Po
+rm -f mesh/.deps/main.Po
+rm -f mesh/.deps/manager.Po
+rm -f mesh/.deps/mesh-config-json.Po
+rm -f mesh/.deps/mesh-io-generic.Po
+rm -f mesh/.deps/mesh-io-mgmt.Po
+rm -f mesh/.deps/mesh-io-unit.Po
+rm -f mesh/.deps/mesh-io.Po
+rm -f mesh/.deps/mesh-mgmt.Po
+rm -f mesh/.deps/mesh.Po
+rm -f mesh/.deps/model.Po
+rm -f mesh/.deps/net-keys.Po
+rm -f mesh/.deps/net.Po
+rm -f mesh/.deps/node.Po
+rm -f mesh/.deps/pb-adv.Po
+rm -f mesh/.deps/prov-acceptor.Po
+rm -f mesh/.deps/prov-initiator.Po
+rm -f mesh/.deps/prvbeac-server.Po
+rm -f mesh/.deps/remprv-server.Po
+rm -f mesh/.deps/rpl.Po
+rm -f mesh/.deps/util.Po
+rm -f monitor/.deps/a2dp.Po
+rm -f monitor/.deps/analyze.Po
+rm -f monitor/.deps/att.Po
+rm -f monitor/.deps/avctp.Po
+rm -f monitor/.deps/avdtp.Po
+rm -f monitor/.deps/bnep.Po
+rm -f monitor/.deps/broadcom.Po
+rm -f monitor/.deps/control.Po
+rm -f monitor/.deps/crc.Po
+rm -f monitor/.deps/display.Po
+rm -f monitor/.deps/ellisys.Po
+rm -f monitor/.deps/find.Po
+rm -f monitor/.deps/hcidump.Po
+rm -f monitor/.deps/hwdb.Po
+rm -f monitor/.deps/intel.Po
+rm -f monitor/.deps/jlink.Po
+rm -f monitor/.deps/keys.Po
+rm -f monitor/.deps/l2cap.Po
+rm -f monitor/.deps/ll.Po
+rm -f monitor/.deps/lmp.Po
+rm -f monitor/.deps/main.Po
+rm -f monitor/.deps/msft.Po
+rm -f monitor/.deps/packet.Po
+rm -f monitor/.deps/rfcomm.Po
+rm -f monitor/.deps/sdp.Po
+rm -f monitor/.deps/vendor.Po
+rm -f obexd/client/.deps/obexd-bip-common.Po
+rm -f obexd/client/.deps/obexd-bip.Po
+rm -f obexd/client/.deps/obexd-bluetooth.Po
+rm -f obexd/client/.deps/obexd-driver.Po
+rm -f obexd/client/.deps/obexd-ftp.Po
+rm -f obexd/client/.deps/obexd-manager.Po
+rm -f obexd/client/.deps/obexd-map-event.Po
+rm -f obexd/client/.deps/obexd-map.Po
+rm -f obexd/client/.deps/obexd-mns.Po
+rm -f obexd/client/.deps/obexd-opp.Po
+rm -f obexd/client/.deps/obexd-pbap.Po
+rm -f obexd/client/.deps/obexd-session.Po
+rm -f obexd/client/.deps/obexd-sync.Po
+rm -f obexd/client/.deps/obexd-transfer.Po
+rm -f obexd/client/.deps/obexd-transport.Po
+rm -f obexd/plugins/.deps/obexd-bluetooth.Po
+rm -f obexd/plugins/.deps/obexd-filesystem.Po
+rm -f obexd/plugins/.deps/obexd-ftp.Po
+rm -f obexd/plugins/.deps/obexd-irmc.Po
+rm -f obexd/plugins/.deps/obexd-mas.Po
+rm -f obexd/plugins/.deps/obexd-messages-dummy.Po
+rm -f obexd/plugins/.deps/obexd-opp.Po
+rm -f obexd/plugins/.deps/obexd-pbap.Po
+rm -f obexd/plugins/.deps/obexd-pcsuite.Po
+rm -f obexd/plugins/.deps/obexd-phonebook-dummy.Po
+rm -f obexd/plugins/.deps/obexd-phonebook.Po
+rm -f obexd/plugins/.deps/obexd-vcard.Po
+rm -f obexd/src/.deps/obexd-log.Po
+rm -f obexd/src/.deps/obexd-logind.Po
+rm -f obexd/src/.deps/obexd-main.Po
+rm -f obexd/src/.deps/obexd-manager.Po
+rm -f obexd/src/.deps/obexd-mimetype.Po
+rm -f obexd/src/.deps/obexd-obex.Po
+rm -f obexd/src/.deps/obexd-plugin.Po
+rm -f obexd/src/.deps/obexd-server.Po
+rm -f obexd/src/.deps/obexd-service.Po
+rm -f obexd/src/.deps/obexd-transport.Po
+rm -f peripheral/.deps/attach.Po
+rm -f peripheral/.deps/efivars.Po
+rm -f peripheral/.deps/gap.Po
+rm -f peripheral/.deps/gatt.Po
+rm -f peripheral/.deps/log.Po
+rm -f peripheral/.deps/main.Po
+rm -f plugins/.deps/bluetoothd-admin.Po
+rm -f plugins/.deps/bluetoothd-autopair.Po
+rm -f plugins/.deps/bluetoothd-hostname.Po
+rm -f plugins/.deps/bluetoothd-neard.Po
+rm -f plugins/.deps/bluetoothd-policy.Po
+rm -f plugins/.deps/bluetoothd-sixaxis.Po
+rm -f profiles/audio/.deps/avrcp-parse.Po
+rm -f profiles/audio/.deps/bluetoothd-a2dp.Po
+rm -f profiles/audio/.deps/bluetoothd-asha.Po
+rm -f profiles/audio/.deps/bluetoothd-avctp.Po
+rm -f profiles/audio/.deps/bluetoothd-avdtp.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp-parse.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp-player.Po
+rm -f profiles/audio/.deps/bluetoothd-avrcp.Po
+rm -f profiles/audio/.deps/bluetoothd-bap.Po
+rm -f profiles/audio/.deps/bluetoothd-bass.Po
+rm -f profiles/audio/.deps/bluetoothd-ccp.Po
+rm -f profiles/audio/.deps/bluetoothd-control.Po
+rm -f profiles/audio/.deps/bluetoothd-csip.Po
+rm -f profiles/audio/.deps/bluetoothd-gmap.Po
+rm -f profiles/audio/.deps/bluetoothd-hfp-hf.Po
+rm -f profiles/audio/.deps/bluetoothd-mcp.Po
+rm -f profiles/audio/.deps/bluetoothd-media.Po
+rm -f profiles/audio/.deps/bluetoothd-micp.Po
+rm -f profiles/audio/.deps/bluetoothd-player.Po
+rm -f profiles/audio/.deps/bluetoothd-sink.Po
+rm -f profiles/audio/.deps/bluetoothd-source.Po
+rm -f profiles/audio/.deps/bluetoothd-telephony.Po
+rm -f profiles/audio/.deps/bluetoothd-tmap.Po
+rm -f profiles/audio/.deps/bluetoothd-transport.Po
+rm -f profiles/audio/.deps/bluetoothd-vcp.Po
+rm -f profiles/audio/.deps/player.Po
+rm -f profiles/battery/.deps/bluetoothd-battery.Po
+rm -f profiles/cups/.deps/hcrp.Po
+rm -f profiles/cups/.deps/main.Po
+rm -f profiles/cups/.deps/sdp.Po
+rm -f profiles/cups/.deps/spp.Po
+rm -f profiles/deviceinfo/.deps/bluetoothd-deviceinfo.Po
+rm -f profiles/fastpair/.deps/bluetoothd-fastpair.Po
+rm -f profiles/fastpair/.deps/bluetoothd-message-stream.Po
+rm -f profiles/fastpair/.deps/message-stream.Po
+rm -f profiles/gap/.deps/bluetoothd-gas.Po
+rm -f profiles/iap/.deps/main.Po
+rm -f profiles/input/.deps/bluetoothd-device.Po
+rm -f profiles/input/.deps/bluetoothd-hog.Po
+rm -f profiles/input/.deps/bluetoothd-manager.Po
+rm -f profiles/input/.deps/bluetoothd-server.Po
+rm -f profiles/input/.deps/bluetoothd-suspend-none.Po
+rm -f profiles/midi/.deps/bluetoothd-libmidi.Po
+rm -f profiles/midi/.deps/bluetoothd-midi.Po
+rm -f profiles/midi/.deps/unit_test_midi-libmidi.Po
+rm -f profiles/network/.deps/bluetoothd-bnep.Po
+rm -f profiles/network/.deps/bluetoothd-connection.Po
+rm -f profiles/network/.deps/bluetoothd-manager.Po
+rm -f profiles/network/.deps/bluetoothd-server.Po
+rm -f profiles/network/.deps/bnep.Po
+rm -f profiles/ranging/.deps/bluetoothd-rap.Po
+rm -f profiles/ranging/.deps/bluetoothd-rap_hci.Po
+rm -f profiles/scanparam/.deps/bluetoothd-scan.Po
+rm -f src/.deps/adapter.Po
+rm -f src/.deps/adv_monitor.Po
+rm -f src/.deps/advertising.Po
+rm -f src/.deps/agent.Po
+rm -f src/.deps/backtrace.Po
+rm -f src/.deps/battery.Po
+rm -f src/.deps/bearer.Po
+rm -f src/.deps/bluetoothd-adapter.Po
+rm -f src/.deps/bluetoothd-adv_monitor.Po
+rm -f src/.deps/bluetoothd-advertising.Po
+rm -f src/.deps/bluetoothd-agent.Po
+rm -f src/.deps/bluetoothd-backtrace.Po
+rm -f src/.deps/bluetoothd-battery.Po
+rm -f src/.deps/bluetoothd-bearer.Po
+rm -f src/.deps/bluetoothd-dbus-common.Po
+rm -f src/.deps/bluetoothd-device.Po
+rm -f src/.deps/bluetoothd-eir.Po
+rm -f src/.deps/bluetoothd-error.Po
+rm -f src/.deps/bluetoothd-gatt-client.Po
+rm -f src/.deps/bluetoothd-gatt-database.Po
+rm -f src/.deps/bluetoothd-log.Po
+rm -f src/.deps/bluetoothd-main.Po
+rm -f src/.deps/bluetoothd-plugin.Po
+rm -f src/.deps/bluetoothd-profile.Po
+rm -f src/.deps/bluetoothd-ranging.Po
+rm -f src/.deps/bluetoothd-rfkill.Po
+rm -f src/.deps/bluetoothd-sdp-client.Po
+rm -f src/.deps/bluetoothd-sdp-xml.Po
+rm -f src/.deps/bluetoothd-sdpd-database.Po
+rm -f src/.deps/bluetoothd-sdpd-request.Po
+rm -f src/.deps/bluetoothd-sdpd-server.Po
+rm -f src/.deps/bluetoothd-sdpd-service.Po
+rm -f src/.deps/bluetoothd-service.Po
+rm -f src/.deps/bluetoothd-set.Po
+rm -f src/.deps/bluetoothd-settings.Po
+rm -f src/.deps/bluetoothd-storage.Po
+rm -f src/.deps/bluetoothd-textfile.Po
+rm -f src/.deps/bluetoothd-uuid-helper.Po
+rm -f src/.deps/dbus-common.Po
+rm -f src/.deps/device.Po
+rm -f src/.deps/eir.Po
+rm -f src/.deps/error.Po
+rm -f src/.deps/gatt-client.Po
+rm -f src/.deps/gatt-database.Po
+rm -f src/.deps/log.Po
+rm -f src/.deps/oui.Po
+rm -f src/.deps/profile.Po
+rm -f src/.deps/ranging.Po
+rm -f src/.deps/rfkill.Po
+rm -f src/.deps/sdp-client.Po
+rm -f src/.deps/sdp-xml.Po
+rm -f src/.deps/sdpd-database.Po
+rm -f src/.deps/sdpd-request.Po
+rm -f src/.deps/sdpd-server.Po
+rm -f src/.deps/sdpd-service.Po
+rm -f src/.deps/service.Po
+rm -f src/.deps/set.Po
+rm -f src/.deps/settings.Po
+rm -f src/.deps/storage.Po
+rm -f src/.deps/textfile.Po
+rm -f src/.deps/unit_test_sdp_xml-log.Po
+rm -f src/.deps/unit_test_sdp_xml-sdp-xml.Po
+rm -f src/.deps/uuid-helper.Po
+rm -f src/shared/.deps/btp.Po
+rm -f src/shared/.deps/libshared_ell_la-ad.Plo
+rm -f src/shared/.deps/libshared_ell_la-asha.Plo
+rm -f src/shared/.deps/libshared_ell_la-att.Plo
+rm -f src/shared/.deps/libshared_ell_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_ell_la-bap.Plo
+rm -f src/shared/.deps/libshared_ell_la-bass.Plo
+rm -f src/shared/.deps/libshared_ell_la-battery.Plo
+rm -f src/shared/.deps/libshared_ell_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_ell_la-ccp.Plo
+rm -f src/shared/.deps/libshared_ell_la-crypto.Plo
+rm -f src/shared/.deps/libshared_ell_la-csip.Plo
+rm -f src/shared/.deps/libshared_ell_la-ecc.Plo
+rm -f src/shared/.deps/libshared_ell_la-gap.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_ell_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_ell_la-gmap.Plo
+rm -f src/shared/.deps/libshared_ell_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_ell_la-hci.Plo
+rm -f src/shared/.deps/libshared_ell_la-hfp.Plo
+rm -f src/shared/.deps/libshared_ell_la-hog.Plo
+rm -f src/shared/.deps/libshared_ell_la-io-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-log.Plo
+rm -f src/shared/.deps/libshared_ell_la-mainloop-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-mcp.Plo
+rm -f src/shared/.deps/libshared_ell_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_ell_la-micp.Plo
+rm -f src/shared/.deps/libshared_ell_la-pcap.Plo
+rm -f src/shared/.deps/libshared_ell_la-queue.Plo
+rm -f src/shared/.deps/libshared_ell_la-rap.Plo
+rm -f src/shared/.deps/libshared_ell_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_ell_la-shell.Plo
+rm -f src/shared/.deps/libshared_ell_la-timeout-ell.Plo
+rm -f src/shared/.deps/libshared_ell_la-tmap.Plo
+rm -f src/shared/.deps/libshared_ell_la-uhid.Plo
+rm -f src/shared/.deps/libshared_ell_la-uinput.Plo
+rm -f src/shared/.deps/libshared_ell_la-util.Plo
+rm -f src/shared/.deps/libshared_ell_la-vcp.Plo
+rm -f src/shared/.deps/libshared_glib_la-ad.Plo
+rm -f src/shared/.deps/libshared_glib_la-asha.Plo
+rm -f src/shared/.deps/libshared_glib_la-att.Plo
+rm -f src/shared/.deps/libshared_glib_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_glib_la-bap.Plo
+rm -f src/shared/.deps/libshared_glib_la-bass.Plo
+rm -f src/shared/.deps/libshared_glib_la-battery.Plo
+rm -f src/shared/.deps/libshared_glib_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_glib_la-ccp.Plo
+rm -f src/shared/.deps/libshared_glib_la-crypto.Plo
+rm -f src/shared/.deps/libshared_glib_la-csip.Plo
+rm -f src/shared/.deps/libshared_glib_la-ecc.Plo
+rm -f src/shared/.deps/libshared_glib_la-gap.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_glib_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_glib_la-gmap.Plo
+rm -f src/shared/.deps/libshared_glib_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_glib_la-hci.Plo
+rm -f src/shared/.deps/libshared_glib_la-hfp.Plo
+rm -f src/shared/.deps/libshared_glib_la-hog.Plo
+rm -f src/shared/.deps/libshared_glib_la-io-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-log.Plo
+rm -f src/shared/.deps/libshared_glib_la-mainloop-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-mainloop-notify.Plo
+rm -f src/shared/.deps/libshared_glib_la-mcp.Plo
+rm -f src/shared/.deps/libshared_glib_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_glib_la-micp.Plo
+rm -f src/shared/.deps/libshared_glib_la-pcap.Plo
+rm -f src/shared/.deps/libshared_glib_la-queue.Plo
+rm -f src/shared/.deps/libshared_glib_la-rap.Plo
+rm -f src/shared/.deps/libshared_glib_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_glib_la-shell.Plo
+rm -f src/shared/.deps/libshared_glib_la-tester.Plo
+rm -f src/shared/.deps/libshared_glib_la-timeout-glib.Plo
+rm -f src/shared/.deps/libshared_glib_la-tmap.Plo
+rm -f src/shared/.deps/libshared_glib_la-uhid.Plo
+rm -f src/shared/.deps/libshared_glib_la-uinput.Plo
+rm -f src/shared/.deps/libshared_glib_la-util.Plo
+rm -f src/shared/.deps/libshared_glib_la-vcp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ad.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-asha.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-att.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bap-debug.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-bass.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-battery.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-btsnoop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ccp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-crypto.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-csip.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ecc.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-client.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-db.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-helpers.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gatt-server.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-gmap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hci-crypto.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hci.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hfp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-hog.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-io-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-log.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mainloop-notify.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mcp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-mgmt.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-micp.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-pcap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-queue.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-rap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-ringbuf.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-shell.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-tester.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-timeout-mainloop.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-tmap.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-uhid.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-uinput.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-util.Plo
+rm -f src/shared/.deps/libshared_mainloop_la-vcp.Plo
+rm -f src/shared/.deps/queue.Po
+rm -f src/shared/.deps/util.Po
+rm -f tools/.deps/3dsp.Po
+rm -f tools/.deps/6lowpan-tester.Po
+rm -f tools/.deps/advtest.Po
+rm -f tools/.deps/avinfo.Po
+rm -f tools/.deps/avtest.Po
+rm -f tools/.deps/bcmfw.Po
+rm -f tools/.deps/bdaddr.Po
+rm -f tools/.deps/bluemoon.Po
+rm -f tools/.deps/bluetooth-player.Po
+rm -f tools/.deps/bnep-tester.Po
+rm -f tools/.deps/bneptest.Po
+rm -f tools/.deps/btattach.Po
+rm -f tools/.deps/btconfig.Po
+rm -f tools/.deps/btgatt-client.Po
+rm -f tools/.deps/btgatt-server.Po
+rm -f tools/.deps/btinfo.Po
+rm -f tools/.deps/btiotest.Po
+rm -f tools/.deps/btmgmt.Po
+rm -f tools/.deps/btmon-logger.Po
+rm -f tools/.deps/btproxy.Po
+rm -f tools/.deps/btsnoop.Po
+rm -f tools/.deps/check-selftest.Po
+rm -f tools/.deps/ciptool.Po
+rm -f tools/.deps/cltest.Po
+rm -f tools/.deps/create-image.Po
+rm -f tools/.deps/eddystone.Po
+rm -f tools/.deps/gap-tester.Po
+rm -f tools/.deps/gatt-service.Po
+rm -f tools/.deps/hci-tester.Po
+rm -f tools/.deps/hciattach.Po
+rm -f tools/.deps/hciattach_ath3k.Po
+rm -f tools/.deps/hciattach_bcm43xx.Po
+rm -f tools/.deps/hciattach_intel.Po
+rm -f tools/.deps/hciattach_qualcomm.Po
+rm -f tools/.deps/hciattach_st.Po
+rm -f tools/.deps/hciattach_ti.Po
+rm -f tools/.deps/hciattach_tialt.Po
+rm -f tools/.deps/hciconfig.Po
+rm -f tools/.deps/hcieventmask.Po
+rm -f tools/.deps/hcisecfilter.Po
+rm -f tools/.deps/hcitool.Po
+rm -f tools/.deps/hex2hcd.Po
+rm -f tools/.deps/hid2hci.Po
+rm -f tools/.deps/hwdb.Po
+rm -f tools/.deps/ibeacon.Po
+rm -f tools/.deps/ioctl-tester.Po
+rm -f tools/.deps/iso-tester.Po
+rm -f tools/.deps/isotest.Po
+rm -f tools/.deps/l2cap-tester.Po
+rm -f tools/.deps/l2ping.Po
+rm -f tools/.deps/l2test.Po
+rm -f tools/.deps/mesh-cfgclient.Po
+rm -f tools/.deps/mesh-cfgtest.Po
+rm -f tools/.deps/mesh-tester.Po
+rm -f tools/.deps/meshctl.Po
+rm -f tools/.deps/mgmt-tester.Po
+rm -f tools/.deps/mpris-proxy.Po
+rm -f tools/.deps/nokfw.Po
+rm -f tools/.deps/obex-client-tool.Po
+rm -f tools/.deps/obex-server-tool.Po
+rm -f tools/.deps/obexctl.Po
+rm -f tools/.deps/oobtest.Po
+rm -f tools/.deps/rctest.Po
+rm -f tools/.deps/rfcomm-tester.Po
+rm -f tools/.deps/rfcomm.Po
+rm -f tools/.deps/rtlfw.Po
+rm -f tools/.deps/sco-tester.Po
+rm -f tools/.deps/scotest.Po
+rm -f tools/.deps/sdptool.Po
+rm -f tools/.deps/seq2bseq.Po
+rm -f tools/.deps/smp-tester.Po
+rm -f tools/.deps/test_runner-test-runner.Po
+rm -f tools/.deps/tester-io.Po
+rm -f tools/.deps/userchan-tester.Po
+rm -f tools/mesh-gatt/.deps/config-client.Po
+rm -f tools/mesh-gatt/.deps/config-server.Po
+rm -f tools/mesh-gatt/.deps/crypto.Po
+rm -f tools/mesh-gatt/.deps/gatt.Po
+rm -f tools/mesh-gatt/.deps/net.Po
+rm -f tools/mesh-gatt/.deps/node.Po
+rm -f tools/mesh-gatt/.deps/onoff-model.Po
+rm -f tools/mesh-gatt/.deps/prov-db.Po
+rm -f tools/mesh-gatt/.deps/prov.Po
+rm -f tools/mesh-gatt/.deps/util.Po
+rm -f tools/mesh/.deps/agent.Po
+rm -f tools/mesh/.deps/cfgcli.Po
+rm -f tools/mesh/.deps/keys.Po
+rm -f tools/mesh/.deps/mesh-db.Po
+rm -f tools/mesh/.deps/remote.Po
+rm -f tools/mesh/.deps/util.Po
+rm -f unit/.deps/avctp.Po
+rm -f unit/.deps/avdtp.Po
+rm -f unit/.deps/avrcp-lib.Po
+rm -f unit/.deps/btd.Po
+rm -f unit/.deps/test-avctp.Po
+rm -f unit/.deps/test-avdtp.Po
+rm -f unit/.deps/test-avrcp.Po
+rm -f unit/.deps/test-bap.Po
+rm -f unit/.deps/test-bass.Po
+rm -f unit/.deps/test-battery.Po
+rm -f unit/.deps/test-crc.Po
+rm -f unit/.deps/test-crypto.Po
+rm -f unit/.deps/test-ecc.Po
+rm -f unit/.deps/test-eir.Po
+rm -f unit/.deps/test-fastpair.Po
+rm -f unit/.deps/test-gatt.Po
+rm -f unit/.deps/test-gdbus-client.Po
+rm -f unit/.deps/test-gmap.Po
+rm -f unit/.deps/test-gobex-apparam.Po
+rm -f unit/.deps/test-gobex-header.Po
+rm -f unit/.deps/test-gobex-packet.Po
+rm -f unit/.deps/test-gobex-transfer.Po
+rm -f unit/.deps/test-gobex.Po
+rm -f unit/.deps/test-hfp.Po
+rm -f unit/.deps/test-hog.Po
+rm -f unit/.deps/test-lib.Po
+rm -f unit/.deps/test-mainloop.Po
+rm -f unit/.deps/test-mcp.Po
+rm -f unit/.deps/test-media-player.Po
+rm -f unit/.deps/test-mgmt.Po
+rm -f unit/.deps/test-micp.Po
+rm -f unit/.deps/test-profile.Po
+rm -f unit/.deps/test-queue.Po
+rm -f unit/.deps/test-rap.Po
+rm -f unit/.deps/test-ringbuf.Po
+rm -f unit/.deps/test-sdp.Po
+rm -f unit/.deps/test-tester.Po
+rm -f unit/.deps/test-textfile.Po
+rm -f unit/.deps/test-tmap.Po
+rm -f unit/.deps/test-uhid.Po
+rm -f unit/.deps/test-util.Po
+rm -f unit/.deps/test-uuid.Po
+rm -f unit/.deps/test-vcp.Po
+rm -f unit/.deps/test_mesh_crypto-test-mesh-crypto.Po
+rm -f unit/.deps/test_midi-test-midi.Po
+rm -f unit/.deps/test_sdp_xml-test-sdp-xml.Po
+rm -f unit/.deps/util.Po
+rm -f Makefile
+#ci RET: 0
+#ci ------------- CMD_RUN END (6.45 s) -------------
+#ci ## verdict: IncrementalBuild PASS

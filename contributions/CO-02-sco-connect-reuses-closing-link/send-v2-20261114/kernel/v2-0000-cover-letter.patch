@@ -1,0 +1,86 @@
+From 50d609ebbe5cf920c3283cdc90b7829899c53aa1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 08:43:12 +0100
+Subject: [PATCH v2 0/3] Bluetooth: hci_conn: fix SCO connection reuse
+
+An HFP codec change can leave a headset silent. PipeWire closes its
+SCO socket and connects another one to the same headset at once.
+hci_connect_sco() hands the new socket the connection that is being
+disconnected, so connect() reports success although no setup command
+is sent, and the new socket is closed with ECONNABORTED when the old
+link's Disconnection Complete arrives.
+
+Patch 1 corrects hold ownership when a SCO connection whose link is
+up is reused: the second connect() correctly returns EBUSY, but also
+drops the first socket's hold and disconnects its working link.
+
+Patch 2 refuses a connection that is being disconnected with
+-ECONNABORTED, and waits for a disconnect worker that is already
+running before it reuses a connection.
+
+Patch 3 keeps the parameters of a link that is set up or being set
+up: a second connect() asking for another voice setting or codec no
+longer changes what the first socket's setup carries, and a closed
+socket's link is not reused for other parameters.
+
+Testing: bluetooth-next da3cc02587c6, QEMU, 4 CPUs, KASAN and
+lockdep, BlueZ master 20ffd285b58f with the sco-tester patches
+posted separately:
+
+  sco-tester, 35 cases   without the series 31 passed, with patches
+                         1 and 2 33, with all three 35 (3 runs each)
+  mgmt-tester (526), iso-tester (213): all pass with and without
+                         the series (1 run each)
+  l2cap-tester (144): all cases pass in 96 of 96 runs with 3 GB
+                         guests (32 each without the series, with
+                         patches 1 and 2, and with all three). With
+                         256 MB guests 2 of 27 runs with all three
+                         stalled in an LE Server HDT case, none of
+                         27 without; not reproduced since, and SCO
+                         connect() is not reachable from that test
+
+The cases that fail without the series are "Reconnect During
+Disconnect" and "Connect Twice" (patches 1 and 2) and "Connect Twice
+Other Voice Setting" and "... Retry" (patch 3). The race patch 2
+closes was reproduced with a debug-only change that parks
+hci_conn_timeout() after it has seen no holder: without the wait in
+patch 2, the second socket is reported connected and then closed with
+ECONNABORTED; with it, connect() fails with -ECONNABORTED, for a link
+set up by the host and for one set up by the remote device.
+
+On the QCA9377 laptop where the bug was found (PipeWire 1.0.5, three
+headsets, v1 of patches 1 and 2 on Ubuntu 7.0.0-38), three codec
+changes on earbuds that reply before the old link's Disconnection
+Complete returned ECONNABORTED instead of a socket connected without
+a link, and eight codec changes on two other headsets all got a new
+link. A second connect() during a call returned EBUSY and the call's
+link and voice data were not interrupted. Patch 3 was not run there.
+
+PipeWire retries ECONNABORTED at once, while the old link is still
+going down, so a codec change is still not seamless: audio returned
+about five seconds later. A prototype that defers the new connect()
+until the old link is gone exists; it changes connect() semantics, so
+I can post it as an RFC.
+
+For stable, patch 1 applies alone on 6.6.y and 6.12.y; patch 2 is for
+trees with e6720779ae61 (6.18.y and 7.2.y).
+
+Changes in v2 (v1: https://lore.kernel.org/linux-bluetooth/20261027165009.2401154-1-yaroslav.voytovych@gmail.com/):
+- v1 patches 2 and 3 are one patch, so that no commit leaves the
+  race open; its second abort_reason check uses READ_ONCE().
+- Patch 3 is new.
+- Rebased on bluetooth-next da3cc02587c6.
+
+Iaroslav Voitovych (3):
+  Bluetooth: hci_conn: hold a reused SCO connection for its caller
+  Bluetooth: hci_conn: don't reuse an aborting SCO connection
+  Bluetooth: hci_conn: don't change the parameters of a SCO link in use
+
+ net/bluetooth/hci_conn.c | 49 ++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 45 insertions(+), 4 deletions(-)
+
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

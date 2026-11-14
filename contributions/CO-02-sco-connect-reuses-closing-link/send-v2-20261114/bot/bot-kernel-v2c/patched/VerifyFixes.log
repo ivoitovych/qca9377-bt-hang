@@ -1,0 +1,16 @@
+#ci ## CI: VerifyFixes
+#ci CI: VerifyFixes: Run
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['/scripts/verify_fixes.sh', 'origin/master..HEAD^2']
+#ci PROC args: ['/scripts/verify_fixes.sh', 'origin/master..HEAD^2']
+Commit: bc23c06d305 ("Bluetooth: hci_conn: don't change the parameters of a SCO link in use")
+	Fixes tag: Fixes: 10c62ddc6f03 ("Bluetooth: Parameters for outgoing SCO connections")
+	Has these problem(s):
+		- Target SHA1 does not exist
+#ci RET: 1
+#ci STDERR:
+#ci ------------- CMD_RUN END (15.85 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci Test Ended(Failure): VerifyFixes:FAIL
+#ci CI: VerifyFixes: Post Run...
+#ci ## verdict: VerifyFixes FAIL

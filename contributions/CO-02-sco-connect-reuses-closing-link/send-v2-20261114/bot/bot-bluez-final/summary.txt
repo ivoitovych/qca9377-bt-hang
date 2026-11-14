@@ -1,0 +1,22 @@
+2026-11-14 05:03:49 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 05:03:49 space user; base 20ffd285b58facfd1f2478d159a5f941b09d5be1 (shared/gatt-client: Track pending discovery Database Hash reads); ELL 002b32d7c091993c5036956bf92d2444aca1c799; kernel image tmp/bzImage-p123
+2026-11-14 05:03:49 mail tmp/mails/bluez-final/v2-0001-tools-sco-tester-Add-SCO-reconnect-tests.patch
+2026-11-14 05:03:49 mail tmp/mails/bluez-final/v2-0002-tools-sco-tester-Add-connect-twice-with-other-voi.patch
+2026-11-14 05:03:50 patched: start
+2026-11-14 05:42:52 patched: done, 1 test(s) not PASS
+Test Summary:
+CheckPatch                    PASS      2.95 seconds
+GitLint                       PASS      0.79 seconds
+BuildEll                      PASS      74.01 seconds
+BluezMake                     PASS      686.31 seconds
+CheckSmatch                   WARNING   812.38 seconds
+IncrementalBuild              PASS      755.12 seconds
+
+Details
+##############################
+Test: CheckSmatch - WARNING
+Desc: Run smatch tool with source
+Output:
+tools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structurestools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structures
+2026-11-14 05:42:52 NOT CLEAN: patched: 1 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 05:42:52 ALL DONE, exit 1

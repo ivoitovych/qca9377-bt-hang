@@ -29,6 +29,7 @@ C22R = "contributions/research-2026-11-01/qca-ids/refresh-20261114"
 C21 = "contributions/CO-21-btusb-sco-alt-setting/send-20261114"
 C20 = "contributions/CO-20-sco-unknown-handle-messages/send-20261114"
 C43S = "contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114"
+C02 = "contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114"
 
 SECTIONS = [
     ("1. CO-44 — MGMT: a timed-out command reported as Authentication Failed", """
@@ -294,6 +295,39 @@ linux-usb is drafted); B2's handling of the command credit.
         (f"{C43S}/0003-Bluetooth-btusb-Recover-after-a-runtime-reset-resume.patch", "diff"),
         (f"{C43S}/0004-Bluetooth-btusb-Drop-deferred-URBs-under-txlock-on-a.patch", "diff"),
         (f"{C43S}/0005-Bluetooth-btusb-Free-the-skb-of-a-deferred-URB-that-.patch", "diff"),
+    ]),
+    ("12. CO-02 v2 — a new SCO connect reuses a closing link", """
+**The defect.** `hci_connect_sco()` reuses an existing SCO connection to the same peer. When that
+link is being torn down (aborting, or its disconnect already sent), a new `connect()` can take it
+over: the new socket then sees the old link's disconnection, or is handed a link with the other
+socket's voice settings. v1 went to the list on 2026-10-27 (no human reply yet). An automated
+reviewer found that v1's patch 2 alone left the race patch 3 closed; v2 folds them, so no commit
+leaves it open, and adds a third patch.
+
+**v2** (bluetooth-next `da3cc02587c6`): 1. hold a reused SCO connection for its caller (unchanged,
+`Cc: stable`); 2. don't reuse an aborting SCO connection (v1's 2 and 3 folded; `Fixes:
+e6720779ae61`, `Cc: stable`); 3. new, don't change the parameters of a SCO link in use: -EBUSY while
+a socket holds the link, -ECONNABORTED only when nothing does, comparing setting and codec, also
+for a setup still in flight (`Fixes: 10c62ddc6f03`, no `Cc: stable`). The BlueZ sco-tester cases
+(ported to today's tester, two new for patch 3) are a separate BlueZ series.
+
+**Tested** (QEMU, 4 CPUs, KASAN and lockdep): sco-tester 35 cases, 3 runs each: unpatched 31,
+patches 1+2 33, all three 35; only the new cases change. The race v2 closes, with a debug-only
+delay: before the fold the second socket connects and is then closed (3 of 3), with it `connect()`
+returns -ECONNABORTED (3 of 3). mgmt-tester and iso-tester all pass. l2cap-tester stalled in 2 of 27
+runs with all three patches in 256 MB guests (0 of 27 unpatched; the guest's OOM killer was active);
+with 3 GB guests 32 of 32 pass on each kernel, and the changed function is reachable only from a
+SCO socket's `connect()`, which l2cap-tester never makes. The bot's checks: identical to base but
+for the Signed-off-by checks.
+
+**Questions for you.** Three kernel patches or two (patch 3 is separable); `Cc: stable` on patch 3;
+whether -EBUSY vs -ECONNABORTED is the right split for user space (PipeWire retries on the latter).
+""", [
+        (f"{C02}/kernel/v2-0000-cover-letter.patch", "diff"),
+        (f"{C02}/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch", "diff"),
+        (f"{C02}/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch", "diff"),
+        (f"{C02}/kernel/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch", "diff"),
+        (f"{C02}/CHECKS.md", "markdown"),
     ]),
 ]
 

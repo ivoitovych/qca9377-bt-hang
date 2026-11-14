@@ -57,10 +57,10 @@ Each item says which of these it had, and where the logs are in the repository.
 | 9 | CO-21: btusb picks alternate setting 0 while a SCO link is up (added 2026-11-14) | bluetooth-next | 2 + cover letter |
 | 10 | CO-20: btusb logs the data of a just-closed SCO link as corruption (added 2026-11-14) | bluetooth-next | 2 + cover letter |
 | 11 | CO-43, the rest: btusb when a resume fails (for review; not yet to send) | bluetooth-next, on top of item 2 | 4 shown + cover letter |
+| 12 | CO-02 v2: a new SCO connect reuses a closing link (v1 on the list since 2026-10-27) | bluetooth-next | 3 + cover letter |
 
-Items 1 to 10 are ready to send. Item 11 is complete and tested in emulation, but one of its
-paths can only be argued from the source, so it is here for review before anyone sends it.
+Items 1 to 10 and 12 are ready to send. Item 11 is complete and tested in emulation, but one of
+its paths can only be argued from the source, so it is here for review before anyone sends it.
 
-**Not included:** CO-02's SCO series is already on the list (2026-10-27); its v2 is built and one
-test result is still being explained. CO-12's advertising-duration clamp waits on a design
-decision and on another author's overlapping patch.
+**Not included:** CO-12's advertising-duration clamp waits on a design decision and on another
+author's overlapping patch.

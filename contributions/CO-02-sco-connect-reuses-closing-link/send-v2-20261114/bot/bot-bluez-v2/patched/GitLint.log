@@ -1,0 +1,29 @@
+#ci ## CI: GitLint
+#ci CI: GitLint: Run
+#ci CI: GitLint: Patch ID: 1001
+#ci CI: GitLint: Patch msg: /root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1001.msg
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['gitlint', '-C', '/gitlint', '--msg-filename', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1001.msg']
+#ci PROC args: ['gitlint', '-C', '/gitlint', '--msg-filename', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1001.msg']
+#ci RET: 2
+#ci STDERR:
+38: B2 Line has trailing whitespace: "    "
+44: B2 Line has trailing whitespace: "    "
+#ci ------------- CMD_RUN END (0.34 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci CI: GitLint: Test result FAIL
+#ci CI: GitLint: Patch ID: 1002
+#ci CI: GitLint: Patch msg: /root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1002.msg
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['gitlint', '-C', '/gitlint', '--msg-filename', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1002.msg']
+#ci PROC args: ['gitlint', '-C', '/gitlint', '--msg-filename', '/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1002.msg']
+#ci RET: 1
+#ci STDERR:
+1: T1 Title exceeds max length (85>80): "[BlueZ,v2,2/2] tools/sco-tester: Add SCO connect twice with other voice setting tests"
+#ci ------------- CMD_RUN END (0.35 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci CI: GitLint: Test result FAIL
+#ci CI: GitLint: Test Verdict: FAIL
+#ci Test Ended(Failure): GitLint:FAIL
+#ci CI: GitLint: Post Run...
+#ci ## verdict: GitLint FAIL

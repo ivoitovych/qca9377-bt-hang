@@ -1,0 +1,170 @@
+2026-11-14 02:52:23 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 02:52:23 space kernel; base da3cc02587c629420603df4395179ec82955c941 (Bluetooth: hci_vhci: Report write readiness with queued input); BlueZ 20ffd285b58facfd1f2478d159a5f941b09d5be1; ELL 002b32d7c091993c5036956bf92d2444aca1c799
+2026-11-14 02:52:23 mail tmp/mails/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch
+2026-11-14 02:52:23 mail tmp/mails/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch
+2026-11-14 02:52:23 mail tmp/mails/kernel/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch
+2026-11-14 02:52:23 patched: blobless clone of bluetooth-next since 2023-01-01
+2026-11-14 02:59:28 patched: start
+2026-11-14 03:49:57 patched: done, 4 test(s) not PASS
+Test Summary:
+CheckPatch                    FAIL      3025.73 seconds
+VerifyFixes                   FAIL      3021.59 seconds
+VerifySignedoff               FAIL      3005.74 seconds
+GitLint                       FAIL      3005.33 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      96.46 seconds
+CheckAllWarning               PASS      93.07 seconds
+CheckSparse                   PASS      90.53 seconds
+BuildKernel32                 PASS      79.11 seconds
+CheckKernelLLVM               PASS      79.59 seconds
+TestRunnerSetup               PASS      2121.87 seconds
+TestRunner_l2cap-tester       PASS      27.36 seconds
+TestRunner_iso-tester         PASS      31.09 seconds
+TestRunner_bnep-tester        PASS      5.08 seconds
+TestRunner_mgmt-tester        PASS      129.45 seconds
+TestRunner_rfcomm-tester      PASS      7.18 seconds
+TestRunner_sco-tester         PASS      9.53 seconds
+TestRunner_ioctl-tester       PASS      7.74 seconds
+TestRunner_mesh-tester        PASS      8.03 seconds
+TestRunner_smp-tester         PASS      6.47 seconds
+TestRunner_userchan-tester    PASS      5.09 seconds
+TestRunner_6lowpan-tester     PASS      7.30 seconds
+IncrementalBuild              PASS      115.96 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+[v2,1/3] Bluetooth: hci_conn: hold a reused SCO connection for its caller
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 0 checks, 24 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-kernel-v2c/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+[v2,2/3] Bluetooth: hci_conn: don't reuse an aborting SCO connection
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 0 checks, 39 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-kernel-v2c/work/patched/patch/1002.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+[v2,3/3] Bluetooth: hci_conn: don't change the parameters of a SCO link in use
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 0 checks, 19 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-kernel-v2c/work/patched/patch/1003.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifyFixes - FAIL
+Desc: Verify Fixes tag format and validity
+Output:
+Commit: bc23c06d305 ("Bluetooth: hci_conn: don't change the parameters of a SCO link in use")
+	Fixes tag: Fixes: 10c62ddc6f03 ("Bluetooth: Parameters for outgoing SCO connections")
+	Has these problem(s):
+		- Target SHA1 does not exist
+
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit bc23c06d3056 ("Bluetooth: hci_conn: don't change the parameters of a SCO link in use")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Commit 767c76bcca05 ("Bluetooth: hci_conn: don't reuse an aborting SCO connection")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Commit 64129b5b2ef3 ("Bluetooth: hci_conn: hold a reused SCO connection for its caller")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[v2,1/3] Bluetooth: hci_conn: hold a reused SCO connection for its caller
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+[v2,2/3] Bluetooth: hci_conn: don't reuse an aborting SCO connection
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+[v2,3/3] Bluetooth: hci_conn: don't change the parameters of a SCO link in use
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+2026-11-14 03:50:57 base: start
+2026-11-14 04:36:16 base: done, 0 test(s) not PASS
+Test Summary:
+BuildKernel                   PASS      86.12 seconds
+CheckAllWarning               PASS      109.76 seconds
+CheckSparse                   PASS      126.45 seconds
+BuildKernel32                 PASS      99.49 seconds
+CheckKernelLLVM               PASS      102.61 seconds
+TestRunnerSetup               PASS      1832.87 seconds
+TestRunner_l2cap-tester       PASS      26.85 seconds
+TestRunner_iso-tester         PASS      33.80 seconds
+TestRunner_bnep-tester        PASS      4.65 seconds
+TestRunner_mgmt-tester        PASS      128.75 seconds
+TestRunner_rfcomm-tester      PASS      6.74 seconds
+TestRunner_sco-tester         PASS      9.41 seconds
+TestRunner_ioctl-tester       PASS      7.83 seconds
+TestRunner_mesh-tester        PASS      7.86 seconds
+TestRunner_smp-tester         PASS      8.79 seconds
+TestRunner_userchan-tester    PASS      4.96 seconds
+TestRunner_6lowpan-tester     PASS      6.78 seconds
+
+2026-11-14 04:36:16 TestRunner_6lowpan-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:16 TestRunner_bnep-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:16 TestRunner_ioctl-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:16 TestRunner_iso-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:16 TestRunner_l2cap-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:16 TestRunner_mesh-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:17 TestRunner_mgmt-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:17 TestRunner_rfcomm-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:17 TestRunner_sco-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:17 TestRunner_smp-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:17 TestRunner_userchan-tester: not-passed sets identical: True (A 0, B 0)
+2026-11-14 04:36:19 kernel-report-scan exit 0 (kernel-report-scan.txt)
+2026-11-14 04:36:19 NOT CLEAN: patched: 4 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 04:36:19 ALL DONE, exit 1

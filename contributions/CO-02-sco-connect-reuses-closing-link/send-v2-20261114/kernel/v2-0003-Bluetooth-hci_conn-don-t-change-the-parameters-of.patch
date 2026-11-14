@@ -1,0 +1,71 @@
+From 50d609ebbe5cf920c3283cdc90b7829899c53aa1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:30 +0100
+Subject: [PATCH v2 3/3] Bluetooth: hci_conn: don't change the parameters of a
+ SCO link in use
+
+hci_connect_sco() looks up an existing SCO connection by type and
+address and stores the requested voice setting and codec into it,
+but sends a setup command only when it is BT_OPEN or BT_CLOSED. For
+any other connection the stored values are not used for that
+connect, and for one whose setup has not been sent yet, or is sent
+again after an error, they replace what the first socket asked for:
+the second connect() fails with EBUSY from sco_chan_add(), yet the
+first socket's link is set up with the second socket's voice
+setting.
+
+The same happens after a socket is closed: a socket asking for
+BT_VOICE_TRANSPARENT that connects before the disconnect work of
+the closed socket's CVSD link has run is reported connected on that
+CVSD link, and no setup command is sent.
+
+Fail a connect whose voice setting, codec id or data path differ
+from those of a connection that is being set up or is up, before a
+hold is taken:
+
+- with -EBUSY while a socket holds the connection, as
+  sco_chan_add() would for the second socket, but without changing
+  the first socket's parameters;
+- with -ECONNABORTED when nothing holds it, which is the link of a
+  closed socket. Its pending disconnect goes ahead, and the caller
+  can connect again for a link set up with its own parameters.
+
+A link set up by the remote device has no stored parameters from a
+local connect, so with no holder it is refused once as well.
+
+Fixes: 10c62ddc6f03 ("Bluetooth: Parameters for outgoing SCO connections")
+---
+
+Notes:
+    v2: new.
+
+ net/bluetooth/hci_conn.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 2918b2296..e13069f8c 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1915,6 +1915,19 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		 */
+ 		hci_conn_drop(acl);
+ 		return ERR_PTR(-ECONNABORTED);
++	} else if ((sco->setting != setting || sco->codec.id != codec->id ||
++		    sco->codec.data_path != codec->data_path) &&
++		   (atomic_read(&sco->refcnt) || sco->state == BT_CONNECT ||
++		    sco->state == BT_CONNECTED)) {
++		/* The connection was or is being set up with other parameters
++		 * and no setup is sent for it here. While a socket holds it,
++		 * sco_chan_add() would fail the new one with EBUSY anyway; with
++		 * no holder it belongs to a closed socket, so leave its
++		 * disconnect to go ahead and let the caller connect again.
++		 */
++		hci_conn_drop(acl);
++		return ERR_PTR(atomic_read(&sco->refcnt) ? -EBUSY :
++			       -ECONNABORTED);
+ 	}
+ 
+ 	if (sco->link) {
+-- 
+2.43.0
+

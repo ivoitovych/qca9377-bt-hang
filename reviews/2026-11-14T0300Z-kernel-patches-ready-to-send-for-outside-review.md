@@ -57,13 +57,13 @@ Each item says which of these it had, and where the logs are in the repository.
 | 9 | CO-21: btusb picks alternate setting 0 while a SCO link is up (added 2026-11-14) | bluetooth-next | 2 + cover letter |
 | 10 | CO-20: btusb logs the data of a just-closed SCO link as corruption (added 2026-11-14) | bluetooth-next | 2 + cover letter |
 | 11 | CO-43, the rest: btusb when a resume fails (for review; not yet to send) | bluetooth-next, on top of item 2 | 4 shown + cover letter |
+| 12 | CO-02 v2: a new SCO connect reuses a closing link (v1 on the list since 2026-10-27) | bluetooth-next | 3 + cover letter |
 
-Items 1 to 10 are ready to send. Item 11 is complete and tested in emulation, but one of its
-paths can only be argued from the source, so it is here for review before anyone sends it.
+Items 1 to 10 and 12 are ready to send. Item 11 is complete and tested in emulation, but one of
+its paths can only be argued from the source, so it is here for review before anyone sends it.
 
-**Not included:** CO-02's SCO series is already on the list (2026-10-27); its v2 is built and one
-test result is still being explained. CO-12's advertising-duration clamp waits on a design
-decision and on another author's overlapping patch.
+**Not included:** CO-12's advertising-duration clamp waits on a design decision and on another
+author's overlapping patch.
 
 ---
 
@@ -5479,6 +5479,619 @@ index 3ae266821cca9..f8843ea96faf0 100644
 -- 
 2.43.0
 
+```
+
+---
+
+## 12. CO-02 v2 — a new SCO connect reuses a closing link
+
+**The defect.** `hci_connect_sco()` reuses an existing SCO connection to the same peer. When that
+link is being torn down (aborting, or its disconnect already sent), a new `connect()` can take it
+over: the new socket then sees the old link's disconnection, or is handed a link with the other
+socket's voice settings. v1 went to the list on 2026-10-27 (no human reply yet). An automated
+reviewer found that v1's patch 2 alone left the race patch 3 closed; v2 folds them, so no commit
+leaves it open, and adds a third patch.
+
+**v2** (bluetooth-next `da3cc02587c6`): 1. hold a reused SCO connection for its caller (unchanged,
+`Cc: stable`); 2. don't reuse an aborting SCO connection (v1's 2 and 3 folded; `Fixes:
+e6720779ae61`, `Cc: stable`); 3. new, don't change the parameters of a SCO link in use: -EBUSY while
+a socket holds the link, -ECONNABORTED only when nothing does, comparing setting and codec, also
+for a setup still in flight (`Fixes: 10c62ddc6f03`, no `Cc: stable`). The BlueZ sco-tester cases
+(ported to today's tester, two new for patch 3) are a separate BlueZ series.
+
+**Tested** (QEMU, 4 CPUs, KASAN and lockdep): sco-tester 35 cases, 3 runs each: unpatched 31,
+patches 1+2 33, all three 35; only the new cases change. The race v2 closes, with a debug-only
+delay: before the fold the second socket connects and is then closed (3 of 3), with it `connect()`
+returns -ECONNABORTED (3 of 3). mgmt-tester and iso-tester all pass. l2cap-tester stalled in 2 of 27
+runs with all three patches in 256 MB guests (0 of 27 unpatched; the guest's OOM killer was active);
+with 3 GB guests 32 of 32 pass on each kernel, and the changed function is reachable only from a
+SCO socket's `connect()`, which l2cap-tester never makes. The bot's checks: identical to base but
+for the Signed-off-by checks.
+
+**Questions for you.** Three kernel patches or two (patch 3 is separable); `Cc: stable` on patch 3;
+whether -EBUSY vs -ECONNABORTED is the right split for user space (PipeWire retries on the latter).
+
+**`contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114/kernel/v2-0000-cover-letter.patch`** (SHA-256 `965200f2640fcb356a25e2be29f0c1b43f02152ed50c9798f03515db68edea78`)
+
+```diff
+From 50d609ebbe5cf920c3283cdc90b7829899c53aa1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 08:43:12 +0100
+Subject: [PATCH v2 0/3] Bluetooth: hci_conn: fix SCO connection reuse
+
+An HFP codec change can leave a headset silent. PipeWire closes its
+SCO socket and connects another one to the same headset at once.
+hci_connect_sco() hands the new socket the connection that is being
+disconnected, so connect() reports success although no setup command
+is sent, and the new socket is closed with ECONNABORTED when the old
+link's Disconnection Complete arrives.
+
+Patch 1 corrects hold ownership when a SCO connection whose link is
+up is reused: the second connect() correctly returns EBUSY, but also
+drops the first socket's hold and disconnects its working link.
+
+Patch 2 refuses a connection that is being disconnected with
+-ECONNABORTED, and waits for a disconnect worker that is already
+running before it reuses a connection.
+
+Patch 3 keeps the parameters of a link that is set up or being set
+up: a second connect() asking for another voice setting or codec no
+longer changes what the first socket's setup carries, and a closed
+socket's link is not reused for other parameters.
+
+Testing: bluetooth-next da3cc02587c6, QEMU, 4 CPUs, KASAN and
+lockdep, BlueZ master 20ffd285b58f with the sco-tester patches
+posted separately:
+
+  sco-tester, 35 cases   without the series 31 passed, with patches
+                         1 and 2 33, with all three 35 (3 runs each)
+  mgmt-tester (526), iso-tester (213): all pass with and without
+                         the series (1 run each)
+  l2cap-tester (144): all cases pass in 96 of 96 runs with 3 GB
+                         guests (32 each without the series, with
+                         patches 1 and 2, and with all three). With
+                         256 MB guests 2 of 27 runs with all three
+                         stalled in an LE Server HDT case, none of
+                         27 without; not reproduced since, and SCO
+                         connect() is not reachable from that test
+
+The cases that fail without the series are "Reconnect During
+Disconnect" and "Connect Twice" (patches 1 and 2) and "Connect Twice
+Other Voice Setting" and "... Retry" (patch 3). The race patch 2
+closes was reproduced with a debug-only change that parks
+hci_conn_timeout() after it has seen no holder: without the wait in
+patch 2, the second socket is reported connected and then closed with
+ECONNABORTED; with it, connect() fails with -ECONNABORTED, for a link
+set up by the host and for one set up by the remote device.
+
+On the QCA9377 laptop where the bug was found (PipeWire 1.0.5, three
+headsets, v1 of patches 1 and 2 on Ubuntu 7.0.0-38), three codec
+changes on earbuds that reply before the old link's Disconnection
+Complete returned ECONNABORTED instead of a socket connected without
+a link, and eight codec changes on two other headsets all got a new
+link. A second connect() during a call returned EBUSY and the call's
+link and voice data were not interrupted. Patch 3 was not run there.
+
+PipeWire retries ECONNABORTED at once, while the old link is still
+going down, so a codec change is still not seamless: audio returned
+about five seconds later. A prototype that defers the new connect()
+until the old link is gone exists; it changes connect() semantics, so
+I can post it as an RFC.
+
+For stable, patch 1 applies alone on 6.6.y and 6.12.y; patch 2 is for
+trees with e6720779ae61 (6.18.y and 7.2.y).
+
+Changes in v2 (v1: https://lore.kernel.org/linux-bluetooth/20261027165009.2401154-1-yaroslav.voytovych@gmail.com/):
+- v1 patches 2 and 3 are one patch, so that no commit leaves the
+  race open; its second abort_reason check uses READ_ONCE().
+- Patch 3 is new.
+- Rebased on bluetooth-next da3cc02587c6.
+
+Iaroslav Voitovych (3):
+  Bluetooth: hci_conn: hold a reused SCO connection for its caller
+  Bluetooth: hci_conn: don't reuse an aborting SCO connection
+  Bluetooth: hci_conn: don't change the parameters of a SCO link in use
+
+ net/bluetooth/hci_conn.c | 49 ++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 45 insertions(+), 4 deletions(-)
+
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch`** (SHA-256 `e88149fb05ee53bee245c7a7aaaeb8a0e91c2a9943f9c0428dd553895ae58cc8`)
+
+```diff
+From 5c5e94f4b2a6954610bbc4948262b4223fe85067 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:24 +0100
+Subject: [PATCH v2 1/3] Bluetooth: hci_conn: hold a reused SCO connection for
+ its caller
+
+Connecting a second SCO socket to a device whose link is already
+in use correctly fails with EBUSY, but also disconnects the first
+socket's working link.
+
+hci_connect_sco() must return a connection with a hold owned by
+its caller. sco_connect() drops that hold when it no longer needs
+it, including when sco_chan_add() fails.
+
+For a new link, hci_conn_link() takes the required SCO hold.
+Since commit 06149746e720 ("Bluetooth: hci_conn: Add support for
+linking multiple hcon"), a connection whose link already exists
+is returned without one: hci_connect_sco() hands the reused SCO
+connection back without a caller hold, while keeping the extra
+ACL hold that hci_connect_acl() took for the link.
+
+Commit 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in
+sco_sock_connect()") added the drop on sco_chan_add() failure.
+When the second socket gets EBUSY, that drop consumes the first
+socket's hold. hci_conn_timeout() then finds no holder and
+disconnects the link.
+
+When the SCO connection already has a link, take a hold for the
+caller and drop the extra ACL hold, which the existing link
+already owns. Keep the hci_conn_link() path for connections that
+do not yet have a link.
+
+This follows the ownership correction made for CIS by
+commit e06d549fcd4a ("Bluetooth: hci_conn: fix CIS hold ownership
+on reuse"). The second connect() still fails with EBUSY, but no
+longer disconnects the first socket's link.
+
+Fixes: 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in sco_sock_connect()")
+Cc: stable@vger.kernel.org # 6.6.x
+---
+
+Notes:
+    v2: no change.
+
+ net/bluetooth/hci_conn.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index c474263fb..2be11f05e 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1909,11 +1909,20 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		}
+ 	}
+ 
+-	link = hci_conn_link(acl, sco);
+-	if (!link) {
++	if (sco->link) {
++		/* The existing link already owns the hold on the ACL, and the
++		 * caller needs its own hold on the SCO connection, which
++		 * hci_conn_link() only takes for a new link.
++		 */
+ 		hci_conn_drop(acl);
+-		hci_conn_drop(sco);
+-		return ERR_PTR(-ENOLINK);
++		hci_conn_hold(sco);
++	} else {
++		link = hci_conn_link(acl, sco);
++		if (!link) {
++			hci_conn_drop(acl);
++			hci_conn_drop(sco);
++			return ERR_PTR(-ENOLINK);
++		}
+ 	}
+ 
+ 	sco->setting = setting;
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch`** (SHA-256 `671d876096420634adaca8fba819b3413fdddb8d902fb9a902e124490e4cee03`)
+
+```diff
+From 18a23f136a4fb48b42ca76d66be9f0f39b8b1354 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:27 +0100
+Subject: [PATCH v2 2/3] Bluetooth: hci_conn: don't reuse an aborting SCO
+ connection
+
+A new SCO socket can report a successful connect() to a link that
+is already being disconnected. No new link is established, and the
+socket is closed with ECONNABORTED when the old link's
+Disconnection Complete arrives. PipeWire hits this when it closes
+and reconnects a SCO socket during an HFP codec change.
+
+hci_connect_sco() looks up an existing connection by type and
+address. It sends Setup Synchronous Connection only when that
+connection is BT_OPEN or BT_CLOSED.
+
+An aborting connection is neither: hci_abort_conn() sets
+abort_reason and queues the Disconnect, but leaves the state
+BT_CONNECTED until the Disconnection Complete. A new connect in
+that interval therefore reuses the old connection without sending
+a setup command.
+
+Before commit e6720779ae61 ("Bluetooth: SCO: Use kref to track
+lifetime of sco_conn"), the closed socket stayed attached in
+BT_DISCONN until that event, so sco_chan_add() rejected the new
+socket with EBUSY. Since that commit, the closed socket is
+detached at once, and the new socket takes its place: sco_connect()
+reports it connected, and the Disconnection Complete then closes
+it with ECONNABORTED.
+
+Reject a connection whose abort_reason is set with -ECONNABORTED.
+The caller learns at once, with the error the socket would
+otherwise get later, and can connect again once the old link is
+gone.
+
+Checking abort_reason at the lookup alone leaves a race with a
+disconnect worker that is already running. hci_conn_hold() uses
+cancel_delayed_work(), which does not wait for running work, and
+hci_conn_timeout() reads refcnt without hdev->lock and, after
+seeing no holder, calls hci_abort_conn(), which sets abort_reason.
+A connect() can check abort_reason and take its hold between those
+two steps. This applies both to a connection whose link exists and
+to one the remote device set up, which gets its link from
+hci_conn_link() here. So abort_reason is checked twice:
+
+- at the lookup, where the ACL hold that hci_connect_acl() took is
+  dropped;
+- after the caller's hold is taken and a running hci_conn_timeout()
+  has been waited for with cancel_delayed_work_sync(); the caller's
+  hold is dropped.
+
+The wait is safe under hdev->lock. For a SCO connection,
+hci_conn_timeout() does not take that lock: hci_proto_disconn_ind()
+returns a constant, and hci_abort_conn() only queues the
+Disconnect. hci_conn_del() already waits for disc_work with
+hdev->lock held. For a new connection the work has never been
+queued, so nothing is waited for. Once the wait returns, the work
+has finished and cannot be queued again while the caller's hold is
+taken, so the second check does not race with it. If the connection
+had no link before, the link hci_conn_link() just made stays with
+the aborting connection and is released with its ACL hold by
+hci_conn_del(), as for any linked SCO connection.
+
+hci_connect_sco() runs under hdev->lock, but hci_conn_timeout()
+sets abort_reason through hci_abort_conn() without it. Use
+READ_ONCE() for both checks and WRITE_ONCE() for that write.
+
+A connect() that comes before the work has started at all cancels
+it with its hold and keeps the live link; that case is not changed
+here.
+
+Reproduced in the emulator by holding back the Disconnection
+Complete, and, for the worker race, by delaying hci_conn_timeout()
+after it has seen no holder (a debug-only change, not part of this
+patch), for a link set up by the host and for one set up by the
+remote device: without this patch connect() returns 0 and the
+socket is then closed with ECONNABORTED; with it, connect() fails
+with -ECONNABORTED.
+
+Fixes: e6720779ae61 ("Bluetooth: SCO: Use kref to track lifetime of sco_conn")
+Cc: stable@vger.kernel.org
+---
+
+Notes:
+    v2: v1 patches 2 and 3 folded into one, so that no commit leaves the
+    race open. The second abort_reason check uses READ_ONCE().
+
+ net/bluetooth/hci_conn.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 2be11f05e..2918b2296 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1907,6 +1907,14 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 			hci_conn_drop(acl);
+ 			return sco;
+ 		}
++	} else if (READ_ONCE(sco->abort_reason)) {
++		/* The connection is being disconnected and stays BT_CONNECTED
++		 * until the Disconnection Complete event, so no setup would
++		 * be sent for it and it would be closed under the new socket
++		 * as soon as the event arrives.
++		 */
++		hci_conn_drop(acl);
++		return ERR_PTR(-ECONNABORTED);
+ 	}
+ 
+ 	if (sco->link) {
+@@ -1925,6 +1933,17 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		}
+ 	}
+ 
++	/* Taking the hold cannot stop a hci_conn_timeout() that is already
++	 * running: it may have seen no holder and be about to abort the
++	 * connection. It does not take hdev->lock, so wait for it and check
++	 * abort_reason again.
++	 */
++	cancel_delayed_work_sync(&sco->disc_work);
++	if (READ_ONCE(sco->abort_reason)) {
++		hci_conn_drop(sco);
++		return ERR_PTR(-ECONNABORTED);
++	}
++
+ 	sco->setting = setting;
+ 	sco->codec = *codec;
+ 
+@@ -3337,7 +3356,7 @@ int hci_abort_conn(struct hci_conn *conn, u8 reason)
+ 
+ 	bt_dev_dbg(hdev, "handle 0x%2.2x reason 0x%2.2x", conn->handle, reason);
+ 
+-	conn->abort_reason = reason;
++	WRITE_ONCE(conn->abort_reason, reason);
+ 
+ 	/* Cancel the connect attempt. A return of 0 means the create command
+ 	 * was still queued and got dequeued, so there is nothing to disconnect.
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114/kernel/v2-0003-Bluetooth-hci_conn-don-t-change-the-parameters-of.patch`** (SHA-256 `241c8360fe5e4c01baf4300acb45114f6dbdbd749c7eec049d765e48020d5aad`)
+
+```diff
+From 50d609ebbe5cf920c3283cdc90b7829899c53aa1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:30 +0100
+Subject: [PATCH v2 3/3] Bluetooth: hci_conn: don't change the parameters of a
+ SCO link in use
+
+hci_connect_sco() looks up an existing SCO connection by type and
+address and stores the requested voice setting and codec into it,
+but sends a setup command only when it is BT_OPEN or BT_CLOSED. For
+any other connection the stored values are not used for that
+connect, and for one whose setup has not been sent yet, or is sent
+again after an error, they replace what the first socket asked for:
+the second connect() fails with EBUSY from sco_chan_add(), yet the
+first socket's link is set up with the second socket's voice
+setting.
+
+The same happens after a socket is closed: a socket asking for
+BT_VOICE_TRANSPARENT that connects before the disconnect work of
+the closed socket's CVSD link has run is reported connected on that
+CVSD link, and no setup command is sent.
+
+Fail a connect whose voice setting, codec id or data path differ
+from those of a connection that is being set up or is up, before a
+hold is taken:
+
+- with -EBUSY while a socket holds the connection, as
+  sco_chan_add() would for the second socket, but without changing
+  the first socket's parameters;
+- with -ECONNABORTED when nothing holds it, which is the link of a
+  closed socket. Its pending disconnect goes ahead, and the caller
+  can connect again for a link set up with its own parameters.
+
+A link set up by the remote device has no stored parameters from a
+local connect, so with no holder it is refused once as well.
+
+Fixes: 10c62ddc6f03 ("Bluetooth: Parameters for outgoing SCO connections")
+---
+
+Notes:
+    v2: new.
+
+ net/bluetooth/hci_conn.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 2918b2296..e13069f8c 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1915,6 +1915,19 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		 */
+ 		hci_conn_drop(acl);
+ 		return ERR_PTR(-ECONNABORTED);
++	} else if ((sco->setting != setting || sco->codec.id != codec->id ||
++		    sco->codec.data_path != codec->data_path) &&
++		   (atomic_read(&sco->refcnt) || sco->state == BT_CONNECT ||
++		    sco->state == BT_CONNECTED)) {
++		/* The connection was or is being set up with other parameters
++		 * and no setup is sent for it here. While a socket holds it,
++		 * sco_chan_add() would fail the new one with EBUSY anyway; with
++		 * no holder it belongs to a closed socket, so leave its
++		 * disconnect to go ahead and let the caller connect again.
++		 */
++		hci_conn_drop(acl);
++		return ERR_PTR(atomic_read(&sco->refcnt) ? -EBUSY :
++			       -ECONNABORTED);
+ 	}
+ 
+ 	if (sco->link) {
+-- 
+2.43.0
+
+```
+
+**`contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114/CHECKS.md`** (SHA-256 `cc44772589aa21623ae40b88a546400c652bab5e57cf4d6dd8123879c939310c`)
+
+```markdown
+# CO-02 v2: checks and test results
+
+Every result: measured unless marked. Work area `/root/exp/agent-work/lane2-sco-20261114/` (here
+`$W`); logs in `$W/logs/`, bot output in `$W/project/tmp/`, scripts in `$W/scripts/`. Hashes of the
+raw logs: `SHA256SUMS` in this directory (and `logs/SHA256SUMS`). Clock times are guest or host
+clock as printed in the logs; the host clock ran 02:0x to 05:xx on 2026-11-14.
+
+## 1. checkpatch --strict: run on the host
+
+Run on the host (`cache/checkpatch/checkpatch.pl --strict --no-tree`, 2026-11-14) on all five patches (3 kernel, 2 BlueZ). Results: kernel: only the missing
+Signed-off-by and `--no-tree`'s "Unknown commit id" warnings; BlueZ: kernel-style alignment checks
+and split-string warnings, which BlueZ's own CheckPatch (the bot, which passed) does not apply.
+No change needed. The bot's own CheckPatch (non-strict, `--ignore UNKNOWN_COMMIT_ID`) is in section 5.
+
+## 2. Upstream state on 2026-11-14
+
+Nothing merged, superseded or answered; stop condition not met.
+
+| Check | Command | Result |
+|---|---|---|
+| Patchwork state of our four patches | `python3 -I project/scripts/patchwork-state.py 14919266 14919267 14919268 14919269` | all four `new`, 2026-10-27 16:50; comments: 1 on patch 1 and 2 on the BlueZ mail, all the CI bot's |
+| Replies on the thread | local lore archive `cache/lore-linux-bluetooth-0.git` (newest entry 2026-11-13 00:25 UTC), `git log --since=2026-10-27 -i --grep=sco` | only `bluez.test.bot` mails for our series: 10-27 20:16 and 21:24 (CI results) and **11-12 00:36 (the CI's sweep closing the BlueZ PR 2724: "never applied to the tree"; a bot sweep, not a review)**; no human |
+| Any patch since 10-27 on `hci_connect_sco`/SCO reuse | `patchwork-recent.py 2026-10-27 'sco\|hci_conn\|reuse\|abort'` (27 of 719 patches) | nothing equivalent. Related: Wentao Liang "Bluetooth: delete the new SCO link if linking it fails" (14942649, 11-04, `new`; same function, textual conflict with our patch 1 hunk 2 — checked with `patch --dry-run`, see NOTES); Zijun Hu "Fix SCO/eSCO Transport_Unit_Size" (applied, 3efdadae3a25, other lines) |
+| bluetooth-next tip | GitHub API `commits?path=net/bluetooth/hci_conn.c` and `sco.c` since 2026-10-27 | tip `da3cc02587c6` (2026-11-12). hci_conn.c: EKS, HDT PHY, ISO QoS, "Initialize the device before hash insertion", Transport_Unit_Size, conn flags bitmap; sco.c: no commit. None is ours or equivalent |
+| bluetooth (fixes) tip | `git fetch --shallow-since=2026-10-27 …/bluetooth.git master`, then `git log -- net/bluetooth/hci_conn.c net/bluetooth/sco.c` | tip `3b069de8a` (11-12); same unrelated commits, nothing for SCO reuse |
+| Our base applies | `git am` of the three v2 patches on `da3cc02587c6` | clean (bot's `git am`, section 5) |
+
+## 3. Kernel series v2: what was built
+
+`$W/linux-bn` (shallow clone of github.com/bluez/bluetooth-next, tip `da3cc02587c6`, "Bluetooth:
+hci_vhci: Report write readiness with queued input", 2026-11-12). Branch `co02-v2-final`:
+
+1. `hold a reused SCO connection for its caller` (v1 patch 1, unchanged; `Cc: stable # 6.6.x`)
+2. `don't reuse an aborting SCO connection` (v1 patches 2 and 3 folded; second check with
+   `READ_ONCE()`; `Cc: stable`)
+3. `don't change the parameters of a SCO link in use` (new; the 11-02 mismatch patch reworked: -EBUSY
+   split, in-flight cases, field compare)
+
+Kernels under test (config = BlueZ `doc/tester.config` plus KASAN, lockdep, `DEBUG_ATOMIC_SLEEP`,
+SMP 4, the earlier area's `img/config-base`; `img/bzImage-<tag>.commit` records the commit):
+`base` = `da3cc0258`, `p12` = patches 1-2 (`3c72ae5a62a3`), `p123` = all three (`6ab80e175065`, tree
+identical to `co02-v2-final`, checked with `git diff`: empty). Builds: `logs/kernel-build-*.log`, no
+warning from `net/bluetooth` (`img/*.commit`).
+
+## 4. Guest tests (QEMU/KVM, 4 CPUs, 256 MB guest, btmon in the guest)
+
+Tester binaries: BlueZ master `20ffd285b58f` plus our two sco-tester patches (`bin/sco-tester-v2b`
+first, `v2c` after the line-wrap fixes the bot asked for in section 6; same tests). Runner:
+`scripts/run-matrix.sh`; summaries: `results/*.txt`.
+
+| Suite | base | p12 (1+2) | p123 (1+2+3) | file |
+|---|---|---|---|---|
+| sco-tester, 35 cases, v2b, 3 runs each | 31 pass, 4 fail ×3 | 33 pass, 2 fail ×3 | **35 pass ×3** | `results/sco-tester.txt` |
+| sco-tester v2c (final binary), 3 runs each | 31 / 4 fail ×3 | 33 / 2 fail ×3 | **35 ×3** | `results/sco-tester-final.txt` |
+| mgmt-tester (526), 1 run | 526 pass | not run | 526 pass | `results/mgmt-iso-tester.txt` |
+| iso-tester (213), 1 run | 213 pass | not run | 213 pass | same |
+| l2cap-tester (144) | 12 of 12 runs pass | 6 of 6 | 10 of 12 pass; **2 stalled** | `results/l2cap-tester.txt` |
+
+- Cases that fail on base: "Reconnect During Disconnect", "Connect Twice" (fixed by patches 1+2),
+  "Connect Twice Other Voice Setting" and "Connect Twice Other Voice Retry" (need patch 3; fail on
+  p12 too, 0/3). Nothing else changes in sco-tester: the other 31 cases pass on all three.
+- Why the two new cases fail on p12 (log lines, `logs/run-probe-p12-1.log`): ACL-pending case,
+  "Setup Synchronous Connection #1, coding 0x03" (the second socket's transparent setting reached the
+  first socket's setup); retry case, "Setup … #1, coding 0x02" then "#2, coding 0x03" (the retried
+  setup after the injected 0x1f carries the second socket's setting). On base both fail earlier:
+  the second connect() drops the first socket's hold and the first link is reset ("first socket
+  failed: Connection reset by peer", `logs/run-probe-base-1.log`). With patch 3, setup #1 and #2
+  carry coding 0x02 and the second connect() returns EBUSY. **This is the in-flight-setup
+  measurement (F-80) the dossier asked for.**
+- **Race patch 2 closes (parked worker), debug-only kernels** `parkA` (hold + abort check without the
+  wait = the old patch 2 alone) and `parkB` (the fold), both with a scratch `msleep()` in
+  `hci_conn_timeout()` after it saw `refcnt == 0` (commits `exp-parkA`/`exp-parkB` in `linux-bn`, not
+  part of any mail); tester `bin/sco-tester-park -p EXPERIMENT` (from the 11-01 work area), 3 runs
+  each: parkA fails both cases 3/3 ("RACE CONFIRMED: second socket was connected and then killed by
+  the parked abort"), parkB passes both 3/3 (second connect() returns ECONNABORTED). Linked and
+  remote-set-up ("Incoming Race Park") cases. `results/park-race.txt`.
+- **l2cap-tester stalls: not caused by the series (see section 4a).** Two of the first 12 l2cap runs
+  on p123 at 256 MB stalled: `run-l2cap-p123-1.log` (95 cases passed, stuck in the teardown of
+  "L2CAP LE Server - Set HDT 2M") and `run-l2cap-p123-3.log` (97 passed, stuck after "Set HDT 3M"
+  started), until the 25-minute guest limit.
+- `kernel-report-scan.py` on all guest logs (`results/kernel-report-scan.txt`): the SCO, park and
+  stalled logs are clean (no WARNING, BUG, KASAN, lockdep, refcount, UBSAN, RCU stall, hung task); the
+  only `Call Trace:` lines are the guest OOM killer taking btmon in l2cap/mgmt/iso logs, on base as
+  well (`grep -c "invoked oom-killer"`: 1 in each of the logs checked).
+- Aborted runs, not results: `logs/run-l2capy-*.log` (a typo in my `timeout` argument, no guest ran).
+
+## 4a. The l2cap-tester stalls, followed up (task 2)
+
+Question: does the series cause the two stalls? Method: the same kernel images (`base`, `p12`,
+`p123`) and the final tester (`l2cap-tester-v2c`, same binary as before), the guest memory raised
+to 3 GB (`scripts/qemu-3g.sh`, `scripts/run-matrix-3g.sh`; nothing else changed) so that the guest OOM
+killer cannot take btmon, 700 s guest limit (600 s for the 3 GB runs).
+
+| Guest | base | p12 (1+2) | p123 (1+2+3) | OOM lines | files |
+|---|---|---|---|---|---|
+| **3 GB**, 32 runs each (labels `l2cap3g` 12, `l2cap3gb` 20) | 32 of 32 pass 144/144 | 32 of 32 | **32 of 32** | **0 in all 96** (`oom=0`, `grep -c "invoked oom-killer"`) | `results/l2cap3g.txt`, `results/l2cap3gb.txt` |
+| 256 MB, new runs (label `l2cap256`, 15 each) | 15 of 15 | not run | 15 of 15 | 1 per log: btmon killed | `results/l2cap256.txt` |
+| 256 MB, earlier (labels `l2cap`, `l2capz`, `l2capw`) | 12 of 12 | 6 of 6 | 10 of 12, **2 stalled** | 1 per completed log | `results/l2cap-tester.txt` |
+
+Totals at 256 MB: p123 2 stalls in 27 runs, base 0 in 27, p12 0 in 6; Fisher exact two-sided
+p = 0.49 for p123 vs base, so the data do not separate the kernels. At 3 GB there is no stall on any
+kernel in 96 runs, every run 144 of 144. The earlier correlation (stalled runs = the two where btmon
+was not OOM-killed) is **refuted as a cause**: at 3 GB btmon is never killed and nothing stalls.
+
+Why the series cannot be involved (source, inferred from reading): `hci_connect_sco()` has one
+caller, `sco_connect()` (`net/bluetooth/sco.c:380`, a SCO socket `connect()`), and the l2cap-tester
+opens no SCO socket, so patch 3 and the hold/abort checks of patches 1 and 2 never run in it. The
+one line of the series every connection passes is the `WRITE_ONCE(conn->abort_reason, …)` in
+`hci_abort_conn()` (patch 2), and p12 carries it too. The stalled cases are LE Server HDT cases
+(BlueZ `a7f03764f`/`a7d89aa0e`, new on master since 11-01). No test-only debug build was needed.
+
+Conclusion: not reproduced in 96 + 30 runs with the memory confound removed or kept; the two stalls
+remain unexplained and are not attributable to any patch of the series. It is reported as
+"two of 27 l2cap-tester guest runs at 256 MB stalled in an LE Server HDT case with the series, none
+of 27 without; 0 of 96 stalled with 3 GB guests". The 11-01 research (`research-2026-11-01/sco/`)
+logged a similar stall of the same tester (guest stopped in the teardown of an LE case, no Total) on
+another kernel/tester pairing, so a pre-existing tester flake is plausible; not proven.
+
+## 5. The list bot's checks, kernel (`scripts/bot-ci-local.sh`, base vs patched)
+
+Run: `scripts/bot-kernel.sh bot-kernel-v2c` (base `da3cc0258`, BlueZ `20ffd285b58f`, the three
+patch mails; the cover letter is not fed to `git am`). Output `project/tmp/bot-kernel-v2c/`
+(`summary.txt`, `patched/report.txt`, `base/report.txt`, `compare-*.txt`). Bot image
+`bluez-action-ci:60348956fc7b`. Two earlier attempts failed at the setup, not at a check
+(`bot-kernel-v2`: the cover mail is an empty patch; `bot-kernel-v2b`: the container could not see
+the mails outside the project).
+
+| Check | Patched | Base | Comment |
+|---|---|---|---|
+| BuildKernel, CheckAllWarning, CheckSparse, BuildKernel32, CheckKernelLLVM | PASS | PASS | |
+| TestRunnerSetup and all 11 TestRunner_* (incl. sco, l2cap, mgmt, iso) | PASS | PASS | `not-passed sets identical: True (A 0, B 0)` for all 11; the bot's sco-tester is the unpatched BlueZ one (30 cases) |
+| IncrementalBuild | PASS | n/a | |
+| SubjectPrefix | PASS | n/a | |
+| kernel-report-scan on the bot's tester logs | exit 0 | exit 0 | |
+| **CheckPatch** | FAIL | n/a | the only finding on each patch: `ERROR: Missing Signed-off-by` (1 error, 0 warnings, 0 checks) |
+| **GitLint**, **VerifySignedoff** | FAIL | n/a | the missing Signed-off-by only |
+| **VerifyFixes** | FAIL | n/a | patch 3 only: "Target SHA1 does not exist" for `10c62ddc6f03`. **Artifact of the clone** (history since 2023-01-01 only): the commit exists, "Bluetooth: Parameters for outgoing SCO connections", 2013-08-21 (`api.github.com/repos/torvalds/linux/commits/10c62ddc6f03`), and is an ancestor of bluetooth-next `da3cc02587c6` (compare API: `status: ahead`, `ahead_by 1115858`). Patches 1 and 2 pass |
+
+Same patch-level checks on copies of the mails with a `Signed-off-by` of the author added (local
+check only, `scripts/bot-kernel-sob.sh`, `scripts/add-sob.py`): **CheckPatch PASS, GitLint PASS,
+VerifySignedoff PASS, SubjectPrefix PASS** (`project/tmp/bot-kernel-sob/summary.txt`). So with the
+operator's own Signed-off-by the patch-level checks are clean; the bot's CheckPatch runs without
+`--strict` (see section 1).
+
+Stable heads, textual apply (scratch copy of `hci_conn.c` from `cache/stable-{6.6,6.12,6.18,7.2}.y`,
+`scripts/stable-check.sh`, `logs/stable-check.txt`): patches 1, 2, 3 apply in order to all four with
+offsets only. This says nothing about which trees contain the `Fixes:` commits.
+
+## 6. The list bot's checks, BlueZ (`--space user`)
+
+Two runs (`scripts/bot-bluez.sh`, `scripts/bot-bluez-final.sh`; outputs `project/tmp/bot-bluez-v2/`,
+`project/tmp/bot-bluez-final/`), base BlueZ `20ffd285b58f`, the two sco-tester patch mails (no
+Signed-off-by), `--kernel-image` = the p123 guest kernel.
+
+- **First run** (mails before the fixes below): CheckPatch **WARNING on patch 2** (three lines of 81
+  columns: `tester_print("Holding back the Synchronous Connection Complete")`, a `tester_warn()`
+  and a declaration line) and GitLint **FAIL** (a) the notes block `git format-patch --notes` writes had
+  4-space blank lines = trailing whitespace on patch 1, (b) patch 2's title was 85 > 80 characters
+  with the bot's `[BlueZ,v2,2/2]` prefix. Real findings, fixed: lines wrapped, notes' blank lines
+  made empty (`scripts/strip-notes-ws.py`), patch 2 renamed "tools/sco-tester: Add connect twice
+  with other voice tests". Its TestFunctional: **PASS (53 passed, 1 skipped, 11 deselected)**.
+- **Final mails** (patched side only, the checks the fixes can change): CheckPatch **PASS**,
+  GitLint **PASS**, BuildEll PASS, BluezMake PASS (ASan/UBSan build, no warning), IncrementalBuild
+  PASS, **CheckSmatch WARNING**: `./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible
+  structures` (and `:356:31`) "in included file" of `tools/sco-tester.c`. It comes from the unmodified
+  header; the same note was the only non-PASS on v1 (README of the dossier, 2026-10-28: "all PASS but
+  the expected CheckSmatch note"). **The first run's base side (completed 07:41) also gives CheckSmatch
+  WARNING**, so the note pre-exists on master; base BuildEll, BluezMake, bluezmakeextell,
+  TestFunctional and ScanBuild PASS; patched (first mails) BuildEll, BluezMake, bluezmakeextell,
+  TestFunctional (53 passed), IncrementalBuild and ScanBuild PASS. Only CheckPatch/GitLint (fixed, above)
+  and the same CheckSmatch note differ from base.
+- The final `sco-tester` binary (`v2c`) differs from the one in the first bot run and in the first
+  guest matrix (`v2b`) only in those line wraps (`git diff` of the commit amend); the guest matrix was
+  repeated with `v2c` (section 4), same result.
+
+## 7. Commands that produced the numbers
+
+    scripts/build-kernel.sh <tag> <ref>            # base, p12, p123, parkA, parkB (make -j4)
+    scripts/build-bluez.sh v2b | v2c                # sco-tester etc. from ../bluez (ASan build, -j4)
+    scripts/run-matrix.sh <label> <runs> <kernels> <tester tag> <tester> [args]
+    scripts/summarize.py <label> <kernels>          # per-case pass counts
+    scripts/results.sh                              # writes results/*.txt
+    scripts/bot-kernel.sh / bot-bluez.sh / bot-bluez-final.sh / bot-kernel-sob.sh
 ```
 
 ---

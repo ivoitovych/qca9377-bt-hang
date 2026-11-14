@@ -1,0 +1,14 @@
+Test Summary:
+CheckPatch                    PASS      2.95 seconds
+GitLint                       PASS      0.79 seconds
+BuildEll                      PASS      74.01 seconds
+BluezMake                     PASS      686.31 seconds
+CheckSmatch                   WARNING   812.38 seconds
+IncrementalBuild              PASS      755.12 seconds
+
+Details
+##############################
+Test: CheckSmatch - WARNING
+Desc: Run smatch tool with source
+Output:
+tools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structurestools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structures

@@ -1,0 +1,32 @@
+From 62710a92d006a01d0a7b97168f1323f2be6c70e2 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 08:43:12 +0100
+Subject: [PATCH BlueZ v2 0/2] tools/sco-tester: Add SCO reconnect tests
+
+Test cases for the kernel series "[PATCH v2 0/3] Bluetooth: hci_conn:
+fix SCO connection reuse" (KERNEL-V2-LINK), in which a second SCO
+socket connects to a device whose link is closing, in use or being
+set up.
+
+Patch 1 is v1 (https://lore.kernel.org/linux-bluetooth/20261027165059.2402360-1-yaroslav.voytovych@gmail.com/)
+rebased onto the mainloop-based sco-tester. Patch 2 is new: two cases
+for the kernel series' patch 3, which fail with patches 1 and 2 alone.
+
+On bluetooth-next da3cc02587c6, sco-tester has 35 cases: 31 pass
+without the kernel series, 33 with its patches 1 and 2, 35 with all
+three (three runs each); the failing cases are the four added here.
+
+Please apply after the kernel series is in bluetooth-next.
+
+Iaroslav Voitovych (2):
+  tools/sco-tester: Add SCO reconnect tests
+  tools/sco-tester: Add connect twice with other voice tests
+
+ tools/sco-tester.c | 711 ++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 710 insertions(+), 1 deletion(-)
+
+
+base-commit: 20ffd285b58facfd1f2478d159a5f941b09d5be1
+-- 
+2.43.0
+

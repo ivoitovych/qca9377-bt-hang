@@ -1,0 +1,83 @@
+2026-11-14 04:36:50 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 04:36:50 space user; base 20ffd285b58facfd1f2478d159a5f941b09d5be1 (shared/gatt-client: Track pending discovery Database Hash reads); ELL 002b32d7c091993c5036956bf92d2444aca1c799; kernel image tmp/bzImage-p123
+2026-11-14 04:36:50 mail tmp/mails/bluez/v2-0001-tools-sco-tester-Add-SCO-reconnect-tests.patch
+2026-11-14 04:36:50 mail tmp/mails/bluez/v2-0002-tools-sco-tester-Add-SCO-connect-twice-with-other.patch
+2026-11-14 04:36:51 patched: start
+2026-11-14 06:16:51 patched: done, 3 test(s) not PASS
+Test Summary:
+CheckPatch                    FAIL      5996.65 seconds
+GitLint                       FAIL      5993.61 seconds
+BuildEll                      PASS      67.13 seconds
+BluezMake                     PASS      907.36 seconds
+CheckSmatch                   WARNING   1012.40 seconds
+bluezmakeextell               PASS      268.56 seconds
+TestFunctional                PASS      1259.44 seconds
+IncrementalBuild              PASS      683.19 seconds
+ScanBuild                     PASS      1786.72 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+[BlueZ,v2,2/2] tools/sco-tester: Add SCO connect twice with other voice setting tests
+WARNING:LONG_LINE_STRING: line length of 81 exceeds 80 columns
+#98: FILE: tools/sco-tester.c:1530:
++		tester_print("Holding back the Synchronous Connection Complete");
+
+WARNING:LONG_LINE: line length of 81 exceeds 80 columns
+#174: FILE: tools/sco-tester.c:1794:
++			tester_warn("setsockopt(BT_VOICE): %s", strerror(errno));
+
+WARNING:LONG_LINE: line length of 81 exceeds 80 columns
+#230: FILE: tools/sco-tester.c:1892:
++	unsigned int i, want = scodata->reconnect == CONNECT_OTHER_RETRY ? 2 : 1;
+
+/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1002.patch total: 0 errors, 3 warnings, 245 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane2-sco-20261114/project/tmp/bot-bluez-v2/work/patched/patch/1002.patch has style problems, please review.
+
+NOTE: Ignored message types: COMMIT_MESSAGE COMPLEX_MACRO CONST_STRUCT FILE_PATH_CHANGES MISSING_SIGN_OFF PREFER_PACKED SPDX_LICENSE_TAG SPLIT_STRING SSCANF_TO_KSTRTO
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[BlueZ,v2,1/2] tools/sco-tester: Add SCO reconnect tests
+
+38: B2 Line has trailing whitespace: "    "
+44: B2 Line has trailing whitespace: "    "
+[BlueZ,v2,2/2] tools/sco-tester: Add SCO connect twice with other voice setting tests
+
+1: T1 Title exceeds max length (85>80): "[BlueZ,v2,2/2] tools/sco-tester: Add SCO connect twice with other voice setting tests"
+##############################
+Test: CheckSmatch - WARNING
+Desc: Run smatch tool with source
+Output:
+tools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structurestools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structures
+2026-11-14 06:16:51 base: start
+2026-11-14 07:41:03 base: done, 1 test(s) not PASS
+Test Summary:
+BuildEll                      PASS      33.51 seconds
+BluezMake                     PASS      590.96 seconds
+CheckSmatch                   WARNING   903.44 seconds
+bluezmakeextell               PASS      306.94 seconds
+TestFunctional                PASS      1079.59 seconds
+ScanBuild                     PASS      2128.42 seconds
+
+Details
+##############################
+Test: CheckSmatch - WARNING
+Desc: Run smatch tool with source
+Output:
+tools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structurestools/sco-tester.c: note: in included file:./lib/bluetooth/bluetooth.h:351:15: warning: array of flexible structures./lib/bluetooth/bluetooth.h:356:31: warning: array of flexible structures
+2026-11-14 07:41:03 NOT CLEAN: patched: 3 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 07:41:03 NOT CLEAN: base: 1 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 07:41:03 ALL DONE, exit 1
