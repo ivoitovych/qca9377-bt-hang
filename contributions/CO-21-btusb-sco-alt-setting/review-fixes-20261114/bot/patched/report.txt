@@ -1,0 +1,109 @@
+Test Summary:
+CheckPatch                    FAIL      848.78 seconds
+VerifyFixes                   FAIL      847.57 seconds
+VerifySignedoff               FAIL      846.64 seconds
+GitLint                       FAIL      846.55 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      23.04 seconds
+CheckAllWarning               PASS      27.51 seconds
+CheckSparse                   WARNING   28.76 seconds
+BuildKernel32                 PASS      25.24 seconds
+CheckKernelLLVM               PASS      24.54 seconds
+TestRunnerSetup               PASS      536.07 seconds
+TestRunner_l2cap-tester       PASS      12.40 seconds
+TestRunner_iso-tester         PASS      15.14 seconds
+TestRunner_bnep-tester        PASS      2.67 seconds
+TestRunner_mgmt-tester        PASS      81.45 seconds
+TestRunner_rfcomm-tester      PASS      3.84 seconds
+TestRunner_sco-tester         PASS      4.81 seconds
+TestRunner_ioctl-tester       PASS      3.87 seconds
+TestRunner_mesh-tester        PASS      4.88 seconds
+TestRunner_smp-tester         PASS      3.78 seconds
+TestRunner_userchan-tester    PASS      2.66 seconds
+TestRunner_6lowpan-tester     PASS      3.79 seconds
+IncrementalBuild              PASS      21.22 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+[1/2] Bluetooth: Keep the air mode of SCO links that came up
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 0 checks, 68 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/co21/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+[2/2] Bluetooth: btusb: Pick the SCO alt setting from links that are up
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 69 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/co21/work/patched/patch/1002.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifyFixes - FAIL
+Desc: Verify Fixes tag format and validity
+Output:
+Commit: 58062b7c90a57 ("Bluetooth: btusb: Pick the SCO alt setting from links that are up")
+	Fixes tag: Fixes: baac6276c0a9 ("Bluetooth: btusb: handle mSBC audio over USB Endpoints")
+	Has these problem(s):
+		- Target SHA should be an ancestor of your tree
+
+
+error: Could not read 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: could not parse commit 10d97b74e2eef787d823f9bc05cb044b47d25c41
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit 58062b7c90a5 ("Bluetooth: btusb: Pick the SCO alt setting from links that are up")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Commit 52504a918753 ("Bluetooth: Keep the air mode of SCO links that came up")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[1/2] Bluetooth: Keep the air mode of SCO links that came up
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+[2/2] Bluetooth: btusb: Pick the SCO alt setting from links that are up
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+##############################
+Test: CheckSparse - WARNING
+Desc: Run sparse tool with linux kernel
+Output:
+net/bluetooth/hci_event.c: note: in included file (through include/net/bluetooth/hci_core.h):

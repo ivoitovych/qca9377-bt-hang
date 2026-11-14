@@ -1,0 +1,53 @@
+From 83ff564a9ceb639590163d864db5e874e539a939 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:24:55 +0100
+Subject: [PATCH] Bluetooth: btusb: Report a failed runtime resume for deferred
+ data
+
+When data is sent while the device is runtime suspended,
+submit_or_queue_tx_urb() anchors the URB on data->deferred and
+btusb_waker() resumes the device with usb_autopm_get_interface(). If
+that fails, the waker returns without a message.
+
+An HCI command deferred during the resume can time out while the waker
+is still waiting, since the command timer is already running. Report
+the runtime-resume error when the PM request returns, so that the
+command timeout can be correlated with the failed resume.
+
+Leave out -EACCES, which is returned while runtime PM is disabled, for
+example during a system sleep transition. Rate-limit the message, as
+the waker runs once for each deferred send.
+---
+Tested with an emulated device attached over usbip in a QEMU guest
+whose runtime resume never completes: the kernel logs, in this order,
+"command 0x0c24 tx timeout" (10.09 s) and then the waker's
+"Failed to resume device for deferred data: -16" (15.24 s, twice), just
+before the disconnect. The unpatched kernel logs no such line.
+
+ drivers/bluetooth/btusb_main.c |7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca098e..ed503eab9d566 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2659,8 +2659,13 @@ static void btusb_waker(struct work_struct *work)
+ 	int err;
+ 
+ 	err = usb_autopm_get_interface(data->intf);
+-	if (err < 0)
++	if (err < 0) {
++		/* -EACCES: runtime PM is disabled, e.g. during system sleep */
++		if (err != -EACCES)
++			bt_dev_err_ratelimited(data->hdev, "Failed to resume device for deferred data: %d",
++					       err);
+ 		return;
++	}
+ 
+ 	usb_autopm_put_interface(data->intf);
+ }
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

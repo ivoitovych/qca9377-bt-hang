@@ -1,0 +1,36 @@
+From e6ae9b51ebc53865a3dc97135893c23cade088b1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 15:16:38 +0100
+Subject: [PATCH] DEBUG ONLY sco_cnt_delay_ms (one-pass tree)
+
+---
+ drivers/bluetooth/btusb_main.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 1b75bd26182ce..e1df99c14b4dc 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2584,6 +2584,10 @@ btusb_find_altsetting(struct usb_interface *intf, int alt)
+ 	return NULL;
+ }
+ 
++/* DEBUG ONLY */
++static int sco_cnt_delay_ms;
++module_param(sco_cnt_delay_ms, int, 0644);
++
+ static void btusb_work(struct work_struct *work)
+ {
+ 	struct btusb_data *data = container_of(work, struct btusb_data, work);
+@@ -2605,6 +2609,8 @@ static void btusb_work(struct work_struct *work)
+ 	 */
+ 	hci_dev_lock(hdev);
+ 	hci_conn_sco_up_num(hdev, &cvsd, &transp);
++	if (sco_cnt_delay_ms)	/* DEBUG ONLY */
++		msleep(sco_cnt_delay_ms);
+ 	hci_dev_unlock(hdev);
+ 
+ 	if (cvsd || transp) {
+-- 
+2.43.0
+

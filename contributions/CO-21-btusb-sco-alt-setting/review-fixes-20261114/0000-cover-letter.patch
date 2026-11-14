@@ -1,0 +1,67 @@
+From 57f84111ccbe44ee2149a96b0dbb089e2a289901 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 16:16:36 +0100
+Subject: [PATCH 0/2] Bluetooth: btusb: Pick the SCO alternate setting from the links that are up
+
+btusb chooses the isochronous alternate setting from the last SCO
+notification, not from the SCO links that exist. When one of two SCO
+links goes down, the remaining link is moved to alternate setting 0,
+which has no isochronous bandwidth. A SCO connection is also counted
+from the start of its setup: if another connection is added or removed
+while it is being set up, the notification of the link coming up is
+ignored.
+
+ 1: keep the air mode of a SCO link that came up in the connection and
+    add a helper that counts the links that are up by air mode, both
+    counts from one walk of the connection list under hdev->lock.
+ 2: let btusb_work() select the alternate setting from those counts.
+    It takes hdev->lock only for the count and releases it before any
+    USB power management or set-interface call.
+
+Patch 2 needs patch 1.
+
+Changes since the first draft: the air mode is stored before the
+connection is marked connected; one helper takes both counts in one
+pass under hdev->lock (lockdep_assert_held()) instead of two separate
+walks under RCU, which could see no CVSD link, then a CVSD link come up
+and the transparent one go down, and so select alternate setting 0
+with a link up.
+
+Tested with a userspace controller attached over usbip to a QEMU guest
+(the real btusb and core; KASAN, lockdep, four CPUs): five scenarios
+(two mSBC links with either one hung up first, two CVSD links, and a
+single link set up while another connection is added and removed, for
+mSBC and for CVSD). Unpatched, the setting is wrong at some point in
+all five; with the series all five pass, in two runs each (0 of 10,
+then 10 of 10). A sixth case changes the connection set while the work
+is between its looks at the links (two mSBC links; one hangs up, which
+starts the work; while it is running a CVSD link comes up and the other
+mSBC link hangs up; the work is held in a test-kernel delay). With two
+separate counts it selects alternate setting 0 with a CVSD link up in
+3 of 3 runs; with the one-pass count in none of 3. No lockdep report
+in any run.
+
+With a CVSD and a transparent link up at the same time the setting is
+the transparent one, as the patched btusb code chooses it; whether that
+carries the CVSD link is a question for the review (Core Volume 4,
+Part B, Table 2.1: alternate setting 1 is 9 bytes per frame, one 8-bit
+voice channel).
+
+The series applies on bluetooth-next without conflicts.
+The existing sco-tester results are the same with and without it.
+
+Iaroslav Voitovych (2):
+  Bluetooth: Keep the air mode of SCO links that came up
+  Bluetooth: btusb: Pick the SCO alt setting from links that are up
+
+ drivers/bluetooth/btusb_main.c   | 30 ++++++++++++++++++++----------
+ include/net/bluetooth/hci.h      |  6 ++++++
+ include/net/bluetooth/hci_core.h | 30 ++++++++++++++++++++++++++++++
+ net/bluetooth/hci_event.c        |  2 ++
+ 4 files changed, 58 insertions(+), 10 deletions(-)
+
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+--
+2.43.0
+

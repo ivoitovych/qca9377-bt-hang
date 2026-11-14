@@ -1,0 +1,25 @@
+Test Summary:
+BuildKernel                   PASS      20.35 seconds
+CheckAllWarning               PASS      24.78 seconds
+CheckSparse                   WARNING   28.23 seconds
+BuildKernel32                 PASS      24.33 seconds
+CheckKernelLLVM               PASS      24.81 seconds
+TestRunnerSetup               PASS      529.87 seconds
+TestRunner_l2cap-tester       PASS      12.37 seconds
+TestRunner_iso-tester         PASS      11.36 seconds
+TestRunner_bnep-tester        PASS      2.64 seconds
+TestRunner_mgmt-tester        PASS      81.15 seconds
+TestRunner_rfcomm-tester      PASS      3.81 seconds
+TestRunner_sco-tester         PASS      4.81 seconds
+TestRunner_ioctl-tester       PASS      3.87 seconds
+TestRunner_mesh-tester        PASS      4.90 seconds
+TestRunner_smp-tester         PASS      3.86 seconds
+TestRunner_userchan-tester    PASS      2.66 seconds
+TestRunner_6lowpan-tester     PASS      3.79 seconds
+
+Details
+##############################
+Test: CheckSparse - WARNING
+Desc: Run sparse tool with linux kernel
+Output:
+net/bluetooth/hci_event.c: note: in included file (through include/net/bluetooth/hci_core.h):

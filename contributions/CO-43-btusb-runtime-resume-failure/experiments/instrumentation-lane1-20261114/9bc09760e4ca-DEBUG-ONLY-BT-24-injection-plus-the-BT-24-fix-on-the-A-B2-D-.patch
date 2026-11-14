@@ -1,0 +1,56 @@
+From 9bc09760e4ca08606a61976f9362a1cd4ee79d22 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:06:59 +0100
+Subject: [PATCH] DEBUG ONLY BT-24 injection plus the BT-24 fix on the
+ A,B2,D-v2 tree
+
+---
+ drivers/bluetooth/btusb_main.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 562be14a3cb69..f5b6cfc4e4ee8 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5094,7 +5094,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		}
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 	}
+ 
+@@ -5102,7 +5102,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		err = btusb_submit_bulk_urb(hdev, GFP_NOIO);
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_BULK_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 
+ 		btusb_submit_bulk_urb(hdev, GFP_NOIO);
+@@ -5126,12 +5126,16 @@ static int btusb_resume(struct usb_interface *intf)
+ 
+ 	return 0;
+ 
+-failed:
+-	usb_scuttle_anchored_urbs(&data->deferred);
+-	if (bt24_delay_ms)	/* DEBUG ONLY: after the scuttle, before the flag is cleared */
+-		msleep(bt24_delay_ms);
+ done:
++	if (err && bt24_delay_ms)	/* DEBUG ONLY: before the locked section */
++		msleep(bt24_delay_ms);
+ 	spin_lock_irq(&data->txlock);
++	/* Drop the deferred URBs and clear BTUSB_SUSPENDING in one critical
++	 * section: a sender that anchored a URB after the scuttle but before
++	 * the flag was cleared would leave it parked until the next resume.
++	 */
++	if (err)
++		usb_scuttle_anchored_urbs(&data->deferred);
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+-- 
+2.43.0
+

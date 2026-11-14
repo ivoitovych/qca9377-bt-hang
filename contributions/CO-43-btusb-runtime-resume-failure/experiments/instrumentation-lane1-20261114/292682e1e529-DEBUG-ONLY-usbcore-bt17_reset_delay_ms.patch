@@ -1,0 +1,36 @@
+From 292682e1e529f30fd1c2e4ebaa966069b9f21752 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:06:31 +0100
+Subject: [PATCH] DEBUG ONLY usbcore bt17_reset_delay_ms
+
+---
+ drivers/usb/core/message.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/usb/core/message.c b/drivers/usb/core/message.c
+index a738d03c23eac..2e7e1a986d316 100644
+--- a/drivers/usb/core/message.c
++++ b/drivers/usb/core/message.c
+@@ -1959,6 +1959,9 @@ static struct usb_interface_assoc_descriptor *find_iad(struct usb_device *dev,
+  * Internal function to queue a device reset
+  * See usb_queue_reset_device() for more details
+  */
++static unsigned int bt17_reset_delay_ms;	/* DEBUG ONLY */
++module_param(bt17_reset_delay_ms, uint, 0644);
++
+ static void __usb_queue_reset_device(struct work_struct *ws)
+ {
+ 	int rc;
+@@ -1966,6 +1969,9 @@ static void __usb_queue_reset_device(struct work_struct *ws)
+ 		container_of(ws, struct usb_interface, reset_ws);
+ 	struct usb_device *udev = interface_to_usbdev(iface);
+ 
++	if (bt17_reset_delay_ms)	/* DEBUG ONLY: widen the window */
++		msleep(bt17_reset_delay_ms);
++
+ 	rc = usb_lock_device_for_reset(udev, iface);
+ 	if (rc >= 0) {
+ 		usb_reset_device(udev);
+-- 
+2.43.0
+

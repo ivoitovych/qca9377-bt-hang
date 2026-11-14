@@ -1,0 +1,55 @@
+Test Summary:
+CheckPatch                    FAIL      769.45 seconds
+VerifyFixes                   PASS      0.01 seconds
+VerifySignedoff               FAIL      769.00 seconds
+GitLint                       FAIL      768.95 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      26.42 seconds
+CheckAllWarning               PASS      30.60 seconds
+CheckSparse                   PASS      32.08 seconds
+BuildKernel32                 PASS      26.46 seconds
+CheckKernelLLVM               PASS      26.69 seconds
+TestRunnerSetup               PASS      580.81 seconds
+IncrementalBuild              PASS      23.34 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+Bluetooth: btusb: Report SCO receive failures by cause
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 67 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/co20/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit 9af2f6d8974f ("Bluetooth: btusb: Report SCO receive failures by cause")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+Bluetooth: btusb: Report SCO receive failures by cause
+
+1: CC1 Body does not contain a 'Signed-off-by' line

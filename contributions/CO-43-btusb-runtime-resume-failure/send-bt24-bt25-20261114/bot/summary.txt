@@ -1,0 +1,122 @@
+2026-11-14 19:08:34 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 19:08:34 space kernel; base 04b58d680611f226c868176f4419edd3bd73b03e (Bluetooth: btusb: Anchor a deferred URB under txlock); BlueZ 20ffd285b58facfd1f2478d159a5f941b09d5be1; ELL 002b32d7c091993c5036956bf92d2444aca1c799
+2026-11-14 19:08:34 mail tmp/mails-bt24/0001-Bluetooth-btusb-Drop-deferred-URBs-under-txlock-on-a.patch
+2026-11-14 19:08:34 mail tmp/mails-bt24/0002-Bluetooth-btusb-Free-the-skb-of-a-deferred-URB-that-.patch
+2026-11-14 19:08:55 patched: start
+2026-11-14 19:20:38 patched: done, 4 test(s) not PASS
+Test Summary:
+CheckPatch                    FAIL      702.70 seconds
+VerifyFixes                   FAIL      701.96 seconds
+VerifySignedoff               FAIL      699.31 seconds
+GitLint                       FAIL      699.23 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      20.34 seconds
+CheckAllWarning               PASS      24.00 seconds
+CheckSparse                   PASS      26.39 seconds
+BuildKernel32                 PASS      22.67 seconds
+CheckKernelLLVM               PASS      23.34 seconds
+TestRunnerSetup               PASS      537.48 seconds
+IncrementalBuild              PASS      24.35 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+[1/2] Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 32 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/bt24/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+[2/2] Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 63 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/bt24/work/patched/patch/1002.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifyFixes - FAIL
+Desc: Verify Fixes tag format and validity
+Output:
+Commit: a46b46a715502 ("Bluetooth: btusb: Free the skb of a deferred URB that is discarded")
+	Fixes tag: Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+	Has these problem(s):
+		- Target SHA should be an ancestor of your tree
+	Fixes tag: Fixes: 19cfe912c37b ("Bluetooth: btusb: Fix memory leak in play_deferred")
+	Has these problem(s):
+		- Target SHA should be an ancestor of your tree
+Commit: 6e16222c4b5d4 ("Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume")
+	Fixes tag: Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+	Has these problem(s):
+		- Target SHA should be an ancestor of your tree
+
+
+error: Could not read 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: could not parse commit 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: Could not read 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: could not parse commit 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: Could not read 10d97b74e2eef787d823f9bc05cb044b47d25c41
+error: could not parse commit 10d97b74e2eef787d823f9bc05cb044b47d25c41
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit a46b46a71550 ("Bluetooth: btusb: Free the skb of a deferred URB that is discarded")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Commit 6e16222c4b5d ("Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[1/2] Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+[2/2] Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+2026-11-14 19:20:47 base: start
+2026-11-14 19:33:50 base: done, 0 test(s) not PASS
+Test Summary:
+BuildKernel                   PASS      24.13 seconds
+CheckAllWarning               PASS      29.58 seconds
+CheckSparse                   PASS      29.29 seconds
+BuildKernel32                 PASS      23.94 seconds
+CheckKernelLLVM               PASS      25.39 seconds
+TestRunnerSetup               PASS      631.22 seconds
+
+2026-11-14 19:33:50 NOT CLEAN: patched: 4 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 19:33:50 ALL DONE, exit 1

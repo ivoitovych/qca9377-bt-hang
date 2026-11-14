@@ -64,6 +64,9 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
   refinement.
 - Send A on its own or as 1/5, not both (R6).
 - No `Fixes:` (R1, R2, R3, R7). R3 of 11-13 had suggested `7bee549e197c`; outvoted.
+- **Done 11-14** (`contributions/CO-43-…/send-20261113/A-review-fixes-20261114/`): R7's wording
+  and `bt_dev_err_ratelimited()`. In the emulator, `tx timeout` comes at 10.09 s and the line at
+  15.24 s; base logs no such line.
 
 ### 4. CO-38
 - Kernel: all five say send. R3 and R7 favour `Cc: stable` (a deterministic two-line fix). Operator.
@@ -164,6 +167,12 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
 - **Mixed CVSD and transparent links:** R2 and R7 ask whether the transparent setting carries both.
   **[open]** Look in the spec or the source, or make it an emulator case.
 - No stable on the first posting (R3, R6). The two patches travel together.
+- **Done 11-14** (`contributions/CO-21-…/review-fixes-20261114/`):
+  - `air_mode` is set first, and one locked pass counts both modes.
+  - The transition test with a debug delay: the two-count version picks alt 0 in 3 of 3 runs,
+    the one-pass version in none. The five scenarios give 0/10 unpatched and 10/10 patched.
+  - Mixed links: alt 1 is too narrow for a 16-bit CVSD link by the USB transport's table, and
+    btusb ties alt 1 to mSBC. Asked in the cover, not coded.
 
 ### 10. CO-20
 - Patch 1: all five say send it alone.
@@ -172,6 +181,9 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
     handle stays remembered, and a malformed frame matching it is excluded from `err_rx`.
   - Options: track recently closed handles from the core, or call the result a heuristic and leave
     `err_rx` as it is.
+- **Done 11-14** (`contributions/CO-20-…/patch1-standalone-20261114/`): patch 1 alone. Base logs
+  "corrupted SCO packet" 21, 21 and 24 times, patch 1 none. Patch 2 is held, with both options
+  in its NOTES.
 
 ### 11. CO-43, the rest
 - **The D v2 blocker** was found three times independently: our checks this morning
@@ -192,6 +204,11 @@ since 10-27, invites triage by volume. Lead with items 1 and 4.
   - R2: check `btusb_close()`, which drains outside `txlock`.
   - R7 supports the `Fixes:` origins, `7bee549e197c` and `19cfe912c37b`.
 - **The linux-usb question first** for BT-18 (R3, R7).
+- **Done 11-14: BT-24/25 extracted** (`contributions/CO-43-…/send-bt24-bt25-20261114/`). Two
+  patches on E with no B2 or D code. kmemleak, 3 runs per case, E alone against E + the series:
+  3/3/1, 2/1/2, 5/3/4 and 2/2/2 leaked objects against 0 everywhere. The anchor is left non-empty
+  3/3 against 3/3 empty. `btusb_close()` needs no lock of its own, because the core stops sending
+  first (argued in the message). The rest of the matrix is identical on both kernels.
 
 ### 12. CO-02 v2
 - **Split or not.** R2 and R3: send 1 and 2 as v2, and patch 3 separately. R6 and R7: keep

@@ -32,6 +32,10 @@ C22R = "contributions/research-2026-11-01/qca-ids/refresh-20261114"
 C21 = "contributions/CO-21-btusb-sco-alt-setting/send-20261114"
 C20 = "contributions/CO-20-sco-unknown-handle-messages/send-20261114"
 C43S = "contributions/CO-43-btusb-runtime-resume-failure/send-series-20261114"
+C43A = "contributions/CO-43-btusb-runtime-resume-failure/send-20261113/A-review-fixes-20261114"
+C43B = "contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114"
+C21F = "contributions/CO-21-btusb-sco-alt-setting/review-fixes-20261114"
+C20F = "contributions/CO-20-sco-unknown-handle-messages/patch1-standalone-20261114"
 C02 = "contributions/CO-02-sco-connect-reuses-closing-link/send-v2-20261114"
 C02F = "contributions/CO-02-sco-connect-reuses-closing-link/send-v2-review-fixes-20261114"
 
@@ -93,9 +97,16 @@ moment of the failure. The bot's checks: only the Signed-off-by checks fail.
 
 **Questions for you.** Whether the message is worth having upstream at all, and its wording; the
 subject ("runtime resume", since the waker's resume is a runtime one).
+
+**Changed after the outside review (2026-11-14):**
+- The message now gives the order of events as measured: the command times out first, and the
+  failed resume is logged when the PM request returns (reviewer 7's wording).
+- The line is rate-limited (`bt_dev_err_ratelimited()`).
+- In the emulator, base logs no such line and patched logs two (`-16`): `tx timeout` at 10.09 s,
+  then the line at 15.24 s.
 """, [
-        (f"{C43}/A/0001-Bluetooth-btusb-Report-a-failed-runtime-resume-for-d.patch", "diff"),
-        (f"{C43}/A/CHECKS.md", "markdown"),
+        (f"{C43A}/0001-Bluetooth-btusb-Report-a-failed-runtime-resume-for-d.patch", "diff"),
+        (f"{C43A}/CHECKS.md", "markdown"),
     ]),
     ("4. CO-38 — MGMT: Read Advertising Features hides instances", """
 **The defect** (from `b338d91703fa`, 2022; in 6.1.y to bluetooth-next). `read_adv_features()`
@@ -261,11 +272,23 @@ Patch 1 changes `struct hci_conn`, so `bluetooth.ko` and btusb must be rebuilt t
 **Questions for you.** The design itself: is a per-link air mode in the core acceptable, or should
 btusb track it alone? The counting helper's locking. `Cc: stable`: patch 2 cannot build without
 patch 1, so a stable tag would have to cover both.
+
+**Changed after the outside review (2026-11-14):**
+- `air_mode` is set before the link is marked connected.
+- One helper counts both modes in a single pass under `hdev->lock`, with
+  `lockdep_assert_held()`. btusb takes the lock only around that call, never across USB calls.
+- A transition test with a debug delay between the counts: the earlier two-count version picks
+  alt 0 with a CVSD link up in 3 of 3 runs, the one-pass version in none. The five scenarios
+  still give 0/10 unpatched and 10/10 patched.
+- **Open, in the cover:** a mixed CVSD + transparent pair gets alt 1. The USB transport's
+  alternate-setting table gives alt 1 too little bandwidth for a 16-bit CVSD link, and
+  btusb's own comment ties alt 1 to mSBC, so the policy for mixed links is asked, not
+  coded.
 """, [
-        (f"{C21}/cover-letter.txt", "text"),
-        (f"{C21}/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch", "diff"),
-        (f"{C21}/0002-Bluetooth-btusb-Pick-the-SCO-alt-setting-from-links-.patch", "diff"),
-        (f"{C21}/CHECKS.md", "markdown"),
+        (f"{C21F}/0000-cover-letter.patch", "diff"),
+        (f"{C21F}/0001-Bluetooth-Keep-the-air-mode-of-SCO-links-that-came-u.patch", "diff"),
+        (f"{C21F}/0002-Bluetooth-btusb-Pick-the-SCO-alt-setting-from-links-.patch", "diff"),
+        (f"{C21F}/CHECKS.md", "markdown"),
     ]),
     ("10. CO-20 — btusb logs the data of a just-closed SCO link as corruption", """
 **The defect.** After a SCO link's Disconnection Complete, the controller can still deliver a few
@@ -286,11 +309,14 @@ btusb-only change.
 
 **Questions for you.** Whether the classification belongs in btusb or in the core's SCO receive
 path; whether the debug-level line is worth keeping at all.
+
+**Changed after the outside review (2026-11-14):**
+- Patch 1 goes alone: base logs "corrupted SCO packet" 21, 21 and 24 times, patch 1 none.
+- Patch 2 is held: "the last valid handle" does not prove "a just-closed link" (reviewers 2, 3,
+  6 and 7; the case is a second link that stays quiet).
 """, [
-        (f"{C20}/cover-letter.txt", "text"),
-        (f"{C20}/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch", "diff"),
-        (f"{C20}/0002-Bluetooth-btusb-Log-SCO-data-for-a-just-closed-link-.patch", "diff"),
-        (f"{C20}/CHECKS.md", "markdown"),
+        (f"{C20F}/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch", "diff"),
+        (f"{C20F}/CHECKS.md", "markdown"),
     ]),
     ("11. CO-43, the rest (for review, not yet to send) — btusb when a resume fails", """
 **What it is.** The other btusb fixes from BT-17's emulation, as one series on top of item 2 (E):
@@ -323,7 +349,24 @@ patches 1, 4 and 5, and of the approach, are still wanted.
 **Questions for you.** D v2's `RPM_RESUMING` test as the way to tell a runtime reset-resume from a
 system one; whether D belongs in btusb at all, or BT-18 is the USB core's to fix (a question to
 linux-usb is drafted); B2's handling of the command credit.
+
+**Changed after the outside review (2026-11-14):** BT-24's and BT-25's fixes are now a series of
+their own on E, with no B2 or D code (`send-bt24-bt25-20261114/`, shown first below).
+- kmemleak, E alone against E + the two patches, 3 runs each: a failed resume with a deferred
+  command leaks 3, 3 and 1 objects, against 0; a failed submission in `play_deferred()` 2, 1, 2
+  against 0; a dead device then close 5, 3, 4 against 0; a dead device with hci0 powered off
+  2, 2, 2 against 0.
+- After a failed resume, the deferred anchor is not empty in 3 of 3 runs on E, and empty in 3 of
+  3 with the series.
+- The other emulated cases are identical on both kernels.
+- `btusb_close()` needs no lock of its own: the core stops sending before it calls close. That
+  is now argued in patch 2's message.
+- B2 and D v2 stay held.
 """, [
+        (f"{C43B}/0000-cover-letter.patch", "diff"),
+        (f"{C43B}/0001-Bluetooth-btusb-Drop-deferred-URBs-under-txlock-on-a.patch", "diff"),
+        (f"{C43B}/0002-Bluetooth-btusb-Free-the-skb-of-a-deferred-URB-that-.patch", "diff"),
+        (f"{C43B}/CHECKS.md", "markdown"),
         (f"{C43S}/0000-cover-letter.patch", "diff"),
         (f"{C43S}/0002-Bluetooth-btusb-Don-t-wait-for-a-resume-in-the-HCI-c.patch", "diff"),
         (f"{C43S}/0003-Bluetooth-btusb-Recover-after-a-runtime-reset-resume.patch", "diff"),

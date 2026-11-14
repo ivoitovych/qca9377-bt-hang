@@ -1,0 +1,72 @@
+2026-11-14 19:59:57 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-14 19:59:57 space kernel; base da3cc02587c629420603df4395179ec82955c941 (Bluetooth: hci_vhci: Report write readiness with queued input); BlueZ 20ffd285b58facfd1f2478d159a5f941b09d5be1; ELL 002b32d7c091993c5036956bf92d2444aca1c799
+2026-11-14 19:59:57 mail tmp/mails-co20/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch
+2026-11-14 20:00:08 patched: start
+2026-11-14 20:12:59 patched: done, 3 test(s) not PASS
+Test Summary:
+CheckPatch                    FAIL      769.45 seconds
+VerifyFixes                   PASS      0.01 seconds
+VerifySignedoff               FAIL      769.00 seconds
+GitLint                       FAIL      768.95 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      26.42 seconds
+CheckAllWarning               PASS      30.60 seconds
+CheckSparse                   PASS      32.08 seconds
+BuildKernel32                 PASS      26.46 seconds
+CheckKernelLLVM               PASS      26.69 seconds
+TestRunnerSetup               PASS      580.81 seconds
+IncrementalBuild              PASS      23.34 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+Bluetooth: btusb: Report SCO receive failures by cause
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 67 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/co20/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit 9af2f6d8974f ("Bluetooth: btusb: Report SCO receive failures by cause")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+Bluetooth: btusb: Report SCO receive failures by cause
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+2026-11-14 20:13:09 base: start
+2026-11-14 20:24:56 base: done, 0 test(s) not PASS
+Test Summary:
+BuildKernel                   PASS      25.77 seconds
+CheckAllWarning               PASS      31.28 seconds
+CheckSparse                   PASS      31.32 seconds
+BuildKernel32                 PASS      25.11 seconds
+CheckKernelLLVM               PASS      25.79 seconds
+TestRunnerSetup               PASS      548.03 seconds
+
+2026-11-14 20:24:56 NOT CLEAN: patched: 3 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-14 20:24:56 ALL DONE, exit 1

@@ -319,6 +319,17 @@ agent-written files and an export of all 79 git trees. Old dossier paths into th
 point at deleted copies. The bot image `bluez-action-ci`, `archive/` and `/var/log/bt-health`
 are untouched. The rule is in the private procedure: reclaim bulk whose result is ported, after
 the rescue.
+**A mistake in it:** the pre-deletion check looked at worktree links but not at git
+*alternates*. One kept tree of the 11-14 btusb work borrowed its objects from
+`laptop-btusb-modules-20261111/linux-btnext`, so part of its history became unreadable. Recovered
+from what it held itself:
+- every submission patch is filed in the send packages, matched by patch-id or by subject;
+- five debug-only instrumentation patches had never been filed. They are now in
+  `contributions/CO-43-…/experiments/instrumentation-lane1-20261114/`. One of them came from a
+  later tree's copy.
+
+One debug-only commit is lost: a same-subject copy of a filed one. The check now includes
+alternates.
 
 **Incident 2026-11-14: one `journalctl` ran 7 h 44 min at a full CPU and slowed the desktop all
 morning.** `devtools/check`'s journal-contract step ran `journalctl -k -b all` and counted every

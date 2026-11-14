@@ -1,0 +1,96 @@
+From f53a5ce78ba7c088287020c93cabfc1dbd062aa3 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 15:11:37 +0100
+Subject: [PATCH] DEBUG ONLY fault injection for BT-24 and BT-25 (E+1+2 tree)
+
+---
+ drivers/bluetooth/btusb_main.c | 45 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 43 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index e80b7442dee9d..dbdee0d99184b 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5011,6 +5011,28 @@ static int btusb_suspend(struct usb_interface *intf, pm_message_t message)
+ 	return 0;
+ }
+ 
++/* DEBUG ONLY: fault injection for the BT-24 and BT-25 emulation runs */
++static int bt_inject;
++static int bt24_delay_ms;
++module_param(bt_inject, int, 0644);
++module_param(bt24_delay_ms, int, 0644);
++static struct hci_dev *bt24_hdev;
++
++static void bt24_send_fn(struct work_struct *w)
++{
++	struct sk_buff *skb;
++
++	msleep(bt24_delay_ms / 2);
++	skb = bt_skb_alloc(3, GFP_KERNEL);
++	if (!skb)
++		return;
++	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
++	skb_put_data(skb, "\x09\x10\x00", 3);
++	btusb_send_frame(bt24_hdev, skb);
++	pr_info("bt24-dbg: second sender done\n");
++}
++static DECLARE_WORK(bt24_send_work, bt24_send_fn);
++
+ static void play_deferred(struct btusb_data *data)
+ {
+ 	struct urb *urb;
+@@ -5019,7 +5041,12 @@ static void play_deferred(struct btusb_data *data)
+ 	while ((urb = usb_get_from_anchor(&data->deferred))) {
+ 		usb_anchor_urb(urb, &data->tx_anchor);
+ 
+-		err = usb_submit_urb(urb, GFP_ATOMIC);
++		if (bt_inject == 2) {	/* DEBUG ONLY */
++			bt_inject = 0;
++			err = -ENOMEM;
++		} else {
++			err = usb_submit_urb(urb, GFP_ATOMIC);
++		}
+ 		if (err < 0) {
+ 			if (err != -EPERM && err != -ENODEV)
+ 				BT_ERR("%s urb %p submission failed (%d)",
+@@ -5058,7 +5085,12 @@ static int btusb_resume(struct usb_interface *intf)
+ 		goto done;
+ 
+ 	if (test_bit(BTUSB_INTR_RUNNING, &data->flags)) {
+-		err = btusb_submit_intr_urb(hdev, GFP_NOIO);
++		if (bt_inject == 1) {	/* DEBUG ONLY */
++			bt_inject = 0;
++			err = -ENOMEM;
++		} else {
++			err = btusb_submit_intr_urb(hdev, GFP_NOIO);
++		}
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+ 			goto done;
+@@ -5094,6 +5126,12 @@ static int btusb_resume(struct usb_interface *intf)
+ 	return 0;
+ 
+ done:
++	if (err && bt24_delay_ms) {	/* DEBUG ONLY */
++		bt24_hdev = hdev;
++		schedule_work(&bt24_send_work);
++		msleep(bt24_delay_ms);
++		flush_work(&bt24_send_work);
++	}
+ 	spin_lock_irq(&data->txlock);
+ 	/* Drop the deferred URBs and clear BTUSB_SUSPENDING in one critical
+ 	 * section: a sender that anchored a URB after the scuttle but before
+@@ -5103,6 +5141,9 @@ static int btusb_resume(struct usb_interface *intf)
+ 		btusb_discard_deferred(data);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
++	if (err)	/* DEBUG ONLY */
++		bt_dev_info(hdev, "bt24-dbg: deferred anchor %s",
++			    usb_anchor_empty(&data->deferred) ? "empty" : "NOT empty");
+ 
+ 	return err;
+ }
+-- 
+2.43.0
+

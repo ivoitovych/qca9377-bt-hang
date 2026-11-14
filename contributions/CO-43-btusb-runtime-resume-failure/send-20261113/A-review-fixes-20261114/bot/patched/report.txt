@@ -1,0 +1,56 @@
+Test Summary:
+CheckPatch                    FAIL      762.37 seconds
+VerifyFixes                   PASS      0.01 seconds
+VerifySignedoff               FAIL      761.97 seconds
+GitLint                       FAIL      761.92 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      31.51 seconds
+CheckAllWarning               PASS      34.92 seconds
+CheckSparse                   PASS      31.73 seconds
+BuildKernel32                 PASS      26.60 seconds
+CheckKernelLLVM               PASS      26.35 seconds
+TestRunnerSetup               PASS      564.52 seconds
+IncrementalBuild              PASS      22.49 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+Bluetooth: btusb: Report a failed runtime resume for deferred data
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 14 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane6-btusb-20261114/project/tmp/bot-ci-local/a/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit c5c9f0eb0fe1 ("Bluetooth: btusb: Report a failed runtime resume for deferred data")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+Bluetooth: btusb: Report a failed runtime resume for deferred data
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+20: B1 Line exceeds max length (98>80): ""Failed to resume device for deferred data: -16" (15.24 s, twice), just before the disconnect. The"

@@ -1,0 +1,60 @@
+From eb0574caa0e2d3c13f4d84fdeee440734700439c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 03:05:37 +0100
+Subject: [PATCH] DEBUG ONLY BT-24 injection on the A,B2,D-v2 tree
+
+---
+ drivers/bluetooth/btusb_main.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index ecc6c350cd83a..562be14a3cb69 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -1018,6 +1018,12 @@ struct btqca_data {
+ #define BTUSB_RESET		19
+ #define BTUSB_CMD_DEFERRED	20
+ 
++/* DEBUG ONLY: fault injection for the BT-24 emulation runs */
++static int bt_inject;		/* 1: interrupt URB submit fails at resume */
++static int bt24_delay_ms;	/* widens the window of a failed resume's scuttle */
++module_param(bt_inject, int, 0644);
++module_param(bt24_delay_ms, int, 0644);
++
+ #define BTUSB_PROTO_LEGACY	0x00
+ #define BTUSB_PROTO_H4		0x01
+ 
+@@ -5080,7 +5086,12 @@ static int btusb_resume(struct usb_interface *intf)
+ 		goto done;
+ 
+ 	if (test_bit(BTUSB_INTR_RUNNING, &data->flags)) {
+-		err = btusb_submit_intr_urb(hdev, GFP_NOIO);
++		if (bt_inject == 1) {	/* DEBUG ONLY */
++			bt_inject = 0;
++			err = -ENOMEM;
++		} else {
++			err = btusb_submit_intr_urb(hdev, GFP_NOIO);
++		}
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+ 			goto failed;
+@@ -5117,11 +5128,16 @@ static int btusb_resume(struct usb_interface *intf)
+ 
+ failed:
+ 	usb_scuttle_anchored_urbs(&data->deferred);
++	if (bt24_delay_ms)	/* DEBUG ONLY: after the scuttle, before the flag is cleared */
++		msleep(bt24_delay_ms);
+ done:
+ 	spin_lock_irq(&data->txlock);
+ 	clear_bit(BTUSB_CMD_DEFERRED, &data->flags);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
++	if (err)	/* DEBUG ONLY */
++		bt_dev_info(hdev, "bt24-dbg: deferred anchor %s",
++			    usb_anchor_empty(&data->deferred) ? "empty" : "NOT empty");
+ 
+ 	return err;
+ }
+-- 
+2.43.0
+
