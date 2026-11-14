@@ -1,0 +1,63 @@
+From 335211543007fbe730bc7f457963fb3773198a5a Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 09:13:19 +0100
+Subject: [PATCH 3/6] media: Fix use-after-free of app removing a locked A2DP
+ endpoint
+
+If the stream of an A2DP endpoint is locked by an acquired transport,
+media_endpoint_remove() returns once a2dp_remove_sep() has deferred the
+removal, without unlinking the endpoint from its application. When the
+application goes away, app_free() then frees it while the endpoint
+still points to it, and once the transport is released, unlocking the
+stream unregisters the SEP and removes the endpoint again, which reads
+the freed application:
+
+ ERROR: AddressSanitizer: heap-use-after-free
+ READ of size 8 thread T0
+     #0 media_endpoint_remove profiles/audio/media.c:321
+     #1 a2dp_unregister_sep profiles/audio/a2dp.c:2893
+     #2 a2dp_sep_unlock profiles/audio/a2dp.c:3588
+     #3 transport_a2dp_suspend profiles/audio/transport.c:469
+     #4 service_filter gdbus/watch.c:493
+
+This happens when a sound server leaves the bus while streaming, and
+on exit, where path_free() frees the applications first.
+
+Unlink the endpoint from its application before removing its SEP.
+
+Fixes: 7482aceece70 ("profiles/audio: fix UAF on external media service teardown")
+---
+ profiles/audio/media.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index 34ff251c7e..3d2f266619 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -310,6 +310,11 @@ static void media_endpoint_remove(void *data)
+ 	struct media_endpoint *endpoint = data;
+ 	struct media_adapter *adapter = endpoint->adapter;
+ 
++	if (endpoint->app) {
++		queue_remove(endpoint->app->endpoints, endpoint);
++		endpoint->app = NULL;
++	}
++
+ #ifdef HAVE_A2DP
+ 	if (endpoint->sep) {
+ 		a2dp_remove_sep(endpoint->sep);
+@@ -317,11 +322,6 @@ static void media_endpoint_remove(void *data)
+ 	}
+ #endif
+ 
+-	if (endpoint->app) {
+-		queue_remove(endpoint->app->endpoints, endpoint);
+-		endpoint->app = NULL;
+-	}
+-
+ 	info("Endpoint unregistered: sender=%s path=%s", endpoint->sender,
+ 			endpoint->path);
+ 
+-- 
+2.43.0
+

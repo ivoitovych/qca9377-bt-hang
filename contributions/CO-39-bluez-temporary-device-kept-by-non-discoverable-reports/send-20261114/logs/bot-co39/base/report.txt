@@ -1,0 +1,26 @@
+Test Summary:
+BuildEll                      PASS      69.71 seconds
+BluezMake                     PASS      688.34 seconds
+MakeCheck                     PASS      17.78 seconds
+MakeDistcheck                 PASS      194.23 seconds
+CheckValgrind                 FAIL      639.45 seconds
+CheckSmatch                   PASS      715.61 seconds
+bluezmakeextell               PASS      257.34 seconds
+TestFunctional                PASS      1093.11 seconds
+ScanBuild                     PASS      1710.98 seconds
+
+Details
+##############################
+Test: CheckValgrind - FAIL
+Desc: Run Bluez Make Check with Valgrind
+Output:
+
+tools/mgmt-tester.c: In function ‘main’:
+tools/mgmt-tester.c:14444:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+14444 | int main(int argc, char *argv[])
+      |     ^~~~
+make[3]: warning: -j16 forced in submake: resetting jobserver mode.
+make[3]: *** [Makefile:10412: test-suite.log] Error 1
+make[2]: *** [Makefile:10547: check-TESTS] Error 2
+make[1]: *** [Makefile:11050: check-am] Error 2
+make: *** [Makefile:11052: check] Error 2

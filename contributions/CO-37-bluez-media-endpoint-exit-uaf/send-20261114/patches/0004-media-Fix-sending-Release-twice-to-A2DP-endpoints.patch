@@ -1,0 +1,56 @@
+From 1810c68f38efb967de6edea7b29d44efab2f319a Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 09:13:19 +0100
+Subject: [PATCH 4/6] media: Fix sending Release twice to A2DP endpoints
+
+release_endpoint() sends Release to the endpoint and then removes it.
+For an A2DP endpoint this unregisters its SEP, whose destroy callback
+calls release_endpoint() again, which sends a second Release. This
+happens to every A2DP endpoint that path_free() releases, on adapter
+removal and on exit.
+
+Mark the endpoint as released once Release is sent.
+
+Fixes: bd3ca4fdf463 ("Fix possible invalid read/free on media.c")
+---
+ profiles/audio/media.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index 3d2f266619..5e72fc2921 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -138,6 +138,7 @@ struct media_endpoint {
+ 	guint			hs_watch;
+ 	guint			ag_watch;
+ 	guint			watch;
++	bool			released;
+ 	GSList			*requests;
+ 	struct media_adapter	*adapter;
+ 	struct media_app	*app;
+@@ -654,8 +655,8 @@ static void release_endpoint(struct media_endpoint *endpoint)
+ 
+ 	DBG("sender=%s path=%s", endpoint->sender, endpoint->path);
+ 
+-	/* already exit */
+-	if (endpoint->watch == 0)
++	/* already exit or released */
++	if (endpoint->watch == 0 || endpoint->released)
+ 		goto done;
+ 
+ 	clear_endpoint(endpoint);
+@@ -670,6 +671,11 @@ static void release_endpoint(struct media_endpoint *endpoint)
+ 
+ 	g_dbus_send_message(btd_get_dbus_connection(), msg);
+ 
++	/* Removing the A2DP SEP below releases the endpoint again from its
++	 * destroy callback.
++	 */
++	endpoint->released = true;
++
+ done:
+ 	media_endpoint_remove(endpoint);
+ }
+-- 
+2.43.0
+

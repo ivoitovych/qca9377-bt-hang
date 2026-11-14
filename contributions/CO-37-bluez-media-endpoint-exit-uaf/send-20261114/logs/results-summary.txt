@@ -1,0 +1,48 @@
+co37 results, 2026-11-14 12:29:56
+== master / co23
+co23: 5 failing pytest runs of 5 (binaries master, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+      5 top-frame [a2dp_reconfig profiles/audio/a2dp.c:2173]
+runs exit 0 and no ASan report: 0
+== master / co37
+co37: 10 failing pytest runs of 10 (binaries master, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/seriesB/src)
+     10 top-frame [media_endpoint_remove profiles/audio/media.c:321]
+runs exit 0 and no ASan report: 0
+== master / file
+file: 2 failing pytest runs of 2 (binaries master, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+      2 top-frame [a2dp_reconfig profiles/audio/a2dp.c:2173]
+runs exit 0 and no ASan report: 0
+== master / rel
+rel: 10 failing pytest runs of 10 (binaries master, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+     10 top-frame []
+runs exit 0 and no ASan report: 0
+== masterS / co37
+co37: 10 failing pytest runs of 10 (binaries master, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+     10 top-frame [media_endpoint_remove profiles/audio/media.c:321]
+runs exit 0 and no ASan report: 0
+== seriesB / co37
+co37: 0 failing pytest runs of 10 (binaries seriesB, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/seriesB/src)
+     10 top-frame []
+runs exit 0 and no ASan report: 10
+== series / co23
+co23: 0 failing pytest runs of 5 (binaries series, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+      5 top-frame []
+runs exit 0 and no ASan report: 5
+== series / co37
+co37: 0 failing pytest runs of 10 (binaries series, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+     10 top-frame []
+runs exit 0 and no ASan report: 10
+== series / file
+file: 0 failing pytest runs of 2 (binaries series, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+      2 top-frame []
+runs exit 0 and no ASan report: 2
+== series / rel
+rel: 0 failing pytest runs of 10 (binaries series, tests /root/exp/agent-work/lane4-bluez-20261114/co37/runs/series/src)
+     10 top-frame []
+runs exit 0 and no ASan report: 10
+
+make check master: # TOTAL: 42 # PASS:  41 # SKIP:  1 # FAIL:  0 
+build warnings master: warnings: 0
+make check series: # TOTAL: 42 # PASS:  41 # SKIP:  1 # FAIL:  0 
+build warnings series: warnings: 0
+make check seriesB: # TOTAL: 42 # PASS:  41 # SKIP:  1 # FAIL:  0 
+build warnings seriesB: warnings: 0

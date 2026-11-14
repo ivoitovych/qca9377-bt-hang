@@ -1,0 +1,37 @@
+Test Summary:
+CheckPatch                    FAIL      7474.44 seconds
+GitLint                       PASS      0.86 seconds
+BuildEll                      PASS      70.03 seconds
+BluezMake                     PASS      960.42 seconds
+MakeCheck                     PASS      22.18 seconds
+MakeDistcheck                 PASS      520.60 seconds
+CheckValgrind                 PASS      884.92 seconds
+CheckSmatch                   PASS      786.32 seconds
+bluezmakeextell               PASS      289.92 seconds
+TestFunctional                PASS      1060.68 seconds
+IncrementalBuild              PASS      636.94 seconds
+ScanBuild                     PASS      2210.59 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+[1/2] adapter: Don't keep temporary devices alive with non-discoverable reports
+WARNING:LONG_LINE_COMMENT: line length of 82 exceeds 80 columns
+#42: FILE: src/adapter.c:7801:
++	 * temporary timer of an unconnected device, or a peer advertising without
+
+/root/exp/agent-work/lane4-bluez-20261114/project/tmp/bot-co39/work/patched/patch/1001.patch total: 0 errors, 1 warnings, 35 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/root/exp/agent-work/lane4-bluez-20261114/project/tmp/bot-co39/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: COMMIT_MESSAGE COMPLEX_MACRO CONST_STRUCT FILE_PATH_CHANGES MISSING_SIGN_OFF PREFER_PACKED SPDX_LICENSE_TAG SPLIT_STRING SSCANF_TO_KSTRTO
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
