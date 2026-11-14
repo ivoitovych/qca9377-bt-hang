@@ -103,10 +103,18 @@ fi
 # contract BROKEN while journalctl was emitting separators normally. Same
 # shape as every other defect this week: a control that holds where it was
 # written and not where it runs.
+#
+# STOP AT THE FIRST SEPARATOR. The claim needs one '-- Boot' line, and the
+# previous boot's start puts the first one right after that boot's lines. Until
+# 2026-11-14 this counted every separator (`grep -c`), so journalctl had to read
+# to the end of the current boot: with BT-17's dynamic debug on, one run read
+# 5.4 GB from 583 journal files for 7 h 44 min at a full CPU (it had emitted
+# 1.29 GB of kernel text and was still going). `grep -m1` exits at the first
+# match, and journalctl ends on the closed pipe.
 prev_start=$(awk '$1 ~ /^-?[0-9]+$/ {print $4" "$5}' <<<"$LB" | tail -2 | head -1)
 if (( nboots > 1 )) && [[ -n "$prev_start" ]]; then
     seps=$(journalctl -k -b all --since "$prev_start" --no-pager -o short-iso-precise 2>/dev/null \
-           | grep -c '^-- Boot ')
+           | grep -m1 -c '^-- Boot ')
     if [[ "${seps:-0}" -gt 0 ]]; then
         ok "-b all still separates boots with '-- Boot <id> --' (stage2 fixtures claim it)"
     else
