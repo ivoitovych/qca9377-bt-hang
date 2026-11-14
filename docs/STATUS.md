@@ -308,6 +308,22 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
 
 ## Repository health
 
+**Incident 2026-11-14: one `journalctl` ran 7 h 44 min at a full CPU and slowed the desktop all
+morning.** `devtools/check`'s journal-contract step ran `journalctl -k -b all` and counted every
+boot separator. The step needed only the first one. With BT-17's debug logging on, the
+journalctl read 5.4 GB from the journal files and wrote 1.29 GB of text before it was found.
+- **Fixed in `69d24d1`:** `grep -m1` stops at the first separator, so the step takes 3.4 s and
+  gives the same verdict.
+- **Background work now runs at low priority:** builds and VMs at nice 10, bulk scans at nice 19,
+  with low disk priority.
+- **journalctl's own share, measured on the laptop's 553 files
+  ([`results/journalctl-file-scaling-2026-11-14/`](../results/journalctl-file-scaling-2026-11-14/README.md)):**
+  - Its speed falls in proportion to the number of files open: from 25 to 200 files the rate
+    halves each time the count doubles.
+  - At 553 files it is 703 lines/s, against 196 451 for one file.
+  - So the cost grows with the square of the journal's size.
+  - Not yet checked against systemd main or in a VM; the cause has not been read in the source.
+
 **CI green again 2026-11-07 from `8bbd04a`** (checks run `42377712229`, every job ✓). It was red
 from 2026-11-02 13:26 UTC (`83ec2f4`) on every push to 11-07, unread (found by the documentation
 review of 11-07; the last green run `f4d80fb`, 11-02 12:52). A trial was open all week, so
