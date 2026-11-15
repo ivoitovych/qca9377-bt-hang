@@ -84,9 +84,18 @@ mkstub systemctl <<'EOF'
 #!/bin/bash
 echo "systemctl $*" >> "$PROVE_CALLS"
 case "$1" in
-    is-active) [[ -e "$PROVE_STATE/active-${*: -1}" ]] ;;
+    is-active)
+        # like the real one: --quiet prints nothing; otherwise the state word
+        if [[ -e "$PROVE_STATE/active-${*: -1}" ]]; then s=active; r=0; else s=inactive; r=3; fi
+        [[ "$2" == --quiet ]] || echo "$s"
+        exit $r ;;
     stop) rm -f "$PROVE_STATE/active-$2" ;;
-    show) echo "{ path=/usr/libexec/bluetooth/bluetoothd ; argv[]=/usr/libexec/bluetooth/bluetoothd -d }" ;;
+    is-enabled) [[ -e "$PROVE_STATE/enabled-${*: -1}" ]] ;;
+    enable) touch "$PROVE_STATE/enabled-${*: -1}" ;;
+    disable) rm -f "$PROVE_STATE/enabled-${*: -1}" ;;
+    show)
+        if [[ "$2" == bt-ui-light-keeper.timer ]]; then cat "$PROVE_STATE/timer-last" 2>/dev/null; exit 0; fi
+        echo "{ path=/usr/libexec/bluetooth/bluetoothd ; argv[]=/usr/libexec/bluetooth/bluetoothd -d }" ;;
 esac
 EOF
 mkstub pw-metadata <<'EOF'
@@ -99,7 +108,17 @@ EOF
 mkstub loginctl <<'EOF'
 #!/bin/bash
 echo "loginctl $*" >> "$PROVE_CALLS"
-case "$1" in show-seat) echo 4 ;; show-session) echo prove-user ;; show-user) echo no ;; esac
+# $PROVE_STATE/seat-session: the seat's active session id (absent: 4; "none":
+# nobody logged in); $PROVE_STATE/session-class: what the session's Class says
+case "$1" in
+    show-seat)
+        s=$(cat "$PROVE_STATE/seat-session" 2>/dev/null || echo 4)
+        [[ "$s" == none ]] || echo "$s" ;;
+    show-session)
+        if [[ "$*" == *Class* ]]; then cat "$PROVE_STATE/session-class" 2>/dev/null || echo user
+        else echo prove-user; fi ;;
+    show-user) echo no ;;
+esac
 EOF
 mkstub chown <<'EOF'
 #!/bin/bash
@@ -172,7 +191,7 @@ export PATH="$T/stub:$PATH"
 export BT_UI_BASE="$T/base" BT_UI_HOME="$T/home" BT_UI_UID=4242 BT_UI_REPO="$T/repo" \
        BT_DYNDBG_CTL="$CTL" BT_UI_APPDIR="$T/apps" BT_UI_CAPTURE_DIRS="$T/cap/capture $T/cap/trace" \
        BT_JOURNAL_FIXTURE="$T/fixture" BT_UI_EUID=0 BT_UI_MARK="$T/repo/bin/bt-mark" \
-       BT_UI_LIGHT_BASE="$T/lbase"
+       BT_UI_LIGHT_BASE="$T/lbase" BT_UI_UNITDIR="$T/units"
 unset BT_UI_USER
 
 tree() { find "$T/base" "$T/home" -printf '%p %s\n' 2>/dev/null | sort; }
@@ -546,6 +565,166 @@ truth "status-light says nothing runs again after stop-light" eq "$(countstr 'NO
 BT_UI_EUID=1000 "$TOOL" start-light > /dev/null 2>&1; r1=$?
 BT_UI_EUID=1000 "$TOOL" stop-light > /dev/null 2>&1; r2=$?
 truth "start-light and stop-light refuse without root, making no call" eq "$r1/$r2/$(wc -c < "$CALLS")" 1/1/0
+
+echo "── light mode: start-light is safe to call every 2 minutes (reboot, no session, login, new login, logout)"
+ndirs() { find "$LB" -maxdepth 1 -type d -name '2*' | wc -l; }
+# a reboot: the transient units are gone, the directory and its pointer stay
+rm -f "$STATE"/active-bt-ui-light-*
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/boot.out" 2>&1; rc=$?
+truth "after a 'reboot' start-light reuses the one directory (no new one)" \
+    eq "$(ndirs)/$(cat "$LB/current")" "1/$LD"
+truth "after a 'reboot' start-light starts the three units again, rc 0" \
+    eq "$rc/$(count '^systemd-run ' "$CALLS")" 0/3
+truth "after a 'reboot' the START mark is made once" eq "$(count '^logger -t bt-ui-capture ui-light START' "$CALLS")" 1
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/again.out" 2>&1; rc=$?
+truth "a repeated call (the 2-minute tick) starts and stops nothing, rc 0" \
+    eq "$rc/$(count '^(systemd-run|systemctl stop)' "$CALLS")" 0/0
+truth "a repeated call makes no mark" eq "$(count '^logger ' "$CALLS")" 0
+truth "a repeated quiet call prints nothing" eq "$(wc -c < "$T/again.out")" 0
+truth "a repeated call keeps the one directory" eq "$(ndirs)/$(cat "$LB/current")" "1/$LD"
+: > "$CALLS"
+"$TOOL" start-light > "$T/again2.out" 2>&1
+truth "a repeated call without the quiet flag still says what it sees, and marks nothing" \
+    eq "$(countstr 'running' "$(cat "$T/again2.out")")/$(count '^logger ' "$CALLS")" "3/0"
+# --new: an explicit new directory (the old one is renamed so the name differs)
+mv "$LD" "$LB/20200101T000000Z"; printf '%s\n' "$LB/20200101T000000Z" > "$LB/current"
+: > "$CALLS"
+"$TOOL" start-light --new > "$T/new.out" 2>&1; rc=$?
+NEWD=$(cat "$LB/current")
+truth "start-light --new opens a second directory and points at it" \
+    eq "$rc/$(ndirs)/$([[ "$NEWD" != "$LB/20200101T000000Z" && -d "$NEWD" ]] && echo yes || echo no)" 0/2/yes
+truth "start-light --new restarts the three units against the new directory" \
+    eq "$(count '^systemctl stop bt-ui-light-(atspi|sysbus|sessbus)$' "$CALLS")/$(count "^systemd-run .*_monitor light-(atspi|sysbus|sessbus) $NEWD\$" "$CALLS")" 3/3
+rm -rf "$LB/20200101T000000Z"; LD="$NEWD"
+
+# nobody logged in: only the system-bus monitor, rc 0, quietly
+rm -f "$STATE"/active-bt-ui-light-*
+echo none > "$STATE/seat-session"
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/nosess.out" 2>&1; rc=$?
+truth "no session: exit 0 and exactly one unit started, the system-bus monitor" \
+    eq "$rc/$(count '^systemd-run ' "$CALLS")/$(count '^systemd-run .*--unit=bt-ui-light-sysbus ' "$CALLS")" 0/1/1
+truth "no session: the system-bus unit carries no desktop user" \
+    eq "$(count '^systemd-run .*BT_UI_USER' "$CALLS")" 0
+truth "no session: no user-bus unit is running" \
+    eq "$(ls "$STATE" | grep -c '^active-bt-ui-light-\(atspi\|sessbus\)$')" 0
+truth "no session: it says so" eq "$(countstr 'no graphical session' "$(cat "$T/nosess.out")")" 1
+truth "no session: one mark" eq "$(count '^logger ' "$CALLS")" 1
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/nosess2.out" 2>&1; rc=$?
+truth "no session, second call: rc 0, nothing started, no mark, no output" \
+    eq "$rc/$(count '^(systemd-run|systemctl stop|logger)' "$CALLS")/$(wc -c < "$T/nosess2.out")" 0/0/0
+# the login screen is a session too, but not the user's
+echo 4 > "$STATE/seat-session"; echo greeter > "$STATE/session-class"
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/greeter.out" 2>&1; rc=$?
+truth "login screen (greeter session): treated as no session, nothing started" \
+    eq "$rc/$(count '^(systemd-run|systemctl stop|logger)' "$CALLS")" 0/0
+# a session appears
+echo user > "$STATE/session-class"
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/login.out" 2>&1; rc=$?
+truth "a session appears: the two user units start, the system-bus unit is left alone" \
+    eq "$rc/$(count '^systemd-run .*--unit=bt-ui-light-(atspi|sessbus) ' "$CALLS")/$(count '^systemd-run ' "$CALLS")" 0/2/2
+truth "a session appears: they run as the desktop user" \
+    eq "$(count '^systemd-run .*--setenv=BT_UI_USER=prove-user --setenv=BT_UI_UID=4242 ' "$CALLS")" 2
+truth "a session appears: one mark" eq "$(count '^logger -t bt-ui-capture ui-light START' "$CALLS")" 1
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > /dev/null 2>&1
+truth "with the session unchanged the next call does nothing and marks nothing" \
+    eq "$(count '^(systemd-run|systemctl stop|logger)' "$CALLS")" 0
+# logout, login: the session id changes; the user monitors are stopped and started anew
+echo 5 > "$STATE/seat-session"
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/relogin.out" 2>&1; rc=$?
+truth "a new login: both user units are stopped and started again, the system-bus unit untouched" \
+    eq "$rc/$(count '^systemctl stop bt-ui-light-(atspi|sessbus)$' "$CALLS")/$(count '^systemd-run .*--unit=bt-ui-light-(atspi|sessbus) ' "$CALLS")/$(count 'bt-ui-light-sysbus' "$CALLS")" 0/2/2/0
+truth "a new login: one mark" eq "$(count '^logger ' "$CALLS")" 1
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > /dev/null 2>&1
+truth "after the new login settles, the next call changes nothing" \
+    eq "$(count '^(systemd-run|systemctl stop|logger)' "$CALLS")" 0
+# a unit left by an earlier version has no login stamp: restarted once, then stable
+rm -f "$LD"/.stamp.*
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > /dev/null 2>&1
+truth "units without a login stamp are restarted once" \
+    eq "$(count '^systemctl stop bt-ui-light-(atspi|sessbus)$' "$CALLS")" 2
+# logout: the user monitors would loop against a dead bus; stop them
+echo none > "$STATE/seat-session"
+: > "$CALLS"
+"$TOOL" start-light --quiet-if-no-session > "$T/logout.out" 2>&1; rc=$?
+truth "logout: the two user units are stopped, nothing started, the system-bus unit kept" \
+    eq "$rc/$(count '^systemctl stop bt-ui-light-(atspi|sessbus)$' "$CALLS")/$(count '^systemd-run' "$CALLS")/$(ls "$STATE" | grep -c '^active-bt-ui-light-sysbus$')" 0/2/0/1
+truth "logout: one CHANGE mark, not START" \
+    eq "$(count '^logger -t bt-ui-capture ui-light CHANGE' "$CALLS")/$(count '^logger ' "$CALLS")" 1/1
+echo 4 > "$STATE/seat-session"
+truth "the whole cycle (boot, no session, logins, logout) left a single directory" eq "$(ndirs)" 1
+echo "── light mode: the keeper (enable-light / disable-light)"
+UD="$T/units"
+rm -rf "$UD"
+rm -f "$STATE"/active-bt-ui-light-*
+: > "$CALLS"
+"$TOOL" enable-light > "$T/enable.out" 2>&1; rc=$?
+truth "enable-light exits 0" eq "$rc" 0
+truth "enable-light wrote exactly the two units" \
+    eq "$(ls "$UD" | tr '\n' ' ')" "bt-ui-light-keeper.service bt-ui-light-keeper.timer "
+truth "the service is a oneshot running this tool's start-light" \
+    eq "$(count '^Type=oneshot$' "$UD/bt-ui-light-keeper.service")/$(count "^ExecStart=.*exec \"$TOOL\" start-light --quiet-if-no-session; fi" "$UD/bt-ui-light-keeper.service")" 1/1
+truth "the service checks that the path still exists and then exits 0 with a message" \
+    eq "$(count "if \[ -x \"$TOOL\" \]" "$UD/bt-ui-light-keeper.service")/$(count 'is gone; nothing done.*exit 0' "$UD/bt-ui-light-keeper.service")" 1/1
+truth "the timer: 1 min after boot, then every 2 min, not persistent" \
+    eq "$(count '^OnBootSec=1min$' "$UD/bt-ui-light-keeper.timer")/$(count '^OnUnitActiveSec=2min$' "$UD/bt-ui-light-keeper.timer")/$(count '^Persistent=false$' "$UD/bt-ui-light-keeper.timer")" 1/1/1
+truth "the timer is installed into timers.target and points at the service" \
+    eq "$(count '^WantedBy=timers.target$' "$UD/bt-ui-light-keeper.timer")/$(count '^Unit=bt-ui-light-keeper.service$' "$UD/bt-ui-light-keeper.timer")" 1/1
+truth "enable-light reloaded systemd and enabled the timer, once each" \
+    eq "$(count '^systemctl daemon-reload$' "$CALLS")/$(count '^systemctl enable --now bt-ui-light-keeper.timer$' "$CALLS")" 1/1
+truth "enable-light touched no light unit" eq "$(count 'bt-ui-light-(atspi|sysbus|sessbus)' "$CALLS")" 0
+: > "$CALLS"
+"$TOOL" enable-light > "$T/enable2.out" 2>&1; rc=$?
+truth "a second enable-light is a no-op: rc 0, no reload, no enable, files unchanged" \
+    eq "$rc/$(count '^systemctl (daemon-reload|enable)' "$CALLS")/$(countstr 'unchanged' "$(cat "$T/enable2.out")")" 0/0/2
+# the unit's own command: runs the tool, and is harmless once the tool is gone
+exec_line=$(sed -n "s/^ExecStart=\/bin\/sh -c '\(.*\)'\$/\1/p" "$UD/bt-ui-light-keeper.service")
+gone_out=$(/bin/sh -c "${exec_line//$TOOL/$T/gone/bt-ui-capture}" 2>&1); rc=$?
+truth "with the tool path gone the unit's command exits 0 with one line" \
+    eq "$rc/$(countstr 'is gone; nothing done' "$gone_out")/$(grep -c . <<<"$gone_out")" 0/1/1
+printf 'Sun 2026-11-15 14:32:00 CET\n' > "$STATE/timer-last"
+ks=$("$TOOL" status-light 2>&1)
+truth "status-light says the keeper is enabled and when the timer last ran" \
+    eq "$(countstr 'keeper: ENABLED.*timer last ran: Sun 2026-11-15 14:32:00 CET' "$ks")" 1
+rm -f "$STATE/timer-last"
+ks=$("$TOOL" status-light 2>&1)
+truth "status-light says so when the timer has not run yet" eq "$(countstr 'timer last ran: not yet since boot' "$ks")" 1
+touch "$STATE/active-bt-ui-light-sysbus"
+: > "$CALLS"
+"$TOOL" stop-light > "$T/stoplight2.out" 2>&1
+truth "stop-light warns that the enabled keeper starts the units again" \
+    eq "$(countstr 'keeper timer is enabled' "$(cat "$T/stoplight2.out")")" 1
+: > "$CALLS"
+touch "$STATE/active-bt-ui-light-sysbus"
+"$TOOL" disable-light > "$T/disable.out" 2>&1; rc=$?
+truth "disable-light removes both unit files and disables the timer" \
+    eq "$rc/$(ls "$UD" | wc -l)/$(count '^systemctl disable --now bt-ui-light-keeper.timer$' "$CALLS")/$(ls "$STATE" | grep -c '^enabled-')" 0/0/1/0
+truth "disable-light leaves the light units and the logs alone" \
+    eq "$(count '^systemctl stop' "$CALLS")/$(ls "$STATE" | grep -c '^active-bt-ui-light-sysbus$')/$([[ -s "$LD/atspi.log" ]] && echo log || echo none)" 0/1/log
+ks=$("$TOOL" status-light 2>&1)
+truth "status-light says the keeper is not enabled after disable-light" eq "$(countstr 'keeper: NOT enabled' "$ks")" 1
+: > "$CALLS"
+"$TOOL" disable-light > "$T/disable2.out" 2>&1; rc=$?
+truth "a second disable-light is a no-op: rc 0, no systemctl change" \
+    eq "$rc/$(count '^systemctl (disable|daemon-reload)' "$CALLS")/$(countstr 'nothing to do' "$(cat "$T/disable2.out")")" 0/0/1
+: > "$CALLS"
+BT_UI_EUID=1000 "$TOOL" enable-light > /dev/null 2>&1; r1=$?
+BT_UI_EUID=1000 "$TOOL" disable-light > /dev/null 2>&1; r2=$?
+truth "enable-light and disable-light refuse without root, making no call" eq "$r1/$r2/$(wc -c < "$CALLS")" 1/1/0
+# a path that cannot go into a unit file safely is refused, nothing written
+mkdir -p "$T/odd dir/tools"
+cp "$TOOL" "$T/odd dir/tools/bt-ui-capture"
+BT_LIBDIR="$T/tools/lib" "$T/odd dir/tools/bt-ui-capture" enable-light > /dev/null 2>&1; rc=$?
+truth "enable-light refuses a path with a space and writes nothing" eq "$rc/$(ls "$UD" 2>/dev/null | wc -l)" 1/0
 
 echo "── collect: the window, the captures, published copies without addresses"
 cat > "$T/fixture/default.log" <<'EOF'

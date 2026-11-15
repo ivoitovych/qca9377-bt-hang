@@ -99,7 +99,7 @@ PipeWire level, no kernel debug, no launchers, no audio-policy recorder, no drop
 `logger -t bt-ui-capture`).
 
 ```
-sudo tools/bt-ui-capture start-light     # three transient units, idempotent
+sudo tools/bt-ui-capture start-light     # three transient units, idempotent, safe every 2 minutes
 sudo tools/bt-ui-capture status-light    # units, file sizes, last write; no root needed
 sudo tools/bt-ui-capture stop-light      # stops those three units only
 ```
@@ -112,14 +112,54 @@ sudo tools/bt-ui-capture stop-light      # stops those three units only
 | `bt-ui-light-sessbus` | `session-bus.log` | as in a full session: Settings' traffic and the Rfkill switch the shell drives |
 
 Files rotate at 20 MiB with four old ones kept (`BT_UI_LIGHT_MAX_BYTES`,
-`BT_UI_LIGHT_KEEP`): at most 100 MiB per file, 300 MiB in all. Each `start-light` after the
-units stopped opens a new directory; `BT_UI_LIGHT_BASE` moves the base (tests). Nothing is
-collected or sanitised: the files hold device names and addresses, root-readable only
-(mode 0640).
+`BT_UI_LIGHT_KEEP`): at most 100 MiB per file, 300 MiB in all. `BT_UI_LIGHT_BASE` moves the
+base (tests). Nothing is collected or sanitised: the files hold device names and addresses,
+root-readable only (mode 0640).
 
-**It does not survive a reboot.** The units are transient (`Restart=always` restarts them
-after a crash or a new login, not after a boot) and nothing is installed. After every
-reboot run `start-light` again; `status-light` says `NOTHING RUNS` when that is the case.
+**The disk bound.** There is ONE directory for the whole recording: `start-light` reuses
+the one `current` points at (also after a reboot) and opens a new one only when none exists
+or on `start-light --new`. The caps above therefore bound the total on disk (300 MiB), not
+the total per boot; with the keeper below running for months the directory does not multiply.
+
+### Keeping it running: `enable-light`
+
+The transient units end at a reboot, and the two that talk to the user's buses fail against
+a dead bus after a logout. To run it for weeks without anyone restarting it:
+
+```
+sudo tools/bt-ui-capture enable-light     # writes and enables the keeper, idempotent
+sudo tools/bt-ui-capture disable-light    # removes the keeper, idempotent
+```
+
+`enable-light` writes `bt-ui-light-keeper.service` (oneshot: runs this checkout's
+`tools/bt-ui-capture start-light --quiet-if-no-session`) and `bt-ui-light-keeper.timer`
+(`OnBootSec=1min`, `OnUnitActiveSec=2min`, `Persistent=false`) into `/etc/systemd/system`
+(`BT_UI_UNITDIR` in tests), reloads systemd and enables the timer. The path of the tool is
+written into the unit: move or delete the checkout and the unit exits 0 with one journal
+line instead of failing (run `disable-light`). A path with spaces or quote characters is refused.
+
+What `start-light` does each time the keeper calls it:
+
+| situation | result |
+|---|---|
+| after a boot | the three units start, in the same directory; one `START` mark |
+| nothing changed | nothing started, no mark, no output with `--quiet-if-no-session` |
+| nobody logged in, or the login screen | only `bt-ui-light-sysbus` runs; the two user-bus units are stopped if they were up (they would restart every 10 s against a dead bus) |
+| a session appears | `bt-ui-light-atspi` and `bt-ui-light-sessbus` start |
+| another login (the session id changes) | those two are stopped and started anew. The atspi monitor re-reads the accessibility bus address and the session monitor the bus path at each start, so a plain restart would reach the new buses for the same user; stop and start also replaces the user name and uid the unit was created with |
+
+Each user unit's login is kept in `.stamp.<unit>` in the directory. A unit from before the
+keeper has no stamp and is restarted once. Marks (`logger -t bt-ui-capture`) are made only
+when a unit was started or stopped, never per tick.
+
+`disable-light` does not stop the light units and keeps the logs; `stop-light` stops the
+units, and with the keeper enabled they come back within 2 minutes (it says so). To stop
+for good: `disable-light`, then `stop-light`. `status-light` shows whether the keeper is
+enabled and when the timer last ran.
+
+What survives what: the units survive a crash and (with the keeper) a boot, a login, a
+logout/login; the keeper survives reboots; the logs and the directory survive everything
+here. Without the keeper nothing survives a reboot and `status-light` says `NOTHING RUNS`.
 A full `stop` does not touch the light units and `stop-light` does not touch a full session.
 
 Positive control: click one tile, run `status-light` — `atspi.log` and `session-bus.log`

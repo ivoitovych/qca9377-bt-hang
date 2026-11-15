@@ -43,9 +43,23 @@
 #                                 Quick Settings DRAW with the real state; own
 #                                 directory /var/log/bt-ui-light/<UTC time>/,
 #                                 own smaller caps; marks through logger
-#   bt-ui-capture status-light    units, file sizes, last write; says plainly
-#                                 when nothing runs (units end at a reboot)
-#   bt-ui-capture stop-light      stop those three units only (root)
+#                                 Safe to call every 2 minutes: reuses ONE directory
+#                                 (--new starts another), starts only what is
+#                                 missing, restarts a user monitor whose login
+#                                 changed, runs only the system-bus monitor while
+#                                 nobody is logged in, marks only on a change;
+#                                 --quiet-if-no-session: print only on a change
+#   bt-ui-capture enable-light    persistent keeper (root): a timer unit pair under
+#                                 /etc/systemd/system runs start-light every 2
+#                                 minutes, so a boot, a login or a logout/login
+#                                 needs nobody to restart the units; idempotent
+#   bt-ui-capture disable-light   remove the keeper (root); leaves the light units
+#                                 and the logs alone
+#   bt-ui-capture status-light    units, keeper enabled or not and when it last
+#                                 ran, file sizes, last write; says plainly
+#                                 when nothing runs
+#   bt-ui-capture stop-light      stop those three units only (root); with the
+#                                 keeper enabled they come back within 2 minutes
 #
 # SIDE EFFECTS, all reverted by `stop` (runtime) or `unstage` (staged):
 #   start   PipeWire daemon log level (pw-metadata settings 0 log.level, the
@@ -72,7 +86,7 @@
 # Seams (tests, scripts/prove-ui-capture.sh): BT_UI_BASE, BT_UI_USER,
 # BT_UI_UID, BT_UI_GID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
 # BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE, BT_PROC; light mode:
-# BT_UI_LIGHT_BASE, BT_UI_LIGHT_MAX_BYTES, BT_UI_LIGHT_KEEP, BT_UI_LIGHT_ADAPTER; the commands it runs
+# BT_UI_LIGHT_BASE, BT_UI_LIGHT_MAX_BYTES, BT_UI_LIGHT_KEEP, BT_UI_LIGHT_ADAPTER, BT_UI_UNITDIR (where enable-light writes the keeper); the commands it runs
 # (runuser, systemd-run, systemctl, pw-metadata, loginctl, dbus-monitor, ...)
 # are taken from PATH, so a stub directory stands in for all of them.
 
@@ -152,13 +166,13 @@ append_ctl() {   # dynamic debug: append, never truncate (see bin/bt-dyndbg)
 }
 
 # ── the desktop user, from logind rather than hard-coded ─────────────────
-U=""; UID_U=""; GID_U=""; HOME_U=""; XDG=""
+U=""; UID_U=""; GID_U=""; HOME_U=""; XDG=""; SID=""
 find_user() {
     U="${BT_UI_USER:-}"
+    SID=""
     if [[ -z "$U" ]]; then
-        local sid
-        sid=$(loginctl show-seat seat0 -p ActiveSession --value 2>/dev/null)
-        [[ -n "$sid" ]] && U=$(loginctl show-session "$sid" -p Name --value 2>/dev/null)
+        SID=$(loginctl show-seat seat0 -p ActiveSession --value 2>/dev/null)
+        [[ -n "$SID" ]] && U=$(loginctl show-session "$SID" -p Name --value 2>/dev/null)
     fi
     [[ -n "$U" ]] || return 1
     UID_U="${BT_UI_UID:-$(id -u "$U" 2>/dev/null)}"
@@ -372,7 +386,12 @@ capped_write() {
 monitor_main() {   # _monitor <kind> <session dir>
     need_root "_monitor"
     local kind="${1:?kind}" dir="${2:?session dir}" raw addr
-    find_user || die "no desktop user"
+    # The system-bus monitors need no desktop user: light mode runs them while
+    # nobody is logged in.
+    case "$kind" in
+        sysbus|light-sysbus) ;;
+        *) find_user || die "no desktop user" ;;
+    esac
     case "$kind" in
         atspi|light-atspi)
             raw=$(as_user busctl --user call org.a11y.Bus /org/a11y/bus org.a11y.Bus GetAddress 2>/dev/null) \
@@ -514,43 +533,114 @@ light_current() {   # sets LDIR from the pointer, or the newest directory
     [[ -n "$last" ]] || return 1
     LDIR="$last"
 }
-light_any_active() {
-    local u
-    for u in "${LIGHT_UNITS[@]}"; do unit_active "$u" && return 0; done
-    return 1
+# A unit that is restarting after its process died (Restart=always, 10 s) is
+# "activating", not "active"; it is still there and must not be started again.
+light_unit_present() {
+    local s
+    s=$(systemctl is-active "$1" 2>/dev/null)
+    [[ "$s" == active || "$s" == activating || "$s" == reloading ]]
 }
+# What one start-light call changed: the tally decides whether a mark is made and
+# whether a quiet call prints anything (so a call every 2 minutes is silent).
+LOUT=""; LSTARTED=0; LCHANGED=0; LFAILED=0; LACTS=""
+lsay() { LOUT+="$*"$'\n'; }
+lact() { LCHANGED=$((LCHANGED + 1)); LACTS+="${LACTS:+, }$*"; }
+light_stamp() { echo "${SID:-$U}:$U"; }   # which login a user monitor was started for
 start_light_monitor() {   # <unit> <kind>
-    if unit_active "$1"; then echo "  $1: already running"; return 0; fi
-    run systemd-run --quiet --unit="$1" --collect \
+    local env=(--setenv=BT_UI_MAX_BYTES="$LIGHT_MAX_BYTES" --setenv=BT_UI_KEEP="$LIGHT_KEEP")
+    [[ -n "$U" ]] && env=(--setenv=BT_UI_USER="$U" --setenv=BT_UI_UID="$UID_U" "${env[@]}")
+    if run systemd-run --quiet --unit="$1" --collect \
         --description="bt-ui-capture $2 monitor ($(basename "$LDIR"))" \
         --property=Restart=always --property=RestartSec=10 \
-        --setenv=BT_UI_USER="$U" --setenv=BT_UI_UID="$UID_U" \
-        --setenv=BT_UI_MAX_BYTES="$LIGHT_MAX_BYTES" --setenv=BT_UI_KEEP="$LIGHT_KEEP" \
-        "$SELF" _monitor "$2" "$LDIR"
+        "${env[@]}" "$SELF" _monitor "$2" "$LDIR"; then
+        LSTARTED=$((LSTARTED + 1)); lact "started $1"; lsay "  $1: started"
+        return 0
+    fi
+    LFAILED=$((LFAILED + 1)); lsay "  $1: systemd-run FAILED"
+    return 1
+}
+light_stop_unit() {   # <unit> <why>
+    run systemctl stop "$1" && { lact "stopped $1 ($2)"; lsay "  $1: stopped ($2)"; }
+}
+# A user-bus monitor is tied to the login it was started for: it carries that
+# user's name and uid in its environment and talks to that user's buses. After a
+# logout (or another user's login) its bus is gone or is not the new session's, and
+# it would restart every 10 s against a dead bus. The atspi monitor re-reads the
+# accessibility address and the session monitor the bus path on every START, so
+# a restart alone would do for the same user; but the unit's own environment
+# (user, uid) is fixed at systemd-run time, so the unit is stopped and started
+# anew, which covers a different user as well.
+light_ensure_user_unit() {   # <index>
+    local u="${LIGHT_UNITS[$1]}" k="${LIGHT_KINDS[$1]}" want had=""
+    want=$(light_stamp)
+    if light_unit_present "$u"; then
+        [[ -r "$LDIR/.stamp.$u" ]] && had=$(<"$LDIR/.stamp.$u")
+        if [[ "$had" == "$want" ]]; then lsay "  $u: running"; return 0; fi
+        light_stop_unit "$u" "login changed: '${had:-unknown}' -> '$want'"
+    fi
+    start_light_monitor "$u" "$k" && printf '%s\n' "$want" > "$LDIR/.stamp.$u"
 }
 start_light_main() {
     need_root "start-light"
-    find_user || die "no active graphical session found (set BT_UI_USER)"
-    if light_any_active && light_current; then
-        echo "── light recording already (partly) running: $LDIR; starting what is missing"
+    local new=0 quiet=0 a have=1 i
+    for a in "$@"; do
+        case "$a" in
+            --new) new=1 ;;
+            --quiet-if-no-session) quiet=1 ;;   # print only when something changed
+            *) die "start-light: unknown option '$a' (--new, --quiet-if-no-session)" ;;
+        esac
+    done
+    LOUT=""; LSTARTED=0; LCHANGED=0; LFAILED=0; LACTS=""
+    if ! find_user; then have=0
+    elif [[ -z "${BT_UI_USER:-}" && -n "$SID" ]] \
+         && [[ "$(loginctl show-session "$SID" -p Class --value 2>/dev/null)" == greeter ]]; then
+        have=0   # the login screen is a session of the display manager's own user
+    fi
+    # ONE directory for the whole recording, across reboots: the caps (per file,
+    # per monitor) then bound the total on disk. A new one only when none exists
+    # or on --new.
+    if (( new )); then
+        for i in 0 1 2; do
+            if light_unit_present "${LIGHT_UNITS[$i]}"; then light_stop_unit "${LIGHT_UNITS[$i]}" "--new"; fi
+        done
+    fi
+    if (( ! new )) && light_current; then
+        lsay "── light recording, directory: $LDIR"
     else
         LDIR="$LIGHT_BASE/$(date -u +%Y%m%dT%H%M%SZ)"
-        echo "── light recording, new directory: $LDIR"
         mkdir -p "$LDIR/bin" || die "cannot create $LDIR"
         chmod 0755 "$LDIR" "$LDIR/bin"
+        lact "new directory $LDIR"; lsay "── light recording, NEW directory: $LDIR"
     fi
     if [[ -r "$REPO/scripts/bt-ui-atspi.py" ]]; then
-        install -m 0644 "$REPO/scripts/bt-ui-atspi.py" "$LDIR/bin/bt-ui-atspi.py"
+        cmp -s "$REPO/scripts/bt-ui-atspi.py" "$LDIR/bin/bt-ui-atspi.py" \
+            || install -m 0644 "$REPO/scripts/bt-ui-atspi.py" "$LDIR/bin/bt-ui-atspi.py"
     else
-        echo "  WARNING: $REPO/scripts/bt-ui-atspi.py missing; the AT-SPI monitor will fail"
+        lsay "  WARNING: $REPO/scripts/bt-ui-atspi.py missing; the AT-SPI monitor will fail"
     fi
-    echo "  files capped at $LIGHT_MAX_BYTES bytes x $((LIGHT_KEEP + 1)) per monitor"
-    local i
-    for i in 0 1 2; do start_light_monitor "${LIGHT_UNITS[$i]}" "${LIGHT_KINDS[$i]}"; done
+    lsay "  files capped at $LIGHT_MAX_BYTES bytes x $((LIGHT_KEEP + 1)) per monitor"
+    # The system-bus monitor needs nobody logged in.
+    if light_unit_present "${LIGHT_UNITS[1]}"; then lsay "  ${LIGHT_UNITS[1]}: running"
+    else start_light_monitor "${LIGHT_UNITS[1]}" "${LIGHT_KINDS[1]}"; fi
+    if (( have )); then
+        light_ensure_user_unit 0
+        light_ensure_user_unit 2
+    else
+        lsay "  no graphical session (login screen or nobody logged in): only the system-bus monitor runs"
+        # Left running they would restart every 10 s against a dead bus.
+        for i in 0 2; do
+            if light_unit_present "${LIGHT_UNITS[$i]}"; then light_stop_unit "${LIGHT_UNITS[$i]}" "no session"; fi
+        done
+    fi
     printf '%s\n' "$LDIR" > "$LIGHT_BASE/current"
-    logger -t "$MARKER" "ui-light START dir=$LDIR user=$U (units: ${LIGHT_UNITS[*]})"
-    echo "── done. Transient units end at a reboot: run start-light again after one."
-    echo "   Check with: bt-ui-capture status-light"
+    if (( LCHANGED > 0 )); then
+        logger -t "$MARKER" "ui-light $( (( LSTARTED > 0 )) && echo START || echo CHANGE ) dir=$LDIR user=${U:-none} ($LACTS)"
+    fi
+    if (( ! quiet || LCHANGED > 0 || LFAILED > 0 )); then
+        printf '%s' "$LOUT"
+        echo "── done. Check with: bt-ui-capture status-light; survive reboots with: bt-ui-capture enable-light"
+    fi
+    (( LFAILED == 0 ))
 }
 stop_light_main() {
     need_root "stop-light"
@@ -561,6 +651,91 @@ stop_light_main() {
     light_current || LDIR=none
     logger -t "$MARKER" "ui-light STOP dir=$LDIR"
     echo "  logs kept in ${LDIR}"
+    if systemctl is-enabled --quiet "$KEEPER.timer" 2>/dev/null; then
+        echo "  NOTE: the keeper timer is enabled: it starts them again within 2 minutes."
+        echo "        Run 'bt-ui-capture disable-light' as well to stop for good."
+    fi
+}
+
+# ── keeper: a persistent timer that runs start-light, so reboots and logins
+# do not need anyone to remember. Transient units end at a reboot; the keeper
+# (an ordinary unit pair under /etc/systemd/system) does not.
+KEEPER=bt-ui-light-keeper
+UNITDIR="${BT_UI_UNITDIR:-/etc/systemd/system}"
+keeper_service() {
+    cat <<EOF
+# bt-ui-capture: written by 'bt-ui-capture enable-light', removed by 'disable-light'.
+[Unit]
+Description=bt-ui-capture light recording keeper (starts the light units when missing)
+
+[Service]
+Type=oneshot
+# Exit 0 with one journal line when the tool is gone, so a removed checkout does
+# not turn into a failure loop.
+ExecStart=/bin/sh -c 'if [ -x "$SELF" ]; then exec "$SELF" start-light --quiet-if-no-session; fi; echo "bt-ui-capture light keeper: $SELF is gone; nothing done (run: bt-ui-capture disable-light)"; exit 0'
+EOF
+}
+keeper_timer() {
+    cat <<EOF
+# bt-ui-capture: written by 'bt-ui-capture enable-light', removed by 'disable-light'.
+[Unit]
+Description=bt-ui-capture light recording keeper, every 2 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+AccuracySec=10s
+Persistent=false
+Unit=$KEEPER.service
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+enable_light_main() {
+    need_root "enable-light"
+    # The path goes into a shell string inside a unit file: keep it plain.
+    case "$SELF" in
+        *[!A-Za-z0-9_./+:@-]*) die "enable-light: '$SELF' has characters that do not survive a unit file; run it from a plainer path" ;;
+    esac
+    [[ -x "$SELF" ]] || die "enable-light: $SELF is not executable"
+    local changed=0 f content
+    mkdir -p "$UNITDIR" || die "cannot create $UNITDIR"
+    for f in service timer; do
+        content=$(keeper_$f)
+        if [[ -r "$UNITDIR/$KEEPER.$f" && "$(<"$UNITDIR/$KEEPER.$f")" == "$content" ]]; then
+            echo "  $UNITDIR/$KEEPER.$f: unchanged"
+        else
+            write_file "$UNITDIR/$KEEPER.$f" 0644 "" "$content" || die "cannot write $UNITDIR/$KEEPER.$f"
+            echo "  $UNITDIR/$KEEPER.$f: written"; changed=1
+        fi
+    done
+    (( changed )) && systemctl daemon-reload
+    if systemctl is-enabled --quiet "$KEEPER.timer" 2>/dev/null && (( ! changed )); then
+        echo "  $KEEPER.timer: already enabled"
+    else
+        systemctl enable --now "$KEEPER.timer" || die "systemctl enable --now $KEEPER.timer failed"
+        echo "  $KEEPER.timer: enabled and started"
+    fi
+    echo "── keeper enabled: after a boot, a login or a logout/login the light units are"
+    echo "   (re)started within about 2 minutes by $SELF."
+    echo "   Check with: bt-ui-capture status-light   Undo with: bt-ui-capture disable-light"
+}
+disable_light_main() {
+    need_root "disable-light"
+    local f did=0
+    if [[ -e "$UNITDIR/$KEEPER.timer" ]] || systemctl is-enabled --quiet "$KEEPER.timer" 2>/dev/null; then
+        systemctl disable --now "$KEEPER.timer" >/dev/null 2>&1
+        echo "  $KEEPER.timer: stopped and disabled"; did=1
+    fi
+    for f in timer service; do
+        if [[ -e "$UNITDIR/$KEEPER.$f" ]]; then
+            rm -f "$UNITDIR/$KEEPER.$f"; echo "  removed $UNITDIR/$KEEPER.$f"; did=1
+        fi
+    done
+    (( did )) && systemctl daemon-reload
+    (( did )) || echo "  keeper not installed; nothing to do"
+    echo "── the light units and their logs are left as they are (stop-light stops the units)"
 }
 status_light_main() {
     local u f n=0 now s m
@@ -573,6 +748,14 @@ status_light_main() {
         echo "  start it with: sudo bt-ui-capture start-light"
     else
         echo "light recording: $n of ${#LIGHT_UNITS[@]} units running"
+    fi
+    local last
+    if systemctl is-enabled --quiet "$KEEPER.timer" 2>/dev/null; then
+        last=$(systemctl show "$KEEPER.timer" -p LastTriggerUSec --value 2>/dev/null)
+        [[ -z "$last" || "$last" == n/a ]] && last="not yet since boot"
+        echo "  keeper: ENABLED (restarts missing units every 2 min); timer last ran: $last"
+    else
+        echo "  keeper: NOT enabled (nothing restarts the units after a reboot or logout); enable: sudo bt-ui-capture enable-light"
     fi
     if ! light_current; then echo "  no directory under $LIGHT_BASE"; return 0; fi
     echo "  directory: $LDIR"
@@ -814,12 +997,14 @@ case "$cmd" in
     stage-restart)  stage_main ;;
     status)         status_main ;;
     stop)           stop_main ;;
-    start-light)    start_light_main ;;
+    start-light)    start_light_main "$@" ;;
+    enable-light)   enable_light_main ;;
+    disable-light)  disable_light_main ;;
     stop-light)     stop_light_main ;;
     status-light)   status_light_main ;;
     unstage)        unstage_main ;;
     collect)        collect_main "$@" ;;
     _monitor)       monitor_main "$@" ;;
-    -h|--help|help) sed -n '2,80p' "$0" ;;
-    *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect|start-light|stop-light|status-light)" ;;
+    -h|--help|help) sed -n '2,92p' "$0" ;;
+    *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect|start-light|stop-light|status-light|enable-light|disable-light)" ;;
 esac
