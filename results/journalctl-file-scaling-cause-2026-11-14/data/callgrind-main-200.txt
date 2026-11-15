@@ -1,0 +1,45 @@
+callgrind of journalctl -o cat, first 3 000 lines, main, 200 files (systemd main 6bd4689, --buildtype=debugoptimized)
+
+== inclusive
+1,086,094,812 (100.0%)  PROGRAM TOTALS
+1,086,094,812 (100.0%)  ???:0x000000000001f540
+1,082,175,737 (99.64%)  ???:(below main) [build-dbg/journalctl]
+1,082,175,725 (99.64%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34
+1,082,175,555 (99.64%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main)
+1,082,175,491 (99.64%)  journal/journalctl.c:main [build-dbg/journalctl]
+1,082,107,009 (99.63%)  journal/journalctl-show.c:action_show [build-dbg/journalctl]
+1,074,175,493 (98.90%)  journal/journalctl-show.c:show [build-dbg/journalctl]
+1,058,735,209 (97.48%)  libsystemd/sd-journal/sd-journal.c:real_journal_next [build-dbg/src/shared/libsystemd-shared-263.so]
+1,058,357,933 (97.45%)  ???:0x00000000001102e0 [???]
+1,058,351,739 (97.45%)  libsystemd/sd-journal/sd-journal.c:sd_journal_step_one [build-dbg/src/shared/libsystemd-shared-263.so]
+  958,242,340 (88.23%)  libsystemd/sd-journal/sd-journal.c:compare_boot_ids [build-dbg/src/shared/libsystemd-shared-263.so]
+  898,200,458 (82.70%)  libsystemd/sd-journal/sd-journal.c:journal_file_find_newest_for_boot_id [build-dbg/src/shared/libsystemd-shared-263.so]
+  624,227,932 (57.47%)  ???:0x0000000004927190 [???]
+  619,420,216 (57.03%)  basic/sort-util.c:bsearch_safe_internal [build-dbg/src/shared/libsystemd-shared-263.so]
+  556,919,873 (51.28%)  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h:bsearch_safe_internal
+  392,031,821 (36.10%)  libsystemd/sd-journal/sd-journal.c:newest_by_boot_id_compare [build-dbg/src/shared/libsystemd-shared-263.so]
+  366,955,179 (33.79%)  ???:0x0000000004930e80 [???]
+  341,878,537 (31.48%)  libsystemd/sd-id128/id128-util.c:id128_compare_func [build-dbg/src/shared/libsystemd-shared-263.so]
+  304,880,069 (28.07%)  ???:0x000000000492f480 [???]
+  279,754,695 (25.76%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe
+   92,239,017 ( 8.49%)  libsystemd/sd-journal/sd-journal.c:journal_file_read_tail_timestamp [build-dbg/src/shared/libsystemd-shared-263.so]
+   38,458,528 ( 3.54%)  basic/prioq.h:journal_file_find_newest_for_boot_id
+   28,843,896 ( 2.66%)  ???:0x000000000492a2e0 [???]
+   24,036,580 ( 2.21%)  basic/prioq.c:prioq_peek_by_index [build-dbg/src/shared/libsystemd-shared-263.so]
+
+== exclusive
+1,086,094,812 (100.0%)  PROGRAM TOTALS
+279,754,695 (25.76%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe
+164,946,994 (15.19%)  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h:bsearch_safe_internal
+144,219,480 (13.28%)  libsystemd/sd-journal/sd-journal.c:journal_file_find_newest_for_boot_id [build-dbg/src/shared/libsystemd-shared-263.so]
+ 91,443,324 ( 8.42%)  libsystemd/sd-journal/sd-journal.c:journal_file_read_tail_timestamp [build-dbg/src/shared/libsystemd-shared-263.so]
+ 64,015,085 ( 5.89%)  libsystemd/sd-journal/sd-journal.c:real_journal_next [build-dbg/src/shared/libsystemd-shared-263.so]
+ 62,500,343 ( 5.75%)  basic/sort-util.c:bsearch_safe_internal [build-dbg/src/shared/libsystemd-shared-263.so]
+ 52,830,908 ( 4.86%)  libsystemd/sd-journal/sd-journal.c:compare_boot_ids [build-dbg/src/shared/libsystemd-shared-263.so]
+ 37,614,963 ( 3.46%)  libsystemd/sd-id128/id128-util.c:id128_compare_func [build-dbg/src/shared/libsystemd-shared-263.so]
+ 25,125,374 ( 2.31%)  ???:0x000000000492f480 [???]
+ 25,076,642 ( 2.31%)  libsystemd/sd-journal/sd-journal.c:newest_by_boot_id_compare [build-dbg/src/shared/libsystemd-shared-263.so]
+ 25,076,642 ( 2.31%)  ???:0x0000000004930e80 [???]
+ 24,036,580 ( 2.21%)  basic/prioq.c:prioq_peek_by_index [build-dbg/src/shared/libsystemd-shared-263.so]
+  9,906,000 ( 0.91%)  basic/ratelimit.c:ratelimit_below_at [build-dbg/src/shared/libsystemd-shared-263.so]
+  9,614,632 ( 0.89%)  basic/prioq.h:journal_file_find_newest_for_boot_id

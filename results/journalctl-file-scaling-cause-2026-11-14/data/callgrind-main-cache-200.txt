@@ -1,0 +1,45 @@
+callgrind of journalctl -o cat, first 3 000 lines, main + boot-order cache, 200 files (systemd main 6bd4689, --buildtype=debugoptimized)
+
+== inclusive
+302,614,401 (100.0%)  PROGRAM TOTALS
+302,614,401 (100.0%)  ???:0x000000000001f540
+298,695,187 (98.70%)  ???:(below main) [build-dbg/journalctl]
+298,695,175 (98.70%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34
+298,695,005 (98.70%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main)
+298,694,941 (98.70%)  journal/journalctl.c:main [build-dbg/journalctl]
+298,626,448 (98.68%)  journal/journalctl-show.c:action_show [build-dbg/journalctl]
+290,792,551 (96.09%)  journal/journalctl-show.c:show [build-dbg/journalctl]
+275,332,406 (90.98%)  libsystemd/sd-journal/sd-journal.c:real_journal_next [build-dbg/src/shared/libsystemd-shared-263.so]
+275,018,385 (90.88%)  ???:0x00000000001102e0 [???]
+275,012,191 (90.88%)  libsystemd/sd-journal/sd-journal.c:sd_journal_step_one [build-dbg/src/shared/libsystemd-shared-263.so]
+168,267,904 (55.60%)  libsystemd/sd-journal/sd-journal.c:compare_boot_ids [build-dbg/src/shared/libsystemd-shared-263.so]
+110,629,680 (36.56%)  libsystemd/sd-journal/sd-journal.c:boot_newest_cached [build-dbg/src/shared/libsystemd-shared-263.so]
+ 18,584,800 ( 6.14%)  ???:0x0000000004928f10 [???]
+ 17,345,600 ( 5.73%)  basic/ratelimit.c:ratelimit_below_at [build-dbg/src/shared/libsystemd-shared-263.so]
+ 15,625,446 ( 5.16%)  ???:0x0000000000110580 [???]
+ 15,619,250 ( 5.16%)  shared/logs-show.c:show_journal_entry [build-dbg/src/shared/libsystemd-shared-263.so]
+ 15,442,236 ( 5.10%)  shared/logs-show.c:output_cat [build-dbg/src/shared/libsystemd-shared-263.so]
+ 15,271,858 ( 5.05%)  shared/logs-show.c:output_cat_field [build-dbg/src/shared/libsystemd-shared-263.so]
+ 14,495,608 ( 4.79%)  ???:0x00000000049319e0 [???]
+ 14,489,412 ( 4.79%)  libsystemd/sd-journal/sd-journal.c:sd_journal_get_data [build-dbg/src/shared/libsystemd-shared-263.so]
+ 14,470,824 ( 4.78%)  libsystemd/sd-journal/sd-journal.c:journal_get_data [build-dbg/src/shared/libsystemd-shared-263.so]
+ 12,256,594 ( 4.05%)  ???:0x0000000004923c70 [???]
+ 12,212,422 ( 4.04%)  libsystemd/sd-journal/journal-file.c:journal_file_entry_field_payload_full [build-dbg/src/shared/libsystemd-shared-263.so]
+ 11,791,335 ( 3.90%)  ???:0x000000000492d850 [???]
+
+== exclusive
+302,614,401 (100.0%)  PROGRAM TOTALS
+100,960,334 (33.36%)  libsystemd/sd-journal/sd-journal.c:boot_newest_cached [build-dbg/src/shared/libsystemd-shared-263.so]
+ 70,017,832 (23.14%)  libsystemd/sd-journal/sd-journal.c:real_journal_next [build-dbg/src/shared/libsystemd-shared-263.so]
+ 50,427,250 (16.66%)  libsystemd/sd-journal/sd-journal.c:compare_boot_ids [build-dbg/src/shared/libsystemd-shared-263.so]
+  9,911,600 ( 3.28%)  basic/ratelimit.c:ratelimit_below_at [build-dbg/src/shared/libsystemd-shared-263.so]
+  9,613,844 ( 3.18%)  systemd/sd-id128.h:boot_newest_cached
+  8,725,853 ( 2.88%)  systemd/sd-id128.h:real_journal_next
+  7,210,974 ( 2.38%)  systemd/sd-id128.h:compare_boot_ids
+  3,717,600 ( 1.23%)  basic/ratelimit.h:ratelimit_below_at
+  3,716,400 ( 1.23%)  basic/time-util.h:ratelimit_below_at
+  2,559,400 ( 0.85%)  libsystemd/sd-journal/journal-file.c:journal_file_move_to_object [build-dbg/src/shared/libsystemd-shared-263.so]
+  2,521,431 ( 0.83%)  libsystemd/sd-journal/mmap-cache.c:mmap_cache_fd_get [build-dbg/src/shared/libsystemd-shared-263.so]
+  2,263,666 ( 0.75%)  libsystemd/sd-journal/journal-file.c:journal_file_data_payload_full [build-dbg/src/shared/libsystemd-shared-263.so]
+  2,101,000 ( 0.69%)  libsystemd/sd-journal/journal-file.c:journal_file_move_to_full [build-dbg/src/shared/libsystemd-shared-263.so]
+  1,834,953 ( 0.61%)  libsystemd/sd-journal/journal-file.c:check_object [build-dbg/src/shared/libsystemd-shared-263.so]

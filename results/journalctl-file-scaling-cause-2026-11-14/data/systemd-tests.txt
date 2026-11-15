@@ -1,0 +1,4 @@
+systemd's journal tests, built with --buildtype=debugoptimized -Dtests=true, each run alone with a 600 s limit (rc 124 = the limit)
+main 6bd4689: test-journal=ok test-journal-append=FAIL:124 test-journal-enum=ok test-journal-file=ok test-journal-flush=ok test-journal-init=ok test-journal-interleaving=ok test-journal-match=ok test-journal-stream=ok test-journal-verify=ok test-mmap-cache=ok
+main 6bd4689 + boot-order cache: test-journal=ok test-journal-append=FAIL:124 test-journal-enum=ok test-journal-file=ok test-journal-flush=ok test-journal-init=ok test-journal-interleaving=ok test-journal-match=ok test-journal-stream=ok test-journal-verify=ok test-mmap-cache=ok
+test-journal-append is a writer-side stress loop that runs until stopped; it reached the limit on both trees alike.
