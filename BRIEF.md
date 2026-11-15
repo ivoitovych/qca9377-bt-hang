@@ -220,11 +220,11 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > - **CI:** green on every push since `2a3f253` (11-14); two red runs that day were ported
 >   scripts without the executable bit and with a non-canonical timeout grep.
 > - **Open for the operator:**
->   - **Old remote branches:** whether to delete the ones the test-suite maintainer's 11-13 note
->     lists. Each was backed up first. The note gives no command and no count.
->   - **`ci/upstream-ci-local`:** the content of its two commits `eb2e6d6` and `6ada2a1` is on
->     `main` as the ports `8b71499` and `a56141e`, new commits, not ancestors (the files checked
->     2026-11-15). The branch only waits for that same deletion.
+>   - **Old remote branches: done 2026-11-15.** The operator deleted the 16 the test-suite
+>     maintainer's 11-13 note lists (each backed up first), `ci/upstream-ci-local` among them (its
+>     two commits are on `main` as the ports `8b71499` and `a56141e`). The public repository now
+>     has `main`, `tests/test-suite`, `research/journalctl-file-scaling` and the whole-project
+>     review's branch (`ls-remote`, 2026-11-15).
 >   - **The rest:** the decisions in each package's notes, and the headset session and laptop
 >     tests as before (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17).
 >   - **Done 11-14:** the 11-13 work areas were deleted, with every result ported (STATUS,
