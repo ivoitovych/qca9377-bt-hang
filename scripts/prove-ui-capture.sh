@@ -313,6 +313,46 @@ def tick():
 GLib.timeout_add(20, tick)
 loop.run()
 PYEOF
+    # A stub of the AT-SPI registry on the private bus: records every
+    # RegisterEvent (event, properties, app_bus_name) and whether the caller's
+    # unique name equals app_bus_name.
+    cat > "$T/registry.py" <<'PYEOF'
+import sys
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+addr, outf = sys.argv[1], sys.argv[2]
+conn = Gio.DBusConnection.new_for_address_sync(
+    addr, Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT |
+    Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION, None, None)
+xml = ('<node><interface name="org.a11y.atspi.Registry">'
+       '<method name="RegisterEvent"><arg type="s" direction="in"/>'
+       '<arg type="as" direction="in"/><arg type="s" direction="in"/></method>'
+       '<method name="GetRegisteredEvents"><arg type="a(ss)" direction="out"/></method>'
+       '</interface></node>')
+iface = Gio.DBusNodeInfo.new_for_xml(xml).interfaces[0]
+def method(c, sender, path, i, m, params, inv):
+    if m == "RegisterEvent":
+        ev, props, bus = params.unpack()
+        with open(outf, "a") as f:
+            f.write(f"{ev}|{','.join(props)}|{'caller' if bus == sender else 'other'}\n")
+        inv.return_value(None)
+    else:
+        inv.return_value(GLib.Variant("(a(ss))", ([],)))
+conn.register_object("/org/a11y/atspi/registry", iface, method, None, None)
+def acquired(c, name):
+    open(outf + ".ready", "w").close()
+Gio.bus_own_name_on_connection(conn, "org.a11y.atspi.Registry", Gio.BusNameOwnerFlags.NONE, acquired, None)
+GLib.MainLoop().run()
+PYEOF
+    REGCALLS="$T/registry.calls"; : > "$REGCALLS"
+    python3 "$T/registry.py" "$addr" "$REGCALLS" &
+    REGPID=$!
+    for _ in $(seq 1 50); do
+        [[ -e "$REGCALLS.ready" ]] && break
+        sleep 0.1
+    done
+    truth "the stub registry owns its name on the private bus" test -e "$REGCALLS.ready"
     MON_DIR="$T/mon"; mkdir -p "$MON_DIR/bin"; cp "$ROOT/scripts/bt-ui-atspi.py" "$MON_DIR/bin/"
     BT_UI_USER=prove-user BT_UI_MAX_BYTES=4000 BT_UI_KEEP=2 "$TOOL" _monitor atspi "$MON_DIR" &
     MON=$!
@@ -339,6 +379,8 @@ PYEOF
     truth "recorder did not record BoundsChanged" eq "$(count 'BoundsChanged|bounds-changed' "$T/atspi.all")" 0
     truth "monitor rotated and kept at most KEEP+1 files" test "$nfiles" -ge 2 -a "$nfiles" -le 3
     truth "no monitor file grew far past the cap" eq "$big" 0
+    truth "the full session's recorder registered nothing with the registry (passive)" \
+        eq "$(wc -c < "$REGCALLS")" 0
     echo "── light mode's AT-SPI monitor: Settings whole, the shell filtered (same private bus)"
     LMON="$T/lmon"; mkdir -p "$LMON/bin"; cp "$ROOT/scripts/bt-ui-atspi.py" "$LMON/bin/"
     : > "$CALLS"
@@ -358,7 +400,7 @@ PYEOF
     shellpid=$(sed -n 's/.*application seen: pid=\([0-9]*\) comm=gnome-shell .*/\1/p' "$LMON/atspi.log" | head -1)
     setpid=$(sed -n 's/.*application seen: pid=\([0-9]*\) comm=gnome-control-c .*/\1/p' "$LMON/atspi.log" | head -1)
     truth "light recorder was run with both applications" \
-        eq "$(count 'python3 .*--comm gnome-control-c --comm gnome-shell$' "$CALLS")" 1
+        eq "$(count 'python3 .*--comm gnome-control-c --comm gnome-shell --register-shell-events$' "$CALLS")" 1
     truth "light recorder saw the shell and Settings" test -n "$shellpid" -a -n "$setpid"
     truth "light recorder kept the shell's drawn state (checked)" \
         test "$(count "pid=$shellpid .*state-changed:checked " "$LMON/atspi.log")" -gt 0
@@ -368,6 +410,25 @@ PYEOF
         test "$(count "pid=$setpid .*state-changed:focused " "$LMON/atspi.log")" -gt 0
     truth "light recorder dropped the bystander (every checked line is the shell's)" \
         eq "$(count 'state-changed:checked ' "$LMON/atspi.log")" "$(count "pid=$shellpid .*state-changed:checked " "$LMON/atspi.log")"
+    printf '%s\n' \
+        'object:state-changed:active||caller' \
+        'object:state-changed:busy||caller' \
+        'object:state-changed:checked||caller' \
+        'object:state-changed:enabled||caller' \
+        'object:state-changed:expanded||caller' \
+        'object:state-changed:indeterminate||caller' \
+        'object:state-changed:pressed||caller' \
+        'object:state-changed:selected||caller' \
+        'object:state-changed:sensitive||caller' \
+        'object:state-changed:showing||caller' \
+        'object:property-change:accessible-description||caller' \
+        'object:property-change:accessible-name||caller' > "$T/registry.want"
+    sort "$REGCALLS" > "$T/registry.got"
+    sort "$T/registry.want" > "$T/registry.want.sorted"
+    truth "light mode registered exactly the shell filter's 12 event types, as the connection" \
+        cmp -s "$T/registry.got" "$T/registry.want.sorted"
+    truth "light recorder logged each registration" eq "$(count '# registered event object:' "$LMON/atspi.log")" 12
+    kill "$REGPID" 2>/dev/null
     kill "$BUS_PID" 2>/dev/null; BUS_PID=""
 else
     bad "AT-SPI check needs dbus-daemon and python3-gi (not proven here)"

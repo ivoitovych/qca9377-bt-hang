@@ -20,6 +20,20 @@ signals whether or not anyone listens (gtk/a11y/gtkatspicontext.c, 4.14.5: the
 only condition on every emit_* call is that the context has a connection). So
 listening is enough; nothing has to be switched on.
 
+THE ONE NON-PASSIVE STEP (opt-in, `--register-shell-events`). GTK 4 emits its
+events unconditionally, but GNOME Shell publishes through the atk bridge
+(at-spi2-atk), which installs its ATK event hooks only for event types some
+client has registered with the registry: it reads Registry.GetRegisteredEvents and
+the EventListenerRegistered signal (strings of libatk-bridge-2.0, at-spi2-core
+2.52). With nothing registered the shell is silent, as a live run showed. This
+option calls org.a11y.atspi.Registry.RegisterEvent(s event, as properties,
+s app_bus_name) at /org/a11y/atspi/registry, with this connection's unique name,
+for exactly the event types the shell filter keeps and nothing broader
+(object:state-changed:<state> for SHELL_STATES, object:property-change:
+accessible-name and accessible-description). The registry forgets them when
+this connection closes; they are registered again if the registry restarts.
+Without the option the recorder stays passive, as below.
+
 HOW IT STAYS PASSIVE. It subscribes to signals with ordinary match rules on the
 accessibility bus. It does NOT register as an AT-SPI event listener with the
 registry (org.a11y.atspi.Registry.RegisterEvent), which is what tells GTK 3 and
@@ -272,6 +286,31 @@ class Recorder:
             f"parent={short(parent)!r}{extra} path={path}")
 
 
+REGISTRY = "org.a11y.atspi.Registry"
+REGISTRY_PATH = "/org/a11y/atspi/registry"
+
+
+def shell_event_names():
+    """The event types the shell filter keeps, in the registry's spelling."""
+    return [f"object:state-changed:{s}" for s in sorted(SHELL_STATES)] + \
+           [f"object:property-change:{p}" for p in sorted(SHELL_PROPS)]
+
+
+def register_shell_events(conn):
+    """Registry.RegisterEvent(s event, as properties, s app_bus_name), once per
+    event type, with this connection's unique name. The registry drops them when
+    the connection closes (it watches NameOwnerChanged)."""
+    me = conn.get_unique_name()
+    for ev in shell_event_names():
+        try:
+            conn.call_sync(REGISTRY, REGISTRY_PATH, REGISTRY, "RegisterEvent",
+                           GLib.Variant("(sass)", (ev, [], me)), None,
+                           Gio.DBusCallFlags.NONE, 2000, None)
+            out(f"{now()} # registered event {ev}")
+        except GLib.Error as e:
+            out(f"{now()} # register FAILED {ev}: {e.message}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--address", help="accessibility bus address")
@@ -279,6 +318,9 @@ def main():
                     help="process name to keep (default gnome-control-c)")
     ap.add_argument("--check-filter", action="store_true",
                     help="read fixture lines (see check_filter) on stdin, print keep/drop; no bus")
+    ap.add_argument("--register-shell-events", action="store_true",
+                    help="opt in: register the shell filter's event types with the AT-SPI registry "
+                         "(the one non-passive step; see the module docstring)")
     a = ap.parse_args()
     if a.check_filter:
         return check_filter()
@@ -298,6 +340,16 @@ def main():
         conn.signal_subscribe(None, iface, member, None, None,
                               Gio.DBusSignalFlags.NONE, rec.on_signal)
 
+    mode = "passive: match rules only, no registry listener"
+    if a.register_shell_events:
+        register_shell_events(conn)
+        mode = "NOT passive: registered the shell's event types with the registry"
+        conn.signal_subscribe(
+            "org.freedesktop.DBus", "org.freedesktop.DBus", "NameOwnerChanged",
+            "/org/freedesktop/DBus", REGISTRY, Gio.DBusSignalFlags.NONE,
+            lambda c, s, p, i, m, params: register_shell_events(conn)
+            if params.unpack()[2] else None)
+
     loop = GLib.MainLoop()
     rc = {"code": 0}
 
@@ -310,7 +362,7 @@ def main():
     for s in (signal.SIGTERM, signal.SIGINT):
         GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, s, lambda: (loop.quit(), False)[1])
     out(f"{now()} # bt-ui-atspi start pid={os.getpid()} comm={','.join(comms)} "
-        f"(passive: match rules only, no registry listener)")
+        f"({mode})")
     loop.run()
     out(f"{now()} # bt-ui-atspi stop")
     return rc["code"]

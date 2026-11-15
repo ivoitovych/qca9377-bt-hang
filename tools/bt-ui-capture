@@ -381,7 +381,10 @@ monitor_main() {   # _monitor <kind> <session dir>
             local comms=(--comm gnome-control-c)
             # Light mode adds the shell (the Quick Settings tiles are its); the
             # recorder applies a per-application filter to it (bt-ui-atspi.py).
-            [[ "$kind" == light-atspi ]] && comms+=(--comm gnome-shell)
+            # The shell only publishes event types some client registered with the
+            # AT-SPI registry, so light mode opts in to registering the few the
+            # filter keeps (the recorder's one non-passive step, see its docstring).
+            [[ "$kind" == light-atspi ]] && comms+=(--comm gnome-shell --register-shell-events)
             as_user python3 "$dir/bin/bt-ui-atspi.py" --address "$addr" "${comms[@]}" \
                 | capped_write "$dir/atspi.log" ;;
         light-sysbus)
