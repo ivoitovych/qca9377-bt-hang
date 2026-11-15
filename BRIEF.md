@@ -180,15 +180,19 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   **stock** btusb and `bluetooth.ko` since 11-12 22:55; the stock btusb has `13d3:3503` and the
 >   boot loads the patch. **E3 is retired; CO-09 is done.** CO-03's `bluetoothd` is staged on disk
 >   (11-13), not running until bluetoothd restarts. `hci0` kernel debug is on (BT-17's arming).
-> - **Ready to send, each with `NOTES-FOR-OPERATOR.md` (his decisions) and nothing sent:**
->   CO-44 (`send-20261113/`, dry runs OK 11-14); CO-43 E and A (`send-20261113/E`, `A`, dry runs
->   OK); CO-38, CO-04, CO-05 + CO-26 (`send-20261114/` each, refreshed on bluetooth-next
->   `da3cc02587c6`); CO-35 (`send-20261114/`, stable tips of 11-14); CO-22 (request v3,
->   `research-2026-11-01/qca-ids/refresh-20261114/`); CO-21 and CO-20 (`send-20261114/`); CO-02 v2
->   (`send-v2-20261114/`, three kernel patches + two BlueZ tests). For review, not yet to send: the
->   rest of CO-43's btusb series on top of E (`send-series-20261114/`: A, B2, D v2, BT-24 and BT-25
->   fixes; D's system path rests on source reading). **Packages made since 11-13 carry no
->   Signed-off-by**; the operator adds his own; the author line is his real name and address.
+> - **What to send: the table "What to send" at the top of `contributions/README.md`** (2026-11-15)
+>   names the one current directory of every package. Several were replaced on 11-14 after
+>   13:23, when that day's outside review was answered (`review-fixes-20261114/`,
+>   `A-review-fixes-20261114/`, `patch1-standalone-20261114/`, `send-v2-review-fixes-20261114/`,
+>   `send-bt24-bt25-20261114/`, `bluez-split-20261114/`).
+>   - Patch ready: CO-44, CO-38, CO-43 E, A and BT-24/25, CO-04, CO-22, CO-21, CO-20 patch 1,
+>     CO-39, CO-41; CO-35, CO-05 + CO-26, CO-12, CO-23 and CO-37 with operator decisions open.
+>   - Send commands and a checked dry run exist only for CO-44 and CO-43 E; for the others they
+>     are to be made before the send.
+>   - **Not ready:** CO-02 v2, a possible lock cycle (11-15).
+>   - **Held:** CO-43 B2 and D v2 (D v2 breaks the system-resume rebind).
+>   - **Packages made since 11-13 carry no Signed-off-by**; the operator adds his own; the author
+>     line is his real name and address. Nothing sent.
 > - **One document for outside reviewers holds all twelve kernel items verbatim:**
 >   `reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`, built by
 >   `scripts/kernel-review-pack/build.py` (rerun it after any package changes; it embeds the files
@@ -216,11 +220,16 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   operator's real one in authored files and `example.com` in throwaway identities.
 > - **CI:** green on every push since `2a3f253` (11-14); two red runs that day were ported
 >   scripts without the executable bit and with a non-canonical timeout grep.
-> - **Open for the operator:** delete the 16 old remote branches (the command is in the test-suite
->   maintainer's 11-13 note); land or drop `ci/upstream-ci-local`'s `eb2e6d6`/`6ada2a1`; the
->   decisions in each package's notes; whether to delete the 11-13 work areas
->   (`co43-ea-send-20261113`, `co44-send-20261113`, `bt17-emu-20261113`), all ported; the
->   headset session and laptop tests as before (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17).
+> - **Open for the operator:**
+>   - **Old remote branches:** whether to delete the ones the test-suite maintainer's 11-13 note
+>     lists. Each was backed up first. The note gives no command and no count.
+>   - **`ci/upstream-ci-local`:** the content of its two commits `eb2e6d6` and `6ada2a1` is on
+>     `main` as the ports `8b71499` and `a56141e`, new commits, not ancestors (the files checked
+>     2026-11-15). The branch only waits for that same deletion.
+>   - **The rest:** the decisions in each package's notes, and the headset session and laptop
+>     tests as before (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17).
+>   - **Done 11-14:** the 11-13 work areas were deleted, with every result ported (STATUS,
+>     Repository health).
 > - **Still open from before (carried forward):** the 11-02 review round's decisions D1–D14
 >   (`contributions/review-2026-11-02/followups.md`) stay the operator's; today's packages put
 >   D1/D2 (CO-02 v2: -EBUSY on a live link, -ECONNABORTED only when nothing holds it) and D6 (one

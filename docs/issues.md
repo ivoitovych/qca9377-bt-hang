@@ -1152,6 +1152,15 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-24 — btusb: a URB deferred during a failed resume is parked after the scuttle
 
+**Status 2026-11-14: reproduced in emulation and fixed** (STATUS `BT-24`):
+- first reproduced on the B2 tree;
+- on E it is reached with test-only fault injection standing in for B2's timing window: the
+  deferred anchor is left non-empty 3 of 3 without the fix and empty 3 of 3 with it;
+- the fix is patch 1 of `contributions/CO-43-…/send-bt24-bt25-20261114/`, which drains the anchor
+  under `txlock`; evidence in `results/co43-d2-series-bt24-bt25-2026-11-14/` and the package's
+  `CHECKS.md`;
+- the text below is the 11-13 state.
+
 **Status 2026-11-13: race from source (an outside review of the CO-43 patches, reviewer 7); not reproduced; no fix yet; not BT-17.**
 - **What:** on its `failed:` path (an interrupt or bulk URB could not be submitted), `btusb_resume()` (bluetooth-next `da3cc0258`, `btusb_main.c:5075-5080`):
   - calls `usb_scuttle_anchored_urbs(&data->deferred)` without `txlock`;
@@ -1163,6 +1172,14 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - **Next:** an emulator test, a deferred send racing a failed receive-URB submission at resume (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`, finding 17). Then the fix: scuttle under `txlock`, or clear the flag first. The scuttle frees URBs, so which of the two fits is to be decided.
 
 ## BT-25 — btusb: discarding deferred URBs appears to leak their skb and setup packet
+
+**Status 2026-11-14: fixed** by patch 2 of `contributions/CO-43-…/send-bt24-bt25-20261114/`
+(STATUS `BT-25`):
+- kmemleak, 3 runs per case, E alone against E with the two patches: 3/3/1, 2/1/2, 5/3/4 and
+  2/2/2 leaked objects against 0 in every run;
+- the cases are a failed resume with a deferred command, a failed submission in
+  `play_deferred()`, a dead device closed, and a dead device powered off;
+- the text below is the 11-13 state.
 
 **Status 2026-11-13: confirmed by kmemleak in emulation on the close/disconnect path; from source on the other three sites; not BT-17.**
 - **The test:** `results/bt17-emulation-2026-11-13/`, `*-h-kml-*` logs.

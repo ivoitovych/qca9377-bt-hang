@@ -16,6 +16,41 @@ forgotten or lost between working sessions. The IDs come from
 - **Raw recordings stay in the git-ignored archive** (they carry real device addresses). A
   dossier names each one by path and, where it matters, by SHA-256.
 
+## What to send: the current package of each contribution (2026-11-15)
+
+This table is the one place that says which directory holds the text to send. The hand-off and
+STATUS point here, and every package's older directory carries a "superseded" line at its top.
+Nothing in it is sent until the operator says so. Each package carries no Signed-off-by: the
+operator adds his own. The open decisions are in each package's notes and in
+`../reviews/2026-11-14T1400Z-kernel-patches-review-answers-checks.md`.
+
+The "commands" column says whether the package has its send commands and a dry run whose
+RCPT TO lines were checked. Only CO-44 and CO-43 E have both. For every other package they are
+still to be made, from the project checkout, before the send.
+
+| CO | send this | it replaces | patch | commands | state |
+|---|---|---|---|---|---|
+| CO-44 | `CO-44-…/send-20261113/` (its `send-commands.txt` STEP 2a as of 11-14) | — | ready | done (`dry-run-20261114/`) | the reviewers' first choice |
+| CO-38 | kernel: `CO-38-…/send-20261114/patch/`; BlueZ tests: `CO-38-…/bluez-split-20261114/series-a/` | `send-20261114/patch/bluez/` | ready | to make | — |
+| CO-43 E | `CO-43-…/send-20261113/E/` | — | ready | done (`E/dry-run.txt`, `../dry-run-20261114/`) | goes before every other CO-43 patch |
+| CO-43 A | `CO-43-…/send-20261113/A-review-fixes-20261114/` | `send-20261113/A/` | ready | to make (`A/send-commands.txt` names the old file) | after E |
+| CO-43 BT-24/25 | `CO-43-…/send-bt24-bt25-20261114/` (cover + two patches on E) | patches 4–5 of `send-series-20261114/` | ready | to make | after E |
+| CO-43 B2, D v2 | not to send: `send-series-20261114/` patches 2 and 3 (`HELD.md` there) | — | **held** | — | D v2 breaks the system-resume rebind (`needs_binding`); B2 needs D |
+| CO-04 | `CO-04-…/review-fixes-20261114/patch/` (mail form; `patch-bare/` for `git am`) | `send-20261114/patch/` | ready | to make | operator: `Link:` or `Closes:`, syzbot (D4) |
+| CO-05 + CO-26 | `CO-05-…/review-fixes-20261114/` (variant A with `Fixes:`, B without) | `send-20261114/` | ready | to make | operator: the variant and the order; mesh held for now (`../reviews/2026-11-15T0115Z-submitted-contributions-status.md`) |
+| CO-35 | `CO-35-…/review-fixes-20261114/` (with its `NOTES-FOR-OPERATOR.md`) | `send-20261114/` | ready | to make | operator: the full or the reduced prerequisite |
+| CO-22 | `research-2026-11-01/qca-ids/refresh-20261114/` (request v3) | — | ready | to make | — |
+| CO-21 | `CO-21-…/review-fixes-20261114/` | `send-20261114/` | ready | to make | the mixed-mode question is in the cover |
+| CO-20 | `CO-20-…/patch1-standalone-20261114/` (patch 1 alone) | `send-20261114/` | ready | to make | patch 2 held |
+| CO-02 v2 | `CO-02-…/send-v2-review-fixes-20261114/`, layout (a) | `send-v2-20261114/` | **not ready** | to make | a possible lock cycle in 2/2 is being settled (`../reviews/2026-11-15T0300Z-submitted-status-review-checks.md`) |
+| CO-12 | `CO-12-…/send-20261114/` | — | ready | to make | operator: the clamp now, or an RFC first (D5) |
+| CO-23 | `CO-23-…/patch/send-20261114/` | `patch/send/`, `patch/send-20261101-draft/` | ready | to make | operator: the list or BlueZ's private advisory (D3) |
+| CO-37 | `CO-37-…/send-20261114/` | `work/patches/master-final-6-20261102/` | ready | to make | operator: same route question (D3) |
+| CO-39 | `CO-39-…/send-20261114/` | — | ready | to make | the bot's base side still to read |
+| CO-41 | `CO-41-…/send-20261114/` | — | ready | to make | — |
+| CO-30 | `CO-30-…/rfc-20261114/` (RFC on CO-02 v2) | — | RFC | to make | waits for CO-02 v2 |
+| CO-11a, CO-03, CO-37 5.72, CO-40 | `ubuntu-bluez-5.72-0ubuntu5.9-bundle/` (one Ubuntu upload); CO-11a's own refresh `CO-11-…/ubuntu/ready-20261114/` | `CO-11-…/ubuntu/ready-20261102/` | built and tested | — (filed by the operator on Launchpad) | not filed |
+
 ## A dossier's layout
 
 | file | what it holds |
