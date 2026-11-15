@@ -15536,6 +15536,9 @@ RFC=$(mktemp -d); mkdir -p "$RFC/scripts"; cp scripts/ci-local.sh "$RFC/scripts/
 git -C "$RFC" init -q; git -C "$RFC" config user.name test; git -C "$RFC" config user.email test@example.com
 git init -q "$RFC/aci"; git -C "$RFC/aci" remote add origin https://github.com/bluez/action-ci
 git init -q "$RFC/tree"; git -C "$RFC/tree" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m base
+# ci-local.sh adds a worktree here; without an identity git builds one from the
+# host name and reads /etc/hosts, /etc/resolv.conf and /etc/mailname (access-audit)
+git -C "$RFC/tree" config user.name t; git -C "$RFC/tree" config user.email t@example.com
 printf 'From: a <a@example.com>\nSubject: [PATCH] x: y\n\nbody\n---\n' > "$RFC/p.patch"
 printf 'exit 0;\n' > "$RFC/cp-silent.pl"
 printf 'print "total: 0 errors, 0 warnings, 0 lines checked\\n";\n' > "$RFC/cp-ok.pl"
