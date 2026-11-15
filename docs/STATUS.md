@@ -1,5 +1,12 @@
 # Status — the dated snapshot
 
+**2026-11-15:** the not-yet-accepted rows re-read 00:40–01:15 UTC (patchwork, lore over git,
+GitLab, GitHub, Sashiko, syzbot): **no row changed state**. CO-02's four patches are still `new`;
+the CI bot's rule makes v2 a resend. CO-25's only answer is still Zijun Hu's of 10-29, and our
+reply v4 is unsent. Hui Peng's patch is `new`, with an identical duplicate posted 11-04. The gvfs
+MRs have no reviewer. New work by other authors that overlaps ours: 14942649 conflicts textually
+with CO-02 v2 1/2 and 2/2; 14973994 conflicts with CO-43 series patch 2 (B2).
+[`reviews/2026-11-15T0115Z-submitted-contributions-status.md`](../reviews/2026-11-15T0115Z-submitted-contributions-status.md).
 **2026-11-14:** every submission row's upstream state re-read 00:40–01:15 UTC (patchwork,
 GitHub, GitLab, Launchpad, the local lore archive; `contributions/rd-2026-11-14.md`, "Upstream
 changes found"): **no submission row changed** (nothing sent, no reply on CO-02 or CO-25, X1's MRs
