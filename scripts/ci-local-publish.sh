@@ -14,7 +14,8 @@
 # a failed configure or make (configure.err / make.err whose run did not exit
 # 0). The full build logs stay in tmp/: megabytes of compiler output that the
 # findings files already summarise. Files over 2 MB are truncated to their
-# first 2 MB with a note. Prints what it copied. Exit 2 on a missing directory.
+# first 2 MB with a note. Prints what it copied. Exit 2 on a missing directory,
+# and on a file the sanitiser refused (that file is removed from <dest-dir>).
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ALL=0
@@ -71,16 +72,24 @@ open(dst, "wb").write(text.encode("utf-8") + note)
 PY
 	# then the repository's own sanitiser: MAC addresses, UUIDs and IPv4
 	# addresses become placeholders (it refuses to write a half-done file)
-	if [[ -x "$REPO/tools/sanitize-logs.sh" ]]; then
-		"$REPO/tools/sanitize-logs.sh" "$2" "$2" >/dev/null 2>&1 || echo "ci-local-publish: sanitize-logs refused $2" >&2
+	# A file the sanitiser refused, or could not be run on, is REMOVED from the
+	# tracked directory: it would otherwise stay there half-processed, with
+	# addresses of the machine in it, and the run would still report success.
+	if [[ ! -x "$REPO/tools/sanitize-logs.sh" ]]; then
+		rm -f "$2"; echo "ci-local-publish: tools/sanitize-logs.sh is missing — $2 not published" >&2; return 1
 	fi
+	"$REPO/tools/sanitize-logs.sh" "$2" "$2" >/dev/null 2>&1 || {
+		rm -f "$2"; echo "ci-local-publish: sanitize-logs refused $2 — removed, not published" >&2; return 1
+	}
 }
 
-n=0
+n=0; failed=0
 while IFS= read -r -d '' f; do
 	rel="${f#"$SRC"/}"
 	if (( ALL )); then
-		mkdir -p "$DEST/$(dirname "$rel")"; elide "$f" "$DEST/$rel"; n=$((n + 1)); continue
+		mkdir -p "$DEST/$(dirname "$rel")"
+		if elide "$f" "$DEST/$rel"; then n=$((n + 1)); else failed=$((failed + 1)); fi
+		continue
 	fi
 	case "$rel" in
 	work/*) continue ;;
@@ -95,7 +104,10 @@ while IFS= read -r -d '' f; do
 	esac
 	case "$rel" in *.out) [[ "$rel" == *pytest.out || "$rel" == base.*.out || "$rel" == patched.*.out || "$rel" == checkpatch.*.out ]] || continue ;; esac
 	mkdir -p "$DEST/$(dirname "$rel")"
-	elide "$f" "$DEST/$rel"
-	n=$((n + 1))
+	if elide "$f" "$DEST/$rel"; then n=$((n + 1)); else failed=$((failed + 1)); fi
 done < <(find "$SRC" -type f -print0 | sort -z)
 echo "ci-local-publish: $n file(s) from ${SRC#"$REPO"/} to ${DEST#"$REPO"/}"
+if (( failed )); then
+	echo "ci-local-publish: $failed file(s) were NOT published (sanitiser refused or missing); the rest are in place" >&2
+	exit 2
+fi

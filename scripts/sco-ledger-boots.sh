@@ -9,9 +9,18 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 (( $# )) || { echo "usage: sco-ledger-boots.sh <boot>..." >&2; exit 2; }
 TMP=$(mktemp) || exit 1
 trap 'rm -f "$TMP"' EXIT
+# A boot whose journal cannot be read is reported and left out of the totals:
+# it has no counts, which is not the same as counting none.
+good=0; bad=0; BADLIST=""
 for b in "$@"; do
 	echo "== boot $b"
-	"$HERE/sco-ledger.sh" "$b" | tee -a "$TMP"
+	if OUT=$("$HERE/sco-ledger.sh" "$b"); then
+		printf '%s\n' "$OUT" | tee -a "$TMP"
+		good=$((good + 1))
+	else
+		echo "   UNREADABLE — excluded from the totals"
+		bad=$((bad + 1)); BADLIST+=" $b"
+	fi
 	echo
 done
 awk '
@@ -26,4 +35,8 @@ awk '
 END {
 	printf "TOTAL over %d boot(s): links %d   hang-ups answered %d   timeouts %d\n", boots, links, ok, to
 	for (h in per) printf "  %-24s %d\n", h, per[h]
-}' boots="$#" "$TMP"
+}' boots="$good" "$TMP"
+if (( bad )); then
+	echo "ERROR: $bad of $# boot(s) could not be read and are NOT in the totals:$BADLIST" >&2
+	exit 2
+fi

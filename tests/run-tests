@@ -15244,6 +15244,129 @@ RFEO=$(devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
     && ok "repo-save still refuses a checkout with no identity" \
     || bad "repo-save did not refuse an empty identity (rc=$rferc)"
 rm -rf "$RFI" "$RFE"
+
+# smtp-login-check.sh: EXIT 1 IS "REVOKED", the answer that is wanted, so a
+# network failure may never produce it. Run from a COPY inside a scratch
+# repository whose sendemail config names 127.0.0.1 and a port nothing listens
+# on: no real server is contacted. The connection setup used to be outside the
+# try, so the refusal was a traceback with exit 1.
+RFS=$(mktemp -d); mkdir -p "$RFS/scripts"; cp scripts/smtp-login-check.sh "$RFS/scripts/"
+git -C "$RFS" init -q
+git -C "$RFS" config sendemail.smtpserver 127.0.0.1
+git -C "$RFS" config sendemail.smtpserverport 1
+git -C "$RFS" config sendemail.smtpuser nobody
+RFSBAD=''
+for _enc in tls ssl; do
+    _o=$(BT_SMTP_PASS=dummy "$RFS/scripts/smtp-login-check.sh" 1 "$_enc" 2>&1); _rc=$?
+    [[ "$_rc" == 3 && "$_o" == *INCONCLUSIVE* && "$_o" != *REVOKED* ]] || RFSBAD+=" [$_enc rc=$_rc: $(head -c 80 <<<"$_o")]"
+done
+[[ -z "$RFSBAD" ]] \
+    && ok "smtp-login-check.sh: a refused connection is INCONCLUSIVE (exit 3) on both STARTTLS and implicit TLS, never REVOKED" \
+    || bad "smtp-login-check.sh read a network failure as a verdict:$RFSBAD"
+rm -rf "$RFS"
+
+# sco-ledger.sh: a boot whose journal cannot be read is an error, not a row of
+# zeros. journalctl is stubbed on PATH; the script stops before it would read
+# any device store.
+RFL=$(mktemp -d); mkdir -p "$RFL/fail" "$RFL/empty" "$RFL/boots/scripts"
+printf '#!/bin/sh\necho "No journal files were found." >&2\nexit 1\n' > "$RFL/fail/journalctl"
+printf '#!/bin/sh\nexit 0\n' > "$RFL/empty/journalctl"
+chmod +x "$RFL/fail/journalctl" "$RFL/empty/journalctl"
+RFLBAD=''
+for _k in fail empty; do
+    _o=$(PATH="$RFL/$_k:$PATH" scripts/sco-ledger.sh 7 2>"$RFL/err"); _rc=$?
+    [[ "$_rc" == 2 && -z "$_o" && "$(cat "$RFL/err")" == *"cannot be read"* ]] || RFLBAD+=" [$_k rc=$_rc out='$(head -c 60 <<<"$_o")']"
+done
+[[ -z "$RFLBAD" ]] \
+    && ok "sco-ledger.sh exits 2 and prints no table for a boot whose journal cannot be read" \
+    || bad "sco-ledger.sh printed counts for an unreadable boot:$RFLBAD"
+# sco-ledger-boots.sh: that boot is named and left out of the totals.
+cp scripts/sco-ledger-boots.sh "$RFL/boots/scripts/"
+cat > "$RFL/boots/scripts/sco-ledger.sh" <<'RFLSTUB'
+#!/bin/bash
+[[ "$1" == bad ]] && exit 2
+printf 'setup  headset  air  len27/9  streamed  outcome\n\nlinks 2   hang-ups answered 1   timeouts 1\n'
+RFLSTUB
+chmod +x "$RFL/boots/scripts/sco-ledger.sh"
+RFLO=$("$RFL/boots/scripts/sco-ledger-boots.sh" good bad 2>"$RFL/err2"); _rc=$?
+[[ "$_rc" == 2 && "$RFLO" == *"TOTAL over 1 boot(s): links 2   hang-ups answered 1   timeouts 1"* \
+   && "$RFLO" == *"UNREADABLE"* && "$(cat "$RFL/err2")" == *"NOT in the totals: bad"* ]] \
+    && ok "sco-ledger-boots.sh excludes an unreadable boot from the totals, names it, and exits 2" \
+    || bad "sco-ledger-boots.sh with an unreadable boot: rc=$_rc: $(grep TOTAL <<<"$RFLO")"
+rm -rf "$RFL"
+
+# ci-local.sh: "no NEW finding" over checks that never ran is not a pass. A
+# checkpatch that produces no result at all (no `total:` line) is NOT RUN, and
+# the run exits 2, as its header promises. Built from a copy in a scratch
+# repository with a fake action-ci clone and a one-commit tree.
+RFC=$(mktemp -d); mkdir -p "$RFC/scripts"; cp scripts/ci-local.sh "$RFC/scripts/"
+git -C "$RFC" init -q; git -C "$RFC" config user.name test; git -C "$RFC" config user.email test@example.com
+git init -q "$RFC/aci"; git -C "$RFC/aci" remote add origin https://github.com/bluez/action-ci
+git init -q "$RFC/tree"; git -C "$RFC/tree" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m base
+printf 'From: a <a@example.com>\nSubject: [PATCH] x: y\n\nbody\n---\n' > "$RFC/p.patch"
+printf 'exit 0;\n' > "$RFC/cp-silent.pl"
+printf 'print "total: 0 errors, 0 warnings, 0 lines checked\\n";\n' > "$RFC/cp-ok.pl"
+rfc_run() {   # <checkpatch script> — exit status of ci-local.sh --checks checkpatch
+    "$RFC/scripts/ci-local.sh" --tree "$RFC/tree" --base HEAD --action-ci "$RFC/aci" \
+        --checks checkpatch --checkpatch "$1" --out "$RFC/out-$(basename "$1")" "$RFC/p.patch" >/dev/null 2>&1
+    echo $?
+}
+_rs=$(rfc_run "$RFC/cp-silent.pl"); _ro=$(rfc_run "$RFC/cp-ok.pl"); _rm=$(rfc_run "$RFC/none.pl")
+[[ "$_rs" == 2 && "$_rm" == 2 && "$_ro" == 0 ]] \
+    && ok "ci-local.sh exits 2 when checkpatch produced no result or is missing, 0 when it ran clean" \
+    || bad "ci-local.sh exits: silent checkpatch=$_rs (want 2), missing=$_rm (want 2), clean=$_ro (want 0)"
+rm -rf "$RFC"
+
+# ci-local-publish.sh: a file the sanitiser refuses must not stay in the tracked
+# results directory, and the run must not report success.
+RFP=$(mktemp -d); mkdir -p "$RFP/scripts" "$RFP/tools" "$RFP/run"
+cp scripts/ci-local-publish.sh "$RFP/scripts/"; printf 'line\n' > "$RFP/run/summary.txt"
+printf '#!/bin/sh\nexit 1\n' > "$RFP/tools/sanitize-logs.sh"; chmod +x "$RFP/tools/sanitize-logs.sh"
+"$RFP/scripts/ci-local-publish.sh" "$RFP/run" "$RFP/dest" >/dev/null 2>&1; _rc=$?
+[[ "$_rc" == 2 && ! -e "$RFP/dest/summary.txt" ]] \
+    && ok "ci-local-publish.sh removes a file the sanitiser refused and exits 2" \
+    || bad "ci-local-publish.sh left a refused file behind or exited $_rc: $(ls "$RFP/dest" 2>/dev/null | tr '\n' ' ')"
+printf '#!/bin/sh\nexit 0\n' > "$RFP/tools/sanitize-logs.sh"
+"$RFP/scripts/ci-local-publish.sh" "$RFP/run" "$RFP/dest" >/dev/null 2>&1; _rc=$?
+[[ "$_rc" == 0 && -e "$RFP/dest/summary.txt" ]] \
+    && ok "ci-local-publish.sh publishes the file when the sanitiser accepts it" \
+    || bad "ci-local-publish.sh control: rc=$_rc"
+rm -rf "$RFP"
+
+# bluez-release-contains.sh: a tag that does not resolve answers nothing.
+RFR=$(mktemp -d); git init -q "$RFR"; git -C "$RFR" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m one
+_o=$(scripts/bluez-release-contains.sh "$RFR" no-such-tag 2>&1); _rc=$?
+[[ "$_rc" == 2 && "$_o" != *"NOT in"* ]] \
+    && ok "bluez-release-contains.sh refuses an unknown tag (exit 2) instead of printing NOT in for every commit" \
+    || bad "bluez-release-contains.sh with a bad tag: rc=$_rc: $(head -1 <<<"$_o")"
+_o=$(scripts/bluez-release-contains.sh "$RFR" HEAD 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$_o" == *"UNKNOWN"* ]] \
+    && ok "bluez-release-contains.sh with a real tag still lists every commit (control)" \
+    || bad "bluez-release-contains.sh control: rc=$_rc"
+rm -rf "$RFR"
+
+# bluez-tester-compare.sh: a tester with no summary on a side compared nothing.
+# The comparison is the script's inline program; it is cut out and run on
+# verdict files.
+RFT=$(mktemp -d)
+awk '/^\tpython3 -I - "\$OUT" "\$t" "\$RUNS" <</ {on = 1; next} on && /^PY$/ {exit} on' scripts/bluez-tester-compare.sh > "$RFT/compare.py"
+printf 'case one\tPassed\ncase two\tPassed\n' > "$RFT/mgmt-tester.base.1.verdicts"
+: > "$RFT/mgmt-tester.patched.1.verdicts"
+_o=$(python3 -I "$RFT/compare.py" "$RFT" mgmt-tester 1 2>&1); _rc=$?
+[[ -s "$RFT/compare.py" && "$_rc" == 2 && "$_o" == *"NO VERDICTS"* && "$_o" != *"REGRESSIONS: 0"* ]] \
+    && ok "bluez-tester-compare.sh: a side with no verdicts is 'NOT compared' (exit 2), not REGRESSIONS: 0" \
+    || bad "bluez-tester-compare.sh with an empty side: rc=$_rc: $(tail -1 <<<"$_o")"
+cp "$RFT/mgmt-tester.base.1.verdicts" "$RFT/mgmt-tester.patched.1.verdicts"
+_o=$(python3 -I "$RFT/compare.py" "$RFT" mgmt-tester 1 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$_o" == *"REGRESSIONS: 0"* ]] \
+    && ok "bluez-tester-compare.sh: identical verdicts on both sides are 0 regressions (control)" \
+    || bad "bluez-tester-compare.sh control: rc=$_rc"
+printf 'case one\tPassed\ncase two\tFailed\n' > "$RFT/mgmt-tester.patched.1.verdicts"
+_o=$(python3 -I "$RFT/compare.py" "$RFT" mgmt-tester 1 2>&1); _rc=$?
+[[ "$_rc" == 1 && "$_o" == *"REGRESSIONS: 1"* ]] \
+    && ok "bluez-tester-compare.sh: a case that now fails is a regression (control)" \
+    || bad "bluez-tester-compare.sh regression control: rc=$_rc"
+rm -rf "$RFT"
 # MARKER-NEW-TESTS-END
 rm -rf "$RF"
 

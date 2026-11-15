@@ -22,8 +22,19 @@
 #   DISC-FAILED <st>   the Disconnect's Command Status carried an error
 #   TIMEOUT <opcode>   the first command after the stream timed out
 #   open               no command yet (link still up, or log ends)
+#
+# Exit 2, with a line on stderr and NO table, when the boot's kernel journal
+# cannot be read (an unknown boot, rotated away, no permission): "links 0
+# hang-ups answered 0 timeouts 0" would otherwise be printed for it and read as
+# a measured zero.
 set -uo pipefail
 BOOT="${1:-0}"
+# Readable at all? One line, any line: a boot with no kernel journal prints
+# nothing or fails, and neither is a count of zero.
+if ! PROBE=$(journalctl -k -b "$BOOT" --no-pager -q -n 1 -o cat 2>&1) || [[ -z "$PROBE" ]]; then
+	echo "sco-ledger: the kernel journal of boot $BOOT cannot be read (${PROBE:-no output}) — no counts, not a zero" >&2
+	exit 2
+fi
 # Names: bluetoothd's persistent store first (every device the adapter has known,
 # including ones not currently listed), then its live list. Root reads the store.
 NAMES=$( {

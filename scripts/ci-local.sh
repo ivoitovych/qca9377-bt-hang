@@ -439,7 +439,7 @@ if want checkpatch; then
 	else
 		cpdir="$TREE"; [[ -d "$SRC" ]] && cpdir="$SRC"
 		[[ "$SPACE" == kernel && ! -f "$cpdir/scripts/checkpatch.pl" ]] && cpdir="$TREE"
-		worst=PASS; : >"$OUT/checkpatch.txt"
+		worst=PASS; cp_notrun=""; : >"$OUT/checkpatch.txt"
 		for p in "${PATCHES[@]}"; do
 			args=()
 			[[ "$SPACE" == kernel ]] && args=(--ignore UNKNOWN_COMMIT_ID)
@@ -447,10 +447,16 @@ if want checkpatch; then
 			out="$OUT/checkpatch.$(basename "$p").out"
 			echo "== $(basename "$p")" >>"$OUT/checkpatch.txt"
 			cat "$out" >>"$OUT/checkpatch.txt"
+			# checkpatch always ends a run with its "total:" line. Without it the
+			# script did not run (no perl, a missing module, a crash), which is not
+			# the same as "nothing reported".
+			grep -q '^total:' "$out" || cp_notrun+=" $(basename "$p")"
 			if grep -q '^ERROR:' "$out"; then worst=NEW
 			elif grep -q '^WARNING:' "$out" && [[ $worst != NEW ]]; then worst="NEW(warning)"; fi
 		done
-		if [[ $worst == PASS ]]; then verdict checkpatch PASS "no ERROR or WARNING from checkpatch (version $(perl "$CHECKPATCH" --version 2>/dev/null | awk '/Version/{print $2}'))"
+		if [[ -n "$cp_notrun" && $worst == PASS ]]; then
+			verdict checkpatch "NOT RUN" "checkpatch.pl produced no result for:$cp_notrun (see $OUT/checkpatch.txt)"; SKIPPED+=(checkpatch)
+		elif [[ $worst == PASS ]]; then verdict checkpatch PASS "no ERROR or WARNING from checkpatch (version $(perl "$CHECKPATCH" --version 2>/dev/null | awk '/Version/{print $2}'))"
 		else
 			verdict checkpatch "$worst" "checkpatch reports on the patches (the bot: ERROR = fail, WARNING = warning)"; NEWS=$((NEWS + 1))
 			grep -E '^(==|ERROR:|WARNING:|CHECK:|#|total:)' "$OUT/checkpatch.txt" | detail
@@ -757,8 +763,11 @@ if (( NEWS )); then
 	exit 1
 fi
 if (( ${#SKIPPED[@]} )); then
-	log "RESULT: no NEW finding; not run: ${SKIPPED[*]}"
-	echo "RESULT: no NEW finding; not run: ${SKIPPED[*]}" >>"$SUMMARY"
+	# NOT exit 0: "no NEW finding" over checks that did not run is no answer, and
+	# the contract above says 2 = could not run.
+	log "RESULT: no NEW finding in what ran; NOT RUN: ${SKIPPED[*]} — incomplete, exit 2"
+	echo "RESULT: no NEW finding in what ran; NOT RUN: ${SKIPPED[*]} — incomplete" >>"$SUMMARY"
+	exit 2
 else
 	log "RESULT: no NEW finding"
 	echo "RESULT: no NEW finding" >>"$SUMMARY"

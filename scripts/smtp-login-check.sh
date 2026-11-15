@@ -11,7 +11,9 @@
 # 587 STARTTLS answered 535 for revoked passwords.
 #
 # Exit 0 and "ALIVE" if the login is accepted (the password must still be
-# revoked); exit 1 and "REVOKED" with the server's code (Gmail: 535) if refused.
+# revoked); exit 1 and "REVOKED" with the server's code (Gmail: 535) if refused;
+# exit 3 and "INCONCLUSIVE" for anything that is not the server's own answer to
+# the login (network, TLS, timeout, hang-up).
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 : "${BT_SMTP_PASS:?set BT_SMTP_PASS}"
@@ -30,21 +32,41 @@ fi
 export HOST PORT USER_ ENC
 python3 - <<'PYEOF'
 import os, smtplib, sys
-if os.environ["ENC"] == "ssl":
-    s = smtplib.SMTP_SSL(os.environ["HOST"], int(os.environ["PORT"]), timeout=30)
-    s.ehlo()
-else:
-    s = smtplib.SMTP(os.environ["HOST"], int(os.environ["PORT"]), timeout=30)
-    s.ehlo(); s.starttls(); s.ehlo()
+
+# EXIT 1 MEANS REVOKED, the wanted answer, so it may be said ONLY when the
+# server itself refused the credentials. Everything else that can go wrong, a
+# timeout, a refused connection, a name that does not resolve, a TLS error, a
+# server that hangs up or answers oddly, is no verdict at all: INCONCLUSIVE,
+# exit 3. The connection and TLS setup used to sit outside the try, so a network
+# failure ended in a traceback with exit 1 and read as "revoked".
+s = None
 try:
+    if os.environ["ENC"] == "ssl":
+        s = smtplib.SMTP_SSL(os.environ["HOST"], int(os.environ["PORT"]), timeout=30)
+        s.ehlo()
+    else:
+        s = smtplib.SMTP(os.environ["HOST"], int(os.environ["PORT"]), timeout=30)
+        s.ehlo(); s.starttls(); s.ehlo()
     s.login(os.environ["USER_"], os.environ["BT_SMTP_PASS"].replace(" ", ""))
 except smtplib.SMTPAuthenticationError as e:
     print(f"REVOKED — server refused the login: {e.smtp_code} {e.smtp_error[:60]!r}")
-    s.quit(); sys.exit(1)
+    try:
+        s.quit()
+    except Exception:
+        pass
+    sys.exit(1)
 except smtplib.SMTPServerDisconnected as e:
     # Not a verdict: the server hung up mid-AUTH. Say so; never read it as REVOKED.
     print(f"INCONCLUSIVE — server closed the connection during AUTH: {e}")
     sys.exit(3)
+except BaseException as e:
+    if isinstance(e, KeyboardInterrupt):
+        raise
+    print(f"INCONCLUSIVE — no verdict, {type(e).__name__}: {e}")
+    sys.exit(3)
 print("ALIVE — the login was accepted; nothing was sent")
-s.quit()
+try:
+    s.quit()
+except Exception:
+    pass
 PYEOF

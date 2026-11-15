@@ -25,7 +25,8 @@
 # counted; this script prints LeakSanitizer output separately when present).
 # Without /dev/kvm test-runner's "accel=kvm:tcg" falls back to software
 # emulation: much slower, and timing-dependent cases may differ from the bot.
-# Exit status 1 if any case passes on the base and fails with the patches.
+# Exit status 1 if any case passes on the base and fails with the patches; 2 if a
+# build failed or a tester produced no verdicts on one side (nothing compared).
 set -uo pipefail
 export LC_ALL=C
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -140,6 +141,12 @@ def load(side):
     return v
 b, p = load("base"), load("patched")
 names = sorted(set(b) | set(p))
+# A side with no verdict at all (the tester crashed, timed out before its
+# summary, or the log has no "Test Summary" block) compares nothing: it must not
+# read as "REGRESSIONS: 0".
+if not b or not p:
+    print(f"== {t}: NO VERDICTS from the {'base' if not b else 'patched'} side (no Test Summary in its log) — NOT compared")
+    sys.exit(2)
 print(f"== {t}: {len(names)} case names; base runs {runs}, patched runs {runs}")
 regress = 0
 for n in names:
@@ -155,7 +162,8 @@ print(f"   cases with identical verdicts on both sides: {sum(1 for n in names if
 print(f"   REGRESSIONS: {regress}")
 sys.exit(1 if regress else 0)
 PY
-	[[ ${PIPESTATUS[0]} -eq 0 ]] || rc=1
+	cmp_rc=${PIPESTATUS[0]}
+	if (( cmp_rc == 2 )); then rc=2; elif (( cmp_rc != 0 && rc == 0 )); then rc=1; fi
 	for side in base patched; do
 		for n in $(seq 1 "$RUNS"); do
 			f="$OUT/$t.$side.$n.log"
@@ -169,5 +177,6 @@ PY
 done
 echo | tee -a "$SUMMARY"
 (( rc == 1 )) && echo "RESULT: regressions found" | tee -a "$SUMMARY"
+(( rc == 2 )) && echo "RESULT: incomplete — a build failed or a tester gave no verdicts; nothing there was compared" | tee -a "$SUMMARY"
 (( rc == 0 )) && echo "RESULT: no case passes on the base and fails with the patches" | tee -a "$SUMMARY"
 exit $rc
