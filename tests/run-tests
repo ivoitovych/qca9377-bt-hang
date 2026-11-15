@@ -15356,13 +15356,15 @@ rm -rf "$STC"
 # the bit turned CI red three times in two days (2026-11-12 to 11-14). A scratch
 # repository with one script staged without the bit must fail; with it, pass.
 RVX=$(mktemp -d); git -C "$RVX" init -q
-printf '#!/bin/sh\nexit 0\n' > "$RVX/a.sh"; chmod 0644 "$RVX/a.sh"; git -C "$RVX" add a.sh
+# The check runs only in this project's own trees, which carry its CI workflow.
+mkdir -p "$RVX/.github/workflows"; printf 'name: checks\n' > "$RVX/.github/workflows/checks.yml"
+printf '#!/bin/sh\nexit 0\n' > "$RVX/a.sh"; chmod 0644 "$RVX/a.sh"; git -C "$RVX" add a.sh .github
 RVXO=$(devtools/repo-validate "$RVX" --no-suite 2>&1); rvxrc=$?
 git -C "$RVX" update-index --chmod=+x a.sh; chmod 0755 "$RVX/a.sh"
 RVXO2=$(devtools/repo-validate "$RVX" --no-suite 2>&1); rvxrc2=$?
 (( rvxrc != 0 )) && [[ "$RVXO" == *"no executable bit in the index"*"a.sh"* ]] \
         && [[ "$RVXO2" == *"files with a #! line are executable in the index"* && "$RVXO2" != *"no executable bit"* ]] \
-    && ok "repo-validate --no-suite refuses a script staged without its executable bit, and accepts it with the bit" \
+    && ok "repo-validate --no-suite refuses a script staged without its executable bit in the project's tree, and accepts it with the bit" \
     || bad "repo-validate --no-suite and the executable bit: rc=$rvxrc then rc=$rvxrc2: $(grep -m1 'executable' <<<"$RVXO")"
 rm -rf "$RVX"
 

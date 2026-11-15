@@ -191,18 +191,26 @@ fi
 # times in two days (2026-11-12 to 11-14; the test-suite maintainer's note of
 # 2026-11-15). This costs a read of two bytes per file, so it runs always.
 # The index's mode is what a clone gets, so that is what is checked.
-noexec=""; nexec=0
-while IFS= read -r f; do
-    [[ -f "$f" ]] || continue
-    [[ "$(head -c2 "$f" 2>/dev/null)" == "#!" ]] || continue
-    nexec=$((nexec + 1))
-    mode=$(git ls-files -s -- "$f" 2>/dev/null | cut -d' ' -f1)
-    [[ -z "$mode" ]] && { [[ -x "$f" ]] || noexec+=" $f"; continue; }
-    [[ "$mode" == 100755 ]] || noexec+=" $f"
-done < <(files)
-[[ -z "$noexec" ]] \
-    && ok "all $nexec files with a #! line are executable in the index" \
-    || bad "files with a #! line but no executable bit in the index (git add --chmod=+x):$noexec"
+# Only in this project's own trees (they carry its CI workflow): the suite's
+# scratch repositories are deliberately minimal, with scripts staged as plain
+# files. Not through ok(), which counts checked FILES (a prose-only tree must
+# still read "0 checkable"); a failure goes through bad(), which fails the run.
+if [[ -f "$ROOT/.github/workflows/checks.yml" ]]; then
+    noexec=""; nexec=0
+    while IFS= read -r f; do
+        [[ -f "$f" ]] || continue
+        [[ "$(head -c2 "$f" 2>/dev/null)" == "#!" ]] || continue
+        nexec=$((nexec + 1))
+        mode=$(git ls-files -s -- "$f" 2>/dev/null | cut -d' ' -f1)
+        [[ -z "$mode" ]] && { [[ -x "$f" ]] || noexec+=" $f"; continue; }
+        [[ "$mode" == 100755 ]] || noexec+=" $f"
+    done < <(files)
+    if [[ -z "$noexec" ]]; then
+        printf '  ✓ %s\n' "all $nexec files with a #! line are executable in the index"
+    else
+        bad "files with a #! line but no executable bit in the index (git add --chmod=+x):$noexec"
+    fi
+fi
 
 # --- analysis invariants ---------------------------------------------------
 # Syntax checks prove a script parses, not that it means what its comments say.
