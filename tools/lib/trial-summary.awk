@@ -107,14 +107,17 @@ NR == 1 {
     # direction; they are counted, shown, and excluded from the denominator.
     if (bs == "censored_pre_failure") { cen[k]++; seen[k]++; next }
     if (bs == "unknown")              { unk[k]++; seen[k]++; next }
-    # A FAILED CLOSE WITH NO BT-1 EVIDENCE IS NOT A SURVIVAL. trial_result is
-    # `failed` when the controller was found not answering (or the operator said
-    # hang), and bt1_status is `not_observed` when the journal showed no HCI
-    # timeout. Together they say: something was wrong with the controller and
-    # the evidence does not say it was BT-1. Past this line such a row went into
-    # the denominator with no numerator, so it was counted exactly as a trial
-    # that survived, and the rate fell by the number of failures nobody could
-    # classify. It is excluded and shown, like the censored and unknown rows.
+    # A FAILED CLOSE WITH NO BT-1 EVIDENCE IS NEITHER A SURVIVAL NOR A FAILURE.
+    # trial_result is `failed` when the closer's probe got no answer (or the
+    # operator said hang), and bt1_status is `not_observed` when the journal
+    # showed no HCI timeout. The row alone cannot say which happened: a real
+    # silent failure, or a probe that came too late. The records show the
+    # second for E3 #3 and #4, whose installed pre-09-19 closer probed after
+    # bluetoothd had powered the adapter off at shutdown (docs/STATUS.md, the
+    # machine, read 2026-11-07: "neither is a hang"). Past this line such a row
+    # went into the denominator with no numerator, which counted it as a
+    # survival. It is excluded and shown, like the censored and unknown rows;
+    # its liveness has to come from the journal, not from this table.
     if (bs == "not_observed" && tr == "failed") { fnx[k]++; seen[k]++; next }
     tot[k]++; sum[k] += $c["duration_s"]; seen[k]++
     # Two different questions, kept apart:
@@ -194,10 +197,11 @@ END {
     if (tf > 0) {
         print ""
         printf "  !! %d trial(s) FAILED with BT-1 NOT OBSERVED, excluded from every rate above.\n", tf
-        print  "     The controller was found dead or hung at close, but the journal"
-        print  "     showed no HCI command timeout. That is a failure the evidence does"
-        print  "     not classify: it is not a survival and not a confirmed BT-1, so it"
-        print  "     enters neither the numerator nor the denominator."
+        print  "     The closer's probe got no answer, but the journal showed no HCI"
+        print  "     command timeout: a silent failure, or a probe made after the adapter"
+        print  "     was powered off at shutdown (E3 #3 and #4 were the latter, STATUS"
+        print  "     2026-11-07). The row cannot tell which, so it enters neither the"
+        print  "     numerator nor the denominator; read the boot's journal for it."
         for (k in fnx) {
             split(k, q, "|")
             printf "       %-18s %-6s %d   (%s)\n", q[1], q[2], fnx[k], q[3]
