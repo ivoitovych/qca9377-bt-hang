@@ -43,10 +43,11 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 | BlueZ | Two cleanups ([`patches/bluez/send-2026-10-18/`](patches/bluez/send-2026-10-18/README.md)): `a2dp: Remove duplicate check in transport_cb` removes the second copy of the check above, and `emulator: Avoid variable length array in send_cmd` clears the smatch warning that BlueZ's CI posted on every patch touching `emulator/btdev.c`. | [`b79d4a887`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=b79d4a887), [`7bc9684dc`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=7bc9684dc) (2026-10-19) |
 | BlueZ | `ioctl-tester: Fix name of the 3-DH packet type test`: two cases were registered under one name, so the second, which runs the 3-DH packet types, could not be selected or told apart in results ([`contributions/CO-34-ioctl-tester-duplicate-name/`](contributions/CO-34-ioctl-tester-duplicate-name/README.md)). | [`3e5b0da969c2`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=3e5b0da969c2) (2026-10-28) |
 
-The kernel fix and the four BlueZ fixes are in code every Linux Bluetooth adapter runs;
-nothing in them is conditional on this controller's USB ID. The emulator and `mgmt-tester`
-commits are test infrastructure: they make the discovery race reproducible in BlueZ's own
-test suite. "Accepted" means in the subsystem maintainer's
+The kernel fix and the three BlueZ fixes in the daemon and its shared code (`a734b06059cb`,
+`0bed9886cff3`, `ae23df052290`) are in code every Linux Bluetooth adapter runs; nothing in them
+is conditional on this controller's USB ID. The fourth fix, `8da7e648a9fb`, and the emulator and
+`mgmt-tester` commits are test infrastructure: they make the discovery race reproducible in
+BlueZ's own test suite. "Accepted" means in the subsystem maintainer's
 tree; inclusion in a release, stable backports and distribution packages are later
 milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). All eleven BlueZ commits are in
 **BlueZ 5.88** (tagged 2026-11-05; none was in 5.87:
@@ -145,7 +146,7 @@ two-line addition to
 `drivers/bluetooth/btusb.c`. Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-11-12
+## Current direction — 2026-11-15 (a summary; the dated state of each item is its row in `docs/STATUS.md`)
 
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
   under review; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
@@ -157,13 +158,13 @@ two-line addition to
   ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
 - **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,
   6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273 (`EX-061`). Ubuntu's `7.0.0-42` lacks it;
-  `7.0.0-43` carries it and is published in noble-updates and noble-security (seen 2026-11-12).
-  Until it is installed the laptop runs the entry as a self-built `btusb`, rebuilt before any new
-  kernel boots.
-- **A start-up failure on the fixed driver.** Twice (boots of 2026-11-05 and 11-11) the
-  controller came up reporting its firmware patch as already loaded, failed two LE commands, and
-  Bluetooth was unavailable for the whole boot; a power-off recovered it. Cause not established
-  (the last issue in the `BT` series of [`docs/issues.md`](docs/issues.md)).
+  `7.0.0-43` carries it and is published in noble-updates and noble-security. The laptop has run
+  `7.0.0-43` with Ubuntu's own btusb since 2026-11-12 22:55; the self-built `btusb` with the
+  entry (E3) is retired.
+- **A start-up failure on the fixed driver.** At three boots (2026-11-05, 11-11 and 11-13, the
+  last on Ubuntu's own `7.0.0-43` btusb) the controller came up reporting its firmware patch as
+  already loaded, failed two LE commands, and Bluetooth was unavailable for the whole boot; a
+  power-off recovered it. Cause not established (`BT-16` in [`docs/issues.md`](docs/issues.md)).
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
   backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
   are released in BlueZ 5.88 (tables above).
@@ -171,13 +172,17 @@ two-line addition to
   Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted, not
   sent (2026-11-12).
 - **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
-  with send packages ready and waiting for the author's decision: a stable request for an L2CAP
-  hang that every released kernel has (`CO-35`); an independent fix for an open mesh
-  use-after-free (`CO-04`) and a mesh locking fix (`CO-05`); a stable request for two more QCA
-  device-table entries (`CO-22`); BlueZ use-after-frees at exit (`CO-37`); a hidden advertising
-  instance in the management interface (`CO-38`); and an Ubuntu update for a `btmon` crash
-  (`CO-11`). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`, `U16`,
-  `U18`) are still being investigated.
+  with send packages ready or in preparation, waiting for the author's decision (the table "What
+  to send" in [`contributions/README.md`](contributions/README.md) names each package's current
+  directory and state): a stable request for an L2CAP deferred-accept hang that affects the
+  7.3, 6.18, 6.12 and 6.6 lines, and the older lines only with the non-default `enable_ecred`
+  parameter (`CO-35`); btusb fixes for a controller that fails to resume (`CO-43`) and a
+  management-interface status fix for a command timeout (`CO-44`); an independent fix for an
+  open mesh use-after-free (`CO-04`) and a mesh locking fix (`CO-05`); a stable request for two
+  more QCA device-table entries (`CO-22`); BlueZ use-after-frees at exit (`CO-37`); a hidden
+  advertising instance in the management interface (`CO-38`); and an Ubuntu update for a `btmon`
+  crash (`CO-11`). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`,
+  `U16`, `U18`) are still being investigated.
 - **Off-topic, outside Bluetooth:** audio CDs played through GNOME's CD backend paused about
   3 seconds every 16 seconds on this laptop. Two fixes were submitted to gvfs on 2026-11-07
   ([!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368),
@@ -199,7 +204,8 @@ Distribution : Ubuntu 24.04 LTS (noble)
 Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype);
                7.0.0-38-generic with the upstream entry (E3) from 2026-10-11, and from 2026-10-23 to
                10-29 also the CO-02 series' bluetooth.ko (EX-071); 7.0.0-42-generic with E3 and the
-               stock bluetooth.ko since 2026-10-30
+               stock bluetooth.ko from 2026-10-30; 7.0.0-43-generic with its own stock btusb (it
+               carries the entry; E3 retired) and the stock bluetooth.ko since 2026-11-12 22:55
 BlueZ        : 5.72 (the running patched daemon is a rebuild of 5.72-0ubuntu5.5; the package is 5.72-0ubuntu5.8 since 2026-10-14)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
@@ -252,8 +258,9 @@ comms/  lessons/      messages between the maintainers; what the project cost to
 contributions/        one dossier per possible contribution (CO-nn): findings, experiments,
                       log, patches and mails as sent; README.md there is the index
 results/              dated results of runs that belong to no single dossier (the list's CI run
-                      locally; the L2CAP hang sweep)
-patches/bluez/        the two applied BlueZ patches, their verification script and mail notes;
+                      locally, the L2CAP hang sweep, the BlueZ 5.88 release check, the BT-16 and
+                      BT-17 records, the btusb emulation runs; most have their own README.md)
+patches/bluez/        the applied BlueZ patches, their verification script and mail notes;
   shared-mgmt/        the applied shared/mgmt fix and its unit tests, as mailed
   send-2026-10-18/    the two cleanups sent 2026-10-18, as mailed, with their re-test
   cleanup/            the first draft (2026-10-07) of the a2dp cleanup, superseded
