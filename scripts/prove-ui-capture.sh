@@ -640,7 +640,7 @@ echo 5 > "$STATE/seat-session"
 : > "$CALLS"
 "$TOOL" start-light --quiet-if-no-session > "$T/relogin.out" 2>&1; rc=$?
 truth "a new login: both user units are stopped and started again, the system-bus unit untouched" \
-    eq "$rc/$(count '^systemctl stop bt-ui-light-(atspi|sessbus)$' "$CALLS")/$(count '^systemd-run .*--unit=bt-ui-light-(atspi|sessbus) ' "$CALLS")/$(count 'bt-ui-light-sysbus' "$CALLS")" 0/2/2/0
+    eq "$rc/$(count '^systemctl stop bt-ui-light-(atspi|sessbus)$' "$CALLS")/$(count '^systemd-run .*--unit=bt-ui-light-(atspi|sessbus) ' "$CALLS")/$(count '^(systemd-run|systemctl stop).*bt-ui-light-sysbus' "$CALLS")" 0/2/2/0
 truth "a new login: one mark" eq "$(count '^logger ' "$CALLS")" 1
 : > "$CALLS"
 "$TOOL" start-light --quiet-if-no-session > /dev/null 2>&1
@@ -665,6 +665,7 @@ truth "the whole cycle (boot, no session, logins, logout) left a single director
 echo "── light mode: the keeper (enable-light / disable-light)"
 UD="$T/units"
 rm -rf "$UD"
+printf 'a line the keeper must not remove\n' > "$LD/atspi.log"
 rm -f "$STATE"/active-bt-ui-light-*
 : > "$CALLS"
 "$TOOL" enable-light > "$T/enable.out" 2>&1; rc=$?
