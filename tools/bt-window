@@ -6,10 +6,11 @@
 #
 # Answers the one question that matters while an untreated observation is
 # running, and answers it WITHOUT PROBING THE CONTROLLER. That exclusion is the
-# whole point: `bt-status` and `bt-state` run `hciconfig <dev> name`, which is a
-# real HCI command/response exchange and is proven to abort an active btmon
-# capture (EX-011). Asking "is it still alive?" with a probe would end the
-# observation it is asking about.
+# whole point: `bt-status --probe` and `bt-state --probe` run `hciconfig <dev>
+# name`, which is a real HCI command/response exchange and is proven to abort an
+# active btmon capture (EX-011). Without --probe both are passive (since
+# 2026-09-18) and print the liveness as unprobed. Asking "is it still alive?"
+# with a probe would end the observation it is asking about.
 #
 # Everything here comes from the journal and from sysfs enumeration, both of
 # which are passive.

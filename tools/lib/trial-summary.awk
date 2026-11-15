@@ -107,6 +107,15 @@ NR == 1 {
     # direction; they are counted, shown, and excluded from the denominator.
     if (bs == "censored_pre_failure") { cen[k]++; seen[k]++; next }
     if (bs == "unknown")              { unk[k]++; seen[k]++; next }
+    # A FAILED CLOSE WITH NO BT-1 EVIDENCE IS NOT A SURVIVAL. trial_result is
+    # `failed` when the controller was found not answering (or the operator said
+    # hang), and bt1_status is `not_observed` when the journal showed no HCI
+    # timeout. Together they say: something was wrong with the controller and
+    # the evidence does not say it was BT-1. Past this line such a row went into
+    # the denominator with no numerator, so it was counted exactly as a trial
+    # that survived, and the rate fell by the number of failures nobody could
+    # classify. It is excluded and shown, like the censored and unknown rows.
+    if (bs == "not_observed" && tr == "failed") { fnx[k]++; seen[k]++; next }
     tot[k]++; sum[k] += $c["duration_s"]; seen[k]++
     # Two different questions, kept apart:
     #   h[]   BT-1 reached UNRECOVERED failure (cold power-off needed)
@@ -178,6 +187,21 @@ END {
         print  "     this project have repeatedly turned out NOT to be causal, so an"
         print  "     early intervention is not evidence that BT-1 was imminent."
         print  "     For a controlled comparison, run with the watchdog OFF."
+    }
+
+    tf = 0
+    for (k in fnx) tf += fnx[k]
+    if (tf > 0) {
+        print ""
+        printf "  !! %d trial(s) FAILED with BT-1 NOT OBSERVED, excluded from every rate above.\n", tf
+        print  "     The controller was found dead or hung at close, but the journal"
+        print  "     showed no HCI command timeout. That is a failure the evidence does"
+        print  "     not classify: it is not a survival and not a confirmed BT-1, so it"
+        print  "     enters neither the numerator nor the denominator."
+        for (k in fnx) {
+            split(k, q, "|")
+            printf "       %-18s %-6s %d   (%s)\n", q[1], q[2], fnx[k], q[3]
+        }
     }
 
     td = 0

@@ -419,7 +419,7 @@ trend, not as an exact figure:
 Coverage is not a target. "Every test encodes a defect that shipped" is the
 rule; the percentage is a ratchet in CI to stop it falling silently as tools
 grow. The current figures are CI's: the coverage, awk, python and
-comprehension steps each print theirs and hold a floor (80, 85, 80 and 75 on
+comprehension steps each print theirs and hold a floor (80, 95, 80 and 75 on
 the branch `main` takes). [The 2026-08-13 assessment](../reviews/2026-08-13T1214Z-unit-testing-assessment.md)
 is where the measurement started (65 invariants, 13% of lines), not where it
 stands.

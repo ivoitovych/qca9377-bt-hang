@@ -45,6 +45,14 @@ diagnose_verdict() {
     local timeouts="$1" resets="$2" fw="$3" boots="$4"
 
     echo "─────────────────────────────────────────────────────────────"
+    # NO READABLE BOOT IS NOT "NOT OBSERVED". Zero timeouts over zero examined
+    # boots measured nothing (the journal is unreadable, rotated away, or the
+    # process may not read it), and the exit contract says 2 = cannot determine.
+    if (( boots == 0 )); then
+        echo "${Y}Cannot determine: no retained boot's kernel journal could be read.${O}"
+        echo "Nothing was examined, so neither \"observed\" nor \"not observed\" is an answer."
+        return 2
+    fi
     if (( timeouts == 0 )); then
         echo "${G}HCI command-timeout phenotype NOT observed.${O}"
         echo "No HCI command timeouts were found in the retained kernel journal."

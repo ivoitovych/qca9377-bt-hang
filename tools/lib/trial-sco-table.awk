@@ -89,6 +89,9 @@ NR==1 {
     if (reclass_treatment($col["treatment"]) ~ /^(CHANGED|PERTURBED):/) { drifted++; next }
     if (o == "censored_pre_failure") { censored++; next }
     if (o == "unknown")              { unread++;   next }
+    # A failed close with no BT-1 evidence is not a survival either (see
+    # trial-summary.awk): it would land in the "survived" cells below.
+    if (o == "not_observed" && (col["trial_result"] ? $col["trial_result"] : "") == "failed") { failedunx++; next }
     # "hung" here means the DEFECT occurred, regardless of whether the
     # controller was later rescued. Recovery is a fact about the mitigation,
     # not about whether the stimulus coincided with a failure.
@@ -107,6 +110,7 @@ END {
     printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
     if (unknown) printf "\n  (%d trial(s) with no SCO field — recorded before this was tracked)\n", unknown
     if (censored) printf "  (%d trial(s) censored by early watchdog intervention — excluded)\n", censored
+    if (failedunx) printf "  (%d trial(s) FAILED with BT-1 not observed — excluded, not counted as survived)\n", failedunx
     if (drifted)  printf "  (%d trial(s) whose treatment CHANGED or was PERTURBED mid-run — excluded)\n", drifted
     if (unread)   printf "  (%d trial(s) with UNKNOWN evidence — journal unreadable at close — excluded)\n", unread
     if (reclassified) printf "  (%d pre-fix CHANGED row(s) reclassified at read time — see trial-reclass.awk)\n", reclassified

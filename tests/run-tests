@@ -1771,6 +1771,24 @@ if (( DZRC == 0 )) && grep -q 'no observation' <<<"$DZERO" \
 else
     bad "zero-timeout verdict overclaims health (rc=$DZRC)"
 fi
+# NO READABLE BOOT IS "CANNOT DETERMINE" (exit 2, as the README promises), not
+# "not observed": zero timeouts over zero examined boots measured nothing.
+DNONE=$(bash -c 'source tools/bt-diagnose; diagnose_verdict 0 0 0 0' 2>&1)
+DNRC=$?
+if (( DNRC == 2 )) && grep -q 'Cannot determine' <<<"$DNONE" && ! grep -q 'NOT observed' <<<"$DNONE"; then
+    ok "bt-diagnose: no readable boot is 'cannot determine' (exit 2), not 'not observed'"
+else
+    bad "bt-diagnose reported a verdict over zero examined boots (rc=$DNRC)"
+fi
+# And end to end: a controller present, a journal that cannot be read.
+DEND=$(mktemp -d); mkdir -p "$DEND/usb/1-1/1-1:1.0/bluetooth/hci0" "$DEND/bin"; printf "#!/bin/sh\nexit 0\n" > "$DEND/bin/lsusb"; chmod +x "$DEND/bin/lsusb"
+printf '13d3\n' > "$DEND/usb/1-1/idVendor"; printf '3503\n' > "$DEND/usb/1-1/idProduct"
+printf '#!/bin/sh\nexit 1\n' > "$DEND/bin/journalctl"; chmod +x "$DEND/bin/journalctl"
+BT_SYSFS_USB="$DEND/usb" PATH="$DEND/bin:$PATH" tools/bt-diagnose >"$DEND/out" 2>&1; DERC=$?
+(( DERC == 2 )) && grep -q 'Cannot determine' "$DEND/out" \
+    && ok "bt-diagnose exits 2 when the controller is there and no journal can be read" \
+    || bad "bt-diagnose exited $DERC with an unreadable journal: $(tail -2 "$DEND/out" | tr '\n' '|')"
+rm -rf "$DEND"
 
 echo
 echo "BT-1 current formulation — one mechanically checked statement"
@@ -3364,7 +3382,7 @@ fi
 if (( $? != 0 )); then
     ok "confirmed: a matching grep -q pipeline exits non-zero under pipefail"
 else
-    ok "grep -q pipeline is not inverted on this shell — rule kept regardless"
+    bad "a matching grep -q pipeline exited 0 under pipefail: the rule's premise no longer holds on this shell"
 fi
 
 echo
@@ -7575,7 +7593,10 @@ lv --bogus >/dev/null 2>&1
 # report perfect agreement between two paths that agree about nothing — the
 # exact failure this tool already shipped once, from a different cause.
 CDW=$(cd_run capdiff-a capdiff-a --since "2026-08-10 12:00:00" --until "2026-08-10 12:00:05")
-[[ "$CDW" == *"agree"* || "$CDW" == *"agreement"* ]] \
+# The verdict line itself, not the word: the tool's own title ("Capture path
+# agreement") and its "coverage question, not agreement" both contain "agree",
+# so matching that could not fail.
+[[ "$CDW" == *"The paths agree"* && "$CDW" != *"coverage question"* ]] \
     && ok "bt-capdiff accepts an explicit window and still compares inside it" \
     || bad "an explicit --since/--until window broke the comparison"
 
@@ -7848,7 +7869,7 @@ rm -rf "$WDL"
 # ── bt-incident: the option paths that follow a valid slug ──────────────
 # The pre-check only inspects $1, so options AFTER the slug still go through
 # the loop — including its own -h|--help and its unknown-option refusal.
-INCSESS2=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+INCSESS2=$(ls -1 evidence/sessions "${BT_EVIDENCE_REPO:?}/evidence/sessions" 2>/dev/null | wc -l)
 tools/bt-incident a-slug --bogus >/dev/null 2>&1
 (( $? == 2 )) && ok "bt-incident rejects an unknown option after the slug" \
               || bad "an unknown option after the slug was accepted"
@@ -7859,7 +7880,7 @@ INCH2=$(tools/bt-incident a-slug --help 2>&1); inch2rc=$?
 tools/bt-incident a-slug --since >/dev/null 2>&1
 (( $? != 0 )) && ok "--since with no value is refused rather than defaulted" \
               || bad "--since accepted a missing value"
-[[ "$(ls -1 evidence/sessions 2>/dev/null | wc -l)" == "$INCSESS2" ]] \
+[[ "$(ls -1 evidence/sessions "${BT_EVIDENCE_REPO:?}/evidence/sessions" 2>/dev/null | wc -l)" == "$INCSESS2" ]] \
     && ok "none of the option paths collected an incident" \
     || bad "an option path wrote a session directory"
 
@@ -7916,7 +7937,7 @@ INCROUT=$(cd "$INCR" && env -u BT_EVIDENCE_REPO ./tools/bt-incident no-evidence-
 # AN INCIDENT named `--help`, and so did every mistyped flag. Two real session
 # directories appeared in evidence/sessions/ the first time this assertion ran,
 # and the suite's own evidence-tree check is what named them.
-INCSESS_BEFORE=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+INCSESS_BEFORE=$(ls -1 evidence/sessions "${BT_EVIDENCE_REPO:?}/evidence/sessions" 2>/dev/null | wc -l)
 tools/bt-incident --bogus >/dev/null 2>&1
 (( $? == 2 )) && ok "bt-incident rejects an unknown option with exit 2" \
               || bad "bt-incident accepted an unknown option"
@@ -7927,7 +7948,7 @@ INCH=$(tools/bt-incident --help 2>&1); inchrc=$?
 tools/bt-incident >/dev/null 2>&1
 (( $? == 2 )) && ok "bt-incident with no slug is a usage error, not a collection" \
               || bad "bt-incident collected an incident with no slug"
-[[ "$(ls -1 evidence/sessions 2>/dev/null | wc -l)" == "$INCSESS_BEFORE" ]] \
+[[ "$(ls -1 evidence/sessions "${BT_EVIDENCE_REPO:?}/evidence/sessions" 2>/dev/null | wc -l)" == "$INCSESS_BEFORE" ]] \
     && ok "no usage path collects anything — evidence/sessions/ is untouched" \
     || bad "a usage or refusal path wrote a session directory"
 rm -rf "$INCR"
@@ -10282,7 +10303,9 @@ rm -rf "$BKJ"
 # is what protects a good archive from being replaced by a worse one; a driver
 # that passed --replace unconditionally would disable it for every boot.
 BKJ=$(bkj_setup); bkj_run "$BKJ" >/dev/null
-if ! grep -q -- '--replace' "$BKJ/calls.log"; then
+# The log must EXIST and hold calls: grep on a file that was never created also
+# "finds no --replace", and the check could not fail.
+if [[ -s "$BKJ/calls.log" ]] && ! grep -q -- '--replace' "$BKJ/calls.log"; then
     ok "--replace is passed only for a marked prefix, never routinely"
 else
     bad "--replace was passed for an ordinary boot, disabling the overwrite refusal"
@@ -15366,6 +15389,26 @@ _o=$(python3 -I "$RFT/compare.py" "$RFT" mgmt-tester 1 2>&1); _rc=$?
 [[ "$_rc" == 1 && "$_o" == *"REGRESSIONS: 1"* ]] \
     && ok "bluez-tester-compare.sh: a case that now fails is a regression (control)" \
     || bad "bluez-tester-compare.sh regression control: rc=$_rc"
+rm -rf "$RFT"
+
+# A FAILED CLOSE WITH NO BT-1 EVIDENCE IS NOT A SURVIVAL. A row with
+# trial_result=failed and bt1_status=not_observed went into the denominator
+# with no numerator, which is how a trial that survived is counted: nine of the
+# eleven E3 rows were of this kind. Three rows, one per kind: a confirmed
+# failure, a real survival, and a failure the journal does not classify.
+RFT=$(mktemp -d)
+printf 'trial_type\tbuild\ttreatment\tbt1_status\ttrial_result\tduration_s\tsco_sent\n' > "$RFT/results.tsv"
+printf 'observational_boot\tstock\tautosusp=Y,power=auto,wd=off,probes=off\tconfirmed\tfailed\t100\t2\n'     >> "$RFT/results.tsv"
+printf 'observational_boot\tstock\tautosusp=Y,power=auto,wd=off,probes=off\tnot_observed\tsurvived\t100\t0\n' >> "$RFT/results.tsv"
+printf 'observational_boot\tstock\tautosusp=Y,power=auto,wd=off,probes=off\tnot_observed\tfailed\t100\t0\n'   >> "$RFT/results.tsv"
+RFTS=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-summary.awk "$RFT/results.tsv" 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$RFTS" == *"1/2"*"50%"* && "$RFTS" == *"1 trial(s) FAILED with BT-1 NOT OBSERVED"* ]] \
+    && ok "trial-summary: a failed close with BT-1 not observed is excluded and named, not counted as a survival (1/2, not 1/3)" \
+    || bad "trial-summary counted a failed, unclassified row: rc=$_rc: $(grep -E 'stock|FAILED' <<<"$RFTS" | head -2 | tr '\n' '|')"
+RFTT=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-sco-table.awk "$RFT/results.tsv" 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$RFTT" == *"FAILED with BT-1 not observed"* && "$RFTT" == *"no SCO setup"*" 0 "*" 1"* ]] \
+    && ok "trial-sco-table: the same row is excluded from the survived cells" \
+    || bad "trial-sco-table counted a failed, unclassified row as a survival: $(grep -E 'no SCO|FAILED' <<<"$RFTT" | tr '\n' '|')"
 rm -rf "$RFT"
 # MARKER-NEW-TESTS-END
 rm -rf "$RF"
