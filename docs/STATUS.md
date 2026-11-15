@@ -5,7 +5,12 @@ GitLab, GitHub, Sashiko, syzbot): **no row changed state**. CO-02's four patches
 the CI bot's rule makes v2 a resend. CO-25's only answer is still Zijun Hu's of 10-29, and our
 reply v4 is unsent. Hui Peng's patch is `new`, with an identical duplicate posted 11-04. The gvfs
 MRs have no reviewer. New work by other authors that overlaps ours: 14942649 conflicts textually
-with CO-02 v2 1/2 and 2/2; 14973994 conflicts with CO-43 series patch 2 (B2).
+with CO-02 v2 1/2 and 2/2; 14973994 conflicts with CO-43 series patch 2 (B2). **Revised after
+five outside reviews** (`reviews/2026-11-15T0300Z-submitted-status-review-checks.md`):
+- patch 1 of CO-02 was run on the laptop on 10-26 (3 of 3; the first version denied it);
+- a possible lock cycle in v2 2/2's wait under `hdev->lock` is unresolved, so 2/2 is not ready
+  to send;
+- the SCO lane is on it.
 [`reviews/2026-11-15T0115Z-submitted-contributions-status.md`](../reviews/2026-11-15T0115Z-submitted-contributions-status.md).
 **2026-11-14:** every submission row's upstream state re-read 00:40–01:15 UTC (patchwork,
 GitHub, GitLab, Launchpad, the local lore archive; `contributions/rd-2026-11-14.md`, "Upstream
