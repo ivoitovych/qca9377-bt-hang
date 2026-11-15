@@ -89,5 +89,48 @@ Volume and limits: monitor files rotate at 50 MiB, four kept (`BT_UI_MAX_BYTES`,
 `status` counts suppressions. WirePlumber's staged level silences warnings of categories
 not in its list (ALSA, `wp-*`) until it is unstaged and restarted.
 
+## Always-on light mode
+
+For a rare case that cannot be staged (the Quick Settings Bluetooth tile that stayed grey
+after a click) the full session is too heavy to leave running. `start-light` records only
+what compares **what the controls drew** with **the real state**, and nothing else: no
+PipeWire level, no kernel debug, no launchers, no audio-policy recorder, no drop-ins, no
+`bt-mark` (it queries `bluetoothctl`; the start and stop marks go through
+`logger -t bt-ui-capture`).
+
+```
+sudo tools/bt-ui-capture start-light     # three transient units, idempotent
+sudo tools/bt-ui-capture status-light    # units, file sizes, last write; no root needed
+sudo tools/bt-ui-capture stop-light      # stops those three units only
+```
+
+| unit | file in `/var/log/bt-ui-light/<UTC time>/` | records |
+|---|---|---|
+| `bt-ui-light-atspi` | `atspi.log` | GNOME Settings whole, as in a full session; **GNOME Shell** (the Quick Settings tiles) only for what shows a control's drawn state: `checked`, `pressed`, `sensitive`, `enabled`, `showing`, `selected`, `active`, `expanded`, `indeterminate`, `busy` state changes, and name/description changes of toggle buttons, buttons, menu items and a label inside one (a tile's subtitle). Dropped for the shell: any text that looks like a time of day (the clock), focus, children, selection, windows, notifications |
+| `bt-ui-light-sysbus` | `system-bus.log` | every method call to `org.bluez`; every signal of the adapter object `/org/bluez/hci0` (`PropertiesChanged`: `Powered`, `Discovering`, …); the object manager's `InterfacesAdded`/`Removed` about the adapter itself. The match path is exact, so `/org/bluez/hci0/dev_*` (per-device RSSI during a scan) is not recorded |
+| `bt-ui-light-sessbus` | `session-bus.log` | as in a full session: Settings' traffic and the Rfkill switch the shell drives |
+
+Files rotate at 20 MiB with four old ones kept (`BT_UI_LIGHT_MAX_BYTES`,
+`BT_UI_LIGHT_KEEP`): at most 100 MiB per file, 300 MiB in all. Each `start-light` after the
+units stopped opens a new directory; `BT_UI_LIGHT_BASE` moves the base (tests). Nothing is
+collected or sanitised: the files hold device names and addresses, root-readable only
+(mode 0640).
+
+**It does not survive a reboot.** The units are transient (`Restart=always` restarts them
+after a crash or a new login, not after a boot) and nothing is installed. After every
+reboot run `start-light` again; `status-light` says `NOTHING RUNS` when that is the case.
+A full `stop` does not touch the light units and `stop-light` does not touch a full session.
+
+Positive control: click one tile, run `status-light` — `atspi.log` and `session-bus.log`
+sizes must have grown and "last line written" be a few seconds ago. If the tile click
+leaves `atspi.log` unchanged, the shell is not publishing on the accessibility bus (check
+`gsettings get org.gnome.desktop.interface toolkit-accessibility`; the recorder never
+changes it) and only the bus logs are of use.
+
+Reading it after the grey tile: find the click in `session-bus.log`/`system-bus.log` (the
+`Powered` property change and the call that caused it), then the shell's `checked` /
+`pressed` events in `atspi.log` around the same second. Drawn `checked` not following a
+`Powered` change is the case being looked for.
+
 Undo summary: `stop` for everything live, `unstage` for the drop-ins. Nothing else is left
 behind except the session directory (kept: it is evidence).
