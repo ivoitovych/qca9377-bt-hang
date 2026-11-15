@@ -322,12 +322,22 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
 ## Repository health
 
 **Code fixes after the whole-project review of 2026-11-15** (`eacbb61`…`ac71f16`; CI green with the
-suite; nothing of it is deployed on the machine):
+suite; nothing of it is deployed on the machine). The review itself is commit `162d3b9`, so far
+only on a separate branch of its own, until the operator decides where it lives.
 - `uninstall.sh` never reloads btusb.
 - `scripts/runtime-mgmt-test.sh` refuses `load`/`restore` (`EX-046`).
 - Seven tools no longer loop on a two-word option given last.
 - `tools/bt-archive --replace` keeps the old archive when the new export holds fewer records.
-- `devtools/repo-save` checks the fixed author named in CI's workflow.
+- `devtools/repo-save` checks the fixed author named in CI's workflow. Its test switch for
+  scratch identities is refused in the project's own checkout and wherever a remote is not a
+  local path (11-15, after the reviewer's reaction).
+- `tools/bt-sco --window` no longer takes a following option (`--raw`) as its value (11-15).
+- The "What to send" table gives full paths; `scripts/send-table-check.py` checks them (11-15).
+- `tools/bt-trial start` sets a reused trial directory aside instead of truncating it, as
+  `autostart` already did (11-15).
+- `install.sh` writes the installing checkout's path into `bt-raw-archive.service` (it named the
+  investigation machine's checkout everywhere), and says two controlled reset demonstrations, not
+  three (11-15).
 - `scripts/smtp-login-check.sh` reads a network error as INCONCLUSIVE.
 - Some scripts used to give a verdict they had not measured; they now exit 2:
   - `sco-ledger.sh` and `sco-ledger-boots.sh` on an unreadable boot;

@@ -30,26 +30,26 @@ still to be made, from the project checkout, before the send.
 
 | CO | send this | it replaces | patch | commands | state |
 |---|---|---|---|---|---|
-| CO-44 | `CO-44-…/send-20261113/` (its `send-commands.txt` STEP 2a as of 11-14) | — | ready | done (`dry-run-20261114/`) | the reviewers' first choice |
-| CO-38 | kernel: `CO-38-…/send-20261114/patch/`; BlueZ tests: `CO-38-…/bluez-split-20261114/series-a/` | `send-20261114/patch/bluez/` | ready | to make | — |
-| CO-43 E | `CO-43-…/send-20261113/E/` | — | ready | done (`E/dry-run.txt`, `../dry-run-20261114/`) | goes before every other CO-43 patch |
-| CO-43 A | `CO-43-…/send-20261113/A-review-fixes-20261114/` | `send-20261113/A/` | ready | to make (`A/send-commands.txt` names the old file) | after E |
-| CO-43 BT-24/25 | `CO-43-…/send-bt24-bt25-20261114/` (cover + two patches on E) | patches 4–5 of `send-series-20261114/` | ready | to make | after E |
-| CO-43 B2, D v2 | not to send: `send-series-20261114/` patches 2 and 3 (`HELD.md` there) | — | **held** | — | D v2 breaks the system-resume rebind (`needs_binding`); B2 needs D |
-| CO-04 | `CO-04-…/review-fixes-20261114/patch/` (mail form; `patch-bare/` for `git am`) | `send-20261114/patch/` | ready | to make | operator: `Link:` or `Closes:`, syzbot (D4) |
-| CO-05 + CO-26 | `CO-05-…/review-fixes-20261114/` (variant A with `Fixes:`, B without) | `send-20261114/` | ready | to make | operator: the variant and the order; mesh held for now (`../reviews/2026-11-15T0115Z-submitted-contributions-status.md`) |
-| CO-35 | `CO-35-…/review-fixes-20261114/` (with its `NOTES-FOR-OPERATOR.md`) | `send-20261114/` | ready | to make | operator: the full or the reduced prerequisite |
+| CO-44 | `CO-44-mgmt-timeout-reported-as-auth-failed/send-20261113/` (its `send-commands.txt` STEP 2a as of 11-14) | — | ready | done (`CO-44-mgmt-timeout-reported-as-auth-failed/send-20261113/dry-run-20261114/`) | the reviewers' first choice |
+| CO-38 | kernel: `CO-38-read-adv-features-hidden-instances/send-20261114/patch/`; BlueZ tests: `CO-38-read-adv-features-hidden-instances/bluez-split-20261114/series-a/` | `CO-38-read-adv-features-hidden-instances/send-20261114/patch/bluez/` | ready | to make | — |
+| CO-43 E | `CO-43-btusb-runtime-resume-failure/send-20261113/E/` | — | ready | done (`CO-43-btusb-runtime-resume-failure/send-20261113/E/dry-run.txt`, `CO-43-btusb-runtime-resume-failure/send-20261113/dry-run-20261114/`) | goes before every other CO-43 patch |
+| CO-43 A | `CO-43-btusb-runtime-resume-failure/send-20261113/A-review-fixes-20261114/` | `CO-43-btusb-runtime-resume-failure/send-20261113/A/` | ready | to make (`CO-43-btusb-runtime-resume-failure/send-20261113/A/send-commands.txt` names the old file) | after E |
+| CO-43 BT-24/25 | `CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/` (cover + two patches on E) | patches 4–5 of `CO-43-btusb-runtime-resume-failure/send-series-20261114/` | ready | to make | after E |
+| CO-43 B2, D v2 | not to send: `CO-43-btusb-runtime-resume-failure/send-series-20261114/` patches 2 and 3 (`HELD.md` there) | — | **held** | — | D v2 breaks the system-resume rebind (`needs_binding`); B2 needs D |
+| CO-04 | `CO-04-mesh-test-14888791/review-fixes-20261114/patch/` (mail form; `CO-04-mesh-test-14888791/review-fixes-20261114/patch-bare/` for `git am`) | `CO-04-mesh-test-14888791/send-20261114/patch/` | ready | to make | operator: `Link:` or `Closes:`, syzbot (D4) |
+| CO-05 + CO-26 | `CO-05-mesh-adv-list-lock-i12/review-fixes-20261114/` (variant A with `Fixes:`, B without) | `CO-05-mesh-adv-list-lock-i12/send-20261114/` | ready | to make | operator: the variant and the order; mesh held for now (`../reviews/2026-11-15T0115Z-submitted-contributions-status.md`) |
+| CO-35 | `CO-35-l2cap-ecred-defer-hang-stable/review-fixes-20261114/` (with its `NOTES-FOR-OPERATOR.md`) | `CO-35-l2cap-ecred-defer-hang-stable/send-20261114/` | ready | to make | operator: the full or the reduced prerequisite |
 | CO-22 | `research-2026-11-01/qca-ids/refresh-20261114/` (request v3) | — | ready | to make | — |
-| CO-21 | `CO-21-…/review-fixes-20261114/` | `send-20261114/` | ready | to make | the mixed-mode question is in the cover |
-| CO-20 | `CO-20-…/patch1-standalone-20261114/` (patch 1 alone) | `send-20261114/` | ready | to make | patch 2 held |
-| CO-02 v2 | 1/2 + the **non-sleeping** 2/2: `CO-02-…/review-fixes-20261115/patches/alt-2of2/`; the mismatch patch later, alone (`…/patches/standalone-3/`) | `send-v2-review-fixes-20261114/` and `review-fixes-20261115/patches/main-v2/`: their 2/2 **can deadlock** (3 of 3 with delays, 2026-11-15) | not ready: checkpatch, the bot's CI and a new cover to do | to make | operator: the stable trailer form |
-| CO-12 | `CO-12-…/send-20261114/` | — | ready | to make | operator: the clamp now, or an RFC first (D5) |
-| CO-23 | `CO-23-…/patch/send-20261114/` | `patch/send/`, `patch/send-20261101-draft/` | ready | to make | operator: the list or BlueZ's private advisory (D3) |
-| CO-37 | `CO-37-…/send-20261114/` | `work/patches/master-final-6-20261102/` | ready | to make | operator: same route question (D3) |
-| CO-39 | `CO-39-…/send-20261114/` | — | ready | to make | the bot's base side still to read |
-| CO-41 | `CO-41-…/send-20261114/` | — | ready | to make | — |
-| CO-30 | `CO-30-…/rfc-20261114/` (RFC on CO-02 v2) | — | RFC | to make | waits for CO-02 v2 |
-| CO-11a, CO-03, CO-37 5.72, CO-40 | `ubuntu-bluez-5.72-0ubuntu5.9-bundle/` (one Ubuntu upload); CO-11a's own refresh `CO-11-…/ubuntu/ready-20261114/` | `CO-11-…/ubuntu/ready-20261102/` | built and tested | — (filed by the operator on Launchpad) | not filed |
+| CO-21 | `CO-21-btusb-sco-alt-setting/review-fixes-20261114/` | `CO-21-btusb-sco-alt-setting/send-20261114/` | ready | to make | the mixed-mode question is in the cover |
+| CO-20 | `CO-20-sco-unknown-handle-messages/patch1-standalone-20261114/` (patch 1 alone) | `CO-20-sco-unknown-handle-messages/send-20261114/` | ready | to make | patch 2 held |
+| CO-02 v2 | 1/2 + the **non-sleeping** 2/2: `CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/alt-2of2/`; the mismatch patch later, alone (`CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/standalone-3/`) | `CO-02-sco-connect-reuses-closing-link/send-v2-review-fixes-20261114/` and `CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/main-v2/`: their 2/2 **can deadlock** (3 of 3 with delays, 2026-11-15) | not ready: checkpatch, the bot's CI and a new cover to do | to make | operator: the stable trailer form |
+| CO-12 | `CO-12-m2-adv-duration-overflow/send-20261114/` | — | ready | to make | operator: the clamp now, or an RFC first (D5) |
+| CO-23 | `CO-23-one-off-events/patch/send-20261114/` | `CO-23-one-off-events/patch/send/`, `CO-23-one-off-events/patch/send-20261101-draft/` | ready | to make | operator: the list or BlueZ's private advisory (D3) |
+| CO-37 | `CO-37-bluez-media-endpoint-exit-uaf/send-20261114/` | `CO-37-bluez-media-endpoint-exit-uaf/work/patches/master-final-6-20261102/` | ready | to make | operator: same route question (D3) |
+| CO-39 | `CO-39-bluez-temporary-device-kept-by-non-discoverable-reports/send-20261114/` | — | ready | to make | the bot's base side still to read |
+| CO-41 | `CO-41-bluez-emulator-io-cap-negative-reply-reason/send-20261114/` | — | ready | to make | — |
+| CO-30 | `CO-30-sco-deferred-connect-rfc/rfc-20261114/` (RFC on CO-02 v2) | — | RFC | to make | waits for CO-02 v2 |
+| CO-11a, CO-03, CO-37 5.72, CO-40 | `ubuntu-bluez-5.72-0ubuntu5.9-bundle/` (one Ubuntu upload); CO-11a's own refresh `CO-11-small-btmon-and-flaky-test/ubuntu/ready-20261114/` | `CO-11-small-btmon-and-flaky-test/ubuntu/ready-20261102/` | built and tested | — (filed by the operator on Launchpad) | not filed |
 
 ## A dossier's layout
 

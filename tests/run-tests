@@ -955,9 +955,14 @@ co_world() {   # <script> — run <script> at this checkout's own path, overlaid
     unshare -Urmn bash -c '
         mount -t overlay co-world -o lowerdir="$PWD",upperdir="$1",workdir="$2" "$PWD" || exit 97
         cd "$PWD" || exit 97        # re-enter: the old directory handle is the lower layer
-        # An identity of its own, in the overlay'"'"'s .git/config: a fresh clone
-        # has none, and CI'"'"'s checkout is one (2026-10-08).
-        git config user.name "Checkout World"; git config user.email world@example.com
+        # An identity in the overlay'"'"'s .git/config: a fresh clone has none,
+        # and CI'"'"'s checkout is one (2026-10-08). It is the project author
+        # named in checks.yml, and repo-save'"'"'s test seam is off in here: the
+        # seam is refused in the project'"'"'s own checkout (2026-11-15), so the
+        # world commits through the real identity gate.
+        unset BT_REPO_SAVE_CONFIG_IDENTITY
+        _want=$(sed -n "s/^[[:space:]]*WANT:[[:space:]]*\"\(.*\)\"[[:space:]]*\$/\1/p" .github/workflows/checks.yml | head -1)
+        git config user.name "${_want% <*}"; _wm=${_want##*<}; git config user.email "${_wm%>}"
         eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
 }
 # --no-optional-locks: a plain `git status` refreshes the index's stat cache and
@@ -7431,6 +7436,12 @@ SCRAW=$(sco_run sco-paired --raw)
 [[ "$SCRAW" == *"Setup Synchronous Connection"* && "$SCRAW" == *"Max latency"* ]] \
     && ok "bt-sco --raw passes btmon's blocks through unfiltered" \
     || bad "--raw dropped the block content it exists to preserve"
+# --window's value is optional, so an option after it is an option, not the
+# value: `--window --raw` used to swallow --raw as the window (2026-11-15).
+SCWR=$(sco_run sco-unanswered --window --raw); scwrrc=$?
+[[ "$scwrrc" == 0 && "$SCWR" != *"Full event window"* && "$SCWR" == *"Setup Synchronous Connection"* ]] \
+    && ok "bt-sco --window --raw keeps --raw as an option, not the window value" \
+    || bad "bt-sco --window --raw (rc=$scwrrc) took the option as the window or failed"
 
 env PATH="$SC/stub:$PATH" BTMON_FIXTURE=/dev/null tools/bt-sco --dir "$SC/nope" >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-sco refuses a capture directory that is not there" \
@@ -9467,6 +9478,29 @@ TLNHS=$(tlnh start stock); tlnhsrc=$?
     && ok "manual start refuses over the same corrupt file — both entry points are guarded" \
     || bad "start numbered a trial from a headerless results.tsv (rc=$tlnhsrc)"
 rm -rf "$TLNH"
+
+# A trial closed without its row leaves its number free, and manual start then
+# truncated that directory's steps.log and overwrote its state-before.txt (review
+# T-09, 2026-11-15); autostart already set such a directory aside. The old
+# directory must survive whole, and the new trial must get a fresh one.
+TLRU=$(mktemp -d)
+mkdir -p "$TLRU/state" "$TLRU/evidence/trials/stock/trial-01"
+echo "[+5s] the old trial's step" > "$TLRU/evidence/trials/stock/trial-01/steps.log"
+echo old > "$TLRU/evidence/trials/stock/trial-01/state-before.txt"
+tlru() {   # bt-trial in this scratch root, as tlnh() above
+    PATH="$TL/bin:$PATH" \
+    BT_REPO="$TLRU" BT_EVIDENCE_REPO="$TLRU" \
+    BT_STATE="$TLRU/state" BT_SYSFS_USB="$TL/sysfs" BT_SYSFS_MODULE="$TL/mod" \
+    tools/bt-trial "$@" 2>&1
+}
+TLRUS=$(tlru start stock); tlrurc=$?
+TLRUA=$(ls -d "$TLRU/evidence/trials/stock/trial-01.unclosed-"* 2>/dev/null | head -1)
+(( tlrurc == 0 )) && [[ -n "$TLRUA" && "$(cat "$TLRUA/steps.log")" == "[+5s] the old trial's step" \
+      && "$(cat "$TLRUA/state-before.txt")" == old \
+      && -e "$TLRU/evidence/trials/stock/trial-01/steps.log" && ! -s "$TLRU/evidence/trials/stock/trial-01/steps.log" ]] \
+    && ok "manual start sets a reused trial directory aside instead of truncating it" \
+    || bad "manual start over an existing trial-01 (rc=$tlrurc, aside='$TLRUA'): $(tr '\n' '|' <<<"$TLRUS")"
+rm -rf "$TLRU"
 
 # ── bt-trial audit: recheck the record against the journal ──────────────
 #
@@ -12372,6 +12406,14 @@ else
     bad "staged install failed (rc=$sirc, $SIERR error line(s), $SIN file(s)):"
     bad "  $(grep -m1 ERROR <<<"$SIOUT")"
 fi
+# The raw-capture archiver's unit names a script by its absolute path. Installed
+# from a checkout other than the investigation machine's, it named one that was
+# not there (2026-11-15). From any checkout, the installed unit must name this
+# checkout's script, and that script must exist and be executable.
+SIRAW=$(sed -n 's/^ExecStart=//p' "$SR/etc/systemd/system/bt-raw-archive.service" 2>/dev/null)
+[[ "$SIRAW" == "$PWD/scripts/raw-capture-archive-all.sh" && -x "$SIRAW" ]] \
+    && ok "the installed bt-raw-archive.service runs this checkout's archiver" \
+    || bad "the installed bt-raw-archive.service runs '$SIRAW', not $PWD/scripts/raw-capture-archive-all.sh"
 
 # THE MODES ARE DERIVED FROM install.sh, not listed here. A hand-written table
 # of expected modes is a second copy of the installer that rots against it; the
@@ -15266,7 +15308,32 @@ RFEO=$(devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
 (( rferc != 0 )) && [[ "$RFEO" == *"no identity"* ]] \
     && ok "repo-save still refuses a checkout with no identity" \
     || bad "repo-save did not refuse an empty identity (rc=$rferc)"
-rm -rf "$RFI" "$RFE"
+# The seam is no bypass: set for a repository with a network remote it is
+# refused before any commit, so only a scratch repository can use it
+# (outside review reaction, 2026-11-15). The control is every other test of
+# this suite that commits through the seam into a scratch repository.
+RFN=$(mktemp -d); git -C "$RFN" init -q; git -C "$RFN" config user.email test@example.com; git -C "$RFN" config user.name test
+git -C "$RFN" remote add origin https://github.com/example-owner/public-repo.git
+printf 'x\n' > "$RFN/c.txt"
+RFNO=$(devtools/repo-save "$RFN" "seam with a network remote" --no-push 2>&1); rfnrc=$?
+(( rfnrc != 0 )) && [[ "$RFNO" == *"scratch repositories only"* ]] \
+        && ! git -C "$RFN" rev-parse -q --verify HEAD >/dev/null \
+    && ok "repo-save refuses its identity seam for a repository with a network remote" \
+    || bad "repo-save let its identity seam commit into a repository with a network remote (rc=$rfnrc)"
+rm -rf "$RFI" "$RFE" "$RFN"
+
+# The "What to send" table names what goes out: every path in it can be copied
+# and exists (2026-11-15: it first elided them as `CO-44-…/`). The real table,
+# and a scratch one with one elided and one missing path, which must be refused.
+STO=$(python3 -I scripts/send-table-check.py 2>&1); strc=$?
+STC=$(mktemp -d); mkdir -p "$STC/CO-01-x/send"
+printf '%s\n' '| CO | send this | it replaces |' '|---|---|---|' \
+    '| CO-01 | `CO-01-x/send/` | — |' '| CO-02 | `CO-02-…/send/` | `CO-01-x/gone/` |' > "$STC/README.md"
+STB=$(python3 -I scripts/send-table-check.py "$STC" 2>&1); stbrc=$?
+(( strc == 0 && stbrc == 1 )) && [[ "$STB" == *"elided path CO-02-…/send/"* && "$STB" == *"no such path CO-01-x/gone/"* && "$STB" != *"CO-01-x/send/"* ]] \
+    && ok "the send table's paths all exist, and an elided or missing path is refused" \
+    || bad "send-table-check: real table rc=$strc ($(tail -1 <<<"$STO")); scratch rc=$stbrc: $(tr '\n' '|' <<<"$STB")"
+rm -rf "$STC"
 
 # smtp-login-check.sh: EXIT 1 IS "REVOKED", the answer that is wanted, so a
 # network failure may never produce it. Run from a COPY inside a scratch

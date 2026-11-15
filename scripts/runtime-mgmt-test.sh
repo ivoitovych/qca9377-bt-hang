@@ -3,8 +3,10 @@
 # running bluetooth.ko for one built from Ubuntu's own source (unpatched
 # control or patched), with the STOCK distro bluetoothd, and capture the
 # management channel around a power cycle (what is checked there: the held
-# branch). Everything is reversible; a reboot restores the stock module and the
-# patched daemon drop-in is only moved aside, never deleted.
+# branch). NOT everything here is reversible: a module swap wedged the
+# controller and only a power-off recovered it (EX-046, below), so `load` and
+# `restore` are refused. The patched daemon drop-in is only moved aside, never
+# deleted.
 #
 #   scripts/runtime-mgmt-test.sh status              what runs now (daemon, module, window)
 #   scripts/runtime-mgmt-test.sh stock-daemon        disable the /usr/local daemon drop-in
@@ -196,5 +198,5 @@ trigger)
 	journalctl _COMM=bluetoothd --since "-30s" --no-pager -o short-precise 2>/dev/null | grep -E "start_discovery_complete|Wrong size|status: 0x|segfault" | tail -6
 	;;
 *)
-	sed -n '2,20p' "$0"; exit 2 ;;
+	sed -n '2,22p' "$0"; exit 2 ;;
 esac

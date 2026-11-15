@@ -147,9 +147,24 @@ echo "  ✓ message clean"
 #
 # TEST SEAM: BT_REPO_SAVE_CONFIG_IDENTITY=1 takes the identity from the target
 # checkout's own git configuration instead. Only the test suite sets it, for
-# scratch repositories that carry a throwaway identity.
+# scratch repositories that carry a throwaway identity. Set anywhere else it
+# would bypass this gate, so it is honoured only where nothing could leave the
+# machine: a target that is not this project's own checkout and whose every
+# remote is a local path. Anywhere else it is refused (outside review
+# reaction, 2026-11-15).
 want=""
 if [[ "${BT_REPO_SAVE_CONFIG_IDENTITY:-}" == 1 ]]; then
+    seam_why=""
+    [[ "$(git rev-parse --show-toplevel 2>/dev/null)" == "$(git -C "$HERE/.." rev-parse --show-toplevel 2>/dev/null)" ]] \
+        && seam_why="the target is this project's own checkout"
+    while read -r _key seam_url; do
+        [[ "$seam_url" == /* || "$seam_url" == file:///* ]] || seam_why="remote ${_key#remote.} is not a local path: $seam_url"
+    done < <(git config --get-regexp '^remote\..*\.url$' 2>/dev/null)
+    if [[ -n "$seam_why" ]]; then
+        echo "  ✗ BT_REPO_SAVE_CONFIG_IDENTITY is for scratch repositories only; refused: $seam_why" >&2
+        echo "ABORT: nothing committed" >&2
+        exit 1
+    fi
     want_name="$(git config user.name 2>/dev/null)"; want_mail="$(git config user.email 2>/dev/null)"
     if [[ -z "$want_name" || -z "$want_mail" ]]; then
         echo "  ✗ no identity configured in this checkout (git config user.name / user.email)" >&2

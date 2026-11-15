@@ -351,6 +351,15 @@ start)
     mkdir -p "$STATE" "$TRIALS"
     n=$(next_trial_no "$build") || exit 1
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
+    # The same reuse as autostart's, below: a trial closed without its results
+    # row leaves its number free, and this used to truncate that directory's
+    # steps.log and overwrite its state-before.txt (review T-09, 2026-11-15).
+    # An existing directory is set aside, never reused.
+    if [[ -e "$dir" ]]; then
+        aside="$dir.unclosed-$(date -u +%Y%m%dT%H%M%S)"
+        mv "$dir" "$aside" || { echo "bt-trial: cannot set aside $dir; nothing started" >&2; exit 1; }
+        echo "bt-trial: trial-$(printf '%02d' "$n") existed with no results row; kept as $(basename "$aside")" >&2
+    fi
     mkdir -p "$dir"
     { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
       echo "treat_start=$(env_fingerprint)"
@@ -410,7 +419,7 @@ autostart)
     # never reused: the row can be rebuilt from the journal, the directory cannot.
     if [[ -e "$dir" ]]; then
         aside="$dir.unclosed-$(date -u +%Y%m%dT%H%M%S)"
-        mv "$dir" "$aside"
+        mv "$dir" "$aside" || { echo "bt-trial: cannot set aside $dir; no auto-trial opened" >&2; exit 1; }
         echo "bt-trial: trial-$(printf '%02d' "$n") existed with no results row; kept as $(basename "$aside")" >&2
     fi
     mkdir -p "$dir"

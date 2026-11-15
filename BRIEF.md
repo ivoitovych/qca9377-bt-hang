@@ -770,8 +770,9 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    Secure Boot off, `sig_enforce=N`. The patched daemon runs from `/usr/local` via drop-in
    `20-patched-bluetoothd.conf`; the stock package binary is intact (`dpkg -V bluez` clean), so
    "stock daemon" = disable that drop-in. Runbook: `scripts/runtime-mgmt-test.sh` — refuses
-   while `bt-window` is open or a trial is open; `load`/`restore` swap the module, `trigger`
-   captures the management channel around a power cycle. A reboot restores all.
+   while `bt-window` is open or a trial is open; `trigger` captures the management channel
+   around a power cycle. *(Updated 11-15: `load`/`restore`, which swapped the module, are now
+   refused by the code, exit 2; see the warning below.)*
    ⚠️ **Attempted 2026-09-23 01:08–01:20 and it wedged the controller (`EX-046`)**: the first
    `btusb` unload/re-probe, still on the STOCK module, ended with HCI Reset `0x0c03` timing out
    (`-110`) and hci0 registered with an all-zero address, DOWN; two further re-probes the same.

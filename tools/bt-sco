@@ -25,10 +25,12 @@
 # makes the association visible rather than asserted.
 #
 # Usage:
-#   bt-sco [--dir <trace-dir>] [--raw]
+#   bt-sco [--dir <trace-dir>] [--raw] [--window [<seconds>]]
 #
-#   --dir   btsnoop directory (default /var/log/bt-health/trace)
-#   --raw   print btmon's blocks unfiltered, for anything this misses
+#   --dir     btsnoop directory (default /var/log/bt-health/trace)
+#   --raw     print btmon's blocks unfiltered, for anything this misses
+#   --window  every event within <seconds> (whole number, default 2) of each
+#             synchronous setup; a following option is not taken as the value
 
 set -uo pipefail
 
@@ -45,8 +47,10 @@ while (( $# )); do
     case "$1" in
         --dir) DIR="${2:-}"; shift 2 || { echo "${0##*/}: $1 needs a value" >&2; exit 2; } ;;
         --raw) RAW=1; shift ;;
-        --window) WINDOW="${2:-2}"; shift; (( $# )) && shift ;;
-        -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+        # The value is optional: `--window --raw` used to take "--raw" as the
+        # window and swallow the option (outside review reaction, 2026-11-15).
+        --window) WINDOW=2; if [[ "${2:-}" =~ ^[0-9]+$ ]]; then WINDOW="$2"; shift; fi; shift ;;
+        -h|--help) sed -n '2,33p' "$0"; exit 0 ;;
         *) echo "bt-sco: unknown argument: $1" >&2; exit 1 ;;
     esac
 done

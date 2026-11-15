@@ -8,7 +8,8 @@
 #
 # --tools-only deploys every file and enables no service, reloads no driver and
 # touches no device. It exists because --apply enables bt-hang-watchdog, whose
-# USB reset has three controlled demonstrations of driving an already-wedged controller off the USB bus until power is removed —
+# USB reset has two controlled demonstrations of driving an already-wedged controller off the
+# USB bus until power is removed (a third case followed a reset this project did not issue) —
 # so on the investigation machine the choice was stale tools or an armed
 # watchdog, and the fixes stayed stuck in the tree for days.
 #
@@ -32,8 +33,9 @@ METRICS=1
 # running on the investigation machine, and every one of those fixes was
 # unreachable — because the only way to deploy them, `--apply`, also runs
 # `systemctl enable --now bt-hang-watchdog`. That watchdog's response to an HCI
-# timeout is a USB reset, and a reset has THREE controlled demonstrations of
-# driving an already-wedged controller off the USB bus until power is removed (EX-023, the 2026-08-15 test, EX-026). So the
+# timeout is a USB reset, and a reset has TWO controlled demonstrations of
+# driving an already-wedged controller off the USB bus until power is removed (EX-023, the
+# 2026-08-15 test; a third case, EX-026, followed a reset this project did not issue). So the
 # operator was choosing between stale instruments and an armed watchdog on
 # the laptop, and correctly chose stale — which left BL-08's fix, the one
 # that stops our own shutdown hook probing the controller, permanently stuck in
@@ -50,7 +52,7 @@ for a in "$@"; do
         --apply)       APPLY=1 ;;
         --tools-only)  APPLY=1; TOOLS_ONLY=1 ;;
         --no-metrics)  METRICS=0 ;;
-        -h|--help)     sed -n '2,15p' "$0"; exit 0 ;;
+        -h|--help)     sed -n '2,16p' "$0"; exit 0 ;;
         *) echo "unknown option: $a" >&2; exit 1 ;;
     esac
 done
@@ -535,6 +537,35 @@ install_file "$SRC/systemd/bt-journal-backup.timer"   /etc/systemd/system/bt-jou
 # The raw HCI captures rotate too (bt-capture keeps 400 files, bt-trace prunes by free
 # space). Their archiver ran on a transient timer that every reboot removed (2026-11-13).
 install_file "$SRC/systemd/bt-raw-archive.service" /etc/systemd/system/bt-raw-archive.service 0644
+# The unit names the archiver by its absolute path, and the tracked file carries the
+# investigation machine's checkout. Installed from any other checkout it named a script
+# that is not there (outside review reaction, 2026-11-15), so the installed copy's path
+# is rewritten to this checkout's. From the investigation machine's checkout nothing
+# changes. (Rewritten after install_file, not before, so the file stays one of the
+# `install_file "$SRC/…"` lines the suite derives its lists from.)
+RAWDST="$DESTDIR/etc/systemd/system/bt-raw-archive.service"
+RAWFROM=$(sed -n 's|^ExecStart=\(/.*\)/scripts/raw-capture-archive-all\.sh$|\1|p' "$SRC/systemd/bt-raw-archive.service")
+if [[ -z "$RAWFROM" ]]; then
+    echo "  ERROR: systemd/bt-raw-archive.service has no ExecStart naming scripts/raw-capture-archive-all.sh" >&2
+    FAILED=1
+elif [[ "$RAWFROM" != "$SRC" && ! -e "$RAWDST.disabled" ]]; then
+    # (A .disabled sibling: install_file skipped the file, and so does this.)
+    if (( APPLY )) && [[ -f "$RAWDST" ]]; then
+        if awk -v from="ExecStart=$RAWFROM/" -v to="ExecStart=$SRC/" \
+               'index($0, from) == 1 { $0 = to substr($0, length(from) + 1) } { print }' \
+               "$SRC/systemd/bt-raw-archive.service" > "$RAWDST.new" \
+           && chmod 0644 "$RAWDST.new" && mv -f "$RAWDST.new" "$RAWDST"; then
+            echo "  + ${RAWDST#"$DESTDIR"}: ExecStart rewritten to $SRC/scripts/"
+        else
+            rm -f "$RAWDST.new"
+            echo "    ERROR: could not rewrite ExecStart in $RAWDST" >&2; FAILED=1
+        fi
+    elif (( ! APPLY )); then
+        echo "  would rewrite ExecStart in /etc/systemd/system/bt-raw-archive.service to $SRC/scripts/"
+    else
+        echo "    ERROR: $RAWDST was not installed, so its ExecStart could not be rewritten" >&2; FAILED=1
+    fi
+fi
 install_file "$SRC/systemd/bt-raw-archive.timer"   /etc/systemd/system/bt-raw-archive.timer   0644
 
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
