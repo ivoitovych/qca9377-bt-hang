@@ -36,6 +36,16 @@
 #   bt-ui-capture collect [--since T] [--until T]
 #                                 gather the window into the session directory,
 #                                 with sanitised copies for publishing (root)
+#   bt-ui-capture start-light     ALWAYS-ON light recording (root): only three
+#                                 transient units (bt-ui-light-atspi,
+#                                 bt-ui-light-sysbus, bt-ui-light-sessbus) that
+#                                 compare what GNOME Settings and the shell's
+#                                 Quick Settings DRAW with the real state; own
+#                                 directory /var/log/bt-ui-light/<UTC time>/,
+#                                 own smaller caps; marks through logger
+#   bt-ui-capture status-light    units, file sizes, last write; says plainly
+#                                 when nothing runs (units end at a reboot)
+#   bt-ui-capture stop-light      stop those three units only (root)
 #
 # SIDE EFFECTS, all reverted by `stop` (runtime) or `unstage` (staged):
 #   start   PipeWire daemon log level (pw-metadata settings 0 log.level, the
@@ -61,7 +71,8 @@
 #
 # Seams (tests, scripts/prove-ui-capture.sh): BT_UI_BASE, BT_UI_USER,
 # BT_UI_UID, BT_UI_GID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
-# BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE, BT_PROC; the commands it runs
+# BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE, BT_PROC; light mode:
+# BT_UI_LIGHT_BASE, BT_UI_LIGHT_MAX_BYTES, BT_UI_LIGHT_KEEP, BT_UI_LIGHT_ADAPTER; the commands it runs
 # (runuser, systemd-run, systemctl, pw-metadata, loginctl, dbus-monitor, ...)
 # are taken from PATH, so a stub directory stands in for all of them.
 
@@ -96,6 +107,16 @@ DAEMON_DEBUG="${BT_UI_DAEMON_DEBUG:-3}"
 MARKER="bt-ui-capture"
 UNITS=(bt-ui-atspi bt-ui-sysbus bt-ui-sessbus)
 RECORDER_UNIT=bt-audio-policy
+# Always-on light mode (start-light): its own units, directory and, being left
+# running for days, smaller caps. 20 MiB x (4 kept + the live file) = 100 MiB
+# per file at most, 300 MiB for the three monitors; one click on a tile is a
+# few hundred bytes, so this holds weeks of the filtered shell/Settings record.
+LIGHT_BASE="${BT_UI_LIGHT_BASE:-/var/log/bt-ui-light}"
+LIGHT_MAX_BYTES="${BT_UI_LIGHT_MAX_BYTES:-20971520}"
+LIGHT_KEEP="${BT_UI_LIGHT_KEEP:-4}"
+LIGHT_ADAPTER="${BT_UI_LIGHT_ADAPTER:-/org/bluez/hci0}"
+LIGHT_UNITS=(bt-ui-light-atspi bt-ui-light-sysbus bt-ui-light-sessbus)
+LIGHT_KINDS=(light-atspi light-sysbus light-sessbus)
 DROPIN_NAME=90-bt-ui-capture.conf
 # Connection-level functions only. sco_send_frame, sco_recv_frame,
 # sco_sock_sendmsg, sco_recv_scodata and the refcount helpers run per packet
@@ -353,18 +374,32 @@ monitor_main() {   # _monitor <kind> <session dir>
     local kind="${1:?kind}" dir="${2:?session dir}" raw addr
     find_user || die "no desktop user"
     case "$kind" in
-        atspi)
+        atspi|light-atspi)
             raw=$(as_user busctl --user call org.a11y.Bus /org/a11y/bus org.a11y.Bus GetAddress 2>/dev/null) \
                 || die "accessibility bus address not available"
             addr=${raw#s \"}; addr=${addr%\"}
-            as_user python3 "$dir/bin/bt-ui-atspi.py" --address "$addr" --comm gnome-control-c \
+            local comms=(--comm gnome-control-c)
+            # Light mode adds the shell (the Quick Settings tiles are its); the
+            # recorder applies a per-application filter to it (bt-ui-atspi.py).
+            [[ "$kind" == light-atspi ]] && comms+=(--comm gnome-shell)
+            as_user python3 "$dir/bin/bt-ui-atspi.py" --address "$addr" "${comms[@]}" \
                 | capped_write "$dir/atspi.log" ;;
+        light-sysbus)
+            # Always-on narrowing of the sysbus rules below. dbus-monitor ORs its
+            # rules. Every call made to BlueZ; the adapter object's own signals
+            # (path= is an EXACT match, so /org/bluez/hci0/dev_* — the per-device
+            # RSSI flood of a scan — is not matched); and the object manager's
+            # InterfacesAdded/Removed about the adapter itself (arg0path exact).
+            dbus-monitor --system "type='method_call',destination='org.bluez'" \
+                "type='signal',sender='org.bluez',path='$LIGHT_ADAPTER'" \
+                "type='signal',sender='org.bluez',interface='org.freedesktop.DBus.ObjectManager',arg0path='$LIGHT_ADAPTER'" \
+                | capped_write "$dir/system-bus.log" ;;
         sysbus)
             # Everything BlueZ says, and every call made to it (who powered,
             # who connected — or that nobody did, U9).
             dbus-monitor --system "sender='org.bluez'" "destination='org.bluez'" \
                 | capped_write "$dir/system-bus.log" ;;
-        sessbus)
+        sessbus|light-sessbus)
             # GNOME Settings' own session-bus traffic and the rfkill switch the
             # shell's quick settings drive.
             as_user dbus-monitor --session "sender='org.gnome.Settings'" \
@@ -458,6 +493,92 @@ start_main() {
     fi
     mark "ui-capture START session=$(basename "$SESSION") (pw level $PW_LEVEL, sco dyndbg, a11y/bus monitors)"
     echo "── done. Logs: $SESSION   Read docs/ui-capture.md before the test."
+}
+
+# ── always-on light mode: start-light / stop-light / status-light ────────
+# Three transient units and nothing else (no PipeWire level, dynamic debug,
+# launchers, audio-policy recorder, drop-ins; the marks go through logger, since
+# bt-mark queries bluetoothctl). Unit names differ from the full session's, so
+# the two never collide and `stop` / `stop-light` each leave the other's alone.
+light_current() {   # sets LDIR from the pointer, or the newest directory
+    local d last=""
+    LDIR=""
+    if [[ -r "$LIGHT_BASE/current" ]]; then
+        d=$(<"$LIGHT_BASE/current")
+        [[ -n "$d" && -d "$d" ]] && { LDIR="$d"; return 0; }
+    fi
+    for d in "$LIGHT_BASE"/2*/; do [[ -d "$d" ]] && last="${d%/}"; done
+    [[ -n "$last" ]] || return 1
+    LDIR="$last"
+}
+light_any_active() {
+    local u
+    for u in "${LIGHT_UNITS[@]}"; do unit_active "$u" && return 0; done
+    return 1
+}
+start_light_monitor() {   # <unit> <kind>
+    if unit_active "$1"; then echo "  $1: already running"; return 0; fi
+    run systemd-run --quiet --unit="$1" --collect \
+        --description="bt-ui-capture $2 monitor ($(basename "$LDIR"))" \
+        --property=Restart=always --property=RestartSec=10 \
+        --setenv=BT_UI_USER="$U" --setenv=BT_UI_UID="$UID_U" \
+        --setenv=BT_UI_MAX_BYTES="$LIGHT_MAX_BYTES" --setenv=BT_UI_KEEP="$LIGHT_KEEP" \
+        "$SELF" _monitor "$2" "$LDIR"
+}
+start_light_main() {
+    need_root "start-light"
+    find_user || die "no active graphical session found (set BT_UI_USER)"
+    if light_any_active && light_current; then
+        echo "── light recording already (partly) running: $LDIR; starting what is missing"
+    else
+        LDIR="$LIGHT_BASE/$(date -u +%Y%m%dT%H%M%SZ)"
+        echo "── light recording, new directory: $LDIR"
+        mkdir -p "$LDIR/bin" || die "cannot create $LDIR"
+        chmod 0755 "$LDIR" "$LDIR/bin"
+    fi
+    if [[ -r "$REPO/scripts/bt-ui-atspi.py" ]]; then
+        install -m 0644 "$REPO/scripts/bt-ui-atspi.py" "$LDIR/bin/bt-ui-atspi.py"
+    else
+        echo "  WARNING: $REPO/scripts/bt-ui-atspi.py missing; the AT-SPI monitor will fail"
+    fi
+    echo "  files capped at $LIGHT_MAX_BYTES bytes x $((LIGHT_KEEP + 1)) per monitor"
+    local i
+    for i in 0 1 2; do start_light_monitor "${LIGHT_UNITS[$i]}" "${LIGHT_KINDS[$i]}"; done
+    printf '%s\n' "$LDIR" > "$LIGHT_BASE/current"
+    logger -t "$MARKER" "ui-light START dir=$LDIR user=$U (units: ${LIGHT_UNITS[*]})"
+    echo "── done. Transient units end at a reboot: run start-light again after one."
+    echo "   Check with: bt-ui-capture status-light"
+}
+stop_light_main() {
+    need_root "stop-light"
+    local u
+    for u in "${LIGHT_UNITS[@]}"; do
+        if unit_active "$u"; then run systemctl stop "$u"; echo "  stopped $u"; fi
+    done
+    light_current || LDIR=none
+    logger -t "$MARKER" "ui-light STOP dir=$LDIR"
+    echo "  logs kept in ${LDIR}"
+}
+status_light_main() {
+    local u f n=0 now s m
+    now=$(date +%s)
+    for u in "${LIGHT_UNITS[@]}"; do
+        if unit_active "$u"; then n=$((n + 1)); echo "  unit $u: active"; else echo "  unit $u: inactive"; fi
+    done
+    if (( n == 0 )); then
+        echo "light recording: NOTHING RUNS. Transient units do not survive a reboot (or a stop-light);"
+        echo "  start it with: sudo bt-ui-capture start-light"
+    else
+        echo "light recording: $n of ${#LIGHT_UNITS[@]} units running"
+    fi
+    if ! light_current; then echo "  no directory under $LIGHT_BASE"; return 0; fi
+    echo "  directory: $LDIR"
+    for f in "$LDIR"/*.log*; do
+        [[ -e "$f" ]] || continue
+        s=$(stat -c %s "$f" 2>/dev/null || echo '?')
+        m=$(stat -c %Y "$f" 2>/dev/null || echo "$now")
+        echo "  $(basename "$f")  $s bytes, last line written $(date -d "@$m" '+%Y-%m-%d %H:%M:%S') ($((now - m)) s ago)"
+    done
 }
 
 # ── stage-restart / unstage ──────────────────────────────────────────────
@@ -690,9 +811,12 @@ case "$cmd" in
     stage-restart)  stage_main ;;
     status)         status_main ;;
     stop)           stop_main ;;
+    start-light)    start_light_main ;;
+    stop-light)     stop_light_main ;;
+    status-light)   status_light_main ;;
     unstage)        unstage_main ;;
     collect)        collect_main "$@" ;;
     _monitor)       monitor_main "$@" ;;
-    -h|--help|help) sed -n '2,60p' "$0" ;;
-    *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect)" ;;
+    -h|--help|help) sed -n '2,80p' "$0" ;;
+    *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect|start-light|stop-light|status-light)" ;;
 esac

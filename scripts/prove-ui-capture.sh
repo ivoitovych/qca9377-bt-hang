@@ -48,6 +48,7 @@ ok()    { echo "  ok    $1"; pass=$((pass + 1)); }
 bad()   { echo "  FAIL  $1"; fail=$((fail + 1)); }
 truth() { local d="$1"; shift; if "$@"; then ok "$d"; else bad "$d"; fi; }
 count() { local n; n=$(grep -c -E -- "$1" "$2" 2>/dev/null || true); echo "${n:-0}"; }
+countstr() { local n; n=$(grep -c -E -- "$1" <<<"$2" || true); echo "${n:-0}"; }
 eq()    { [[ "$1" == "$2" ]]; }
 
 # ── the tool, its library and the sanitiser, copied together ─────────────
@@ -112,6 +113,10 @@ mkstub dbus-monitor <<'EOF'
 #!/bin/bash
 echo "dbus-monitor $*" >> "$PROVE_CALLS"
 EOF
+mkstub logger <<'EOF'
+#!/bin/bash
+echo "logger $*" >> "$PROVE_CALLS"
+EOF
 mkstub pgrep <<'EOF'
 #!/bin/bash
 exit 1
@@ -166,7 +171,8 @@ printf '[Desktop Entry]\nName=Settings\nExec=gnome-control-center\nType=Applicat
 export PATH="$T/stub:$PATH"
 export BT_UI_BASE="$T/base" BT_UI_HOME="$T/home" BT_UI_UID=4242 BT_UI_REPO="$T/repo" \
        BT_DYNDBG_CTL="$CTL" BT_UI_APPDIR="$T/apps" BT_UI_CAPTURE_DIRS="$T/cap/capture $T/cap/trace" \
-       BT_JOURNAL_FIXTURE="$T/fixture" BT_UI_EUID=0 BT_UI_MARK="$T/repo/bin/bt-mark"
+       BT_JOURNAL_FIXTURE="$T/fixture" BT_UI_EUID=0 BT_UI_MARK="$T/repo/bin/bt-mark" \
+       BT_UI_LIGHT_BASE="$T/lbase"
 unset BT_UI_USER
 
 tree() { find "$T/base" "$T/home" -printf '%p %s\n' 2>/dev/null | sort; }
@@ -333,10 +339,116 @@ PYEOF
     truth "recorder did not record BoundsChanged" eq "$(count 'BoundsChanged|bounds-changed' "$T/atspi.all")" 0
     truth "monitor rotated and kept at most KEEP+1 files" test "$nfiles" -ge 2 -a "$nfiles" -le 3
     truth "no monitor file grew far past the cap" eq "$big" 0
+    echo "── light mode's AT-SPI monitor: Settings whole, the shell filtered (same private bus)"
+    LMON="$T/lmon"; mkdir -p "$LMON/bin"; cp "$ROOT/scripts/bt-ui-atspi.py" "$LMON/bin/"
+    : > "$CALLS"
+    BT_UI_USER=prove-user "$TOOL" _monitor light-atspi "$LMON" &
+    LPID=$!
+    for _ in $(seq 1 50); do
+        [[ "$(count 'bt-ui-atspi start' "$LMON/atspi.log")" -gt 0 ]] && break
+        sleep 0.1
+    done
+    python3 "$T/emitter.py" "$addr" 20 gnome-shell checked
+    python3 "$T/emitter.py" "$addr" 20 gnome-shell focused
+    python3 "$T/emitter.py" "$addr" 5 gnome-control-c focused
+    python3 "$T/emitter.py" "$addr" 5 bystander checked
+    sleep 1
+    pkill -f "$LMON/bin/bt-ui-atspi.py" 2>/dev/null
+    wait "$LPID" 2>/dev/null
+    shellpid=$(sed -n 's/.*application seen: pid=\([0-9]*\) comm=gnome-shell .*/\1/p' "$LMON/atspi.log" | head -1)
+    setpid=$(sed -n 's/.*application seen: pid=\([0-9]*\) comm=gnome-control-c .*/\1/p' "$LMON/atspi.log" | head -1)
+    truth "light recorder was run with both applications" \
+        eq "$(count 'python3 .*--comm gnome-control-c --comm gnome-shell$' "$CALLS")" 1
+    truth "light recorder saw the shell and Settings" test -n "$shellpid" -a -n "$setpid"
+    truth "light recorder kept the shell's drawn state (checked)" \
+        test "$(count "pid=$shellpid .*state-changed:checked " "$LMON/atspi.log")" -gt 0
+    truth "light recorder dropped the shell's focus churn" \
+        eq "$(count "pid=$shellpid .*state-changed:focused " "$LMON/atspi.log")" 0
+    truth "light recorder kept Settings' focus events (whole record)" \
+        test "$(count "pid=$setpid .*state-changed:focused " "$LMON/atspi.log")" -gt 0
+    truth "light recorder dropped the bystander (every checked line is the shell's)" \
+        eq "$(count 'state-changed:checked ' "$LMON/atspi.log")" "$(count "pid=$shellpid .*state-changed:checked " "$LMON/atspi.log")"
     kill "$BUS_PID" 2>/dev/null; BUS_PID=""
 else
     bad "AT-SPI check needs dbus-daemon and python3-gi (not proven here)"
 fi
+
+echo "── light mode: status before anything runs, then start-light"
+LB="$T/lbase"
+: > "$CALLS"
+out=$("$TOOL" status-light 2>&1); rc=$?
+truth "status-light says plainly that nothing runs" eq "$rc:$(countstr 'NOTHING RUNS' "$out")" "0:1"
+truth "status-light says it does not survive a reboot" eq "$(countstr 'not survive a reboot' "$out")" 1
+before_base=$(find "$T/base" -printf '%p %s\n' | sort)
+: > "$CALLS"
+"$TOOL" start-light > "$T/light1.out" 2>&1; rc=$?
+LD=$(cat "$LB/current" 2>/dev/null)
+truth "start-light exits 0" eq "$rc" 0
+truth "start-light wrote its directory under BT_UI_LIGHT_BASE and pointed at it" \
+    eq "$([[ "$LD" == "$LB"/2* && -d "$LD" ]] && echo yes || echo no)" yes
+truth "start-light left the full session's base untouched" \
+    eq "$(find "$T/base" -printf '%p %s\n' | sort)" "$before_base"
+truth "start-light launched exactly three units" eq "$(count '^systemd-run ' "$CALLS")" 3
+truth "start-light's units are the three light units" \
+    eq "$(count '^systemd-run .*--unit=bt-ui-light-(atspi|sysbus|sessbus) ' "$CALLS")" 3
+truth "start-light's units restart always" eq "$(count '^systemd-run .*--property=Restart=always ' "$CALLS")" 3
+truth "start-light runs _monitor with light kinds and its own directory" \
+    eq "$(count "_monitor light-(atspi|sysbus|sessbus) $LD\$" "$CALLS")" 3
+truth "start-light passes its own caps (20 MiB, 4 kept)" \
+    eq "$(count '^systemd-run .*--setenv=BT_UI_MAX_BYTES=20971520 --setenv=BT_UI_KEEP=4 ' "$CALLS")" 3
+truth "start-light touched nothing else (no pw-metadata, chown, bt-mark, runuser, other unit)" \
+    eq "$(grep -c -v -E '^(loginctl|systemd-run|systemctl is-active|logger) ' "$CALLS" || true)" 0
+truth "start-light marks through logger, not bt-mark" \
+    eq "$(count '^logger -t bt-ui-capture ui-light START' "$CALLS")/$(count '^bt-mark' "$CALLS")" 1/0
+truth "start-light copied the recorder into its directory" test -r "$LD/bin/bt-ui-atspi.py"
+truth "the shipped default base is /var/log/bt-ui-light, not under bt-health" \
+    eq "$(count '^LIGHT_BASE="\$\{BT_UI_LIGHT_BASE:-/var/log/bt-ui-light\}"$' "$TOOL")" 1
+: > "$CALLS"
+"$TOOL" start-light > "$T/light2.out" 2>&1
+truth "a second start-light launches no unit and keeps the directory" \
+    eq "$(count '^systemd-run ' "$CALLS")/$(cat "$LB/current")" "0/$LD"
+
+echo "── light mode: positive control through status-light"
+printf 'x\n' > "$LD/atspi.log"
+s1=$("$TOOL" status-light 2>&1)
+printf 'a click was drawn\n' >> "$LD/atspi.log"
+s2=$("$TOOL" status-light 2>&1)
+truth "status-light reports the three units running" eq "$(countstr 'light recording: 3 of 3 units running' "$s2")" 1
+truth "status-light shows the file size growing after a write" \
+    eq "$(countstr 'atspi.log  2 bytes, last line written' "$s1")/$(countstr 'atspi.log  20 bytes, last line written' "$s2")" 1/1
+
+echo "── light mode: the narrowed match rules, and the session monitor unchanged"
+mkdir -p "$T/lm"
+: > "$CALLS"
+BT_UI_USER=prove-user "$TOOL" _monitor light-sysbus "$T/lm"
+sysline=$(grep '^dbus-monitor' "$CALLS")
+truth "light sysbus rules: calls to org.bluez, adapter signals, adapter interface changes only" \
+    eq "$sysline" "dbus-monitor --system type='method_call',destination='org.bluez' type='signal',sender='org.bluez',path='/org/bluez/hci0' type='signal',sender='org.bluez',interface='org.freedesktop.DBus.ObjectManager',arg0path='/org/bluez/hci0'"
+truth "light sysbus rules name no per-device path" eq "$(countstr "dev_" "$sysline")" 0
+: > "$CALLS"
+BT_UI_USER=prove-user "$TOOL" _monitor light-sessbus "$T/lm"
+lsess=$(grep '^dbus-monitor' "$CALLS")
+: > "$CALLS"
+BT_UI_USER=prove-user "$TOOL" _monitor sessbus "$T/lm"
+fsess=$(grep '^dbus-monitor' "$CALLS")
+truth "light session monitor has the full session's rules, unchanged" eq "$lsess" "$fsess"
+truth "light session monitor still names Settings and the Rfkill switch" \
+    eq "$(countstr "Rfkill" "$lsess")" 1
+: > "$CALLS"
+BT_UI_USER=prove-user "$TOOL" _monitor sysbus "$T/lm"
+truth "the full session's sysbus rules are still the wide ones" \
+    eq "$(count "sender='org.bluez' destination='org.bluez'" "$CALLS")" 1
+
+echo "── light mode: the gnome-shell filter, fixture in, expected lines out"
+FIX="$ROOT/tests/fixtures/ui-atspi-shell-filter.tsv"
+grep -v '^#' "$FIX" | cut -f2- > "$T/filter.in"
+grep -v '^#' "$FIX" > "$T/filter.want"
+python3 -I "$ROOT/scripts/bt-ui-atspi.py" --check-filter < "$T/filter.in" > "$T/filter.got"
+truth "filter output equals the fixture's expected keep/drop lines" cmp -s "$T/filter.got" "$T/filter.want"
+truth "the fixture holds both kept and dropped shell lines" \
+    eq "$(count '^keep	gnome-shell' "$T/filter.got")/$(count '^drop	gnome-shell' "$T/filter.got")" 7/10
+truth "the clock's per-minute label change is dropped" \
+    eq "$(count '^drop	gnome-shell	PropertyChange	accessible-name	label	Sun Nov 15 14:32' "$T/filter.got")" 1
 
 echo "── stop puts back exactly what start recorded"
 : > "$CALLS"
@@ -350,6 +462,29 @@ truth "stop removed its overrides" eq "$([[ -e "$APPS/gnome-sound-panel.desktop"
 truth "stop kept the foreign launcher" cmp -s "$T/foreign.desktop" "$APPS/gnome-bluetooth-panel.desktop"
 truth "stop cleared the pointer" test ! -e "$T/base/current"
 truth "stop recorded the state" eq "$(awk -F= '/^state=/ { v = $2 } END { print v }' "$M")" stopped
+
+echo "── a full-session stop leaves the light units; stop-light stops only them"
+truth "the full stop did not stop any light unit" \
+    eq "$(count 'systemctl stop bt-ui-light' "$CALLS")/$(ls "$STATE" | grep -c '^active-bt-ui-light-')" "0/3"
+touch "$STATE/active-bt-ui-atspi" "$STATE/active-bt-ui-sysbus"
+: > "$CALLS"
+"$TOOL" stop-light > "$T/stoplight.out" 2>&1; rc=$?
+truth "stop-light exits 0" eq "$rc" 0
+truth "stop-light stopped the three light units" \
+    eq "$(count '^systemctl stop bt-ui-light-(atspi|sysbus|sessbus)$' "$CALLS")" 3
+truth "stop-light stopped nothing else" eq "$(count '^systemctl stop ' "$CALLS")" 3
+truth "stop-light left the full session's units running" \
+    eq "$(ls "$STATE" | grep -c '^active-bt-ui-\(atspi\|sysbus\)$')" 2
+truth "stop-light touched no PipeWire level, dynamic debug or bt-mark" \
+    eq "$(count '^(pw-metadata|bt-mark)' "$CALLS")" 0
+truth "stop-light marked the journal through logger" eq "$(count '^logger -t bt-ui-capture ui-light STOP' "$CALLS")" 1
+truth "stop-light kept the logs" test -s "$LD/atspi.log"
+sl=$("$TOOL" status-light 2>&1)
+truth "status-light says nothing runs again after stop-light" eq "$(countstr 'NOTHING RUNS' "$sl")" 1
+: > "$CALLS"
+BT_UI_EUID=1000 "$TOOL" start-light > /dev/null 2>&1; r1=$?
+BT_UI_EUID=1000 "$TOOL" stop-light > /dev/null 2>&1; r2=$?
+truth "start-light and stop-light refuse without root, making no call" eq "$r1/$r2/$(wc -c < "$CALLS")" 1/1/0
 
 echo "── collect: the window, the captures, published copies without addresses"
 cat > "$T/fixture/default.log" <<'EOF'

@@ -30,7 +30,9 @@ for an object it has not seen, that object's Name, role name and parent's Name
 (org.a11y.atspi.Accessible), each with a short timeout and cached.
 
 Events from other applications are dropped by process name (/proc/<pid>/comm,
-15 characters: "gnome-control-c"). BoundsChanged and text-caret events are not
+15 characters: "gnome-control-c"). Each --comm may carry a per-application
+filter (APP_FILTERS below): for "gnome-shell" only drawn-state changes are
+kept; `--check-filter` tests it from fixture lines on stdin. BoundsChanged and text-caret events are not
 subscribed at all — they carry no state and would dominate the volume.
 
 Exit: SIGTERM or SIGINT ends it cleanly. If the bus goes away (a new login)
@@ -43,13 +45,87 @@ import signal
 import sys
 import time
 
-import gi
+import re
 
-gi.require_version("Gio", "2.0")
-gi.require_version("GLib", "2.0")
-from gi.repository import Gio, GLib  # noqa: E402
+try:  # the filter below is testable without GObject (--check-filter)
+    import gi
+
+    gi.require_version("Gio", "2.0")
+    gi.require_version("GLib", "2.0")
+    from gi.repository import Gio, GLib  # noqa: E402
+except (ImportError, ValueError):
+    gi = Gio = GLib = None
 
 CALL_TIMEOUT_MS = 300
+
+# -- per-application filters ------------------------------------------------
+# GNOME Settings (gnome-control-c) is recorded whole: no entry here. The shell
+# (gnome-shell) also publishes things that change constantly — the clock label
+# every minute, notifications, focus, menu children — so for it only what shows
+# a control's DRAWN state is kept:
+#   * StateChanged of the states a toggle or button is drawn with;
+#   * PropertyChange of the accessible name/description of toggle-like
+#     controls, and of a label whose parent is one (a tile's subtitle), unless
+#     the text is a time of day (the clock, wherever it hangs).
+# Everything else of the shell (children, selection, active descendant, window,
+# focus, other property changes) is dropped.
+SHELL_STATES = {"checked", "pressed", "sensitive", "enabled", "showing",
+                "selected", "active", "expanded", "indeterminate", "busy"}
+SHELL_PROPS = {"accessible-name", "accessible-description"}
+TOGGLE_ROLES = {"toggle button", "check box", "switch", "radio button",
+                "push button", "menu item", "check menu item",
+                "radio menu item", "button"}
+LABEL_ROLES = {"label", "static"}
+CLOCK_TEXT = re.compile(r"\b\d{1,2}[:.]\d{2}\b")
+
+
+def keep_shell(member, detail, role, name, parent_role, value):
+    if member == "StateChanged":
+        return detail in SHELL_STATES
+    if member == "PropertyChange" and detail in SHELL_PROPS:
+        if CLOCK_TEXT.search(str(name)) or CLOCK_TEXT.search(str(value)):
+            return False
+        return role in TOGGLE_ROLES or (role in LABEL_ROLES and parent_role in TOGGLE_ROLES)
+    return False
+
+
+APP_FILTERS = {"gnome-shell": keep_shell}
+
+
+def early_drop(comm, is_object, member, detail):
+    """Cheap pre-check, before any read from the application: True = drop."""
+    if comm != "gnome-shell":
+        return False
+    if not is_object:
+        return True
+    if member == "StateChanged":
+        return detail not in SHELL_STATES
+    if member == "PropertyChange":
+        return detail not in SHELL_PROPS
+    return True
+
+
+def needs_parent_role(comm, member, detail, role):
+    """True when keep() for this event looks at the parent's role (one extra read)."""
+    return comm == "gnome-shell" and member == "PropertyChange" and \
+        detail in SHELL_PROPS and role in LABEL_ROLES
+
+
+def keep(comm, member, detail, role, name, parent_role, value):
+    f = APP_FILTERS.get(comm)
+    return True if f is None else f(member, detail, role, name, parent_role, value)
+
+
+def check_filter():
+    """Fixture mode: stdin lines 'comm<TAB>member<TAB>detail<TAB>role<TAB>name<TAB>
+    parent_role<TAB>value'; prints 'keep' or 'drop' and the line."""
+    for line in sys.stdin:
+        line = line.rstrip("\n")
+        if not line or line.startswith("#"):
+            continue
+        f = (line.split("\t") + [""] * 7)[:7]
+        print(("keep" if keep(f[0], f[1], f[2], f[3], f[4], f[5], f[6]) else "drop") + "\t" + line)
+    return 0
 OBJ = "org.a11y.atspi.Event.Object"
 SUBSCRIBE = [
     (OBJ, "StateChanged"),
@@ -91,6 +167,7 @@ class Recorder:
         self.conn = conn
         self.comms = set(comms)
         self.sender_pid = {}      # unique name -> pid or None (not ours)
+        self.sender_comm = {}     # unique name -> process name of the kept ones
         self.info = {}            # (sender, path) -> (role, name, parent)
 
     # -- reads, each bounded by a timeout -------------------------------
@@ -119,6 +196,7 @@ class Recorder:
                 comm = ""
             if comm in self.comms:
                 pid = p
+                self.sender_comm[sender] = comm
                 out(f"{now()} # application seen: pid={p} comm={comm} sender={sender}")
         self.sender_pid[sender] = pid
         return pid
@@ -168,8 +246,21 @@ class Recorder:
         detail = args[0] if len(args) > 0 else ""
         v1 = args[1] if len(args) > 1 else ""
         extra = ""
+        comm = self.sender_comm.get(sender, "")
+        if early_drop(comm, iface == OBJ, member, detail):
+            return
         refresh = member == "PropertyChange" and detail == "accessible-name"
         role, name, parent = self.describe(sender, path, refresh=refresh)
+        value = args[3] if member == "PropertyChange" and len(args) > 3 else ""
+        parent_role = ""
+        if needs_parent_role(comm, member, detail, role):
+            par = self.prop(sender, path, "Parent", "(so)")
+            if isinstance(par, tuple) and len(par) == 2 and par[1] not in ("", "/org/a11y/atspi/null"):
+                r = self.call(par[0] or sender, par[1], "org.a11y.atspi.Accessible",
+                              "GetRoleName", None, "(s)")
+                parent_role = r.unpack()[0] if r is not None else ""
+        if not keep(comm, member, detail, role, name, parent_role, value):
+            return
         if member == "PropertyChange" and len(args) > 3:
             extra = f" value={short(args[3])!r}"
         elif member == "ChildrenChanged" and len(args) > 3 and isinstance(args[3], tuple) \
@@ -183,10 +274,18 @@ class Recorder:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--address", required=True, help="accessibility bus address")
+    ap.add_argument("--address", help="accessibility bus address")
     ap.add_argument("--comm", action="append", default=[],
                     help="process name to keep (default gnome-control-c)")
+    ap.add_argument("--check-filter", action="store_true",
+                    help="read fixture lines (see check_filter) on stdin, print keep/drop; no bus")
     a = ap.parse_args()
+    if a.check_filter:
+        return check_filter()
+    if not a.address:
+        ap.error("--address is required")
+    if Gio is None:
+        sys.exit("bt-ui-atspi: python3 GObject (Gio, GLib) not available")
     comms = a.comm or ["gnome-control-c"]
 
     conn = Gio.DBusConnection.new_for_address_sync(

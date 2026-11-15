@@ -1,0 +1,28 @@
+# Fixture for scripts/bt-ui-atspi.py --check-filter, written in the shape of the
+# recorder's events. Columns (tab separated): expected result, application
+# (process name), signal member, detail, role, accessible name, parent's role,
+# value. The tool's output for a line is the line itself with keep/drop first,
+# so this file minus its comments is also the expected output.
+# -- the Quick Settings Bluetooth tile and its labels (kept)
+keep	gnome-shell	StateChanged	checked	toggle button	Bluetooth
+keep	gnome-shell	StateChanged	pressed	toggle button	Bluetooth
+keep	gnome-shell	StateChanged	sensitive	toggle button	Bluetooth
+keep	gnome-shell	StateChanged	showing	panel	Quick Settings
+keep	gnome-shell	PropertyChange	accessible-name	toggle button	Bluetooth Off
+keep	gnome-shell	PropertyChange	accessible-description	toggle button	Bluetooth	panel	Turn on
+keep	gnome-shell	PropertyChange	accessible-name	label	Headset A	toggle button	Headset A
+# -- churn (dropped)
+drop	gnome-shell	PropertyChange	accessible-name	label	Sun Nov 15 14:32	push button	Sun Nov 15 14:32
+drop	gnome-shell	PropertyChange	accessible-name	push button	Sun Nov 15 14:33
+drop	gnome-shell	PropertyChange	accessible-name	label	Notifications	panel	New message
+drop	gnome-shell	PropertyChange	accessible-name	panel	Overview		Activities
+drop	gnome-shell	PropertyChange	accessible-value	slider	Volume		50
+drop	gnome-shell	StateChanged	focused	toggle button	Bluetooth
+drop	gnome-shell	StateChanged	visible	label	14:32
+drop	gnome-shell	ChildrenChanged	add	panel	Notification list
+drop	gnome-shell	SelectionChanged		panel	Quick Settings
+drop	gnome-shell	ActiveDescendantChanged		list	Quick Settings
+# -- GNOME Settings is recorded whole, whatever the event
+keep	gnome-control-c	StateChanged	focused	toggle button	Bluetooth
+keep	gnome-control-c	ChildrenChanged	add	list box	Devices
+keep	gnome-control-c	PropertyChange	accessible-name	label	Sat 14:32	panel	Sat 14:32
