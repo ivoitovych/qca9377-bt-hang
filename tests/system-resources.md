@@ -69,6 +69,8 @@ one and points the seam at it. A test that forgets meets an empty machine.
 | `BT_METRICS` | `/var/log/bt-health/metrics.tsv` (appended) | bt-health-snapshot, bt-env-history, bt-health-report.sh |
 | `BT_UI_BASE` | `/var/log/bt-health/ui` | bt-ui-capture |
 | `BT_UI_CAPTURE_DIRS` | `/var/log/bt-health/capture /var/log/bt-health/trace` | bt-ui-capture |
+| `BT_UI_LIGHT_BASE` | `/var/log/bt-ui-light` (the always-on light recording) | bt-ui-capture |
+| `BT_UI_LIGHT_ADAPTER` | `/org/bluez/hci0` (the adapter object the light BlueZ monitor watches) | bt-ui-capture |
 | `BT_UI_APPDIR` | `/usr/share/applications` (launcher overrides written) | bt-ui-capture |
 | `BT_SHARE_DIR` | `/usr/local/share/qca9377-bt-hang` (the install stamp) | bt-health-report.sh |
 | `BT_MODE_STAMP` | `/usr/local/share/qca9377-bt-hang/mode` | install.sh, bt-mode, bt-verify-install |

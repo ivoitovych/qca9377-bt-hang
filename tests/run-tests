@@ -527,13 +527,14 @@ export BT_TRIAL_STATE_DIR="$SUITE_MACHINE/trial-state"
 # (tests/system-resources.md lists them, and an invariant below keeps that list
 # whole). A test that needs one sets it, as every test did; a test that forgets
 # one meets this machine, which has nothing, instead of the one it runs on.
-mkdir -p "$SUITE_MACHINE"/{evidence-state,modules,snapshots,usb-drivers,udev,usbmon-debugfs,bt-trial,dyndbg,ui-base,ui-apps}
+mkdir -p "$SUITE_MACHINE"/{evidence-state,modules,snapshots,usb-drivers,udev,usbmon-debugfs,bt-trial,dyndbg,ui-base,ui-apps,ui-light}
 export BT_EVIDENCE_STATE="$SUITE_MACHINE/evidence-state" BT_MODE_STAMP="$SUITE_MACHINE/share/mode" \
        BT_MODPROBE_CONF="$SUITE_MACHINE/modprobe.d/btusb-qca9377.conf" BT_MODULES_DIR="$SUITE_MACHINE/modules" \
        BT_SNAPSHOT_DIR="$SUITE_MACHINE/snapshots" BT_SYSFS_DRIVERS="$SUITE_MACHINE/usb-drivers" \
        BT_UDEV_DIR="$SUITE_MACHINE/udev" BT_USBMON_DEBUGFS="$SUITE_MACHINE/usbmon-debugfs" \
        BT_STATE="$SUITE_MACHINE/bt-trial" BT_DYNDBG_CTL="$SUITE_MACHINE/dyndbg/control" \
        BT_UI_BASE="$SUITE_MACHINE/ui-base" BT_UI_APPDIR="$SUITE_MACHINE/ui-apps" \
+       BT_UI_LIGHT_BASE="$SUITE_MACHINE/ui-light" BT_UI_LIGHT_ADAPTER=/org/bluez/suite-hci \
        BT_UI_CAPTURE_DIRS="$SUITE_MACHINE/health/capture $SUITE_MACHINE/health/trace"
 # And the evidence tree incidents are written into, which defaults to THIS
 # checkout's: rule 4's last check counts evidence/sessions after the run, and
