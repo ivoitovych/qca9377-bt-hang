@@ -122,11 +122,20 @@ END {
     # never ran at all from the day it was written. The separately reported
     # defect — outcome read by field position — was real, but in code that
     # was never reached.
+    # The bottom row can be empty only because its trials were excluded; then
+    # "every trial provoked SCO setup" would be false (2026-11-15: 16 excluded
+    # rows, none with a SCO setup, emptied it). Say so, and still judge the
+    # top row on its own.
+    if ((c+d) == 0 && failedunx) {
+        print "  The bottom row is empty only because trials were excluded (the failed"
+        print "  closes with BT-1 not observed, above): it does not show that every"
+        print "  trial provoked SCO setup."
+    }
     if ((a+b) == 0) {
         print "  No trial has yet applied the stimulus. Until one does, nothing here"
         print "  distinguishes a build that fixes the bug from a run that never"
         print "  provoked it."
-    } else if ((c+d) == 0) {
+    } else if ((c+d) == 0 && !failedunx) {
         print "  Every trial provoked SCO setup. The bottom row is empty, so this"
         print "  cannot yet separate the stimulus from the passage of time."
     } else if (b+0 > 0 && a+0 > 0) {

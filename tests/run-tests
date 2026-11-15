@@ -15409,6 +15409,17 @@ RFTT=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-sco-table.awk "$RFT
 [[ "$_rc" == 0 && "$RFTT" == *"FAILED with BT-1 not observed"* && "$RFTT" == *"no SCO setup"*" 0 "*" 1"* ]] \
     && ok "trial-sco-table: the same row is excluded from the survived cells" \
     || bad "trial-sco-table counted a failed, unclassified row as a survival: $(grep -E 'no SCO|FAILED' <<<"$RFTT" | tr '\n' '|')"
+# An empty bottom row made of excluded trials must not read as "every trial
+# provoked SCO setup" (the real results.tsv did exactly that on 2026-11-15:
+# 16 excluded rows, none with a SCO setup). Without the survival row the bottom
+# row is empty only by exclusion.
+printf 'trial_type\tbuild\ttreatment\tbt1_status\ttrial_result\tduration_s\tsco_sent\n' > "$RFT/empty.tsv"
+printf 'observational_boot\tstock\tautosusp=Y,power=auto,wd=off,probes=off\tconfirmed\tfailed\t100\t2\n'     >> "$RFT/empty.tsv"
+printf 'observational_boot\tstock\tautosusp=Y,power=auto,wd=off,probes=off\tnot_observed\tfailed\t100\t0\n'   >> "$RFT/empty.tsv"
+RFTE=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-sco-table.awk "$RFT/empty.tsv" 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$RFTE" == *"empty only because trials were excluded"* && "$RFTE" != *"Every trial provoked SCO setup"* ]] \
+    && ok "trial-sco-table: a bottom row emptied by exclusion is not reported as every trial provoking SCO setup" \
+    || bad "trial-sco-table misread an empty-by-exclusion bottom row: rc=$_rc: $(tail -4 <<<"$RFTE" | tr '\n' '|')"
 rm -rf "$RFT"
 # MARKER-NEW-TESTS-END
 rm -rf "$RF"

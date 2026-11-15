@@ -320,6 +320,40 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
 
 ## Repository health
 
+**Code fixes after the whole-project review of 2026-11-15** (`eacbb61`…`ac71f16`; CI green with the
+suite; nothing of it is deployed on the machine):
+- `uninstall.sh` never reloads btusb.
+- `scripts/runtime-mgmt-test.sh` refuses `load`/`restore` (`EX-046`).
+- Seven tools no longer loop on a two-word option given last.
+- `tools/bt-archive --replace` keeps the old archive when the new export holds fewer records.
+- `devtools/repo-save` checks the fixed author named in CI's workflow.
+- `scripts/smtp-login-check.sh` reads a network error as INCONCLUSIVE.
+- Some scripts used to give a verdict they had not measured; they now exit 2:
+  - `sco-ledger.sh` and `sco-ledger-boots.sh` on an unreadable boot;
+  - `ci-local.sh` when a check did not run;
+  - `bluez-tester-compare.sh` without verdicts;
+  - `bluez-release-contains.sh` on an unknown tag;
+  - `tools/bt-diagnose` without a readable boot.
+
+**The trial summary changed its counting.**
+- **What changed:** a row with `trial_result` `failed` and `bt1_status` `not_observed` is no
+  longer counted as a survival. It is excluded and named.
+  - The row records only that the closer's probe got no answer, with no HCI timeout in the
+    journal.
+  - For E3 #3 and #4 that was a probe after shutdown had powered the adapter off (the machine,
+    2026-11-07 above).
+- **Rows affected:** 16, of them 7 of the 9 E3 rows of `autosusp=Y` and 2 of the 6 stock rows
+  of `autosusp=Y`.
+- **The two tables now read:**
+  - E3 0/2 (was 0/9) and stock 4/4 (was 4/6);
+  - "no SCO setup / survived" 0 (was 16).
+- **Old outputs:** the close outputs archived in `evidence/trials/*/close-output.txt` keep the
+  old numbers and no longer reproduce from the tool.
+- **What is unaffected:** no claim of the registers rested on those rates. E1's and E3's link
+  counts come from `scripts/sco-ledger.sh` over the journal, not from `results.tsv`.
+- **Reproduce:** `tmp/project-review-20261115/summary-before-after.sh`, a local helper, runs both
+  versions.
+
 **Disk reclaim, 2026-11-14 (the operator's yes):** nine finished agent work areas are deleted,
 about 40 GB: `co43-ea-send-20261113`, `bt17-emu-20261113`, `co44-send-20261113`,
 `laptop-btusb-modules-20261111`, `co02-mismatch-20261102`, `bt17-mgmt-timeout`,
