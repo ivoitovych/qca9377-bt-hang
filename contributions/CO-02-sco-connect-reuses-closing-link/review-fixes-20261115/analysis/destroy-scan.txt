@@ -1,0 +1,100 @@
+# python3 -I destroy-scan.py  (every destroy callback of hci_cmd_sync_queue/queue_once/submit/run/run_once, da3cc02587c6)
+abort_conn_destroy                         net/bluetooth/hci_conn.c:3311  no direct hci_dev_lock   queued at net/bluetooth/hci_conn.c:3343
+add_advertising_complete                   net/bluetooth/mgmt.c:9077  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:9237
+add_device_complete                        net/bluetooth/mgmt.c:7851  hci_dev_lock at line 7859, no ECANCELED test [under if (!err)]   queued at net/bluetooth/mgmt.c:7968
+add_ext_adv_data_complete                  net/bluetooth/mgmt.c:9438  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:9582
+add_ext_adv_params_complete                net/bluetooth/mgmt.c:9248  hci_dev_lock at line 9258, no ECANCELED test   queued at net/bluetooth/mgmt.c:9404
+adv_timeout_expire_destroy                 net/bluetooth/hci_sync.c:569  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:595
+conn_update_sync_destroy                   net/bluetooth/mgmt.c:8163  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:8281
+create_big_complete                        net/bluetooth/hci_conn.c:2282  ECANCELED test first; hci_dev_lock at line 2291   queued at net/bluetooth/hci_conn.c:2436,net/bluetooth/hci_sync.c:8300
+create_big_complete                        net/bluetooth/hci_sync.c:8233  no direct hci_dev_lock   queued at net/bluetooth/hci_conn.c:2436,net/bluetooth/hci_sync.c:8300
+create_le_conn_complete                    net/bluetooth/hci_sync.c:7795  ECANCELED test first; hci_dev_lock at line 7804   queued at net/bluetooth/hci_sync.c:7837
+create_pa_complete                         net/bluetooth/hci_sync.c:8041  ECANCELED test first; hci_dev_lock at line 8051   queued at net/bluetooth/hci_sync.c:8225
+destroy                                    (definition not found)  queued at net/bluetooth/hci_sync.c:774,net/bluetooth/hci_sync.c:811,net/bluetooth/hci_sync.c:840
+disconnect_complete                        net/bluetooth/mgmt.c:3299  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:3375
+fast_connectable_complete                  net/bluetooth/mgmt.c:6880  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:6951
+get_clock_info_complete                    net/bluetooth/mgmt.c:7713  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:7822
+get_conn_info_complete                     net/bluetooth/mgmt.c:7546  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:7683
+hci_acl_create_conn_sync_complete          net/bluetooth/hci_sync.c:7775  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:7787
+hci_enhanced_setup_sync_destroy            net/bluetooth/hci_conn.c:468  no direct hci_dev_lock   queued at net/bluetooth/hci_conn.c:490
+hci_le_conn_rate_request_destroy           net/bluetooth/hci_sync.c:8017  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:8032
+le_conn_update_complete                    net/bluetooth/hci_conn.c:576  no direct hci_dev_lock   queued at net/bluetooth/hci_conn.c:600
+le_enable_encrypt_complete                 net/bluetooth/hci_sync.c:8780  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:8872,net/bluetooth/hci_sync.c:8917,net/bluetooth/hci_sync.c:9035
+le_phy_update_complete                     net/bluetooth/hci_sync.c:8532  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:8567
+mesh_next                                  net/bluetooth/mgmt.c:1121  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:1145
+mesh_send_start_complete                   net/bluetooth/mgmt.c:2313  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:1128,net/bluetooth/mgmt.c:2547
+mgmt_add_adv_patterns_monitor_complete     net/bluetooth/mgmt.c:5460  ECANCELED test first; hci_dev_lock at line 5476   queued at net/bluetooth/mgmt.c:5545
+mgmt_class_complete                        net/bluetooth/mgmt.c:2782  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2843,net/bluetooth/mgmt.c:2941,net/bluetooth/mgmt.c:3011
+mgmt_remove_adv_monitor_complete           net/bluetooth/mgmt.c:5696  ECANCELED test first; hci_dev_lock at line 5715   queued at net/bluetooth/mgmt.c:5769
+mgmt_set_connectable_complete              net/bluetooth/mgmt.c:1721  ECANCELED test first; hci_dev_lock at line 1731   queued at net/bluetooth/mgmt.c:1837
+mgmt_set_discoverable_complete             net/bluetooth/mgmt.c:1544  ECANCELED test first; hci_dev_lock at line 1554   queued at net/bluetooth/mgmt.c:1710
+mgmt_set_powered_complete                  net/bluetooth/mgmt.c:1348  ECANCELED test first; hci_dev_lock at line 1363 [under if (!err)]   queued at net/bluetooth/mgmt.c:1449,net/bluetooth/mgmt.c:1453
+past_complete                              net/bluetooth/hci_sync.c:8313  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:8389,net/bluetooth/hci_sync.c:8393
+pkt_type_changed                           net/bluetooth/hci_sync.c:8492  no direct hci_dev_lock   queued at net/bluetooth/hci_sync.c:8524
+read_local_oob_data_complete               net/bluetooth/mgmt.c:5793  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:5903
+read_local_oob_ext_data_complete           net/bluetooth/mgmt.c:8516  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:8647
+remove_advertising_complete                net/bluetooth/mgmt.c:9608  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:9687
+send_cancel_destroy                        net/bluetooth/mgmt.c:2462  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2487
+send_hci_cmd_sync_destroy                  net/bluetooth/mgmt.c:2685  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2715
+set_advertising_complete                   net/bluetooth/mgmt.c:6564  ECANCELED test first; hci_dev_lock at line 6619   queued at net/bluetooth/mgmt.c:6775
+set_bredr_complete                         net/bluetooth/mgmt.c:6968  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:7087
+set_default_phy_complete                   net/bluetooth/mgmt.c:4246  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:4434
+set_le_complete                            net/bluetooth/mgmt.c:2113  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2644
+set_mesh_complete                          net/bluetooth/mgmt.c:2196  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2298
+set_name_complete                          net/bluetooth/mgmt.c:4047  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:4153
+set_secure_conn_complete                   net/bluetooth/mgmt.c:7109  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:7225
+set_ssp_complete                           net/bluetooth/mgmt.c:1955  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:2089
+start_discovery_complete                   net/bluetooth/mgmt.c:6091  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:6173,net/bluetooth/mgmt.c:6304
+stop_discovery_complete                    net/bluetooth/mgmt.c:6318  ECANCELED test first; hci_dev_lock at line 6327   queued at net/bluetooth/mgmt.c:6391
+terminate_big_destroy                      net/bluetooth/hci_conn.c:786  no direct hci_dev_lock   queued at net/bluetooth/hci_conn.c:807,net/bluetooth/hci_conn.c:881
+unpair_device_complete                     net/bluetooth/mgmt.c:3126  no direct hci_dev_lock   queued at net/bluetooth/mgmt.c:3289
+
+# python3 -I callee-scan.py  (direct callees that take hci_dev_lock)
+abort_conn_destroy  net/bluetooth/hci_conn.c:3311  direct callees that take hci_dev_lock: -
+add_advertising_complete  net/bluetooth/mgmt.c:9077  direct callees that take hci_dev_lock: add_adv_complete
+add_device_complete  net/bluetooth/mgmt.c:7851  direct callees that take hci_dev_lock: -
+add_ext_adv_data_complete  net/bluetooth/mgmt.c:9438  direct callees that take hci_dev_lock: add_adv_complete
+add_ext_adv_params_complete  net/bluetooth/mgmt.c:9248  direct callees that take hci_dev_lock: -
+adv_timeout_expire_destroy  net/bluetooth/hci_sync.c:569  direct callees that take hci_dev_lock: -
+conn_update_sync_destroy  net/bluetooth/mgmt.c:8163  direct callees that take hci_dev_lock: -
+create_big_complete  net/bluetooth/hci_conn.c:2282  direct callees that take hci_dev_lock: -
+create_big_complete  net/bluetooth/hci_sync.c:8233  direct callees that take hci_dev_lock: -
+create_le_conn_complete  net/bluetooth/hci_sync.c:7795  direct callees that take hci_dev_lock: -
+create_pa_complete  net/bluetooth/hci_sync.c:8041  direct callees that take hci_dev_lock: -
+disconnect_complete  net/bluetooth/mgmt.c:3299  direct callees that take hci_dev_lock: -
+fast_connectable_complete  net/bluetooth/mgmt.c:6880  direct callees that take hci_dev_lock: -
+get_clock_info_complete  net/bluetooth/mgmt.c:7713  direct callees that take hci_dev_lock: -
+get_conn_info_complete  net/bluetooth/mgmt.c:7546  direct callees that take hci_dev_lock: -
+hci_acl_create_conn_sync_complete  net/bluetooth/hci_sync.c:7775  direct callees that take hci_dev_lock: -
+hci_enhanced_setup_sync_destroy  net/bluetooth/hci_conn.c:468  direct callees that take hci_dev_lock: -
+hci_le_conn_rate_request_destroy  net/bluetooth/hci_sync.c:8017  direct callees that take hci_dev_lock: -
+le_conn_update_complete  net/bluetooth/hci_conn.c:576  direct callees that take hci_dev_lock: -
+le_enable_encrypt_complete  net/bluetooth/hci_sync.c:8780  direct callees that take hci_dev_lock: -
+le_phy_update_complete  net/bluetooth/hci_sync.c:8532  direct callees that take hci_dev_lock: -
+mesh_next  net/bluetooth/mgmt.c:1121  direct callees that take hci_dev_lock: -
+mesh_send_start_complete  net/bluetooth/mgmt.c:2313  direct callees that take hci_dev_lock: -
+mgmt_add_adv_patterns_monitor_complete  net/bluetooth/mgmt.c:5460  direct callees that take hci_dev_lock: -
+mgmt_class_complete  net/bluetooth/mgmt.c:2782  direct callees that take hci_dev_lock: -
+mgmt_remove_adv_monitor_complete  net/bluetooth/mgmt.c:5696  direct callees that take hci_dev_lock: -
+mgmt_set_connectable_complete  net/bluetooth/mgmt.c:1721  direct callees that take hci_dev_lock: -
+mgmt_set_discoverable_complete  net/bluetooth/mgmt.c:1544  direct callees that take hci_dev_lock: -
+mgmt_set_powered_complete  net/bluetooth/mgmt.c:1348  direct callees that take hci_dev_lock: -
+past_complete  net/bluetooth/hci_sync.c:8313  direct callees that take hci_dev_lock: -
+pkt_type_changed  net/bluetooth/hci_sync.c:8492  direct callees that take hci_dev_lock: -
+read_local_oob_data_complete  net/bluetooth/mgmt.c:5793  direct callees that take hci_dev_lock: -
+read_local_oob_ext_data_complete  net/bluetooth/mgmt.c:8516  direct callees that take hci_dev_lock: -
+remove_advertising_complete  net/bluetooth/mgmt.c:9608  direct callees that take hci_dev_lock: -
+send_cancel_destroy  net/bluetooth/mgmt.c:2462  direct callees that take hci_dev_lock: -
+send_hci_cmd_sync_destroy  net/bluetooth/mgmt.c:2685  direct callees that take hci_dev_lock: -
+set_advertising_complete  net/bluetooth/mgmt.c:6564  direct callees that take hci_dev_lock: -
+set_bredr_complete  net/bluetooth/mgmt.c:6968  direct callees that take hci_dev_lock: -
+set_default_phy_complete  net/bluetooth/mgmt.c:4246  direct callees that take hci_dev_lock: -
+set_le_complete  net/bluetooth/mgmt.c:2113  direct callees that take hci_dev_lock: -
+set_mesh_complete  net/bluetooth/mgmt.c:2196  direct callees that take hci_dev_lock: -
+set_name_complete  net/bluetooth/mgmt.c:4047  direct callees that take hci_dev_lock: -
+set_secure_conn_complete  net/bluetooth/mgmt.c:7109  direct callees that take hci_dev_lock: -
+set_ssp_complete  net/bluetooth/mgmt.c:1955  direct callees that take hci_dev_lock: hci_update_eir_sync
+start_discovery_complete  net/bluetooth/mgmt.c:6091  direct callees that take hci_dev_lock: -
+stop_discovery_complete  net/bluetooth/mgmt.c:6318  direct callees that take hci_dev_lock: -
+terminate_big_destroy  net/bluetooth/hci_conn.c:786  direct callees that take hci_dev_lock: -
+unpair_device_complete  net/bluetooth/mgmt.c:3126  direct callees that take hci_dev_lock: -

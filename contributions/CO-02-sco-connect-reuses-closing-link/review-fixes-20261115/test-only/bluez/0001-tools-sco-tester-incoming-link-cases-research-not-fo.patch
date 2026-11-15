@@ -1,0 +1,369 @@
+From e4e672a46e29c2f2f687d7bfb4c0a4b11364a749 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 15:18:55 +0100
+Subject: [PATCH 01/17] tools/sco-tester: incoming link cases (research, not
+ for posting)
+
+---
+ tools/sco-tester.c | 296 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 296 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 96cdadc77..a4436ddd9 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -12,6 +12,7 @@
+ #include <config.h>
+ #endif
+ 
++#include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <errno.h>
+@@ -81,6 +82,8 @@ enum reconnect_mode {
+ 	CONNECT_TWICE,		/* Connect again while the first link is up */
+ 	CONNECT_OTHER_ACL,	/* ... other voice setting, link not set up */
+ 	CONNECT_OTHER_RETRY,	/* ... other voice setting, setup retried */
++	INCOMING_HELD,		/* Link set up by the remote, socket open */
++	INCOMING_FREE,		/* ... socket closed, nothing holds the link */
+ };
+ 
+ struct sco_client_data {
+@@ -112,6 +115,9 @@ struct sco_client_data {
+ 
+ 	/* A second socket connects to the same peer, see the modes above */
+ 	enum reconnect_mode reconnect;
++
++	/* The second socket asks for a transparent voice setting */
++	bool transp;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -281,6 +287,8 @@ static void test_pre_setup(const void *test_data)
+ 					read_index_list_callback, NULL, NULL);
+ }
+ 
++static void park_worker(unsigned int ms);
++
+ static void test_post_teardown(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -300,6 +308,8 @@ static void test_post_teardown(const void *test_data)
+ 		data->sk = -1;
+ 	}
+ 
++	park_worker(0);
++
+ 	if (data->timer_id) {
+ 		tester_remove_source(data->timer_id);
+ 		data->timer_id = 0;
+@@ -414,6 +424,28 @@ static const struct sco_client_data connect_twice = {
+ 	.reconnect = CONNECT_TWICE,
+ };
+ 
++static const struct sco_client_data incoming_held = {
++	.server = true,
++	.reconnect = INCOMING_HELD,
++};
++
++static const struct sco_client_data incoming_held_transp = {
++	.server = true,
++	.reconnect = INCOMING_HELD,
++	.transp = true,
++};
++
++static const struct sco_client_data incoming_free = {
++	.server = true,
++	.reconnect = INCOMING_FREE,
++};
++
++static const struct sco_client_data incoming_free_transp = {
++	.server = true,
++	.reconnect = INCOMING_FREE,
++	.transp = true,
++};
++
+ const uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+ 
+ static const struct sco_client_data connect_recv_success = {
+@@ -2180,6 +2212,254 @@ static void test_listen(const void *test_data)
+ 	setup_listen(data, sco_accept_cb);
+ }
+ 
++#define INCOMING_DELAY_MS	50	/* after the link is accepted */
++#define INCOMING_PARK_MS	300	/* idle-disconnect worker, debug kernel */
++
++/* A debug kernel can hold the idle-disconnect worker of a SCO connection
++ * after it has seen no holder; other kernels have no such parameter.
++ */
++static void park_worker(unsigned int ms)
++{
++	FILE *f = fopen("/sys/module/bluetooth/parameters/w2c_park_ms", "w");
++
++	if (!f)
++		return;
++
++	fprintf(f, "%u\n", ms);
++	fclose(f);
++
++	if (ms)
++		tester_print("Idle-disconnect worker parked for %u ms", ms);
++}
++
++static bool incoming_connect3(void *user_data);
++
++static bool hook_incoming_disc(const void *buf, uint16_t len, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct bt_hci_evt_disconnect_complete *evt = buf;
++
++	if (len < sizeof(*evt) || data->done)
++		return true;
++
++	tester_print("Disconnection Complete: handle %u, reason 0x%02x",
++				le16_to_cpu(evt->handle), evt->reason);
++
++	if (data->disc_held && le16_to_cpu(evt->handle) == data->handle &&
++							!evt->status) {
++		data->disc_held = false;
++		reconnect_arm(data, RECONNECT_DELAY_MS, incoming_connect3);
++	}
++
++	return true;
++}
++
++static int incoming_sock(struct test_data *data, int *err)
++{
++	const struct sco_client_data *scodata = data->test_data;
++	const uint8_t *client_bdaddr;
++	struct sockaddr_sco addr;
++	int sk, ret;
++
++	client_bdaddr = hciemu_get_client_bdaddr(data->hciemu);
++	sk = create_sco_sock(data);
++	if (!client_bdaddr || sk < 0)
++		return -1;
++
++	if (scodata->transp) {
++		struct bt_voice voice;
++
++		memset(&voice, 0, sizeof(voice));
++		voice.setting = BT_VOICE_TRANSPARENT;
++		if (setsockopt(sk, SOL_BLUETOOTH, BT_VOICE, &voice,
++							sizeof(voice)) < 0) {
++			tester_warn("setsockopt(BT_VOICE): %s",
++							strerror(errno));
++			close(sk);
++			return -1;
++		}
++	}
++
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family = AF_BLUETOOTH;
++	bacpy(&addr.sco_bdaddr, (void *) client_bdaddr);
++
++	ret = connect(sk, (struct sockaddr *) &addr, sizeof(addr));
++	*err = ret < 0 ? errno : 0;
++
++	tester_print("connect() returned %d (%s)", ret, strerror(*err));
++
++	return sk;
++}
++
++static bool incoming_held_check(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	bool ok;
++
++	data->timer_id = 0;
++
++	/* The accepted socket keeps its link, no other link is set up */
++	ok = sock_connected(data->sk, "accepted") && !data->disc_cmds &&
++						!data->setup_cmds;
++
++	reconnect_end(data, ok);
++	return false;
++}
++
++static bool incoming_stable(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->timer_id = 0;
++
++	/* The incoming link was disconnected once, the new link stays up */
++	reconnect_end(data, sock_connected(data->sk2, "second") &&
++						data->disc_cmds == 1);
++	return false;
++}
++
++static bool incoming_linked(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->io2_id = 0;
++
++	if (!io_connected(cond, data->sk2, "second")) {
++		reconnect_end(data, false);
++		return false;
++	}
++
++	if (data->setup_cmds != 1 || data->sync_complete != 2) {
++		tester_warn("Second socket connected without a link of its "
++				"own");
++		reconnect_end(data, false);
++		return false;
++	}
++
++	reconnect_arm(data, RECONNECT_QUIET_MS, incoming_stable);
++	return false;
++}
++
++/* The refused socket tries again once the incoming link is gone */
++static bool incoming_connect3(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct tester_io *io;
++	int err;
++
++	data->timer_id = 0;
++
++	if (data->done)
++		return false;
++
++	close(data->sk2);
++	data->sk2 = incoming_sock(data, &err);
++	if (data->sk2 < 0 || err != EINPROGRESS) {
++		tester_warn("Expected EINPROGRESS from the retry");
++		reconnect_end(data, false);
++		return false;
++	}
++
++	io = tester_io_new(data->sk2);
++	tester_io_set_close_on_unref(io, false);
++	data->io2_id = tester_io_add_watch(io,
++				TESTER_IO_OUT | TESTER_IO_ERR | TESTER_IO_HUP,
++				incoming_linked, NULL);
++	tester_io_unref(io);
++
++	reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
++	return false;
++}
++
++static bool incoming_connect2(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	int err;
++
++	data->timer_id = 0;
++
++	if (data->done)
++		return false;
++
++	data->sk2 = incoming_sock(data, &err);
++	if (data->sk2 < 0) {
++		reconnect_end(data, false);
++		return false;
++	}
++
++	if (scodata->reconnect == INCOMING_HELD) {
++		/* A socket holds the link: refused, the link is left alone */
++		if (err != EBUSY) {
++			tester_warn("Expected EBUSY from the connect()");
++			reconnect_end(data, false);
++			return false;
++		}
++
++		reconnect_arm(data, RECONNECT_QUIET_MS, incoming_held_check);
++		return false;
++	}
++
++	/* Nothing holds the link: refused once, the link goes */
++	if (err != ECONNABORTED) {
++		tester_warn("Expected ECONNABORTED from the connect()");
++		reconnect_end(data, false);
++		return false;
++	}
++
++	data->disc_held = true;
++	reconnect_arm(data, RECONNECT_LINK_MS, reconnect_deadline);
++	return false;
++}
++
++static bool incoming_accept(struct tester_io *io, uint32_t cond,
++							void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct sco_client_data *scodata = data->test_data;
++	int sk;
++
++	data->io_id = 0;
++
++	sk = accept(tester_io_get_fd(io), NULL, NULL);
++	if (sk < 0) {
++		tester_warn("accept: %s", strerror(errno));
++		reconnect_end(data, false);
++		return false;
++	}
++
++	tester_print("Incoming link accepted");
++	data->sk = sk;
++
++	if (scodata->reconnect == INCOMING_FREE) {
++		park_worker(INCOMING_PARK_MS);
++		close(data->sk);
++		data->sk = -1;
++		tester_print("Accepted socket closed, nothing holds the link");
++	}
++
++	reconnect_arm(data, INCOMING_DELAY_MS, incoming_connect2);
++	return false;
++}
++
++static void test_incoming(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
++					BT_HCI_EVT_SYNC_CONN_COMPLETE,
++					hook_reconnect_sync, NULL);
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_POST_EVT,
++					BT_HCI_EVT_DISCONNECT_COMPLETE,
++					hook_incoming_disc, NULL);
++	hciemu_add_central_post_command_hook(data->hciemu,
++					hook_reconnect_cmd, data);
++
++	setup_listen(data, incoming_accept);
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	tester_init(&argc, &argv);
+@@ -2239,6 +2519,22 @@ int main(int argc, char *argv[])
+ 					&connect_twice, setup_powered,
+ 					test_reconnect, false, false, false, 8);
+ 
++	test_sco_full("eSCO CVSD - Connect Over Incoming Link",
++					&incoming_held, setup_powered,
++					test_incoming, false, false, false, 8);
++
++	test_sco_full("eSCO CVSD - Connect Transparent Over Incoming Link",
++					&incoming_held_transp, setup_powered,
++					test_incoming, false, false, false, 8);
++
++	test_sco_full("eSCO CVSD - Connect Over Closed Incoming Link",
++					&incoming_free, setup_powered,
++					test_incoming, false, false, false, 9);
++
++	test_sco_full("eSCO CVSD - Connect Transparent Over Closed Incoming Link",
++					&incoming_free_transp, setup_powered,
++					test_incoming, false, false, false, 9);
++
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+ 
+-- 
+2.43.0
+

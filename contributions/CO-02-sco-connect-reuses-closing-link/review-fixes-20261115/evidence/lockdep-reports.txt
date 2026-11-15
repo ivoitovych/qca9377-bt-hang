@@ -1,0 +1,350 @@
+#### run-lkt14-lb2-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-g5b76fb9e0bb2 #7 Not tainted
+------------------------------------------------------
+sco-tester-inc1/58 is trying to acquire lock:
+ffff888002a540b8 (&hdev->lock){+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002a547d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_queue_once+0x33/0x300
+       hci_update_passive_scan+0x165/0x1c0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       hci_cmd_sync_clear+0x184/0x360
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/58: 1, last CPU#2:
+ #0: ffff888002a547d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+----
+#### run-lkv14-lb2-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-g5b76fb9e0bb2 #7 Not tainted
+------------------------------------------------------
+sco-tester-inc1/58 is trying to acquire lock:
+ffff888002cdc0b8 (&hdev->lock){+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002cdc7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_queue_once+0x33/0x300
+       hci_update_passive_scan+0x165/0x1c0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       hci_cmd_sync_clear+0x184/0x360
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/58: 1, last CPU#3:
+ #0: ffff888002cdc7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+----
+#### run-lkt14-l122-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-gb448b72b88a6 #8 Not tainted
+------------------------------------------------------
+sco-tester-inc1/59 is trying to acquire lock:
+ffff888002ed80b8 (&hdev->lock){+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002ed87d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_queue_once+0x33/0x300
+       hci_update_passive_scan+0x165/0x1c0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       hci_cmd_sync_clear+0x184/0x360
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/59: 1, last CPU#0:
+ #0: ffff888002ed87d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+----
+#### run-lkv14-l12a-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-gb8a05494ef16 #10 Not tainted
+------------------------------------------------------
+sco-tester-inc1/60 is trying to acquire lock:
+ffff888002f3c0b8 (&hdev->lock){+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002f3c7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_queue_once+0x33/0x300
+       hci_update_passive_scan+0x165/0x1c0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       hci_cmd_sync_clear+0x184/0x360
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/60: 1, last CPU#2:
+ #0: ffff888002f3c7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+----
+#### run-lkt14-la2-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-g7542acd0ab44 #9 Not tainted
+------------------------------------------------------
+sco-tester-inc1/58 is trying to acquire lock:
+ffff888002d3c0b8 (&hdev->lock){+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002d3c7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_queue_once+0x33/0x300
+       hci_update_passive_scan+0x165/0x1c0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       hci_cmd_sync_clear+0x184/0x360
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/58: 1, last CPU#1:
+ #0: ffff888002d3c7d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xdc/0x360
+----
+#### run-lkd18-p124-1.log: 1 lockdep circular-dependency report(s)
+======================================================
+WARNING: possible circular locking dependency detected
+7.3.0-g3324a6c4395c #15 Not tainted
+------------------------------------------------------
+sco-tester-inc1/59 is trying to acquire lock:
+ffff888002e040b8LKD child: connect() returned -1 (Software caused connection abort) (&hdev->lock){+
+.+.}-{4:4}, at: add_ext_adv_params_complete+0xe7/0x620
+
+but task is already holding lock:
+ffff888002e047d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xf2/0x2a0
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-> #1 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}:
+       __mutex_lock+0x19d/0x27d0
+       hci_cmd_sync_lookup_entry+0x48/0x2d0
+       hci_update_passive_scan+0x16d/0x1f0
+       mgmt_set_powered_complete+0x259/0x3c0
+       hci_cmd_sync_work+0x274/0x3b0
+       process_one_work+0x8b5/0x1ba0
+       worker_thread+0x630/0x1180
+       kthread+0x34f/0x480
+       ret_from_fork+0x485/0x700
+       ret_from_fork_asm+0x1a/0x30
+
+-> #0 (&hdev->lock){+.+.}-{4:4}:
+       __lock_acquire+0x14ab/0x24c0
+       lock_acquire+0x10d/0x310
+       __mutex_lock+0x19d/0x27d0
+       add_ext_adv_params_complete+0xe7/0x620
+       _hci_cmd_sync_cancel_entry.constprop.0+0x76/0x220
+       hci_cmd_sync_clear+0x14e/0x2a0
+       hci_unregister_dev+0x1ff/0x5b0
+       vhci_release+0x18b/0x240
+       __fput+0x351/0xa10
+       fput_close_sync+0xe2/0x190
+       __x64_sys_close+0x78/0xd0
+       do_syscall_64+0xaf/0x520
+       entry_SYSCALL_64_after_hwframe+0x76/0x7e
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&hdev->cmd_sync_work_lock);
+                               lock(&hdev->lock);
+                               lock(&hdev->cmd_sync_work_lock);
+  lock(&hdev->lock);
+
+ *** DEADLOCK ***
+
+locks held by sco-tester-inc1/59: 1, last CPU#0:
+ #0: ffff888002e047d8 (&hdev->cmd_sync_work_lock){+.+.}-{4:4}, at: hci_cmd_sync_clear+0xf2/0x2a0
+----

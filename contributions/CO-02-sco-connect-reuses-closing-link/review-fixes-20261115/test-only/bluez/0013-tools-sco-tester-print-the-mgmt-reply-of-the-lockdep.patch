@@ -1,0 +1,50 @@
+From e0cfd61327b068cf258a7074ea007a07bf136616 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:33:06 +0100
+Subject: [PATCH 13/17] tools/sco-tester: print the mgmt reply of the lockdep
+ probe (research)
+
+---
+ tools/sco-tester.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 7f09b3539..9ece1e7e2 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2378,6 +2378,14 @@ static const uint8_t lk_ext_adv_params[] = {
+ 	0x7f,				/* tx_power */
+ };
+ 
++static void lk_extadv_cb(uint8_t status, uint16_t length, const void *param,
++							void *user_data)
++{
++	printf("LKX: mgmt reply to Add Extended Advertising Parameters, status 0x%02x\n",
++								status);
++	fflush(stdout);
++}
++
+ static bool lk_extadv_pass(void *user_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -2405,7 +2413,7 @@ static void test_lk_extadv(const void *test_data)
+ 	park_sync(400);
+ 	mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_PARAMS, data->mgmt_index,
+ 			sizeof(lk_ext_adv_params), lk_ext_adv_params,
+-			NULL, NULL, NULL);
++			lk_extadv_cb, NULL, NULL);
+ 	reconnect_arm(data, 50, lk_extadv_pass);
+ }
+ 
+@@ -2671,7 +2679,7 @@ static bool incoming_accept(struct tester_io *io, uint32_t cond,
+ 		lk_dump = false;
+ 		mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_PARAMS,
+ 				data->mgmt_index, sizeof(lk_ext_adv_params),
+-				lk_ext_adv_params, NULL, NULL, NULL);
++				lk_ext_adv_params, lk_extadv_cb, NULL, NULL);
+ 		close(data->sk);
+ 		data->sk = -1;
+ 		tester_print("LKD: accepted socket closed, workers parked");
+-- 
+2.43.0
+

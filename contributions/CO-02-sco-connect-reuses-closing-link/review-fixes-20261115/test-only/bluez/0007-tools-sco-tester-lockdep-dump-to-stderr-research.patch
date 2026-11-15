@@ -1,0 +1,34 @@
+From 48411360dfcffbbc25c1b8d992fc5e060d70a31c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 02:59:22 +0100
+Subject: [PATCH 07/17] tools/sco-tester: lockdep dump to stderr (research)
+
+---
+ tools/sco-tester.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index d60fec878..58387a82d 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2262,7 +2262,7 @@ static void lockdep_dump(void)
+ 
+ 	f = fopen("/proc/lockdep", "r");
+ 	if (!f) {
+-		tester_print("LOCKDEP-DUMP: /proc/lockdep not readable");
++		fprintf(stderr, "LOCKDEP-DUMP: /proc/lockdep not readable\n");
+ 		return;
+ 	}
+ 
+@@ -2291,7 +2291,7 @@ static void lockdep_dump(void)
+ 		if (show) {
+ 			if (n && line[n - 1] == '\n')
+ 				line[n - 1] = '\0';
+-			tester_print("LOCKDEP-DUMP: %s", line);
++			fprintf(stderr, "LOCKDEP-DUMP: %s\n", line);
+ 		}
+ 	}
+ 
+-- 
+2.43.0
+

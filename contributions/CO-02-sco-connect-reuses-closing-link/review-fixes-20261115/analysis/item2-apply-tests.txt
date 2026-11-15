@@ -1,0 +1,33 @@
+== branch l7-wbase = da3cc02587c6 + his patch (git log -1: 1f6fe0cef Wentao Liang Bluetooth: delete the new SCO link if linking it fails)
+$ git -C <work area>/linux apply -3 <work area>/mails/b-three/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch
+Applied patch to 'net/bluetooth/hci_conn.c' with conflicts.
+U net/bluetooth/hci_conn.c
+exit=1
+$ git -C <work area>/linux diff --stat
+ net/bluetooth/hci_conn.c | Unmerged
+ net/bluetooth/hci_conn.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+exit=0
+$ git -C <work area>/linux apply -3 <work area>/mails/b-three/kernel/v2-0002-Bluetooth-hci_conn-don-t-reuse-an-aborting-SCO-co.patch
+Applied patch to 'net/bluetooth/hci_conn.c' with conflicts.
+U net/bluetooth/hci_conn.c
+exit=1
+== branch l7-ab~1 (v2 1/2+2/2 on da3cc02587c6); his patch on top
+$ git -C <work area>/linux apply -3 <project>/tmp/upstream-status-20261115/wentao-14942649.diff
+Applied patch to 'net/bluetooth/hci_conn.c' with conflicts.
+U net/bluetooth/hci_conn.c
+exit=1
+$ git -C <work area>/linux diff --stat
+ net/bluetooth/hci_conn.c | Unmerged
+ net/bluetooth/hci_conn.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+exit=0
+== plain git apply --check (no -3)
+$ git -C <work area>/linux apply --check <work area>/mails/b-three/kernel/v2-0001-Bluetooth-hci_conn-hold-a-reused-SCO-connection-f.patch
+error: patch failed: net/bluetooth/hci_conn.c:1909
+error: net/bluetooth/hci_conn.c: patch does not apply
+exit=1
+$ git -C <work area>/linux apply --check <project>/tmp/upstream-status-20261115/wentao-14942649.diff
+error: patch failed: net/bluetooth/hci_conn.c:1909
+error: net/bluetooth/hci_conn.c: patch does not apply
+exit=1

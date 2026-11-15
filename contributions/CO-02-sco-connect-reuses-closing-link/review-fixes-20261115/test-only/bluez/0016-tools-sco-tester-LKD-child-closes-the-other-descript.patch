@@ -1,0 +1,35 @@
+From ba39416ac35ca23bc2e878acdf7f1acdaa2df451 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:51:26 +0100
+Subject: [PATCH 16/17] tools/sco-tester: LKD child closes the other
+ descriptors (research)
+
+---
+ tools/sco-tester.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 31830924c..3e79f9511 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2656,7 +2656,16 @@ static bool deadlock_connect(void *user_data)
+ 
+ 	pid = fork();
+ 	if (pid == 0) {
+-		int ret = connect(data->sk2, (struct sockaddr *) &addr,
++		int fd, ret;
++
++		/* Hold nothing but the socket, so that the controller's
++		 * vhci file is closed by the tester alone
++		 */
++		for (fd = 3; fd < 1024; fd++)
++			if (fd != data->sk2)
++				close(fd);
++
++		ret = connect(data->sk2, (struct sockaddr *) &addr,
+ 							sizeof(addr));
+ 
+ 		printf("LKD child: connect() returned %d (%s)\n", ret,
+-- 
+2.43.0
+

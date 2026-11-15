@@ -1,0 +1,29 @@
+From 57d7955ff0bd37c4a72d30e754eba67b07a2e371 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:37:05 +0100
+Subject: [PATCH 14/17] tools/sco-tester: use the test's emulator type
+ (research)
+
+---
+ tools/sco-tester.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 9ece1e7e2..ed16f494b 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -235,9 +235,9 @@ static void read_index_list_callback(uint8_t status, uint16_t length,
+ 	mgmt_register(data->mgmt, MGMT_EV_INDEX_REMOVED, MGMT_INDEX_NONE,
+ 					index_removed_callback, NULL, NULL);
+ 
+-	data->hciemu = hciemu_new(HCIEMU_TYPE_BREDRLE);
++	data->hciemu = hciemu_new(data->hciemu_type);
+ 	if (!data->hciemu)
+-		data->hciemu = hciemu_new_debug(HCIEMU_TYPE_BREDRLE, print_debug,
++		data->hciemu = hciemu_new_debug(data->hciemu_type, print_debug,
+ 							"hciemu: ", NULL);
+ 	if (!data->hciemu) {
+ 		tester_warn("Failed to setup HCI emulation");
+-- 
+2.43.0
+

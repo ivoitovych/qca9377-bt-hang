@@ -1,0 +1,57 @@
+From 47e5055af0360254cb634e1e7cabfd41db6e8368 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:04:39 +0100
+Subject: [PATCH 10/17] tools/sco-tester: lockdep edge print (research)
+
+---
+ tools/sco-tester.c | 27 ++++++++++++++++++++++++++-
+ 1 file changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 20649a4b6..109089cbc 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2256,7 +2256,7 @@ static void lockdep_dump(void)
+ 		"&hdev->unregister_lock", "(work_completion)(&(&conn->disc_work)->work)",
+ 		"(work_completion)(&hdev->cmd_sync_work)", NULL
+ 	};
+-	char line[512];
++	char line[512], hdr[512] = "";
+ 	bool show = false;
+ 	FILE *f;
+ 
+@@ -2291,6 +2291,31 @@ static void lockdep_dump(void)
+ 			}
+ 		}
+ 
++		if (line[0] != ' ') {
++			char *p = line, *name = NULL;
++
++			while ((p = strstr(p, ": ")) != NULL) {
++				name = p + 2;
++				p += 2;
++			}
++			snprintf(hdr, sizeof(hdr), "%s", name ? name : "?");
++			hdr[strcspn(hdr, "\n")] = '\0';
++		} else {
++			char *tgt = strstr(line, "] ");
++
++			if (tgt) {
++				tgt += 2;
++				for (i = 0; names[i]; i++) {
++					size_t l = strlen(names[i]);
++
++					if (!strncmp(tgt, names[i], l) &&
++							tgt[l] == '\n')
++						printf("LOCKDEP-EDGE: %s -> %s\n",
++							hdr, names[i]);
++				}
++			}
++		}
++
+ 		if (show) {
+ 			if (n && line[n - 1] == '\n')
+ 				line[n - 1] = '\0';
+-- 
+2.43.0
+

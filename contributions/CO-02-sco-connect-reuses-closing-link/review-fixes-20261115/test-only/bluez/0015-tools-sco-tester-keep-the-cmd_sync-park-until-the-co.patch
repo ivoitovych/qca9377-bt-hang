@@ -1,0 +1,70 @@
+From 1f4466fbaf3df8401b981177be041e0825b67c36 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:47:41 +0100
+Subject: [PATCH 15/17] tools/sco-tester: keep the cmd_sync park until the
+ controller is gone (research)
+
+---
+ tools/sco-tester.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index ed16f494b..31830924c 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -293,6 +293,7 @@ static void test_pre_setup(const void *test_data)
+ 
+ static void park_worker(unsigned int ms);
+ static void park_sync(unsigned int ms);
++static void park_sync_later(void);
+ static void lockdep_dump(void);
+ static bool lk_dump;
+ 
+@@ -335,7 +336,7 @@ static void test_post_teardown(const void *test_data)
+ 	hciemu_unref(data->hciemu);
+ 	data->hciemu = NULL;
+ 
+-	park_sync(0);
++	park_sync_later();
+ 
+ 	if (lk_dump)
+ 		lockdep_dump();
+@@ -2353,6 +2354,8 @@ static void lockdep_dump(void)
+ }
+ 
+ /* Lockdep probe (debug-only parameter): hold the cmd_sync worker before it dequeues */
++static bool sync_parked;
++
+ static void park_sync(unsigned int ms)
+ {
+ 	FILE *f = fopen("/sys/module/bluetooth/parameters/w2c_park_sync_ms",
+@@ -2364,10 +2367,26 @@ static void park_sync(unsigned int ms)
+ 	fprintf(f, "%u\n", ms);
+ 	fclose(f);
+ 
++	sync_parked = ms != 0;
+ 	if (ms)
+ 		tester_print("cmd_sync worker parked for %u ms", ms);
+ }
+ 
++static bool park_sync_off(void *user_data)
++{
++	if (lk_dump)
++		lockdep_dump();
++	park_sync(0);
++	return false;
++}
++
++/* The controller is removed after the test's teardown: keep the cmd_sync park until then */
++static void park_sync_later(void)
++{
++	if (sync_parked)
++		timeout_add(2500, park_sync_off, NULL, NULL);
++}
++
+ static const uint8_t lk_ext_adv_params[] = {
+ 	0x01,				/* instance */
+ 	0x00, 0xC0, 0x00, 0x00,		/* flags */
+-- 
+2.43.0
+

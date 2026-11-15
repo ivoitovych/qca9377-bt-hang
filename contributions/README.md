@@ -42,7 +42,7 @@ still to be made, from the project checkout, before the send.
 | CO-22 | `research-2026-11-01/qca-ids/refresh-20261114/` (request v3) | — | ready | to make | — |
 | CO-21 | `CO-21-…/review-fixes-20261114/` | `send-20261114/` | ready | to make | the mixed-mode question is in the cover |
 | CO-20 | `CO-20-…/patch1-standalone-20261114/` (patch 1 alone) | `send-20261114/` | ready | to make | patch 2 held |
-| CO-02 v2 | `CO-02-…/send-v2-review-fixes-20261114/`, layout (a) | `send-v2-20261114/` | **not ready** | to make | a possible lock cycle in 2/2 is being settled (`../reviews/2026-11-15T0300Z-submitted-status-review-checks.md`) |
+| CO-02 v2 | 1/2 + the **non-sleeping** 2/2: `CO-02-…/review-fixes-20261115/patches/alt-2of2/`; the mismatch patch later, alone (`…/patches/standalone-3/`) | `send-v2-review-fixes-20261114/` and `review-fixes-20261115/patches/main-v2/`: their 2/2 **can deadlock** (3 of 3 with delays, 2026-11-15) | not ready: checkpatch, the bot's CI and a new cover to do | to make | operator: the stable trailer form |
 | CO-12 | `CO-12-…/send-20261114/` | — | ready | to make | operator: the clamp now, or an RFC first (D5) |
 | CO-23 | `CO-23-…/patch/send-20261114/` | `patch/send/`, `patch/send-20261101-draft/` | ready | to make | operator: the list or BlueZ's private advisory (D3) |
 | CO-37 | `CO-37-…/send-20261114/` | `work/patches/master-final-6-20261102/` | ready | to make | operator: same route question (D3) |

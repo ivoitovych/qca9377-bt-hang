@@ -1,0 +1,101 @@
+From 80c9a4a3e76abbd0e924eee1097f955b9983a294 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 02:58:30 +0100
+Subject: [PATCH 06/17] tools/sco-tester: dump lockdep dependencies of the
+ probe locks (research)
+
+---
+ tools/sco-tester.c | 56 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index a470aef7a..d60fec878 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -292,6 +292,8 @@ static void test_pre_setup(const void *test_data)
+ 
+ static void park_worker(unsigned int ms);
+ static void park_sync(unsigned int ms);
++static void lockdep_dump(void);
++static bool lk_dump;
+ 
+ static void test_post_teardown(const void *test_data)
+ {
+@@ -333,6 +335,9 @@ static void test_post_teardown(const void *test_data)
+ 	data->hciemu = NULL;
+ 
+ 	park_sync(0);
++
++	if (lk_dump)
++		lockdep_dump();
+ }
+ 
+ static void test_data_free(void *test_data)
+@@ -2243,6 +2248,56 @@ static void park_worker(unsigned int ms)
+ 		tester_print("Idle-disconnect worker parked for %u ms", ms);
+ }
+ 
++/* Research: print the forward dependencies lockdep recorded for the locks of the cycle */
++static void lockdep_dump(void)
++{
++	static const char * const names[] = {
++		"&hdev->lock", "&hdev->cmd_sync_work_lock",
++		"&hdev->unregister_lock", "(work_completion)(&(&conn->disc_work)->work)",
++		"(work_completion)(&hdev->cmd_sync_work)", NULL
++	};
++	char line[512];
++	bool show = false;
++	FILE *f;
++
++	f = fopen("/proc/lockdep", "r");
++	if (!f) {
++		tester_print("LOCKDEP-DUMP: /proc/lockdep not readable");
++		return;
++	}
++
++	while (fgets(line, sizeof(line), f)) {
++		size_t n = strlen(line);
++		unsigned int i;
++
++		if (line[0] != ' ') {
++			char *name = strstr(line, ": ");
++
++			show = false;
++			if (!name)
++				continue;
++			name += 2;
++			for (i = 0; names[i]; i++) {
++				size_t l = strlen(names[i]);
++
++				if (!strncmp(name, names[i], l) &&
++						name[l] == '\n') {
++					show = true;
++					break;
++				}
++			}
++		}
++
++		if (show) {
++			if (n && line[n - 1] == '\n')
++				line[n - 1] = '\0';
++			tester_print("LOCKDEP-DUMP: %s", line);
++		}
++	}
++
++	fclose(f);
++}
++
+ /* Lockdep probe (debug-only parameter): hold the cmd_sync worker before it dequeues */
+ static void park_sync(unsigned int ms)
+ {
+@@ -2292,6 +2347,7 @@ static void test_lk_extadv(const void *test_data)
+ 		return;
+ 	}
+ 
++	lk_dump = true;
+ 	park_sync(400);
+ 	mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_PARAMS, data->mgmt_index,
+ 			sizeof(lk_ext_adv_params), lk_ext_adv_params,
+-- 
+2.43.0
+

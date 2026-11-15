@@ -189,7 +189,9 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     CO-39, CO-41; CO-35, CO-05 + CO-26, CO-12, CO-23 and CO-37 with operator decisions open.
 >   - Send commands and a checked dry run exist only for CO-44 and CO-43 E; for the others they
 >     are to be made before the send.
->   - **Not ready:** CO-02 v2, a possible lock cycle (11-15).
+>   - **Not ready:** CO-02 v2. Its sleeping 2/2 deadlocks with debug delays (3 of 3, 11-15); the
+>     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch, the bot's CI
+>     and a cover are still to do.
 >   - **Held:** CO-43 B2 and D v2 (D v2 breaks the system-resume rebind).
 >   - **Packages made since 11-13 carry no Signed-off-by**; the operator adds his own; the author
 >     line is his real name and address. Nothing sent.

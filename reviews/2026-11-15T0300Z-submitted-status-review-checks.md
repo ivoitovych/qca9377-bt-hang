@@ -54,3 +54,26 @@ state on 2026-11-15, 01:45–02:45 UTC. Verdicts:
   - Error code options: `-EBUSY` for a link in use and `-ECONNABORTED` for a closing one (R2 and R6 of 11-02); or a single code.
   - Timing options: with v2; or later on its own.
   - Recommendation: the split codes, sent later as its own patch against the base, after v2 has a review.
+
+## Results of the open items (2026-11-15, later; `contributions/CO-02-…/review-fixes-20261115/`, checked on copy)
+
+- **3, the lock cycle: reachable.** Reviewers 2 and 7 were right.
+  - With debug-only delays standing in for the scheduling windows, the v2 kernel (1/2 + sleeping
+    2/2) hangs 3 of 3. The trace ends inside `cmd_sync_work_lock` while
+    `add_ext_adv_params_complete()` waits for `hdev->lock`.
+  - Base and a non-sleeping alternative 2/2 pass 3 of 3.
+  - "Not new" is withdrawn: on the base kernel nothing waits for a running `disc_work` under
+    `hdev->lock`.
+  - The alternative refuses when the worker is running instead of waiting. It gives sco-tester
+    35/2/7 in each of 3 runs, mgmt 526/526 and iso 213/213. It is the new candidate.
+  - The sleeping 2/2 is not to be sent.
+- **4, Wentao Liang's patch:**
+  - v2 keeps his bug and neither fixes nor worsens it (read from the code).
+  - `git apply -3` conflicts in every order tried.
+  - A rebased variant builds and gives the same results: sco 35/2 in each of 3 runs, mgmt
+    526/526, iso 213/213.
+- **7, the standalone mismatch patch:** made against the bare base. Its two cases pass 3 of 3.
+- **16, the stable note:** written into the covers and 2/2. The trailer form is proposed in the
+  package README; it is the operator's call.
+- **17, `READ_ONCE()`:** annotation hygiene, not a functional need. KCSAN (3 runs each) found
+  nothing on `abort_reason`, and it does not settle the question.

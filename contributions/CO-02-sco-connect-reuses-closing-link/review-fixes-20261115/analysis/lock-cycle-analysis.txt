@@ -1,0 +1,102 @@
+The lock cycle of v2 2/2: reachability (2026-11-15). All file:line at bluetooth-next da3cc02587c6 unless marked "v2".
+Replaces section 3 of cancel-sync-analysis.txt (which had one wrong edge: add_device_complete() takes hdev->lock only when !err,
+mgmt.c:7856-7859).  Evidence commands: README.md item 1.
+
+THE CYCLE
+  A  connect() holds hdev->lock and waits in cancel_delayed_work_sync(&sco->disc_work)          [v2 2/2, hci_connect_sco()]
+  B  the waited-for hci_conn_timeout() blocks on a mutex, cmd_sync_work_lock or unregister_lock
+  C  the holder of that mutex waits for hdev->lock
+
+A. Where the waiter comes from
+  sco_connect(): hci_get_route() sco.c:355 (takes a reference, hci_core.c:74-83 under hci_dev_list_lock), hci_dev_lock() sco.c:359,
+  hci_connect_sco() sco.c:375. In v2 2/2 hci_connect_sco() calls cancel_delayed_work_sync(&sco->disc_work) with hdev->lock held.
+  It sleeps only if hci_conn_timeout() (hci_conn.c:629) is RUNNING (a pending/queued work is cancelled; kernel/workqueue.c
+  start_flush_work() 4507-4561 returns false when the work is neither pending nor executing). hci_conn_hold() uses
+  cancel_delayed_work() (no wait). disc_work runs on hdev->workqueue, an ordered workqueue (hci_core.c:2694), queued with delay 0
+  for SCO/eSCO (hci_core.h:1792-1798).
+  On base (without v2) no path waits for a RUNNING disc_work with hdev->lock held and reaches B:
+    - hci_conn_del() waits (hci_conn.c:1298, disable_delayed_work_sync) but its callers either run in rx_work on the same ordered
+      workqueue (so disc_work cannot be running), or are hci_conn_hash_flush() (hci_sync.c:6099), which runs after
+      drain_workqueue(hdev->workqueue) (hci_sync.c:6085), or are process-context error paths for a connection just created.
+    - hci_abort_conn_sync() calls hci_conn_del() (hci_sync.c:6493) from cmd_sync_work; the disc_work of that connection already
+      ran (it queued this work) and, with abort_reason set, returns at the top of hci_abort_conn() (hci_conn.c:3326) before B.
+  So the "not new" claim of cancel-sync-analysis.txt section 3 is not supported: v2 2/2 adds the first reachable waiter.
+
+B. What a running hci_conn_timeout() blocks on (SCO/eSCO connection)
+  hci_conn_timeout() hci_conn.c:629-650 -> hci_proto_disconn_ind() returns HCI_ERROR_REMOTE_USER_TERM for non-ACL/LE
+  (hci_core.h:2247-2250) -> hci_abort_conn() hci_conn.c:3318:
+    abort_reason already set: return 0 at 3326 (no further waiting)
+    hci_cancel_connect_sync() hci_sync.c:7924: ACL/LE/CIS take cmd_sync_work_lock, SCO/eSCO default: return -ENOENT (no lock)
+    hci_cmd_sync_run_once() hci_sync.c:850 (called at hci_conn.c:3343):
+      hci_cmd_sync_lookup_entry() hci_sync.c:866 -> mutex_lock(&hdev->cmd_sync_work_lock) at 871, BEFORE any HCI_RUNNING test
+      hci_cmd_sync_run() hci_sync.c:820: !HCI_RUNNING -> -ENETDOWN (826); else (not on cmd_sync_work) hci_cmd_sync_submit() 728:
+        mutex_lock(&hdev->unregister_lock) 734; HCI_UNREGISTER -> -ENODEV 735 (unlock at 756); otherwise
+        mutex_lock(&hdev->cmd_sync_work_lock) 749, list_add, queue_work(req_workqueue) 753
+  So the worker takes cmd_sync_work_lock (871, and 749) and unregister_lock (734) briefly. HCI_UNREGISTER does not avoid the
+  first of them (871).
+
+C. Who holds those mutexes while waiting for hdev->lock
+  unregister_lock holders: hci_unregister_dev() hci_core.c:2784-2786 (sets the flag), hci_rfkill_set_hw_state() hci_core.c:955-978
+  (rfkill_set_hw_state() and schedule_work() inside; no hdev->lock), hci_cmd_sync_submit() itself. No hdev->lock inside. Not a link.
+  cmd_sync_work_lock holders, with a destroy callback called under the lock (_hci_cmd_sync_cancel_entry() hci_sync.c:664-673):
+    - hci_cmd_sync_clear() hci_sync.c:675-688 (lock 684, destroy with -ECANCELED 686). Its only caller is hci_unregister_dev()
+      (hci_core.c:2805, after HCI_UNREGISTER is set 2785, after list_del 2789, before hci_dev_do_close() 2809).
+    - hci_cmd_sync_cancel_entry() 880-887, hci_cmd_sync_dequeue() 894-910 (called from hci_conn_del() hci_conn.c:1363 with hdev->lock
+      already held, mgmt.c:1502, mgmt.c:2438/2447), hci_{acl,le,cis}_cancel_create_conn_sync() hci_sync.c:7851-7920.
+  Destroy callbacks that take hdev->lock when called with -ECANCELED (scripts: destroy-scan.py, callee-scan.py, output in
+  destroy-scan.txt; checked by reading each function):
+    add_ext_adv_params_complete()   mgmt.c:9248, hci_dev_lock() 9259, no -ECANCELED test        (queued mgmt.c:9404)
+    add_advertising_complete()      mgmt.c:9077 -> add_adv_complete() 9045, hci_dev_lock() 9052  (queued mgmt.c:9237)
+    add_ext_adv_data_complete()     mgmt.c:9438 -> add_adv_complete() 9444 -> 9052               (queued mgmt.c:9582)
+  Destroy callbacks that take hdev->lock only when NOT cancelled (-ECANCELED returns first):
+    add_device_complete() mgmt.c:7851 (lock 7859 only under if (!err)); mgmt_set_powered_complete 1348 (1354 test, lock 1363);
+    mgmt_set_discoverable_complete 1544 (1552); mgmt_set_connectable_complete 1721 (1729); mgmt_add_adv_patterns_monitor_complete
+    5460 (5472); mgmt_remove_adv_monitor_complete 5696 (5706 returns before 5716); stop_discovery_complete 6318 (6322);
+    set_advertising_complete 6564 (6572); create_le_conn_complete hci_sync.c:7795 (7801); create_pa_complete hci_sync.c:8041;
+    create_big_complete hci_conn.c:2282 (2288).
+  All other destroy callbacks (list in destroy-scan.txt) take no hdev->lock, directly or through a function of the tree.
+  Entries stay queued at unregister: hci_cmd_sync_work() stops at HCI_UNREGISTER (hci_sync.c:319-321, "Leave the backlog to
+  hci_cmd_sync_clear()"), and hci_cmd_sync_clear() destroys what is left. With hdev->lock not held by the unregister thread.
+
+D. Can a connect() hold hdev->lock while hci_unregister_dev() is inside hci_cmd_sync_clear()?
+  Yes, but only if the connect() takes hdev->lock after hci_unregister_dev() has passed hci_devcd_shutdown().
+  hci_unregister_dev() removes hdev from hci_dev_list (hci_core.c:2788-2790); a connect() that already holds a reference from
+  hci_get_route() (sco.c:355) goes on to hci_dev_lock() (sco.c:359); hci_connect_sco() has no HCI_UNREGISTER / HCI_UP test.
+  hci_unregister_dev() disables rx/cmd/tx/power_on/error_reset/rfkill work and the two timers (hci_core.c:2795-2802; a
+  disable_work_sync() waits only for work that is pending or running; on the ordered hdev->workqueue anything queued behind a
+  running disc_work waits for it), then calls hci_devcd_shutdown() (hci_core.c:2803), which takes and releases hdev->lock
+  (coredump.c:118-120), then hci_cmd_sync_clear() (2805). So a connect() that holds hdev->lock when the unregister reaches
+  coredump.c:118 only delays the unregister there, before it holds cmd_sync_work_lock: no cycle. The cycle needs the connect()
+  to take hdev->lock between that unlock and the destroy callback's hci_dev_lock() inside clear: a connect() that was already
+  past hci_get_route() and is queued on hdev->lock (mutex waiters are woken in turn) or preempted there. hci_cmd_sync_clear()
+  first waits for a running cmd_sync_work (hci_sync.c:681), which widens the window when cmd_sync is busy.
+  The disc_work must be running past its holder check and not yet in hci_abort_conn() when the connect() reaches the wait, and
+  must block on cmd_sync_work_lock after clear took it.
+
+E. Conclusion: REACHABLE, narrow window
+  All of these at once: (1) an Add Advertising, Add Extended Advertising Data or Add Extended Advertising Parameters command
+  is still queued on cmd_sync when the controller is unregistered; (2) a SCO/eSCO connection with no holder whose
+  hci_conn_timeout() is running and has not set abort_reason; (3) a connect() to the same peer that took hdev->lock after the
+  unregister passed hci_devcd_shutdown() and reaches the wait of v2 2/2. Then: clear holds cmd_sync_work_lock and waits in the
+  destroy for hdev->lock (held by the connect()), the connect() waits for the disc_work, the disc_work waits for
+  cmd_sync_work_lock.
+  Demonstrated in QEMU with debug-only delays that stand in for the scheduling windows (README item 1, evidence/lkd-traces.txt):
+  p126 = v2 1/2+2/2: the guest hangs in 3 of 3 runs, with the trace "clear: taking cmd_sync_work_lock", "destroy
+  add_ext_adv_params_complete ... holding cmd_sync_work_lock", "lookup_entry: taking cmd_sync_work_lock" and no further line;
+  pb6 = base with the same delays and palt6 = alternative 2/2: no hang in 3 of 3 runs each.
+  The alternative 2/2 (alt2-msg.txt, branch l7-alt) removes edge A (it reads work_busy() only), so this cycle cannot form.
+
+F. What lockdep printed
+  - Base kernel (probe parameters only, no CO-02 patch): with an Add Extended Advertising Parameters entry queued at unregister,
+    lockdep reports a two-lock inversion, not involving SCO: &hdev->cmd_sync_work_lock (held in hci_cmd_sync_clear()) -> &hdev->lock
+    (add_ext_adv_params_complete()) against &hdev->lock -> &hdev->cmd_sync_work_lock (mgmt_set_powered_complete() ->
+    hci_update_passive_scan() -> hci_cmd_sync_queue_once()). Full text: evidence/lockdep-reports.txt (run-lkt14-lb2-1.log).
+    The same report appears on every kernel of the matrix (v2, alternative 2/2) because it is a base edge pair; the
+    unregister_lock protocol (hci_sync.c:734-756, hci_core.c:2784-2786) keeps the direct interleaving from happening, lockdep cannot
+    know that. After the first report lockdep stops, so the SCO chain is not printed separately.
+  - /proc/lockdep after the runs (evidence/lockdep-edges.txt): the disc_work class has edges to cmd_sync_work_lock and
+    unregister_lock on every kernel (edge B, from hci_conn_timeout()). The edge from hdev->lock to the disc_work class, which the
+    wait of v2 2/2 should record, is NOT in the graph on the unmodified v2 kernel (l122) although the connect() really waited
+    (about 260 ms in the guest); with an explicit lock_map_acquire()/release() of the work's lockdep map after the wait (debug-only,
+    kernel l12a) the edge appears. So lockdep does not see the wait of v2 2/2 by itself.
+  - hci_conn_del() on base: no edge from hdev->lock to the disc_work class on any kernel, consistent with section A.

@@ -1,0 +1,64 @@
+From 25357a9c5bfb96923f5f41a493a7b07bab9c86e8 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:31:03 +0100
+Subject: [PATCH 11/17] tools/sco-tester: lockdep probe 2 cases use a 5.0
+ controller (research)
+
+---
+ tools/sco-tester.c | 28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 109089cbc..e8df696b4 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -373,6 +373,26 @@ static void test_data_free(void *test_data)
+ 				test_data_free); \
+ 	} while (0)
+ 
++/* A Bluetooth 5.0 controller: extended advertising, for the lockdep probes */
++#define test_sco_ext(name, data, setup, func, _timeout) \
++	do { \
++		struct test_data *user; \
++		user = calloc(1, sizeof(struct test_data)); \
++		if (!user) \
++			break; \
++		user->hciemu_type = HCIEMU_TYPE_BREDRLE50; \
++		user->io_id = 0; \
++		user->err_io_id = 0; \
++		user->sk = -1; \
++		user->sk2 = -1; \
++		user->test_data = data; \
++		user->step = 0; \
++		tester_add_full(name, data, \
++				test_pre_setup, setup, func, NULL, \
++				test_post_teardown, _timeout, user, \
++				test_data_free); \
++	} while (0)
++
+ #define test_sco(name, data, setup, func) \
+ 	test_sco_full(name, data, setup, func, false, false, false, 2)
+ 
+@@ -2758,15 +2778,15 @@ int main(int argc, char *argv[])
+ 	test_sco_full("LKV1 Connect Over Parked Worker", &incoming_free,
+ 				setup_powered, test_incoming,
+ 				false, false, false, 9);
+-	test_sco_full("LKV2 Unregister With Queued Ext Adv Params",
++	test_sco_ext("LKV2 Unregister With Queued Ext Adv Params",
+ 				&connect_success, setup_powered,
+-				test_lk_extadv, false, false, false, 9);
++				test_lk_extadv, 9);
+ 	test_sco_full("LKT1 Teardown With Parked Worker", &incoming_teardown,
+ 				setup_powered, test_incoming,
+ 				false, false, false, 9);
+-	test_sco_full("LKT2 Unregister With Queued Ext Adv Params",
++	test_sco_ext("LKT2 Unregister With Queued Ext Adv Params",
+ 				&connect_success, setup_powered,
+-				test_lk_extadv, false, false, false, 9);
++				test_lk_extadv, 9);
+ 
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+-- 
+2.43.0
+

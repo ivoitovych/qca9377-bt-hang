@@ -1,0 +1,63 @@
+From 6bbaf0bdbb47f14767df5497d72feae027023cb9 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:44:16 +0100
+Subject: [PATCH 2/3] lockdep probe: trace the lock steps (debug only)
+
+---
+ net/bluetooth/hci_sync.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/net/bluetooth/hci_sync.c b/net/bluetooth/hci_sync.c
+index 5ae454a82..d17263551 100644
+--- a/net/bluetooth/hci_sync.c
++++ b/net/bluetooth/hci_sync.c
+@@ -675,8 +675,12 @@ static void _hci_cmd_sync_cancel_entry(struct hci_dev *hdev,
+ 				       struct hci_cmd_sync_work_entry *entry,
+ 				       int err)
+ {
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: destroy %ps err %d, holding cmd_sync_work_lock\n", current->comm, entry->destroy, err);
+ 	if (entry->destroy)
+ 		entry->destroy(hdev, entry->data, err);
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: destroy %ps returned\n", current->comm, entry->destroy);
+ 
+ 	list_del(&entry->list);
+ 	kfree(entry);
+@@ -688,13 +692,19 @@ void hci_cmd_sync_clear(struct hci_dev *hdev)
+ 
+ 	/* cmd_work is disabled, the pending request can only time out */
+ 	hci_cmd_sync_cancel_sync(hdev, ENODEV);
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: clear: waiting for cmd_sync_work\n", current->comm);
+ 	cancel_work_sync(&hdev->cmd_sync_work);
+ 	cancel_work_sync(&hdev->reenable_adv_work);
+ 
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: clear: taking cmd_sync_work_lock\n", current->comm);
+ 	mutex_lock(&hdev->cmd_sync_work_lock);
+ 	list_for_each_entry_safe(entry, tmp, &hdev->cmd_sync_work_list, list)
+ 		_hci_cmd_sync_cancel_entry(hdev, entry, -ECANCELED);
+ 	mutex_unlock(&hdev->cmd_sync_work_lock);
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: clear: done\n", current->comm);
+ }
+ 
+ void hci_cmd_sync_cancel(struct hci_dev *hdev, int err)
+@@ -878,9 +888,13 @@ hci_cmd_sync_lookup_entry(struct hci_dev *hdev, hci_cmd_sync_work_func_t func,
+ {
+ 	struct hci_cmd_sync_work_entry *entry;
+ 
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: lookup_entry: taking cmd_sync_work_lock\n", current->comm);
+ 	mutex_lock(&hdev->cmd_sync_work_lock);
+ 	entry = _hci_cmd_sync_lookup_entry(hdev, func, data, destroy);
+ 	mutex_unlock(&hdev->cmd_sync_work_lock);
++	if (w2c_park_sync_ms)
++		pr_warn("w2c: %s: lookup_entry: done\n", current->comm);
+ 
+ 	return entry;
+ }
+-- 
+2.43.0
+

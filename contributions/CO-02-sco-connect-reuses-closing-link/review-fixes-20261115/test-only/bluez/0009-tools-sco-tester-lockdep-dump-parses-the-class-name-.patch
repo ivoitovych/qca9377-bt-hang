@@ -1,0 +1,35 @@
+From d1aa1eb6409011a79759039c13cd57cb4427fb6e Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:00:44 +0100
+Subject: [PATCH 09/17] tools/sco-tester: lockdep dump parses the class name
+ after the last colon (research)
+
+---
+ tools/sco-tester.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 378e50fc9..20649a4b6 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2271,12 +2271,15 @@ static void lockdep_dump(void)
+ 		unsigned int i;
+ 
+ 		if (line[0] != ' ') {
+-			char *name = strstr(line, ": ");
++			char *name = NULL, *p = line;
+ 
+ 			show = false;
++			while ((p = strstr(p, ": ")) != NULL) {
++				name = p + 2;
++				p += 2;
++			}
+ 			if (!name)
+ 				continue;
+-			name += 2;
+ 			for (i = 0; names[i]; i++) {
+ 				size_t l = strlen(names[i]);
+ 
+-- 
+2.43.0
+

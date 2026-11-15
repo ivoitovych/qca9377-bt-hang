@@ -1,0 +1,83 @@
+From 29c487c2ae1d9b63076c07ab5347150799aed725 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 02:07:24 +0100
+Subject: [PATCH 2/3] Bluetooth: hci_conn: hold a reused SCO connection for its
+ caller
+
+Connecting a second SCO socket to a device whose link is already
+in use correctly fails with EBUSY, but also disconnects the first
+socket's working link.
+
+hci_connect_sco() must return a connection with a hold owned by
+its caller. sco_connect() drops that hold when it no longer needs
+it, including when sco_chan_add() fails.
+
+For a new link, hci_conn_link() takes the required SCO hold.
+Since commit 06149746e720 ("Bluetooth: hci_conn: Add support for
+linking multiple hcon"), a connection whose link already exists
+is returned without one: hci_connect_sco() hands the reused SCO
+connection back without a caller hold, while keeping the extra
+ACL hold that hci_connect_acl() took for the link.
+
+Commit 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in
+sco_sock_connect()") added the drop on sco_chan_add() failure.
+When the second socket gets EBUSY, that drop consumes the first
+socket's hold. hci_conn_timeout() then finds no holder and
+disconnects the link.
+
+When the SCO connection already has a link, take a hold for the
+caller and drop the extra ACL hold, which the existing link
+already owns. Keep the hci_conn_link() path for connections that
+do not yet have a link.
+
+This follows the ownership correction made for CIS by
+commit e06d549fcd4a ("Bluetooth: hci_conn: fix CIS hold ownership
+on reuse"). The second connect() still fails with EBUSY, but no
+longer disconnects the first socket's link.
+
+Fixes: 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in sco_sock_connect()")
+Cc: stable@vger.kernel.org # 6.6.x
+---
+ net/bluetooth/hci_conn.c | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 484a57acc..889adad74 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1912,16 +1912,25 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		new_sco = true;
+ 	}
+ 
+-	link = hci_conn_link(acl, sco);
+-	if (!link) {
++	if (sco->link) {
++		/* The existing link already owns the hold on the ACL, and the
++		 * caller needs its own hold on the SCO connection, which
++		 * hci_conn_link() only takes for a new link.
++		 */
+ 		hci_conn_drop(acl);
++		hci_conn_hold(sco);
++	} else {
++		link = hci_conn_link(acl, sco);
++		if (!link) {
++			hci_conn_drop(acl);
+ 
+-		if (new_sco)
+-			hci_conn_del(sco);
+-		else
+-			hci_conn_drop(sco);
++			if (new_sco)
++				hci_conn_del(sco);
++			else
++				hci_conn_drop(sco);
+ 
+-		return ERR_PTR(-ENOLINK);
++			return ERR_PTR(-ENOLINK);
++		}
+ 	}
+ 
+ 	sco->setting = setting;
+-- 
+2.43.0
+

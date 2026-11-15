@@ -1,0 +1,53 @@
+From 3da1c3a5a4a632cef77ac3c527bb9811e2dee92b Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 03:57:03 +0100
+Subject: [PATCH 17/17] tools/sco-tester: LKD delays the connect() in the
+ kernel (research)
+
+---
+ tools/sco-tester.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 3e79f9511..7edb537bd 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2372,11 +2372,25 @@ static void park_sync(unsigned int ms)
+ 		tester_print("cmd_sync worker parked for %u ms", ms);
+ }
+ 
++/* Debug-only parameter: sleep in sco_connect() between hci_get_route() and hci_dev_lock() */
++static void park_sco(unsigned int ms)
++{
++	FILE *f = fopen("/sys/module/bluetooth/parameters/w2c_sco_delay_ms",
++									"w");
++
++	if (!f)
++		return;
++
++	fprintf(f, "%u\n", ms);
++	fclose(f);
++}
++
+ static bool park_sync_off(void *user_data)
+ {
+ 	if (lk_dump)
+ 		lockdep_dump();
+ 	park_sync(0);
++	park_sco(0);
+ 	return false;
+ }
+ 
+@@ -2654,6 +2668,9 @@ static bool deadlock_connect(void *user_data)
+ 	addr.sco_family = AF_BLUETOOTH;
+ 	bacpy(&addr.sco_bdaddr, (void *) client_bdaddr);
+ 
++	/* The connect() is held between hci_get_route() and hci_dev_lock() */
++	park_sco(230);
++
+ 	pid = fork();
+ 	if (pid == 0) {
+ 		int fd, ret;
+-- 
+2.43.0
+

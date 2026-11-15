@@ -1,0 +1,339 @@
+#### lkd20-pb6-1
+start 2026-11-15 03:58:00 kernel pb6 image <work area>/img/bzImage-pb6 tester sco-tester-inc17 run 1 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.016160
+LKD Connect Waits While Controller Removed - run
+w2c: hcon ffff88  LKD: accepted socket closed, workers parked8001fd8000 saw refcnt 0, parking
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.030665
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   03:58:03.085592
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.215716
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.216152
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned 0 (ok)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888001fd8000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:0: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:0: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.694594
+LKD Connect Waits While Controller Removed           Passed       1.553 seconds
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:03.694986
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   03:58:03.695806
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   03:58:03.695983
+exit=0 end 2026-11-15 03:58:03
+#### lkd20-palt6-1
+start 2026-11-15 03:58:03 kernel palt6 image <work area>/img/bzImage-palt6 tester sco-tester-inc17 run 1 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.239861
+LKD Connect Waits While Controller Removed - run
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff88
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.252032
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   03:58:06.316690
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.438423
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.438747
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned -1 (Software caused connection abort)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888002580000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:1: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:1: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.901229
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:58:06.901715
+LKD Connect Waits While Controller Removed           Passed       1.516 seconds
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   03:58:06.902531
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   03:58:06.902788
+exit=0 end 2026-11-15 03:58:06
+#### lkd20-p126-1
+start 2026-11-15 03:58:06 kernel p126 image <work area>/img/bzImage-p126 tester sco-tester-inc17 run 1 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[60]: = LKD Connect Waits While Contr..   03:58:09.465368
+LKD Connect Waits While Controller Removed - run
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff88
+sco-tester-inc1[60]: = LKD Connect Waits While Contr..   03:58:09.476943
+sco-tester-inc1[60]: = LKD: accepted socket closed, workers..   03:58:09.537926
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[60]: = LKD Connect Waits While Contr..   03:58:09.662966
+sco-tester-inc1[60]: = LKD Connect Waits While Contr..   03:58:09.663421
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: hcon ffff888002880000 released: refcnt 1 abort_reason 0
+w2c: kworker/u17:0: lookup_entry: taking cmd_sync_work_lock
+exit=124 end 2026-11-15 03:59:47
+#### lkd20-p126-2
+start 2026-11-15 03:59:53 kernel p126 image <work area>/img/bzImage-p126 tester sco-tester-inc17 run 2 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:55.943186
+LKD Connect Waits While Controller Removed - run
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff888002d68000 saw r
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:55.953148
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   03:59:56.008645
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:56.141072
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:56.141640
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: hcon ffff888002d68000 released: refcnt 1 abort_reason 0
+w2c: kworker/u17:1: lookup_entry: taking cmd_sync_work_lock
+exit=124 end 2026-11-15 04:01:33
+#### lkd20-p126-3
+start 2026-11-15 04:01:39 kernel p126 image <work area>/img/bzImage-p126 tester sco-tester-inc17 run 3 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+LKD Connect Waits While Controller Removed - run
+sco-tester-inc1[58]: = LKD Connect Waits While Contr..   04:01:42.422843
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff88
+sco-tester-inc1[58]: = LKD Connect Waits While Contr..   04:01:42.434462
+sco-tester-inc1[58]: = LKD: accepted socket closed, workers..   04:01:42.490219
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[58]: = LKD Connect Waits While Contr..   04:01:42.622817
+sco-tester-inc1[58]: = LKD Connect Waits While Contr..   04:01:42.623164
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: hcon ffff8880029b8000 released: refcnt 1 abort_reason 0
+w2c: kworker/u17:0: lookup_entry: taking cmd_sync_work_lock
+exit=124 end 2026-11-15 04:03:19
+#### lkd20-pb6-2
+start 2026-11-15 03:59:47 kernel pb6 image <work area>/img/bzImage-pb6 tester sco-tester-inc17 run 2 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:49.521559
+LKD Connect Waits While Controller Removed - run
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff88
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:49.530890
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   03:59:49.585975
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:49.717231
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:49.717591
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned 0 (ok)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888002c84000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:0: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:0: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:50.182732
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:50.183186
+LKD Connect Waits While Controller Removed           Passed       1.511 seconds
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   03:59:50.184183
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   03:59:50.184402
+exit=0 end 2026-11-15 03:59:50
+#### lkd20-palt6-2
+start 2026-11-15 03:59:50 kernel palt6 image <work area>/img/bzImage-palt6 tester sco-tester-inc17 run 2 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+LKD Connect Waits While Controller Removed - run
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:52.716434
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff88
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:52.729416
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   03:59:52.791131
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:52.914060
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:52.914559
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned -1 (Software caused connection abort)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888002d28000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:1: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:1: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:53.397257
+LKD Connect Waits While Controller Removed           Passed       1.532 seconds
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   03:59:53.397737
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   03:59:53.398730
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   03:59:53.398894
+exit=0 end 2026-11-15 03:59:53
+#### lkd20-pb6-3
+start 2026-11-15 04:01:33 kernel pb6 image <work area>/img/bzImage-pb6 tester sco-tester-inc17 run 3 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+LKD Connect Waits While Controller Removed - run
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.016659
+  LKD: accepted socket closed, workers parkedw2c: hcon ffff888002b0c000 saw r
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.028338
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   04:01:36.087299
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.214562
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.215071
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned 0 (ok)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888002b0c000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:1: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:1: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.679834
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:36.680441
+LKD Connect Waits While Controller Removed           Passed       1.507 seconds
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   04:01:36.682043
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   04:01:36.682341
+exit=0 end 2026-11-15 04:01:36
+#### lkd20-palt6-3
+start 2026-11-15 04:01:36 kernel palt6 image <work area>/img/bzImage-palt6 tester sco-tester-inc17 run 3 cpus 4 args -p LKD
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u quiet ro init=<work area>/bin/test-runner-inc17 TESTHOME=<work area>/bin TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=1 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='<work area>/bin/sco-tester-inc17 -p LKD'
+Running command <work area>/bin/sco-tester-inc17 -p LKD
+LKD Connect Waits While Controller Removed - init
+LKD Connect Waits While Controller Removed - setup
+LKD Connect Waits While Controller Removed - setup complete
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.209557
+LKD Connect Waits While Controller Removed - run
+w2c: hcon ffff88  LKD: accepted socket closed, workers parked8002b2c000 saw refcnt 0, parking
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.220901
+sco-tester-inc1[59]: = LKD: accepted socket closed, workers..   04:01:39.280363
+LKD Connect Waits While Controller Removed - test passed
+LKD Connect Waits While Controller Removed - teardown
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.407376
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.407845
+w2c-u: sco-tester-inc1: unregister start
+w2c-u: flag set, off the list
+w2c-u: srcu done
+w2c-u: rx_work disabled
+w2c-u: cmd_work disabled
+w2c-u: tx_work disabled
+w2c-u: timers disabled
+w2c: sco-tester-inc1: clear: waiting for cmd_sync_work
+LKD child: connect() returned -1 (Software caused connection abort)
+w2c: sco-tester-inc1: clear: taking cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete err -125, holding cmd_sync_work_lock
+w2c: sco-tester-inc1: destroy add_ext_adv_params_complete returned
+w2c: sco-tester-inc1: clear: done
+w2c: hcon ffff888002b2c000 released: refcnt 0 abort_reason 0
+w2c: kworker/u17:0: lookup_entry: taking cmd_sync_work_lock
+w2c: kworker/u17:0: lookup_entry: done
+LKX: mgmt reply to Add Extended Advertising Parameters, status 0x10
+LKD Connect Waits While Controller Removed - teardown complete
+LKD Connect Waits While Controller Removed - done
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.861592
+sco-tester-inc1[59]: = LKD Connect Waits While Contr..   04:01:39.862248
+LKD Connect Waits While Controller Removed           Passed       1.497 seconds
+Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+sco-tester-inc1[59]: = LKD Connect Waits While Controller R..   04:01:39.863531
+sco-tester-inc1[59]: = Total: 1, Passed: 1 (100.0%)..   04:01:39.863849
+exit=0 end 2026-11-15 04:01:39

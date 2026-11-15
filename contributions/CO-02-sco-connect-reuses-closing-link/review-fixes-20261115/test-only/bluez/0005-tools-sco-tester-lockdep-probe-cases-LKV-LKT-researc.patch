@@ -1,0 +1,190 @@
+From 52d92827bfc66cb9c1b73360fc72f9acc43cfb73 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 02:51:00 +0100
+Subject: [PATCH 05/17] tools/sco-tester: lockdep probe cases LKV/LKT
+ (research, not for posting)
+
+---
+ tools/sco-tester.c | 104 ++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 102 insertions(+), 2 deletions(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 5855def25..a470aef7a 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -86,6 +86,7 @@ enum reconnect_mode {
+ 	CONNECT_OTHER_RETRY,	/* ... other voice setting, setup retried */
+ 	INCOMING_HELD,		/* Link set up by the remote, socket open */
+ 	INCOMING_FREE,		/* ... socket closed, nothing holds the link */
++	INCOMING_TEARDOWN,	/* ... socket closed, controller removed at once */
+ };
+ 
+ struct sco_client_data {
+@@ -290,6 +291,7 @@ static void test_pre_setup(const void *test_data)
+ }
+ 
+ static void park_worker(unsigned int ms);
++static void park_sync(unsigned int ms);
+ 
+ static void test_post_teardown(const void *test_data)
+ {
+@@ -329,6 +331,8 @@ static void test_post_teardown(const void *test_data)
+ 
+ 	hciemu_unref(data->hciemu);
+ 	data->hciemu = NULL;
++
++	park_sync(0);
+ }
+ 
+ static void test_data_free(void *test_data)
+@@ -442,6 +446,11 @@ static const struct sco_client_data incoming_free = {
+ 	.reconnect = INCOMING_FREE,
+ };
+ 
++static const struct sco_client_data incoming_teardown = {
++	.server = true,
++	.reconnect = INCOMING_TEARDOWN,
++};
++
+ static const struct sco_client_data incoming_free_transp = {
+ 	.server = true,
+ 	.reconnect = INCOMING_FREE,
+@@ -2234,6 +2243,62 @@ static void park_worker(unsigned int ms)
+ 		tester_print("Idle-disconnect worker parked for %u ms", ms);
+ }
+ 
++/* Lockdep probe (debug-only parameter): hold the cmd_sync worker before it dequeues */
++static void park_sync(unsigned int ms)
++{
++	FILE *f = fopen("/sys/module/bluetooth/parameters/w2c_park_sync_ms",
++									"w");
++
++	if (!f)
++		return;
++
++	fprintf(f, "%u\n", ms);
++	fclose(f);
++
++	if (ms)
++		tester_print("cmd_sync worker parked for %u ms", ms);
++}
++
++static const uint8_t lk_ext_adv_params[] = {
++	0x01,				/* instance */
++	0x00, 0xC0, 0x00, 0x00,		/* flags */
++	0x00, 0x00,			/* duration */
++	0x00, 0x00,			/* timeout */
++	0xA0, 0x00, 0x00, 0x00,		/* min_interval */
++	0xA0, 0x00, 0x00, 0x00,		/* max_interval */
++	0x7f,				/* tx_power */
++};
++
++static bool lk_extadv_pass(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->timer_id = 0;
++	/* The controller is removed with the Add Extended Advertising
++	 * Parameters entry still queued behind the parked worker.
++	 */
++	tester_test_passed();
++	return false;
++}
++
++static void test_lk_extadv(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	if (access("/sys/module/bluetooth/parameters/w2c_park_sync_ms",
++								W_OK) < 0) {
++		tester_print("Needs the debug-only w2c_park_sync_ms parameter");
++		tester_test_abort();
++		return;
++	}
++
++	park_sync(400);
++	mgmt_send(data->mgmt, MGMT_OP_ADD_EXT_ADV_PARAMS, data->mgmt_index,
++			sizeof(lk_ext_adv_params), lk_ext_adv_params,
++			NULL, NULL, NULL);
++	reconnect_arm(data, 50, lk_extadv_pass);
++}
++
+ static bool incoming_connect3(void *user_data);
+ 
+ static bool hook_incoming_disc(const void *buf, uint16_t len, void *user_data)
+@@ -2421,6 +2486,15 @@ static bool incoming_connect2(void *user_data)
+ 	return false;
+ }
+ 
++static bool incoming_teardown_pass(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	data->timer_id = 0;
++	reconnect_end(data, true);
++	return false;
++}
++
+ static bool incoming_accept(struct tester_io *io, uint32_t cond,
+ 							void *user_data)
+ {
+@@ -2440,13 +2514,20 @@ static bool incoming_accept(struct tester_io *io, uint32_t cond,
+ 	tester_print("Incoming link accepted");
+ 	data->sk = sk;
+ 
+-	if (scodata->reconnect == INCOMING_FREE) {
++	if (scodata->reconnect == INCOMING_FREE ||
++				scodata->reconnect == INCOMING_TEARDOWN) {
+ 		park_worker(INCOMING_PARK_MS);
+ 		close(data->sk);
+ 		data->sk = -1;
+ 		tester_print("Accepted socket closed, nothing holds the link");
+ 	}
+ 
++	if (scodata->reconnect == INCOMING_TEARDOWN) {
++		/* End the test while the parked worker still runs */
++		reconnect_arm(data, 30, incoming_teardown_pass);
++		return false;
++	}
++
+ 	reconnect_arm(data, INCOMING_DELAY_MS, incoming_connect2);
+ 	return false;
+ }
+@@ -2460,7 +2541,8 @@ static void test_incoming(const void *test_data)
+ 	 * microseconds, so a closed link can only be caught with the
+ 	 * debug-only w2c_park_ms parameter.
+ 	 */
+-	if (scodata->reconnect == INCOMING_FREE &&
++	if ((scodata->reconnect == INCOMING_FREE ||
++			scodata->reconnect == INCOMING_TEARDOWN) &&
+ 			access("/sys/module/bluetooth/parameters/w2c_park_ms",
+ 								W_OK) < 0) {
+ 		tester_print("Needs the debug-only w2c_park_ms parameter");
+@@ -2584,6 +2666,24 @@ int main(int argc, char *argv[])
+ 					&incoming_free_transp, setup_powered,
+ 					test_incoming, false, false, false, 9);
+ 
++	/* Lockdep probes (research): LKV = the wait of a connect() onto a
++	 * running disconnect worker, LKT = a controller removed under a running
++	 * disconnect worker; both followed by a removal with an Add Extended
++	 * Advertising Parameters entry queued. They need debug-only kernels.
++	 */
++	test_sco_full("LKV1 Connect Over Parked Worker", &incoming_free,
++				setup_powered, test_incoming,
++				false, false, false, 9);
++	test_sco_full("LKV2 Unregister With Queued Ext Adv Params",
++				&connect_success, setup_powered,
++				test_lk_extadv, false, false, false, 9);
++	test_sco_full("LKT1 Teardown With Parked Worker", &incoming_teardown,
++				setup_powered, test_incoming,
++				false, false, false, 9);
++	test_sco_full("LKT2 Unregister With Queued Ext Adv Params",
++				&connect_success, setup_powered,
++				test_lk_extadv, false, false, false, 9);
++
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,65 @@
+From b25f64ff7ad7e58b125e515c3fa6d6f02c4f2b20 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 16:18:29 +0100
+Subject: [PATCH 04/17] tools/sco-tester: research watcher for stuck guests
+ (not for posting)
+
+---
+ tools/sco-tester.c | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index e73c6d648..5855def25 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -13,6 +13,8 @@
+ #endif
+ 
+ #include <stdio.h>
++#include <signal.h>
++#include <sys/prctl.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <errno.h>
+@@ -2478,9 +2480,38 @@ static void test_incoming(const void *test_data)
+ 	setup_listen(data, incoming_accept);
+ }
+ 
++/* Research only: on a kernel with the debug parameter and magic sysrq, dump the
++ * task states every 40 s, to see what a stuck guest is doing.
++ */
++static void start_watcher(void)
++{
++	pid_t pid;
++
++	if (access("/sys/module/bluetooth/parameters/w2c_park_ms", W_OK) < 0)
++		return;
++
++	pid = fork();
++	if (pid != 0)
++		return;
++
++	prctl(PR_SET_PDEATHSIG, SIGKILL);
++
++	for (;;) {
++		FILE *f;
++
++		sleep(40);
++		f = fopen("/proc/sysrq-trigger", "w");
++		if (!f)
++			continue;
++		fputs("t\n", f);
++		fclose(f);
++	}
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	tester_init(&argc, &argv);
++	start_watcher();
+ 
+ 	test_sco("Basic Framework - Success", NULL, setup_powered,
+ 							test_framework);
+-- 
+2.43.0
+

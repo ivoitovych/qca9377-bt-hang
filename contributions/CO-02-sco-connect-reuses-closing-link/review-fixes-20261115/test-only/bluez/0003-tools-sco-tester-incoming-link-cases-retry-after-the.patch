@@ -1,0 +1,38 @@
+From 502ac578a8943b067e0abcbf3c6603778f411f02 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 15:33:36 +0100
+Subject: [PATCH 03/17] tools/sco-tester: incoming link cases, retry after the
+ parked worker (research, not for posting)
+
+---
+ tools/sco-tester.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index e0b330aad..e73c6d648 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -2248,7 +2248,8 @@ static bool hook_incoming_disc(const void *buf, uint16_t len, void *user_data)
+ 	if (data->disc_held && le16_to_cpu(evt->handle) == data->handle &&
+ 							!evt->status) {
+ 		data->disc_held = false;
+-		reconnect_arm(data, RECONNECT_DELAY_MS, incoming_connect3);
++		/* A parked worker may still delay the host's events */
++		reconnect_arm(data, INCOMING_PARK_MS + 200, incoming_connect3);
+ 	}
+ 
+ 	return true;
+@@ -2385,6 +2386,10 @@ static bool incoming_connect2(void *user_data)
+ 		return false;
+ 
+ 	data->sk2 = incoming_sock(data, &err);
++
++	/* The parked worker blocks the host's event processing as well */
++	park_worker(0);
++
+ 	if (data->sk2 < 0) {
+ 		reconnect_end(data, false);
+ 		return false;
+-- 
+2.43.0
+
