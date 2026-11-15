@@ -66,10 +66,10 @@ cmd_new() {
     local claim="" why="" cmd="" boots=""
     while (( $# )); do
         case "$1" in
-            --claim) claim="${2:-}"; shift 2 ;;
-            --why)   why="${2:-}";   shift 2 ;;
-            --cmd)   cmd="${2:-}";   shift 2 ;;
-            --boots) boots="${2:-}"; shift 2 ;;
+            --claim) claim="${2:-}"; shift 2 || { echo "${0##*/}: $1 needs a value" >&2; exit 2; } ;;
+            --why)   why="${2:-}";   shift 2 || { echo "${0##*/}: $1 needs a value" >&2; exit 2; } ;;
+            --cmd)   cmd="${2:-}";   shift 2 || { echo "${0##*/}: $1 needs a value" >&2; exit 2; } ;;
+            --boots) boots="${2:-}"; shift 2 || { echo "${0##*/}: $1 needs a value" >&2; exit 2; } ;;
             *) die "unknown argument: $1" ;;
         esac
     done

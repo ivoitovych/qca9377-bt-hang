@@ -17,7 +17,7 @@
 # window or tools/bt-trial reports a trial open — that evidence outranks this
 # test (BRIEF §7). Root required for everything but status.
 #
-# ⚠️ 2026-09-23: `load`/`restore` WEDGED THE CONTROLLER (EX-046). Unloading and
+# ⚠️ `load` and `restore` are REFUSED (exit 2) by the code. 2026-09-23: they WEDGED THE CONTROLLER (EX-046). Unloading and
 # re-probing btusb on this part, healthy, stock module, ended with HCI Reset
 # timing out and hci0 registered with an all-zero address — before any swap had
 # even happened. Do not run load/restore on a live system here. The module has
@@ -145,7 +145,13 @@ patched-daemon)
 	systemctl daemon-reload && systemctl restart bluetooth
 	sleep 1; "$0" status
 	;;
-load)
+load|restore)
+	# Refused outright: swapping bluetooth.ko on a live system wedged the
+	# controller (EX-046). The code below this case is kept for reference only.
+	echo "REFUSED: '$cmd' unloads and reloads btusb and bluetooth.ko on a live system; that wedged the controller (EX-046). Use a cold boot with the module in updates/ instead." >&2
+	exit 2
+	;;
+load_disabled)
 	guard
 	v="${2:?load unpatched|patched}"
 	ko="$RT/bluetooth-$v.ko"; [[ -f $ko ]] || { echo "no $ko — build it first" >&2; exit 2; }
@@ -157,7 +163,7 @@ load)
 	finish_stack
 	sleep 2; "$0" status
 	;;
-restore)
+restore_disabled)
 	guard
 	unload_stack || exit 1
 	modprobe bluetooth

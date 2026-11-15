@@ -133,20 +133,38 @@ fi
 echo "  ✓ message clean"
 
 # ── IDENTITY, CHECKED BEFORE THE COMMIT EXISTS ────────────────────────────
-# Every commit of this repository is authored AND committed by the project
-# author: the identity configured in this checkout (user.name, user.email).
-# Both fields, because the committer is set by whoever runs `git commit` and is
-# not shown by a plain `git log`; a hosted environment or a tool can set it to
-# something else while the author looks right. A checkout without an identity
-# is refused as well: git would invent one. The same two fields are checked
-# again on every commit about to be pushed (below) and by CI on every push.
-want_name="$(git config user.name 2>/dev/null)"; want_mail="$(git config user.email 2>/dev/null)"
-if [[ -z "$want_name" || -z "$want_mail" ]]; then
-    echo "  ✗ no identity configured in this checkout (git config user.name / user.email)" >&2
-    echo "ABORT: nothing committed" >&2
-    exit 1
+# Every commit of this repository is authored AND committed by ONE fixed person,
+# the project author: the WANT value of the identity job in
+# .github/workflows/checks.yml, which CI compares every pushed commit with.
+# This gate reads that same value from the project's own copy of the workflow
+# (next to this script), NOT from the checkout's git configuration: a checkout
+# whose configuration was reset to an environment's default would otherwise
+# agree with itself and pass, which is the 2026-09-18 incident this gate was
+# written for. Both fields, because the committer is set by whoever runs
+# `git commit` and is not shown by a plain `git log`. An empty identity is
+# refused as well: git would invent one. The same two fields are checked again
+# on every commit about to be pushed (below) and by CI on every push.
+#
+# TEST SEAM: BT_REPO_SAVE_CONFIG_IDENTITY=1 takes the identity from the target
+# checkout's own git configuration instead. Only the test suite sets it, for
+# scratch repositories that carry a throwaway identity.
+want=""
+if [[ "${BT_REPO_SAVE_CONFIG_IDENTITY:-}" == 1 ]]; then
+    want_name="$(git config user.name 2>/dev/null)"; want_mail="$(git config user.email 2>/dev/null)"
+    if [[ -z "$want_name" || -z "$want_mail" ]]; then
+        echo "  ✗ no identity configured in this checkout (git config user.name / user.email)" >&2
+        echo "ABORT: nothing committed" >&2
+        exit 1
+    fi
+    want="$want_name <$want_mail>"
+else
+    want="$(sed -n 's/^[[:space:]]*WANT:[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$HERE/../.github/workflows/checks.yml" 2>/dev/null | head -1)"
+    if [[ -z "$want" || "$want" != *" <"*">" ]]; then
+        echo "  ✗ the project author could not be read from .github/workflows/checks.yml (WANT) — refusing to guess" >&2
+        echo "ABORT: nothing committed" >&2
+        exit 1
+    fi
 fi
-want="$want_name <$want_mail>"
 id_author="$(git var GIT_AUTHOR_IDENT 2>/dev/null)"
 id_committer="$(git var GIT_COMMITTER_IDENT 2>/dev/null)"
 id_bad=0
@@ -156,11 +174,11 @@ for who in "author:$id_author" "committer:$id_committer"; do
     if [[ -z "$ident" ]]; then
         echo "  ✗ no $role identity — git would invent one" >&2; id_bad=1
     elif [[ "$ident" != "$want" ]]; then
-        echo "  ✗ $role is not this checkout's identity ($want): $ident" >&2; id_bad=1
+        echo "  ✗ $role is not the expected identity ($want): $ident" >&2; id_bad=1
     fi
 done
 if (( id_bad )); then
-    echo "     unset GIT_AUTHOR_* / GIT_COMMITTER_*, or set git config user.name / user.email, then retry" >&2
+    echo "     unset GIT_AUTHOR_* / GIT_COMMITTER_*, or set git config user.name / user.email to the project author, then retry" >&2
     echo "ABORT: nothing committed" >&2
     exit 1
 fi
@@ -176,7 +194,7 @@ echo "  author: $(git log -1 --format='%an <%ae>')"
 # the push below can publish it.
 recorded_a="$(git log -1 --format='%an <%ae>')"; recorded_c="$(git log -1 --format='%cn <%ce>')"
 if [[ "$recorded_a" != "$want" || "$recorded_c" != "$want" ]]; then
-    echo "  ✗ the recorded author or committer is not this checkout's identity — undoing the commit" >&2
+    echo "  ✗ the recorded author or committer is not the expected identity — undoing the commit" >&2
     echo "      author: $recorded_a   committer: $recorded_c" >&2
     git reset -q --soft HEAD~1
     echo "ABORT: commit undone; nothing pushed" >&2
@@ -222,7 +240,7 @@ while read -r c; do
     fi
 done < <(git rev-list "$br" --not --remotes 2>/dev/null)
 if (( id_push_bad )); then
-    echo "  ✗ a commit about to be pushed is not authored and committed by this checkout's identity ($want) — not pushed" >&2
+    echo "  ✗ a commit about to be pushed is not authored and committed by the expected identity ($want) — not pushed" >&2
     exit 1
 fi
 git push -q "$remote" "$br" 2>&1 | tail -3

@@ -540,6 +540,11 @@ export BT_EVIDENCE_STATE="$SUITE_MACHINE/evidence-state" BT_MODE_STAMP="$SUITE_M
 # this keeps a forgotten seam from writing there in the first place.
 mkdir -p "$SUITE_MACHINE/evidence-repo"
 export BT_EVIDENCE_REPO="$SUITE_MACHINE/evidence-repo"
+# repo-save checks the commit identity against the project author named in
+# .github/workflows/checks.yml; the scratch repositories here carry a throwaway
+# identity, so the suite asks for the old comparison with the repository's own
+# configuration. The one test of the fixed identity unsets this.
+export BT_REPO_SAVE_CONFIG_IDENTITY=1
 
 # THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
 #
@@ -14682,8 +14687,8 @@ save() { devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
 # exists; the scratch repository's own identity passes (the commits below).
 SVAI=$(GIT_AUTHOR_NAME="Someone Else" GIT_AUTHOR_EMAIL="else@example.com" save "fix the thing"); svairc=$?
 SVCI=$(GIT_COMMITTER_NAME="Someone Else" GIT_COMMITTER_EMAIL="else@example.com" save "fix the thing"); svcirc=$?
-(( svairc != 0 && svcirc != 0 )) && [[ "$SVAI" == *"author is not this checkout's identity"* \
-                                  && "$SVCI" == *"committer is not this checkout's identity"* ]] \
+(( svairc != 0 && svcirc != 0 )) && [[ "$SVAI" == *"author is not the expected identity"* \
+                                  && "$SVCI" == *"committer is not the expected identity"* ]] \
     && ok "repo-save refuses a foreign author, and a foreign committer, before the commit exists" \
     || bad "a foreign identity was accepted (author rc=$svairc, committer rc=$svcirc)"
 
@@ -14753,12 +14758,12 @@ printf 'identity probe\n' > "$SCRATCH/save/ident.log"
 svbefore=$(git -C "$SCRATCH/save" rev-parse HEAD)
 SVID=$(GIT_AUTHOR_NAME="Another Person" GIT_AUTHOR_EMAIL="another@example.com" save "identity probe"); svidrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
-(( svidrc != 0 )) && [[ "$SVID" == *"author is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
+(( svidrc != 0 )) && [[ "$SVID" == *"author is not the expected identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save refuses an author that is not the checkout's identity before any commit exists" \
     || bad "a foreign author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
 SVIDC=$(GIT_COMMITTER_NAME="Another Person" GIT_COMMITTER_EMAIL="another@example.com" save "identity probe"); svidcrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
-(( svidcrc != 0 )) && [[ "$SVIDC" == *"committer is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
+(( svidcrc != 0 )) && [[ "$SVIDC" == *"committer is not the expected identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save checks the committer field as well as the author" \
     || bad "a foreign committer identity got through (rc=$svidcrc)"
 # And a legitimate identity still commits — a gate that refuses everything is
@@ -15117,6 +15122,130 @@ ACMN=$(acmr none whole); acmnrc=$?
     && ok "access-classify keeps a namespace world's own mount inside it, whether mount's execve lands before or after its vfork returns" \
     || bad "a world's own mount: split rc=$acmsrc, whole rc=$acmwrc ($(grep MACHINE <<<"$ACMW" | head -1)), no world rc=$acmnrc"
 rm -rf "$ACM"
+
+echo
+echo "review fixes of 2026-11-15 — option parsing, refusals, exit contracts"
+echo "──────────────────────────────────────────────────────────────"
+#
+# Each check below is built so the OLD behaviour fails it.
+
+# A TWO-WORD OPTION GIVEN LAST. `--window` and its kin did `shift 2` under
+# `set -uo pipefail` with no -e: with no value left the shift failed, $# stayed
+# 1 and the option loop spun for ever. Every such option must now return at
+# once with a usage status (2), and the loop is bounded by timeout here so a
+# regression reads as 124, not as a hung suite.
+RF=$(mktemp -d)
+rf_last() {   # <tool> <args...> — run with a bound; print the exit status
+    local _t=$1; shift
+    BT_REPO="$RF" BT_EVIDENCE_REPO="$RF" BT_TRACE_DIR="$RF/none" BT_HEALTH_DIR="$RF/none" \
+        timeout 10 "tools/$_t" "$@" >/dev/null 2>&1
+    echo $?
+}
+RFBAD=''
+for _spec in "bt-actions -b" "bt-actions --since" "bt-actions --until" \
+             "bt-capdiff --since" "bt-capdiff --until" "bt-capdiff -n" \
+             "bt-context -b" "bt-context -C" \
+             "bt-logvolume -b" "bt-logvolume --since" "bt-logvolume -n" \
+             "bt-phase -b" "bt-phase --incident-gap" \
+             "bt-sco --dir" \
+             "bt-exhibit new some-slug --claim" "bt-exhibit new some-slug --why" \
+             "bt-exhibit new some-slug --cmd" "bt-exhibit new some-slug --boots"; do
+    read -r -a _a <<<"$_spec"
+    _rc=$(rf_last "${_a[@]}")
+    [[ "$_rc" == 2 ]] || RFBAD+=" [$_spec -> $_rc]"
+done
+[[ -z "$RFBAD" ]] \
+    && ok "a two-word option given last exits 2 at once in all 18 option loops, none spins" \
+    || bad "a two-word option given last did not exit 2:$RFBAD"
+# bt-sco's bare --window is documented (it means the default window), so it is
+# not an error: it must simply return, whatever the answer.
+_rc=$(rf_last bt-sco --window)
+[[ "$_rc" != 124 ]] \
+    && ok "bt-sco --window as the last argument returns (rc=$_rc) instead of looping" \
+    || bad "bt-sco --window as the last argument never returned"
+# And no `shift 2` is left unguarded in an option loop of the shipped tools:
+# derived, not listed. A `shift 2` is safe when it is guarded (|| ...), when the
+# value is required by ${2:?...}, or when the line is the library's own check.
+RFUNG=$(grep -rnE 'shift 2( ;;|;|$)' tools bin 2>/dev/null \
+        | grep -vE 'shift 2 \|\|' | grep -vE '\$\{2:\?' | grep -vE 'tools/lib/journal\.sh' || true)
+[[ -z "$RFUNG" ]] \
+    && ok "no unguarded 'shift 2' in tools/ or bin/" \
+    || bad "unguarded 'shift 2' in an option loop: $(head -3 <<<"$RFUNG" | tr '\n' '|')"
+
+# runtime-mgmt-test.sh load/restore swapped bluetooth.ko live and wedged the
+# controller (EX-046). The script must refuse both, before it reads anything.
+for _v in load restore; do
+    _o=$(scripts/runtime-mgmt-test.sh "$_v" patched 2>&1); _rc=$?
+    [[ "$_rc" == 2 && "$_o" == *"REFUSED"* && "$_o" == *"EX-046"* ]] \
+        && ok "runtime-mgmt-test.sh $_v is refused with exit 2 and names EX-046" \
+        || bad "runtime-mgmt-test.sh $_v: rc=$_rc: $(head -2 <<<"$_o" | tr '\n' '|')"
+done
+
+# bt-archive --replace MUST NEVER SHORTEN AN ARCHIVE. A live boot loses its
+# oldest journal files, so a prefix that is re-archived "in full" can come back
+# with FEWER records than the prefix holds; the repair would then replace the
+# only copy of the early records. Built with a fixture whose export holds one
+# record, against an archive of the same boot that holds three.
+RFA=$(mktemp -d)
+mkdir -p "$RFA/short" "$RFA/dest"
+cp tests/journal/archive/list-boots.log tests/journal/archive/default.log "$RFA/short/"
+head -4 tests/journal/archive/default.b-1.log > "$RFA/short/default.b-1.log"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFA/dest" tools/bt-archive -1 >/dev/null 2>&1
+mapfile -t _full < <(ls "$RFA/dest"/boot-c1315c25.export.* 2>/dev/null)
+_dc=gzip; [[ "${_full[0]:-}" == *.zst ]] && _dc=zstd; [[ "${_full[0]:-}" == *.xz ]] && _dc=xz
+_n_before=$($_dc -dc "${_full[0]:-/dev/null}" 2>/dev/null | grep -c '^__CURSOR=' || true)
+_sum_before=$(cksum < "${_full[0]:-/dev/null}")
+RFAO=$(BT_JOURNAL_FIXTURE="$RFA/short" BT_ARCHIVE_DIR="$RFA/dest" tools/bt-archive -1 --replace 2>&1); rfarc=$?
+_sum_after=$(cksum < "${_full[0]:-/dev/null}")
+mapfile -t _side < <(ls "$RFA/dest"/shorter-boot-c1315c25.export.* 2>/dev/null)
+(( _n_before == 3 )) && (( rfarc != 0 )) && [[ "$_sum_before" == "$_sum_after" && "${#_side[@]}" == 1 \
+        && "$RFAO" == *"NOT replaced"* ]] \
+    && ok "bt-archive --replace refuses a shorter export: the old archive is untouched, the new one kept aside (rc=$rfarc)" \
+    || bad "bt-archive --replace with a shorter export: rc=$rfarc, before=$_n_before records, unchanged=$([[ $_sum_before == "$_sum_after" ]] && echo yes || echo no), side files=${#_side[@]}: $(tail -1 <<<"$RFAO")"
+# The side file is not an archive to any reader: --list shows only the original.
+RFAL=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFA/dest" tools/bt-archive --list 2>&1)
+[[ "$RFAL" != *"shorter-boot"* ]] \
+    && ok "the kept-aside export is not listed as an archive" \
+    || bad "--list shows the kept-aside export as an archive"
+# The control, so the refusal can fail: an export with at least as many records
+# still replaces (that is what --repair is for).
+rm -f "${_side[@]}"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFA/dest" tools/bt-archive -1 --replace >/dev/null 2>&1; rfarc2=$?
+(( rfarc2 == 0 )) \
+    && ok "bt-archive --replace with an export of equal length still replaces" \
+    || bad "bt-archive --replace refused an export that is not shorter (rc=$rfarc2)"
+rm -rf "$RFA"
+
+# repo-save's IDENTITY IS THE PROJECT AUTHOR, NOT WHATEVER THE CHECKOUT SAYS.
+# A checkout reset to an environment's default agrees with itself; the check
+# must compare with the fixed author CI uses (WANT in checks.yml). The suite
+# exports BT_REPO_SAVE_CONFIG_IDENTITY=1 for its throwaway scratch identities;
+# these checks drop it.
+RFI=$(mktemp -d); git -C "$RFI" init -q; git -C "$RFI" config user.email test@example.com; git -C "$RFI" config user.name test
+printf 'one line\n' > "$RFI/a.txt"
+_hb=$(git -C "$RFI" rev-parse HEAD 2>/dev/null || echo none)
+RFIO=$(env -u BT_REPO_SAVE_CONFIG_IDENTITY devtools/repo-save "$RFI" "a commit" --no-push 2>&1); rfirc=$?
+_ha=$(git -C "$RFI" rev-parse HEAD 2>/dev/null || echo none)
+(( rfirc != 0 )) && [[ "$_hb" == "$_ha" && "$RFIO" == *"not the expected identity"* ]] \
+    && ok "repo-save refuses a commit whose identity is only the checkout's own configuration" \
+    || bad "repo-save accepted the checkout's own identity (rc=$rfirc): $(grep -m1 '✗' <<<"$RFIO")"
+_want=$(sed -n 's/^[[:space:]]*WANT:[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' .github/workflows/checks.yml | head -1)
+_wn=${_want%% <*}; _we=${_want#*<}; _we=${_we%>}
+RFIO2=$(env -u BT_REPO_SAVE_CONFIG_IDENTITY GIT_AUTHOR_NAME="$_wn" GIT_AUTHOR_EMAIL="$_we" \
+        GIT_COMMITTER_NAME="$_wn" GIT_COMMITTER_EMAIL="$_we" devtools/repo-save "$RFI" "a commit" --no-push 2>&1); rfirc2=$?
+_ha2=$(git -C "$RFI" rev-parse HEAD 2>/dev/null || echo none)
+[[ -n "$_want" ]] && (( rfirc2 == 0 )) && [[ "$_ha2" != "$_ha" ]] \
+    && ok "repo-save commits under the project author named in checks.yml, whatever the checkout's configuration" \
+    || bad "repo-save refused the project author (rc=$rfirc2): $(grep -m1 '✗' <<<"$RFIO2")"
+# An empty identity is still refused (the configuration seam, no identity at all).
+RFE=$(mktemp -d); git -C "$RFE" init -q; printf 'x\n' > "$RFE/b.txt"
+RFEO=$(devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
+(( rferc != 0 )) && [[ "$RFEO" == *"no identity"* ]] \
+    && ok "repo-save still refuses a checkout with no identity" \
+    || bad "repo-save did not refuse an empty identity (rc=$rferc)"
+rm -rf "$RFI" "$RFE"
+# MARKER-NEW-TESTS-END
+rm -rf "$RF"
 
 echo
 echo "the tests may not write to the real evidence tree"

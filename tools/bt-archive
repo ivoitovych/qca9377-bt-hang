@@ -350,6 +350,38 @@ if (( ARC_N != SRC_N )); then
     refuse "read-back mismatch: $SRC_N record(s) exported, $ARC_N recovered — archive discarded"
 fi
 
+# ── NEVER REPLACE AN ARCHIVE WITH A SHORTER ONE ──────────────────────────
+#
+# --replace exists to repair a SHORT archive, but a live boot loses its oldest
+# journal files over time: by the time a prefix is re-archived the ring may hold
+# FEWER records than the prefix does, and the "repair" would then shorten the
+# only copy of the early records. So the records already on disk are counted
+# (every archive of this boot, whatever its extension) and the new export must
+# hold at least as many. Otherwise the old files stay untouched and the new
+# export is kept beside them under a name no reader globs.
+if [[ -e "$OUT" ]]; then
+    OLD_N=0
+    for old in "$DEST_ABS"/boot-"${BID:0:8}".export.*; do
+        [[ "$old" == *.prefix || "$old" == "$TMP" ]] && continue
+        if od=$(decomp_for "$old"); then
+            on=$($od < "$old" 2>/dev/null | grep -c '^__CURSOR=' || true)
+        else
+            on=-1
+        fi
+        if (( on < 0 )); then
+            # unreadable here: its size cannot be compared, so it cannot be replaced
+            OLD_N=$(( SRC_N + 1 ))
+        elif (( on > OLD_N )); then
+            OLD_N=$on
+        fi
+    done
+    if (( SRC_N < OLD_N )); then
+        SIDE="$DEST_ABS/shorter-boot-${BID:0:8}.export.$EXT"
+        mv -f "$TMP" "$SIDE" 2>/dev/null
+        refuse "the new export holds $SRC_N record(s) but the archive on disk holds more or cannot be counted (${OLD_N}) — NOT replaced; the new export is kept as $SIDE"
+    fi
+fi
+
 mv -f "$TMP" "$OUT" || refuse "could not place $OUT"
 
 # ── ONE BOOT, ONE ARCHIVE ────────────────────────────────────────────────
