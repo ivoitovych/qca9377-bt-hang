@@ -184,6 +184,26 @@ if (( enumerated == 0 )); then
     echo "VALIDATION INCONCLUSIVE — git enumerated no files in $ROOT" >&2
     exit 1
 fi
+# --- executable bits, in every mode ------------------------------------------
+# A tracked file that starts with "#!" must be executable. The suite checks the
+# same, but the suite does not run while a trial is open, and on the laptop a
+# trial is always open: scripts committed without the bit turned CI red three
+# times in two days (2026-11-12 to 11-14; the test-suite maintainer's note of
+# 2026-11-15). This costs a read of two bytes per file, so it runs always.
+# The index's mode is what a clone gets, so that is what is checked.
+noexec=""; nexec=0
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    [[ "$(head -c2 "$f" 2>/dev/null)" == "#!" ]] || continue
+    nexec=$((nexec + 1))
+    mode=$(git ls-files -s -- "$f" 2>/dev/null | cut -d' ' -f1)
+    [[ -z "$mode" ]] && { [[ -x "$f" ]] || noexec+=" $f"; continue; }
+    [[ "$mode" == 100755 ]] || noexec+=" $f"
+done < <(files)
+[[ -z "$noexec" ]] \
+    && ok "all $nexec files with a #! line are executable in the index" \
+    || bad "files with a #! line but no executable bit in the index (git add --chmod=+x):$noexec"
+
 # --- analysis invariants ---------------------------------------------------
 # Syntax checks prove a script parses, not that it means what its comments say.
 # The gap between those two is where this project's worst defects have lived —

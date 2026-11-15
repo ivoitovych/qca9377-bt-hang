@@ -3578,7 +3578,9 @@ fi
 wb_scan() {   # one "<file><TAB><the read>" per unbounded journal read in the tools
     local f
     for f in "${SHFILES[@]}"; do
-        case "$f" in tools/*|bin/*|install.sh|uninstall.sh) ;; *) continue ;; esac
+        # devtools/ too since 2026-11-15: devtools/check's whole-journal read ran
+        # 7 h 44 min on the laptop (69d24d1), and the scan did not look there.
+        case "$f" in tools/*|bin/*|devtools/*|install.sh|uninstall.sh) ;; *) continue ;; esac
         awk -v f="$f" '
             { while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } }
             /^[[:space:]]*#/ { next }
@@ -15348,6 +15350,21 @@ STB=$(python3 -I scripts/send-table-check.py "$STC" 2>&1); stbrc=$?
     && ok "the send table's paths all exist, and an elided or missing path is refused" \
     || bad "send-table-check: real table rc=$strc ($(tail -1 <<<"$STO")); scratch rc=$stbrc: $(tr '\n' '|' <<<"$STB")"
 rm -rf "$STC"
+
+# repo-validate checks executable bits even with --no-suite, the mode a commit
+# takes while a trial is open (always, on the laptop): scripts committed without
+# the bit turned CI red three times in two days (2026-11-12 to 11-14). A scratch
+# repository with one script staged without the bit must fail; with it, pass.
+RVX=$(mktemp -d); git -C "$RVX" init -q
+printf '#!/bin/sh\nexit 0\n' > "$RVX/a.sh"; chmod 0644 "$RVX/a.sh"; git -C "$RVX" add a.sh
+RVXO=$(devtools/repo-validate "$RVX" --no-suite 2>&1); rvxrc=$?
+git -C "$RVX" update-index --chmod=+x a.sh; chmod 0755 "$RVX/a.sh"
+RVXO2=$(devtools/repo-validate "$RVX" --no-suite 2>&1); rvxrc2=$?
+(( rvxrc != 0 )) && [[ "$RVXO" == *"no executable bit in the index"*"a.sh"* ]] \
+        && [[ "$RVXO2" == *"files with a #! line are executable in the index"* && "$RVXO2" != *"no executable bit"* ]] \
+    && ok "repo-validate --no-suite refuses a script staged without its executable bit, and accepts it with the bit" \
+    || bad "repo-validate --no-suite and the executable bit: rc=$rvxrc then rc=$rvxrc2: $(grep -m1 'executable' <<<"$RVXO")"
+rm -rf "$RVX"
 
 # smtp-login-check.sh: EXIT 1 IS "REVOKED", the answer that is wanted, so a
 # network failure may never produce it. Run from a COPY inside a scratch

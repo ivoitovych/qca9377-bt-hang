@@ -53,3 +53,5 @@ tools/bt-state	wd=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null |
 tools/bt-status	BD=$(bt_journal -u bluetooth -b 0 --no-pager 2>/dev/null || true)	pending
 tools/bt-status	WD=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)	pending
 tools/bt-timeline.sh	bt_journal "${SEL[@]}" -o short-unix --no-pager "$@" 2>/dev/null | grep -v '^-- No entries --' | awk -v t="$tag" '{ ts=$1; $1=""; sub(/^ /,""); printf "%s\t%s\t%s\n", ts, t, $0 }'	pending
+devtools/journal-contract	TZ=UTC journalctl --file="$W/built.journal" -b all --no-pager -o short-iso-precise > "$W/got-all" 2>/dev/null	bounded by --file: it reads only the small journal it builds from its own fixture, never the system's (2026-11-15, when the scan was widened to devtools/)
+devtools/sandbox	probe data "a decoy tool's answer, consumed" "journalctl -k -b 0 | tail -1"	a self-test probe inside the decoy world: the journalctl it runs is the decoy's, and the probe exists to show that the decoy answered (2026-11-15, when the scan was widened to devtools/)
