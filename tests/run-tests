@@ -11703,6 +11703,11 @@ uistub chown <<'EOF'
 #!/bin/bash
 echo "chown $*" >> "$PROVE_CALLS"
 EOF
+# light mode marks through logger: recorded here, never the machine's journal
+uistub logger <<'EOF'
+#!/bin/bash
+echo "logger $*" >> "$PROVE_CALLS"
+EOF
 uistub busctl <<'EOF'
 #!/bin/bash
 printf 's "%s"\n' "$(cat "$PROVE_STATE/bus-address" 2>/dev/null)"
