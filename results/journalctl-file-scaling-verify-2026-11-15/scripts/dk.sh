@@ -5,4 +5,4 @@ W=$WORKDIR
 R=$REPO
 s=$1; shift
 exec nice -n 19 docker run --rm --cpus=${CPUS:-6} -v $W:/work -v $R:/repo $DKOPTS \
-    -e MAIN_REV -e VARS -e KS -e RUNS -e LINES -e SECS -e OUT -e EPF co46-build:1 /work/bin/$s "$@"
+    -e MAIN_REV -e VARS -e KS -e RUNS -e LINES -e SECS -e OUT -e EPF -e ONLYCUR co46-build:1 /work/bin/$s "$@"

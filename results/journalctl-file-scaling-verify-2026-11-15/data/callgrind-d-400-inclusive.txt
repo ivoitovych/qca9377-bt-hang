@@ -1,0 +1,45 @@
+--------------------------------------------------------------------------------
+Profile data file '<work dir>/callgrind-d-400.out' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 166726780
+Trigger: Program termination
+Profiled target:  <work dir>/bins/d/journalctl --directory=<work dir>/data/synth/sets/400 -o short --no-pager -n all (PID 8, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+651,286,479 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                    file:function
+--------------------------------------------------------------------------------
+651,286,479 (100.0%)  ???:0x000000000001f530 [/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2]
+646,713,270 (99.30%)  ???:(below main) [<work dir>/bins/d/journalctl]
+646,713,258 (99.30%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+646,713,084 (99.30%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main) [/usr/lib/x86_64-linux-gnu/libc.so.6]
+646,713,020 (99.30%)  ???:main [<work dir>/bins/d/journalctl]
+646,713,006 (99.30%)  ???:run [<work dir>/bins/d/journalctl]
+635,934,234 (97.64%)  ???:show [<work dir>/bins/d/journalctl]
+497,727,617 (76.42%)  ???:real_journal_next [<work dir>/bins/d/libsystemd-shared-255.so]
+496,817,913 (76.28%)  ???:0x000000000010def0 [???]
+496,811,795 (76.28%)  ???:sd_journal_step_one [<work dir>/bins/d/libsystemd-shared-255.so]
+309,571,376 (47.53%)  ???:compare_boot_ids [<work dir>/bins/d/libsystemd-shared-255.so]
+193,567,376 (29.72%)  ???:boot_newest_cached [<work dir>/bins/d/libsystemd-shared-255.so]
+137,105,247 (21.05%)  ???:0x000000000010e120 [???]
+137,099,127 (21.05%)  ???:show_journal_entry [<work dir>/bins/d/libsystemd-shared-255.so]
+105,177,000 (16.15%)  ???:output_short [<work dir>/bins/d/libsystemd-shared-255.so]
+ 54,419,493 ( 8.36%)  ???:0x00000000048cdb90 [???]
+ 54,184,437 ( 8.32%)  ???:journal_file_move_to_object [<work dir>/bins/d/libsystemd-shared-255.so]
+ 54,033,520 ( 8.30%)  ???:0x00000000048cf920 [???]
+ 53,935,600 ( 8.28%)  ???:sd_journal_enumerate_data [<work dir>/bins/d/libsystemd-shared-255.so]
+ 49,590,182 ( 7.61%)  ???:journal_file_read_tail_timestamp [<work dir>/bins/d/libsystemd-shared-255.so]

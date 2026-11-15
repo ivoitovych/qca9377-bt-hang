@@ -11,6 +11,7 @@ A=$W/bins/$ref/jc
 for d in "$@"; do
     boot=$($A --directory="$d" --list-boots --no-pager -q 2>/dev/null | awk 'NR == 2 { print $2 }')
     since=$($A --directory="$d" -o short-unix --no-pager 2>/dev/null | awk 'NR == 2000 { print int($1); exit }')
+    cur=$($A --directory="$d" --no-pager -o export --lines=+3000 2>/dev/null | grep -a '^__CURSOR=' | tail -n 1 | cut -d= -f2-)
     queries=(
         "-o export"
         "-o export -r"
@@ -22,7 +23,12 @@ for d in "$@"; do
         "-o export -r --since=@$since"
         "-o export --reverse -n 3000"
         "-o export --lines=+3000"
+        "-o export --after-cursor=$cur"
+        "-o export --cursor=$cur"
+        "-o export -r --cursor=$cur"
+        "-o export -r --after-cursor=$cur"
     )
+    [ -n "${ONLYCUR:-}" ] && queries=("${queries[@]: -4}")
     for q in "${queries[@]}"; do
         # shellcheck disable=SC2086
         ha=$($A --directory="$d" --no-pager $q 2>/dev/null | sha256sum | cut -c1-16)

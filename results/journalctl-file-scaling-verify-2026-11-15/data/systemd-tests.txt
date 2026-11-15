@@ -1,0 +1,43 @@
+systemd's journal tests on main 6bd4689 + the priority-queue prototype (variant g), built with
+-Dtests=true --buildtype=debugoptimized, run by scripts/inside-tests.sh and scripts/inside-tests-min2.sh.
+Exit status of each test binary.
+
+== queue as shipped (built from 16 files up)
+test-journal exit 0
+test-journal-interleaving exit 0
+test-journal-enum exit 0
+test-journal-flush exit 0
+test-journal-init exit 0
+test-journal-match exit 0
+test-journal-stream exit 0
+test-journal-verify exit 0
+test-journal-file exit 0
+test-mmap-cache exit 0
+
+== queue forced on for any number of files (-DHEAP_MIN_FILES=2), first version of the prototype
+test-journal exit 0
+test-journal-interleaving exit 134   <- "Assertion failed: Expected sd_journal_previous(j) to be positive, but it is zero."
+                                        (test-journal-interleaving.c:1528, after a monotonic seek; cause: the queue was
+                                        built while a file was still unsettled after the seek; see README, section 5)
+test-journal-enum exit 0
+test-journal-flush exit 0
+test-journal-init exit 0
+test-journal-match exit 0
+test-journal-stream exit 0
+test-journal-verify exit 0
+test-journal-file exit 0
+test-mmap-cache exit 0
+
+== queue forced on, after the fix (only archived files that are settled in the walk's direction build it)
+test-journal exit 0
+test-journal-interleaving exit 0
+test-journal-enum exit 0
+test-journal-flush exit 0
+test-journal-init exit 0
+test-journal-match exit 0
+test-journal-stream exit 0
+test-journal-verify exit 0
+test-journal-file exit 0
+test-mmap-cache exit 0
+
+The "as shipped" block was run on the first version; the fixed version was run forced-on only.

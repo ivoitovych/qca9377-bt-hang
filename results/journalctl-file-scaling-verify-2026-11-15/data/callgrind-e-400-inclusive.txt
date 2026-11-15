@@ -1,0 +1,45 @@
+--------------------------------------------------------------------------------
+Profile data file '<work dir>/callgrind-e-400.out' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 644331162
+Trigger: Program termination
+Profiled target:  <work dir>/bins/e/journalctl --directory=<work dir>/data/synth/sets/400 -o short --no-pager -n all (PID 8, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+2,435,945,133 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      file:function
+--------------------------------------------------------------------------------
+2,435,945,133 (100.0%)  ???:0x000000000001f530 [/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2]
+2,431,544,399 (99.82%)  ???:(below main) [<work dir>/bins/e/journalctl]
+2,431,544,387 (99.82%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+2,431,544,217 (99.82%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main) [/usr/lib/x86_64-linux-gnu/libc.so.6]
+2,431,544,153 (99.82%)  ???:main [<work dir>/bins/e/journalctl]
+2,431,522,558 (99.82%)  ???:action_show [<work dir>/bins/e/journalctl]
+2,419,732,040 (99.33%)  ???:show [<work dir>/bins/e/journalctl]
+2,323,306,246 (95.38%)  ???:0x0000000000111300 [???]
+2,323,300,128 (95.38%)  ???:sd_journal_step_one [<work dir>/bins/e/libsystemd-shared-263.so]
+2,010,748,835 (82.54%)  ???:journal_file_find_newest_for_boot_id [<work dir>/bins/e/libsystemd-shared-263.so]
+1,459,773,574 (59.93%)  ???:0x0000000004935420 [???]
+1,450,104,754 (59.53%)  ???:bsearch_safe_internal [<work dir>/bins/e/libsystemd-shared-263.so]
+1,111,223,835 (45.62%)  ???:compare_locations [<work dir>/bins/e/libsystemd-shared-263.so]
+1,065,786,190 (43.75%)  ???:compare_boot_ids [<work dir>/bins/e/libsystemd-shared-263.so]
+  927,536,826 (38.08%)  ???:newest_by_boot_id_compare [<work dir>/bins/e/libsystemd-shared-263.so]
+  867,181,522 (35.60%)  ???:0x000000000493fc50 [???]
+  806,826,218 (33.12%)  ???:id128_compare_func [<work dir>/bins/e/libsystemd-shared-263.so]
+  720,353,118 (29.57%)  ???:0x000000000493e000 [???]
+  659,718,157 (27.08%)  ./string/../sysdeps/x86_64/multiarch/memcmp-avx2-movbe.S:__memcmp_avx2_movbe [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  186,101,896 ( 7.64%)  ???:journal_file_read_tail_timestamp [<work dir>/bins/e/libsystemd-shared-263.so]

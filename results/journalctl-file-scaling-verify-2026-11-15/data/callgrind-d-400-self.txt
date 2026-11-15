@@ -1,0 +1,30 @@
+--------------------------------------------------------------------------------
+Profile data file '<work dir>/callgrind-d-400.out' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 166726780
+Trigger: Program termination
+Profiled target:  <work dir>/bins/d/journalctl --directory=<work dir>/data/synth/sets/400 -o short --no-pager -n all (PID 8, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+651,286,479 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                    file:function
+--------------------------------------------------------------------------------
+193,374,728 (29.69%)  ???:boot_newest_cached [<work dir>/bins/d/libsystemd-shared-255.so]
+126,155,049 (19.37%)  ???:real_journal_next [<work dir>/bins/d/libsystemd-shared-255.so]
+116,004,000 (17.81%)  ???:compare_boot_ids [<work dir>/bins/d/libsystemd-shared-255.so]
+ 49,018,560 ( 7.53%)  ???:journal_file_read_tail_timestamp [<work dir>/bins/d/libsystemd-shared-255.so]
+ 25,196,269 ( 3.87%)  ./string/../sysdeps/x86_64/multiarch/memset-vec-unaligned-erms.S:__memset_avx2_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]

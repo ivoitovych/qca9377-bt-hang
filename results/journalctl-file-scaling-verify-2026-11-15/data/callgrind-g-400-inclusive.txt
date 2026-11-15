@@ -1,0 +1,45 @@
+--------------------------------------------------------------------------------
+Profile data file '<work dir>/callgrind-g-400.out' (creator: callgrind-3.22.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 61725604
+Trigger: Program termination
+Profiled target:  <work dir>/bins/g/journalctl --directory=<work dir>/data/synth/sets/400 -o short --no-pager -n all (PID 8, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+180,857,931 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                    file:function
+--------------------------------------------------------------------------------
+180,857,931 (100.0%)  ???:0x000000000001f530 [/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2]
+176,457,197 (97.57%)  ???:(below main) [<work dir>/bins/g/journalctl]
+176,457,185 (97.57%)  ./csu/../csu/libc-start.c:__libc_start_main@@GLIBC_2.34 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+176,457,015 (97.57%)  ./csu/../sysdeps/nptl/libc_start_call_main.h:(below main) [/usr/lib/x86_64-linux-gnu/libc.so.6]
+176,456,951 (97.57%)  ???:main [<work dir>/bins/g/journalctl]
+176,435,356 (97.55%)  ???:action_show [<work dir>/bins/g/journalctl]
+163,841,220 (90.59%)  ???:show [<work dir>/bins/g/journalctl]
+ 95,029,951 (52.54%)  ???:0x00000000001115a0 [???]
+ 95,023,831 (52.54%)  ???:show_journal_entry [<work dir>/bins/g/libsystemd-shared-263.so]
+ 94,852,281 (52.45%)  ???:output_short [<work dir>/bins/g/libsystemd-shared-263.so]
+ 67,461,098 (37.30%)  ???:0x0000000000111300 [???]
+ 67,454,980 (37.30%)  ???:sd_journal_step_one [<work dir>/bins/g/libsystemd-shared-263.so]
+ 66,959,422 (37.02%)  ???:heap_next [<work dir>/bins/g/libsystemd-shared-263.so]
+ 55,073,283 (30.45%)  ???:heap_compare [<work dir>/bins/g/libsystemd-shared-263.so]
+ 49,028,755 (27.11%)  ???:journal_file_find_newest_for_boot_id [<work dir>/bins/g/libsystemd-shared-263.so]
+ 41,838,752 (23.13%)  ???:0x00000000049337c0 [???]
+ 41,832,634 (23.13%)  ???:prioq_pop [<work dir>/bins/g/libsystemd-shared-263.so]
+ 41,100,324 (22.73%)  ???:0x00000000049337d0 [???]
+ 41,094,204 (22.72%)  ???:strip_tab_ansi [<work dir>/bins/g/libsystemd-shared-263.so]
+ 39,025,094 (21.58%)  ???:shuffle_down.part.0 [<work dir>/bins/g/libsystemd-shared-263.so]
