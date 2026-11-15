@@ -144,6 +144,10 @@ notes at `5cdf0dc`; the built copies were verified to `git apply --check` agains
 
 ### The list's CI bot, 2026-09-19 22:05 / 22:10 UTC
 
+*(corrected 2026-11-15: 22:05 and 22:10 are the saved mails' own times, in the mailbox's CEST, so most
+likely 20:05 and 20:10 UTC, 81 and 86 minutes after the 18:44 UTC send; an inference, the mails'
+headers are not in the repository. "Within 90 minutes" holds either way only on this reading.)*
+
 Patchwork: `0001` is patch `14831546` in series 1169362, `0002` is `14831547` in
 series 1169363. The bot's verdicts, with the full quotation and the check in
 [`reviews/2026-09-20T0300Z-bluez-ci-bot-results.md`](../../reviews/2026-09-20T0300Z-bluez-ci-bot-results.md)

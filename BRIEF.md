@@ -76,15 +76,11 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
   STATUS's issue rows and the list below follow them.
 
-**The state at a glance (2026-10-28; machine lines 2026-10-30; the submission rows of `docs/STATUS.md` win):**
-- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11), 6.12.113 (10-15) and 6.6.160
-  (10-21); in the 6.1, 5.15 and 5.10 release candidates of 10-17, still unreleased on 10-28
-  (`EX-061`; STATUS), **released in 6.1.191, 5.15.224 and 5.10.273 on 10-30**.
-  **2026-11-12:** Ubuntu's `7.0.0-43` carries the entry and is published in noble-updates and
-  noble-security, not installed (STATUS, the machine). Ubuntu's `7.0.0-38` stock btusb lacks it, and so do `-39` (noble-proposed
-  since 10-01) and **`7.0.0-42`, pending in noble-updates since 10-27** (its base is v6.18.55 /
-  v7.2.9; CO-09). **E3 was built for `-42` and installed 10-28, before it booted**; the laptop
-  runs `-42` with it since 2026-10-30 04:31 (Machine, below).
+**The state at a glance (2026-10-28; machine lines 2026-10-30; stale lines corrected 2026-11-15 where marked; the submission rows of `docs/STATUS.md` win):**
+- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11), 6.12.113 (10-15), 6.6.160
+  (10-21), and 6.1.191, 5.15.224 and 5.10.273 (10-30) (`EX-061`; STATUS). Ubuntu's `7.0.0-43`
+  carries the entry and runs on the laptop since 2026-11-12 22:55; `-38`, `-39` and `-42` lack
+  it, and E3 is retired (Machine, below; corrected 2026-11-15).
 - **Accepted upstream, ours:**
   - kernel `86ef0f58bdec` (BT-8): in v7.3 (released 10-18; first in v7.3-rc7); released in 7.2.11, 6.18.57 and 6.12.113 (10-15), 6.6.160 (10-21) and 6.1.191 (10-30);
   - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
@@ -98,18 +94,17 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Waiting for replies (re-checked 2026-10-28):** CO-02 (above); the Tested-by on Hui Peng's
   mesh_tx leak patch (10-06; still `new`); the #1554 retest by a second affected user (nothing
   since 10-14). Every other authors' mesh fix is still `new` with no maintainer reply (STATUS,
-  the mesh row). Stable: 6.1, 5.15 and 5.10 are still at their 10-17 rc1, with ours in; no review
-  mail found for them (lore's web pages refuse this machine, 403; CO-28 waits). **Since 10-29 lore
+  the mesh row). Stable: every line is released (above; corrected 2026-11-15). **Since 10-29 lore
   is readable from here over git**: `scripts/lore-git-message.sh <list> <message-id>` (lore's git
   archive is not behind the bot check), so the stable list's review mails can be looked up the
   same way.
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
-  - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it installed the same day (CO-09; `patches/diag/README.md`); booted 2026-10-30 04:31 with the stock `bluetooth.ko`; the CO-02 module for it is built, not installed: whether to install it (`updates/` + `depmod` + a cold boot) and resume the field test;
+  - **`7.0.0-42`:** the laptop left it on 11-12 for `-43`; the CO-02 module built for it was never installed (STATUS, the machine); whether to resume that field test on `-43` is open (corrected 2026-11-15);
   - **2026-11-02: the review round's decisions D1–D14** (`contributions/review-2026-11-02/followups.md`) now gate every send below;
-  - **sends:** CO-25 was SENT 2026-10-29 02:33 +0100 (the Qualcomm report; STATUS; replies and arrival to watch); CO-11 (the btmon Launchpad bug, approved, the operator files); CO-35 (the package in `send/`: 7.3.y + 7.2.y request and three backport series, after its outside review); CO-19 after the laptop headset test; CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
+  - **sends:** CO-25 was SENT 2026-10-29 02:33 +0100 (the Qualcomm report; STATUS; replies and arrival to watch); CO-11 (the btmon Launchpad bug, approved, the operator files); CO-35 (the package named in `contributions/README.md`, "What to send"); CO-19 after the laptop headset test; CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
   - **the CO-02 module on the laptop:** ran from 10-23 to the 10-29 15:20 shutdown on `-38`; `-42` runs without it (above);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
-  - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacks five CVE fixes of 2026-10-07 (STATUS), then the U12 backport request (CO-03); **U12 struck again 2026-10-31 13:42** (`EX-084`–`EX-088`): the backport is the remedy. It is built and VM-tested as of 10-31: `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes and the U12 backport, and on the trigger it goes from losing A2DP 70/70 to 0/70 (`contributions/CO-03-bluez-u12-backport/backport/`). It waits for the operator's word to install and test it with the MOMENTUM 4;
+  - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacks five CVE fixes of 2026-10-07 (STATUS), then the U12 backport request (CO-03); **U12 struck again 2026-10-31 13:42** (`EX-084`–`EX-088`): the backport is the remedy. It is built and VM-tested as of 10-31: `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes and the U12 backport, and on the trigger it goes from losing A2DP 70/70 to 0/70 (`contributions/CO-03-bluez-u12-backport/backport/`). It has been staged on disk since 11-13 and runs after the next bluetoothd start; the test with the MOMENTUM 4 is still the operator's (hand-off below; corrected 2026-11-15);
   - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; budget 20 GB, the coordinator's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is now flagged at every session start (STATUS, the desktop capture);
   - an Ubuntu SRU for `dc16388d45ec` (less pressing: Ubuntu's next stable base should carry it; an inference);
   - the U6 SRU; the U7 and U17 PipeWire reports and the U15/U20 quirk entries (PipeWire's rules: the operator writes); the U11 opt-in proposal; U19's Launchpad report;
@@ -122,7 +117,7 @@ Recent detail may be shortened. Settled state is never dropped.
     the patch, so **E3 is retired** (STATUS, the machine section). The lines below are the history
     up to `-42`.
   - **From 2026-10-30 04:31:21 (boot `738e228b`) the laptop ran `7.0.0-42` with E3 built for it** (`updates/btusb.ko`, srcversion `DDB92562D1890FC3D262993`; kernel log `QCA: patch rome 0x302 build 0x3e8`) and the **stock** `bluetooth.ko` (`12120DE84945B5EB6D372FD`). From 2026-10-11 16:26 to 10-29 it ran `7.0.0-38` with E3 (srcversion `D1DEA96A0C95BFAB05CEE01`). The recipe is in `patches/diag/README.md`.
-  - `-42`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
+  - `-42`'s **stock** btusb lacks the entry (history; `-43`'s has it and E3 is retired, above).
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
   - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **The trial of the 10-13 boot was therefore closed by hand on 2026-10-18 at 17:03** (`scripts/trial-close-now.sh --reopen`: `main`'s closer from the checkout, passive, row first; 13 SCO setups, 0 timeouts; STATUS), and E3 #2 opened at 17:05:04, mid-boot. Until the deploy, a shutdown with a trial open still decodes the captures before the row if the trial saw a call, and the installed `autostop` and `bt-mark` send HCI Read Local Name up to four times (STATUS, the machine's warnings). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
   - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
@@ -142,7 +137,7 @@ Recent detail may be shortened. Settled state is never dropped.
     be recovered. The desktop capture runs again since 10-23 22:12:30 (STATUS).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer that every reboot removes. Paused from 2026-10-11 to 10-29 (captures from 10-09 06:46 to 10-18 14:14 were lost to bt-trace's free-space floor meanwhile); restarted 10-29 on the operator's word with a 20 GB budget, and again on 10-30 after the `-42` reboot (`docs/tooling-index.md` has the command). Rules: §7, "Evidence".
-- **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11) (`docs/issues.md`).
+- **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
 - **Who works where:**
   - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
@@ -214,7 +209,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   clamp-or-design package; 4 CO-41 and CO-39 (no report yet); 5 the btmon CVE and CO-11a's
 >   renumbered debdiffs. Their results are leads until checked on copy.
 > - **Porting a lane's output into the repository (learned 11-14, five failed pushes):** run
->   `tmp/port-check/check.sh <dir>` (executable bits, the suite's timeout spelling), then
+>   `tmp/port-check/check.sh <dir>` (a machine-local script, not in a clone: executable bits, the suite's timeout spelling), then
 >   `git add -A` and `devtools/repo-scan` before `devtools/save`. Leave in the work area: tester
 >   and bot harness logs (emulated controllers' addresses), saved lore/patchwork pages and other
 >   people's packaging (their addresses, third-party text), kernel images and binaries, scripts that
@@ -263,7 +258,6 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 **Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
 ## 2. The signature — `n = 12`, four kernels, three peripherals, both configurations
-² self-built `bluetooth.ko` from `updates/` (srcversion `66D38200…`); signature unchanged.
 
 ```
 0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → len 27 mtu 9 (3×9-byte packets) → FIRST command observed → +2.0 s tx timeout
@@ -276,14 +270,14 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 | `EX-037` | 09-01 | `-30` | modified | 680 | 39 ms | 2.151 s |
 | `EX-038` | 09-13 | `-31` | modified | 682 | 35 ms | 2.191 s |
 | `EX-040` | 09-13 | `-31` | modified | 1562¹ | 34 ms | 2.140 s |
-| `EX-042` | 09-16 | `-31` | modified | 1595¹ | ~90 ms | 2.147 s |
+| `EX-042` | 09-16 | `-31` | modified | 1595¹ | not recorded | 2.147 s |
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** (`0x0406`) | **11.874 s** |
 | **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`, reason `0x13`) | 2.018 s cmd→timeout |
 | **`EX-047`** | **09-24** | `-31`² | **original** | 717 | (`0x0406`, reason `0x13`) | 2.053 s cmd→timeout |
 | **`EX-051`** | **09-25** | `-31` | **original** | 1857¹ | (`0x0c1a` Write Scan Enable) | 3.672 s; 2.020 s cmd→timeout |
 | **`EX-052`** | **09-25** | **`-34`** | **original** | 3605¹ | (`0x0406`, reason `0x13`) | 2.051 s cmd→timeout |
 | **`EX-053`** | **09-26** | `-34` | **original** | 2432¹ | **7,331 ms** (`0x0406`, reason `0x13`); **Shure AONIC 50** | **9.421 s** |
-| *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
+| *survival* | 09-01 | `-30` | modified | **0** (8 × `len 90 mtu 9`, `EX-037`) | — | *lived* |
 
 ¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first
 command 34–279 ms after link-up); the invariant is *first command + `HCI_CMD_TIMEOUT`*,
@@ -291,6 +285,8 @@ and `EX-043` shows the stream itself running 9.65 s without harm until a command
 Where the log names the dying command it is `0x0406 Disconnect, reason 0x13`, except
 `EX-051`: `0x0c1a Write Scan Enable`, the first command after the stream started — so the
 fault is not specific to Disconnect.
+
+² self-built `bluetooth.ko` from `updates/` (srcversion `66D38200…`); signature unchanged.
 
 ## 3. Settled
 
@@ -328,8 +324,8 @@ fault is not specific to Disconnect.
 
 ## 4. Not settled
 
-- **Mechanism.** Correlation across 12 deaths / 1 survival (§2; "7" when this was written,
-  09-18). *What the ROM firmware does wrong* with alt-1 traffic is unknown and is not claimed;
+- **Mechanism.** Correlation across 12 deaths / 2 survivals (§2's 09-01 link, and `EX-031`'s
+  Enhanced-setup link, §3; "7" deaths when this was written, 09-18). *What the ROM firmware does wrong* with alt-1 traffic is unknown and is not claimed;
   the host-side remedy (load the firmware the entry provides) is validated, §3.
 - **No controlled comparison.** Nobody has forced alt-1 with a sustained stream on demand,
   or blocked alt-1 and shown survival under identical use. The survival was the
@@ -341,7 +337,7 @@ fault is not specific to Disconnect.
 
 | claim | status |
 |---|---|
-| "`BT-1` *is* `0x0428` submitted and never answered" | **FALSE as a general claim** — answered in all 5 alt-1 instances. ⚠️ But `EX-006` (Phase 19) did record one genuinely unanswered, so "never answered" is wrong, and "always answered" is too |
+| "`BT-1` *is* `0x0428` submitted and never answered" | **FALSE as a general claim** — answered in all 5 alt-1 instances (the count when this was written; §2 has 12 now). ⚠️ But `EX-006` (Phase 19) did record one genuinely unanswered, so "never answered" is wrong, and "always answered" is too |
 | "alt probes, then silence" (`EX-033`/`036`) | **FALSE** — artefact of those exhibits' own grep; data was flowing |
 | "the dying command is anonymous *by construction*" | **OVERSTATED** — anonymous to the printk, not the log |
 | "patch `0002`'s guard has never fired" | **FALSE** — fired 4× (`EX-041`); came from grepping one boot |
@@ -383,7 +379,7 @@ an error**; 50/72; subjects 49/46; checkpatch 0 errors under BlueZ's own config;
 **BlueZ takes patches by mail (`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is
 needed — the patch is the report.** `0002` has no `Fixes:` on purpose (pickaxe: a 2015 refactor).
 **v2 of both sent 2026-09-21** (message-only: quoted code re-indented, two lines wrapped).
-**The list's CI bot answered both v1 mails within 90 min (09-19 22:05/22:10 UTC; register §CB):** every
+**The list's CI bot answered both v1 mails within 90 min (09-19 22:05/22:10 as the saved mails show it, in the mailbox's CEST, so most likely 20:05/20:10 UTC, 81 and 86 min after the 18:44 UTC send; an inference, the mails' headers are not in the repository; register §CB):** every
 build, smatch, scan-build, valgrind and distcheck PASS; CheckPatch the one known quoted-line
 warning; **GitLint B3 — hard tabs in the quoted C of both messages — the only actionable item
 (v2 with spaces: operator's call, CB-02)**; TestFunctional FAIL is the bot's own — the same two
@@ -432,7 +428,7 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Evidence, decided 2026-10-11 by the operator.**
   - **What is committed** is the incident window: complete inside the window (every relevant source, no line filtered out, a margin before and after), and nothing outside it. GitHub space serves everyone, so no bulk history goes into git, in any repository.
   - **Evidence is never deleted,** fixed bugs included: a deletion does not shrink history, and a bug can return.
-  - **Raw captures are never left to rotation.** `scripts/bt-trace-archive.py` keeps them all, compressed, in `archive/bt-trace/` (git-ignored, 10 GB budget, never deletes). Windows are cut from there.
+  - **Raw captures are never left to rotation.** `scripts/bt-trace-archive.py` keeps them all, compressed, in `archive/bt-trace/` (git-ignored, 20 GB budget since 10-29; the desktop captures in `archive/hci-capture/`, 25 GB since 11-13; never deletes). Windows are cut from there.
   - **Device addresses:**
     - real addresses are kept separately, never in this repository;
     - files here carry **pseudonyms** from a table kept separately: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
@@ -470,7 +466,7 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever does not belong in this repository is kept separately, never only here.
   - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py`, kept separately). `scripts/unpushed-survey.py` lists what is still local.
   - **Exceptions, kept local on purpose:**
-    - **the raw capture archive** (`archive/`, up to 10 GB). It is bulk, not windows, and GitHub space is not for it;
+    - **the raw capture archive** (`archive/`, 20 GB for bt-trace and 25 GB for the desktop captures). It is bulk, not windows, and GitHub space is not for it;
     - **upstream source trees**, which can be fetched again;
     - **build outputs and the bulk of `tmp/`**, which can be regenerated.
   - **The archive's one weakness** is that it lives on one laptop disk. A copy elsewhere (an external disk) is the operator's call.
@@ -886,6 +882,6 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
 | one dossier per possible contribution: findings, experiments, log, references | `contributions/` (index: `contributions/README.md`) |
-| narrative, why things were believed | `HISTORY.md` (37 phases, dated chapters to 2026-10-28, and the retired hand-off blocks) |
+| narrative, why things were believed | `HISTORY.md` (37 phases, dated chapters to 2026-11-14, and the retired hand-off blocks) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |
