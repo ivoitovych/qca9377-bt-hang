@@ -1,14 +1,27 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. About fifty distinct problems have been observed on this machine by 2026-11-12
-(sixteen `BT`, three `M`, thirty-one `U`, and four off-topic `X`), and
+one defect. About sixty-five distinct problems have been observed on this machine by 2026-11-14
+(twenty-five `BT`, five `M`, thirty-one `U`, and four off-topic `X`; the rows of `docs/STATUS.md` are the count), and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
 
 Each issue below is tracked separately, with its own evidence and its own reportability.
-They are numbered `BT-n` so exhibits and commits can cite them.
+They are numbered `BT-n` (kernel and controller), `M-n` (mesh), `U-n` (userspace and desktop
+audio) and `X-n` (off-topic) so exhibits and commits can cite them.
+
+---
+
+## Current state — 2026-11-15 (a pointer only; `docs/STATUS.md` has the state)
+
+- **New since the 11-12 block below:** `BT-17` to `BT-25` (11-12 to 11-14) and `M-4`, `M-5`
+  (11-14). Their sections stop at 11-13 or 11-14; the later state (B2, D v2 held, the BT-24 and
+  BT-25 package, the send directories) is in their rows in `docs/STATUS.md`. Where a section here
+  says "five patches" for CO-43, that is the 11-13 candidate set (A, B, C, D, E); the series now
+  is in `contributions/README.md`, "What to send".
+- **BT-16** has three occurrences (11-05, 11-11, 11-13), the last on `7.0.0-43` with the stock btusb.
+- **U24's fix** `7e3212fa233e` is in BlueZ 5.88.
 
 ---
 
@@ -1227,7 +1240,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 | U21 | after forgetting and re-pairing the Shure AONIC 50 it comes up in Handsfree, and GNOME Settings' Sound panel shows **no codec/profile row at all** (not only an unusable first line, as in U1); a disconnect and reconnect gives the same (2026-10-29 ~04:38–04:48) | observed by the operator (screenshot: Output and Input "Handsfree - Shure AONIC 50", no row below); why Handsfree: explained by the logs (below, STATUS); why no row: not known |
 | U22 | bluetoothd crashed with a bad `free()` on 2026-09-08 10:23:43, when a codec switch arrived while an AVDTP Close was pending: `a2dp_reconfig()` writes to the setup after `avdtp_close()`/`avdtp_abort()` freed it (registered 2026-10-31; investigated as CO-23 event 1, 2026-10-28) | confirmed in the daemon's debug log and the binary; reproduced under ASan on BlueZ master `82667d713949`; not fixed upstream; our fix ready (CO-23) |
 | U23 | at bluetoothd exit with an A2DP media endpoint registered, `clear_endpoint()` (`profiles/audio/media.c:300`) reads an `a2dp_sep` that `a2dp_unregister_sep()` already freed (2026-10-31) | ASan report in QEMU guests, 3 of 10 runs on 5.72 and 2 of 10 on 5.72 with the CO-03 backport; **present on master, fix series ready (CO-37, 2026-11-01)**; 2026-11-02: the duplicate `MediaEndpoint1.Release` the series exposed is fixed by a sixth mail (a `released` flag; CO-37 `log.md`); not seen on the laptop, whose build has no ASan |
-| U24 | at bluetoothd exit, `discovery_cleanup()` → `invalidate_rssi_and_tx_power()` calls `device_set_rssi_with_delta()` (`src/device.c:6167`) on a device already freed by its D-Bus interface removal (2026-10-31) | ASan report in QEMU guests, twice on 5.72 at the teardown of PipeWire's `test_pipewire_a2dp`; **fixed upstream by `7e3212fa233e`** (not released), 5.72 backport ready (CO-37); not seen on the laptop |
+| U24 | at bluetoothd exit, `discovery_cleanup()` → `invalidate_rssi_and_tx_power()` calls `device_set_rssi_with_delta()` (`src/device.c:6167`) on a device already freed by its D-Bus interface removal (2026-10-31) | ASan report in QEMU guests, twice on 5.72 at the teardown of PipeWire's `test_pipewire_a2dp`; **fixed upstream by `7e3212fa233e`** (in BlueZ 5.88; corrected 2026-11-15, this said "not released"), 5.72 backport ready (CO-37, patch 3 of the Ubuntu bundle); not seen on the laptop |
 | U25 | while running: an A2DP endpoint removed while another D-Bus client holds its transport; that client's `Release` then makes `a2dp_sep_unlock()` unregister the removed SEP, which frees the transport under the caller, and the suspend path calls `a2dp_sep_unlock(NULL)` (2026-11-01) | ASan SEGV `a2dp.c:3566` in QEMU guests on master `14bd6ab65`: every run of all four `Release` variants with CO-37's fixes applied (6 or 7 runs each), and of three of the four without them (the fourth hits U23's read first); `a2dp.c:3254` on 5.72, 5/5 in both variants run; **not fixed upstream**; not in CO-37's series; a local a2dp proposal clears it (CO-37 `work/review-20261101/`); not seen on the laptop. **2026-11-01 evening:** that timer proposal is rejected (it leaks the removed SEP and keeps U26); see CO-37 `log.md` |
 | U26 | while running: an A2DP endpoint removed while another D-Bus client holds its transport, then the adapter removed, then the endpoint's own client leaves the bus about 1 s later: bluetoothd reads the A2DP server that the adapter removal freed (2026-11-01) | ASan `heap-use-after-free` in `a2dp_remove_sep` (`a2dp.c:3042` on master `14bd6ab65`; the freed object allocated by `a2dp_server_register`, freed by `unload_drivers` from `adapter_remove`), reached from the bus-exit watch; QEMU guests, 10/10 test calls on master, on master with CO-37's fixes, and with the timer proposal; not with either alternative being measured; `agent-work/u25-settle-20261101/runs/q1-*`; **not fixed upstream**; not seen on the laptop |
 | U27 | **5.72 only:** an A2DP endpoint removed while another D-Bus client holds its transport, then the stream goes idle (the peer disconnects, or the power-off at SIGTERM): bluetoothd reads freed memory in `clear_endpoint()` (`media.c:300`, the signature of CO-03's original report) (2026-11-02) | ASan `heap-use-after-free` in QEMU guests: 2 of 2 and 3 of 3 runs on 5.72, on 5.72 with the CO-37 backport, and with the Release flag added; master leaks in this case instead of crashing (the settling runs); **the CO-37 5.72 backport does not cover it**; not fixed; not seen on the laptop (CO-37 `log.md`, 2026-11-02) |
