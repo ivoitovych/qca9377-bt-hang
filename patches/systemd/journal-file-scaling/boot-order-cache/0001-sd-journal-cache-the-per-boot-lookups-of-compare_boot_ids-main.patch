@@ -1,0 +1,198 @@
+From bb3b2d51671fc615c92088a40be1f14134a8f228 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 15 Nov 2026 00:56:33 +0000
+Subject: [PATCH] sd-journal: cache the per-boot lookups of compare_boot_ids()
+
+compare_boot_ids() runs for every comparison of two entries from
+different boots, i.e. for nearly every open journal file on every step
+of sd_journal_next() when the journal spans many boots. Each call looks
+up the newest file of both boots: a binary search over all boots, a
+priority queue peek and a tail timestamp refresh. Yet the answer only
+changes when some file's newest entry, or the set of boots, changes.
+
+Keep what compare_boot_ids() needs per journal file (for the boot of
+its current entry) and per sd_journal (for the boot of the location
+compared against), and refill it once newest_by_boot_id_generation,
+which now moves wherever a file's newest data or the boot index
+changes, has moved. A cache hit skips the tail timestamp refresh the
+lookup did; next_beyond_location() still refreshes each file at most
+once per second, and a change found there moves the generation.
+
+compare_with_location() takes a non-const JournalFile for this; its
+only caller already has one.
+
+On 200 archived journal files over 40 boots, 'journalctl -o cat'
+printed 37584 lines/s before and 110246 after; on 400 files over 80
+boots, 10591 and 38406. Under callgrind, compare_boot_ids() went from
+88% of all instructions to 56%. The export output of eight kinds of
+query (forward, reverse, -n, -k, a boot match, -b -3, --since/--until
+both ways) is byte-identical before and after, on these files and on
+files whose boots interleave in time, and the journal tests pass as
+before.
+---
+ src/libsystemd/sd-journal/journal-file.h     | 12 +++++
+ src/libsystemd/sd-journal/journal-internal.h |  2 +
+ src/libsystemd/sd-journal/sd-journal.c       | 57 ++++++++++++++++----
+ 3 files changed, 62 insertions(+), 9 deletions(-)
+
+diff --git a/src/libsystemd/sd-journal/journal-file.h b/src/libsystemd/sd-journal/journal-file.h
+index 8bf38e7..b55df40 100644
+--- a/src/libsystemd/sd-journal/journal-file.h
++++ b/src/libsystemd/sd-journal/journal-file.h
+@@ -13,6 +13,17 @@
+ #include "ratelimit.h"
+ #include "sparse-endian.h"
+ 
++/* What compare_boot_ids() needs to know about one boot: the machine ID and realtime timestamp of
++ * the newest entry of the newest open file of that boot. See boot_newest_cached(). */
++typedef struct BootNewestCache {
++        bool valid;
++        int error;              /* < 0: no open file is known for boot_id */
++        sd_id128_t boot_id;
++        sd_id128_t machine_id;
++        usec_t realtime;
++        uint64_t generation;    /* the sd_journal's newest_by_boot_id_generation when filled */
++} BootNewestCache;
++
+ typedef struct JournalMetrics {
+         /* For all these: UINT64_MAX means "pick automatically", and 0 means "no limit enforced" */
+         uint64_t max_size;     /* how large journal files grow at max */
+@@ -122,6 +133,7 @@ typedef struct JournalFile {
+         uint64_t newest_entry_offset;
+         uint8_t newest_state;
+         RateLimit tail_timestamp_ratelimit; /* rate-limits journal_file_read_tail_timestamp() calls during iteration */
++        BootNewestCache boot_newest_cache;  /* for the boot of this file's current entry */
+ } JournalFile;
+ 
+ typedef enum JournalFileFlags {
+diff --git a/src/libsystemd/sd-journal/journal-internal.h b/src/libsystemd/sd-journal/journal-internal.h
+index 978e520..3bc1932 100644
+--- a/src/libsystemd/sd-journal/journal-internal.h
++++ b/src/libsystemd/sd-journal/journal-internal.h
+@@ -81,6 +81,8 @@ typedef struct sd_journal {
+         /* a bisectable array of NewestByBootId, ordered by boot id. */
+         NewestByBootId *newest_by_boot_id;
+         size_t n_newest_by_boot_id;
++        uint64_t newest_by_boot_id_generation; /* moves whenever a file's newest data or the index changes */
++        BootNewestCache location_boot_newest_cache; /* for the boot of a Location compared against */
+ 
+         Location current_location;
+ 
+diff --git a/src/libsystemd/sd-journal/sd-journal.c b/src/libsystemd/sd-journal/sd-journal.c
+index 3993409..4b0aa36 100644
+--- a/src/libsystemd/sd-journal/sd-journal.c
++++ b/src/libsystemd/sd-journal/sd-journal.c
+@@ -464,6 +464,7 @@ static void journal_file_unlink_newest_by_boot_id(sd_journal *j, JournalFile *f)
+ 
+         assert_se(prioq_remove(found->prioq, f, &f->newest_boot_id_prioq_idx) > 0);
+         f->newest_boot_id_prioq_idx = PRIOQ_IDX_NULL;
++        j->newest_by_boot_id_generation++;
+ 
+         /* The prioq may be empty, but that should not cause any issue. Let's keep it. */
+ }
+@@ -480,6 +481,7 @@ static void journal_clear_newest_by_boot_id(sd_journal *j) {
+ 
+         j->newest_by_boot_id = mfree(j->newest_by_boot_id);
+         j->n_newest_by_boot_id = 0;
++        j->newest_by_boot_id_generation++;
+ }
+ 
+ static int journal_file_newest_monotonic_compare(const void *a, const void *b) {
+@@ -586,28 +588,62 @@ static int journal_file_find_newest_for_boot_id(
+         }
+ }
+ 
+-static int compare_boot_ids(sd_journal *j, sd_id128_t a, sd_id128_t b) {
+-        JournalFile *x, *y;
++static int boot_newest_cached(sd_journal *j, BootNewestCache *c, sd_id128_t id, const BootNewestCache **ret) {
++        JournalFile *f;
++        int r;
++
++        assert(j);
++        assert(c);
++        assert(ret);
++
++        /* compare_boot_ids() runs for every comparison of two entries from different boots, i.e. for
++         * nearly every open file on every step of an iteration over many boots, and each lookup costs a
++         * binary search over all boots and a tail timestamp refresh. Its inputs change only when some
++         * file's newest entry or the boot index changes, which moves newest_by_boot_id_generation, so
++         * keep the answer until then. The refresh the lookup does is skipped on a hit: tail timestamps
++         * are still refreshed by next_beyond_location(), and a change found there moves the generation. */
++        if (c->valid && c->generation == j->newest_by_boot_id_generation && sd_id128_equal(c->boot_id, id)) {
++                *ret = c;
++                return c->error;
++        }
++
++        r = journal_file_find_newest_for_boot_id(j, id, &f);
++
++        /* The lookup may itself have refreshed a timestamp and moved the generation: record the one now in force. */
++        *c = (BootNewestCache) {
++                .valid = true,
++                .error = MIN(r, 0),
++                .boot_id = id,
++                .machine_id = r >= 0 ? f->newest_machine_id : SD_ID128_NULL,
++                .realtime = r >= 0 ? f->newest_realtime_usec : 0,
++                .generation = j->newest_by_boot_id_generation,
++        };
++        *ret = c;
++        return c->error;
++}
++
++static int compare_boot_ids(sd_journal *j, BootNewestCache *ca, sd_id128_t a, BootNewestCache *cb, sd_id128_t b) {
++        const BootNewestCache *x, *y;
+ 
+         assert(j);
+ 
+         /* Try to find the newest open journal file for the two boot ids */
+-        if (journal_file_find_newest_for_boot_id(j, a, &x) < 0 ||
+-            journal_file_find_newest_for_boot_id(j, b, &y) < 0)
++        if (boot_newest_cached(j, ca, a, &x) < 0 ||
++            boot_newest_cached(j, cb, b, &y) < 0)
+                 return 0;
+ 
+         /* Only compare the boot id timestamps if they originate from the same machine. If they are from
+          * different machines, then we timestamps of the boot ids might be as off as the timestamps on the
+          * entries and hence not useful for comparing. */
+-        if (!sd_id128_equal(x->newest_machine_id, y->newest_machine_id))
++        if (!sd_id128_equal(x->machine_id, y->machine_id))
+                 return 0;
+ 
+-        return CMP(x->newest_realtime_usec, y->newest_realtime_usec);
++        return CMP(x->realtime, y->realtime);
+ }
+ 
+ static int compare_with_location(
+                 sd_journal *j,
+-                const JournalFile *f,
++                JournalFile *f,
+                 const Location *l,
+                 const JournalFile *current_file) {
+         int r;
+@@ -644,7 +680,8 @@ static int compare_with_location(
+                 if (sd_id128_equal(f->current_boot_id, l->boot_id))
+                         r = CMP(f->current_monotonic, l->monotonic);
+                 else
+-                        r = compare_boot_ids(j, f->current_boot_id, l->boot_id);
++                        r = compare_boot_ids(j, &f->boot_newest_cache, f->current_boot_id,
++                                             &j->location_boot_newest_cache, l->boot_id);
+                 if (r != 0)
+                         return r;
+         }
+@@ -1128,7 +1165,8 @@ static int compare_locations(sd_journal *j, JournalFile *af, JournalFile *bf) {
+                 r = CMP(af->current_monotonic, bf->current_monotonic);
+         else
+                 /* If they don't match try to compare boot IDs */
+-                r = compare_boot_ids(j, af->current_boot_id, bf->current_boot_id);
++                r = compare_boot_ids(j, &af->boot_newest_cache, af->current_boot_id,
++                                     &bf->boot_newest_cache, bf->current_boot_id);
+         if (r != 0)
+                 return r;
+ 
+@@ -2794,6 +2832,7 @@ static int journal_file_read_tail_timestamp(sd_journal *j, JournalFile *f) {
+         f->newest_monotonic_usec = mo;
+         f->newest_realtime_usec = rt;
+         f->newest_machine_id = mid;
++        j->newest_by_boot_id_generation++;
+         f->newest_entry_offset = offset;
+         f->newest_state = f->header->state;
+ 

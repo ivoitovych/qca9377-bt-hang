@@ -1,0 +1,64 @@
+diff --git a/src/basic/ratelimit.c b/src/basic/ratelimit.c
+index 41ca070..5832984 100644
+--- a/src/basic/ratelimit.c
++++ b/src/basic/ratelimit.c
+@@ -10,5 +10,3 @@
+ 
+-bool ratelimit_below(RateLimit *r) {
+-        usec_t ts;
+-
++bool ratelimit_below_at(RateLimit *r, usec_t ts) {
+         assert(r);
+@@ -18,4 +16,2 @@ bool ratelimit_below(RateLimit *r) {
+ 
+-        ts = now(CLOCK_MONOTONIC);
+-
+         if (r->begin <= 0 ||
+@@ -34,2 +30,11 @@ bool ratelimit_below(RateLimit *r) {
+ 
++bool ratelimit_below(RateLimit *r) {
++        assert(r);
++
++        if (!ratelimit_configured(r))
++                return true;
++
++        return ratelimit_below_at(r, now(CLOCK_MONOTONIC));
++}
++
+ unsigned ratelimit_num_dropped(RateLimit *r) {
+diff --git a/src/basic/ratelimit.h b/src/basic/ratelimit.h
+index 492ea3b..49fc585 100644
+--- a/src/basic/ratelimit.h
++++ b/src/basic/ratelimit.h
+@@ -25,2 +25,5 @@ static inline bool ratelimit_configured(RateLimit *rl) {
+ bool ratelimit_below(RateLimit *r);
++/* Like ratelimit_below(), but takes the current CLOCK_MONOTONIC timestamp from the caller, for callers
++ * that check many rate limits in a row and should not read the clock for each of them. */
++bool ratelimit_below_at(RateLimit *r, usec_t ts);
+ 
+diff --git a/src/libsystemd/sd-journal/sd-journal.c b/src/libsystemd/sd-journal/sd-journal.c
+index fd9a3be..37b027d 100644
+--- a/src/libsystemd/sd-journal/sd-journal.c
++++ b/src/libsystemd/sd-journal/sd-journal.c
+@@ -806,3 +806,3 @@ static int next_with_matches(
+ 
+-static int next_beyond_location(sd_journal *j, JournalFile *f, direction_t direction) {
++static int next_beyond_location(sd_journal *j, JournalFile *f, direction_t direction, usec_t ts) {
+         Object *c;
+@@ -818,3 +818,3 @@ static int next_beyond_location(sd_journal *j, JournalFile *f, direction_t direc
+          * for any missed inotify events. */
+-        if (ratelimit_below(&f->tail_timestamp_ratelimit))
++        if (ratelimit_below_at(&f->tail_timestamp_ratelimit, ts))
+                 (void) journal_file_read_tail_timestamp(j, f);
+@@ -940,2 +940,6 @@ static int real_journal_next(sd_journal *j, direction_t direction) {
+ 
++        /* Read the clock once for the whole call: next_beyond_location() rate-limits its tail timestamp
++         * refresh, which would otherwise be one clock read per file for every entry. */
++        usec_t ts = now(CLOCK_MONOTONIC);
++
+         r = iterated_cache_get(j->files_cache, NULL, &files, &n_files);
+@@ -948,3 +952,3 @@ static int real_journal_next(sd_journal *j, direction_t direction) {
+ 
+-                r = next_beyond_location(j, f, direction);
++                r = next_beyond_location(j, f, direction, ts);
+                 if (r < 0) {

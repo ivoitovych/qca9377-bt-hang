@@ -1,0 +1,50 @@
+diff --git a/src/libsystemd/sd-journal/journal-file.c b/src/libsystemd/sd-journal/journal-file.c
+index e7a7728..4d500e6 100644
+--- a/src/libsystemd/sd-journal/journal-file.c
++++ b/src/libsystemd/sd-journal/journal-file.c
+@@ -4107,6 +4107,7 @@ int journal_file_open(
+                 .strict_order = FLAGS_SET(file_flags, JOURNAL_STRICT_ORDER),
+                 .newest_boot_id_prioq_idx = PRIOQ_IDX_NULL,
+                 .last_direction = _DIRECTION_INVALID,
++                .tail_timestamp_ratelimit = { .interval = USEC_PER_SEC, .burst = 1 },
+         };
+ 
+         if (fname) {
+diff --git a/src/libsystemd/sd-journal/journal-file.h b/src/libsystemd/sd-journal/journal-file.h
+index 6b378a2..135af70 100644
+--- a/src/libsystemd/sd-journal/journal-file.h
++++ b/src/libsystemd/sd-journal/journal-file.h
+@@ -16,6 +16,7 @@
+ #include "hashmap.h"
+ #include "journal-def.h"
+ #include "mmap-cache.h"
++#include "ratelimit.h"
+ #include "sparse-endian.h"
+ #include "time-util.h"
+ 
+@@ -131,6 +132,7 @@ typedef struct JournalFile {
+         unsigned newest_boot_id_prioq_idx;
+         uint64_t newest_entry_offset;
+         uint8_t newest_state;
++        RateLimit tail_timestamp_ratelimit; /* rate-limits journal_file_read_tail_timestamp() calls during iteration */
+ } JournalFile;
+ 
+ typedef enum JournalFileFlags {
+diff --git a/src/libsystemd/sd-journal/sd-journal.c b/src/libsystemd/sd-journal/sd-journal.c
+index 68270c2..fd9a3be 100644
+--- a/src/libsystemd/sd-journal/sd-journal.c
++++ b/src/libsystemd/sd-journal/sd-journal.c
+@@ -812,7 +812,12 @@ static int next_beyond_location(sd_journal *j, JournalFile *f, direction_t direc
+         assert(j);
+         assert(f);
+ 
+-        (void) journal_file_read_tail_timestamp(j, f);
++        /* Rate-limit tail timestamp refreshes during iteration. Calling this unconditionally is
++         * O(N x files) volatile mmap overhead that makes large 'journalctl -n N' queries unusably
++         * slow. Periodic refresh keeps cross-boot ordering reasonably fresh and provides a fallback
++         * for any missed inotify events. */
++        if (ratelimit_below(&f->tail_timestamp_ratelimit))
++                (void) journal_file_read_tail_timestamp(j, f);
+ 
+         n_entries = le64toh(f->header->n_entries);
+ 
