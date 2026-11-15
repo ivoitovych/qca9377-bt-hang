@@ -4493,6 +4493,89 @@ All twelve ready kernel items went into one self-contained document for outside 
   refused `checkpatch.pl` in one and `git send-email --dry-run` in another; both stopped and
   asked, and the checks were run on the host instead.
 
+## A whole-project review, a deadlock in our own patch, a switch that was not broken, and journalctl measured (2026-11-15 → 11-16)
+
+**11-15, night: the whole project reviewed against itself.** An outside reviewer checked every
+document against every other and against the exhibits (83 findings, kept on a separate branch).
+The reaction recorded each finding as confirmed, partly right or wrong
+(`reviews/2026-11-15T1751Z-project-review-fixes-reaction-checks.md`). It fixed the five weak
+points that same day: the "What to send" table now names full paths, and a script checks them;
+installers and test scripts say what they do not undo; a trial that is set aside never lands on
+another. A lane brought the front pages back into agreement with the exhibits. The reviewer's
+re-check that evening (27 fixed, 26 partly, 26 not addressed, 4 waiting for the operator) found
+the pattern behind most of what was left: **each correction had been applied to one copy of a
+fact at a time**, so the second row of documents (dossier front pages, `docs/issues.md`'s
+sections, older `docs/` files, this file) kept the old wording.
+
+**11-15: the CO-02 v2 claim withdrawn.** v2's second patch waited for the connection's work
+while holding `hdev->lock`. The cover letter's "the wait is safe; the risk is not new" did not
+survive two reviewers. With debug delays a lock cycle was reproduced 3 of 3 times: the wait
+under `hdev->lock` against `cmd_sync_work_lock`, through a destroy callback that takes
+`hdev->lock`. A non-sleeping second patch replaces it (`review-fixes-20261115/`), and v2 is not
+ready until it has its own cover and checks. The earlier sentence is withdrawn, not reworded.
+
+**11-15, evening: a switch that seemed not to turn on.** The operator saw Bluetooth stay grey in
+the desktop's quick settings after a click. Every layer that records something was read: rfkill,
+the settings daemon's airplane mode, bluetoothd's `Powered`, and the Settings switch. There was
+one soft block from the panel at 17:25, and one power-on at 19:31 that succeeded in 0.32 s.
+Paired devices had been removed on purpose, to pair a headset with another machine. Nothing
+abnormal was found, and on the operator's call the case was dropped and not registered. Two
+lessons on driving a desktop:
+- A keyboard-injection tool sent keys to whichever window had focus, not to the one intended,
+  and it was removed. Clicks through the compositor's remote-desktop interface work, but only
+  while nobody else is using the desktop.
+- Screenshots of the operator's screen stay on the machine.
+
+**11-15: the desktop's state recorded all the time.** So that a repeat can be looked at instead
+of remembered, `tools/bt-ui-capture` gained a light mode. It runs three small monitors: the
+system bus, narrowed to bluetoothd's adapter; the session bus; and the accessibility events of
+Settings and the shell. The shell's quick-settings tile emits nothing until its event types are
+registered, which is why the first passive recording was empty. A positive control by the
+operator matched the layers to a few milliseconds:
+- **off:** the Settings switch at .699, rfkill at .701, the tile at .737;
+- **on:** the tile turned on only once bluetoothd reported Powered.
+
+A keeper timer restarts the monitors after a reboot or a new login, so the recording lasts for
+the rest of the project, as the operator asked. Size is capped at 20 MiB × 5 per monitor.
+
+**11-15: our own fixes broke CI five times, and CI caught each one.**
+- Two trials set aside in the same second collided on one name.
+- Rewriting an installed unit's path tripped the upgrade check.
+- A new exec-bit check refused the suite's scratch repositories.
+- Two new seams were not declared.
+- The light mode's suite tests reached the machine's own `logger`, because the section had no
+  stub for it.
+
+The last was fixed on 11-16 (`700122c`). While a trial is open the suite does not run before a
+commit, so CI is the gate, and it worked as one.
+
+**11-15 → 11-16: journalctl measured instead of suspected (CO-46).**
+- **The cause.** Every printed entry makes journalctl visit every open journal file, so reading
+  N entries from F files costs about N × F. Rotation keeps adding files, so the cost grows with
+  the square of the journal.
+- **The 2024 commits.** Two upstream commits of 2024 backport cleanly to Ubuntu 24.04's 255.4
+  and remove most of the per-file system calls. A lane tested whether they also remove the
+  growth, using a fitted exponent b of time against files over synthetic journals and a copy of
+  the laptop's journal. They do not:
+  - b is 2.14 → 2.11 on synthetic journals and 1.91 → 1.45 on the laptop's journal;
+  - the constant falls by one to two orders of magnitude in a container (container figures,
+    still to be measured on the laptop itself, where system calls are cheaper);
+  - upstream main is no better in shape (2.24).
+- **A prototype.** A priority queue of archived files on main brings b to 1.15 and 0.99. Its
+  output was byte-identical in 272 synthetic and 18 real comparisons, and systemd's journal
+  tests pass. It is a prototype: the order across machines and follow mode are open.
+- **The operator's decision.** The speed-up alone is worth bringing to Ubuntu 24.04 users as a
+  self-contained backport request. The remaining growth is the next piece of research. On 11-16
+  the request's evidence was started: the laptop and the container side by side, everyday
+  queries, a reproducer that touches only a temporary directory, and where the commits already
+  are.
+
+**Also on 11-15:**
+- The test-suite maintainer's four questions of 11-07 were answered (`comms/`).
+- The operator deleted the 16 old remote branches.
+- This file had not been updated since 11-14. A chapter is now owed before each break in the
+  work, and the session start reports when the newest chapter is older than the newest commit.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
