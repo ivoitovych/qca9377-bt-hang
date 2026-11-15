@@ -333,6 +333,11 @@ only on a separate branch of its own, until the operator decides where it lives.
   local path (11-15, after the reviewer's reaction).
 - `tools/bt-sco --window` no longer takes a following option (`--raw`) as its value (11-15).
 - The "What to send" table gives full paths; `scripts/send-table-check.py` checks them (11-15).
+- `tools/bt-ui-capture start-light` (11-15, the operator's request after a Quick Settings tile
+  seemed to stay grey after a click; nothing abnormal in the logs, not registered): an always-on
+  record of what GNOME Settings and the shell's Quick Settings draw, next to the GNOME rfkill
+  switch's traffic and every call to BlueZ, in `/var/log/bt-ui-light/`. Transient units: a
+  reboot ends it.
 - `tools/bt-trial start` sets a reused trial directory aside instead of truncating it, as
   `autostart` already did (11-15).
 - `install.sh` installs and enables `bt-raw-archive` only from the checkout its unit names, the
