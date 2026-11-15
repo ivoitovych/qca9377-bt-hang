@@ -335,9 +335,9 @@ only on a separate branch of its own, until the operator decides where it lives.
 - The "What to send" table gives full paths; `scripts/send-table-check.py` checks them (11-15).
 - `tools/bt-trial start` sets a reused trial directory aside instead of truncating it, as
   `autostart` already did (11-15).
-- `install.sh` writes the installing checkout's path into `bt-raw-archive.service` (it named the
-  investigation machine's checkout everywhere), and says two controlled reset demonstrations, not
-  three (11-15).
+- `install.sh` installs and enables `bt-raw-archive` only from the checkout its unit names, the
+  investigation machine's (from any other it named a script that is not there), and says two
+  controlled reset demonstrations, not three (11-15).
 - `scripts/smtp-login-check.sh` reads a network error as INCONCLUSIVE.
 - Some scripts used to give a verdict they had not measured; they now exit 2:
   - `sco-ledger.sh` and `sco-ledger-boots.sh` on an unreadable boot;

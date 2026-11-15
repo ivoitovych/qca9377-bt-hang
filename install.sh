@@ -536,37 +536,21 @@ install_file "$SRC/systemd/bt-journal-backup.timer"   /etc/systemd/system/bt-jou
 
 # The raw HCI captures rotate too (bt-capture keeps 400 files, bt-trace prunes by free
 # space). Their archiver ran on a transient timer that every reboot removed (2026-11-13).
-install_file "$SRC/systemd/bt-raw-archive.service" /etc/systemd/system/bt-raw-archive.service 0644
 # The unit names the archiver by its absolute path, and the tracked file carries the
-# investigation machine's checkout. Installed from any other checkout it named a script
-# that is not there (outside review reaction, 2026-11-15), so the installed copy's path
-# is rewritten to this checkout's. From the investigation machine's checkout nothing
-# changes. (Rewritten after install_file, not before, so the file stays one of the
-# `install_file "$SRC/…"` lines the suite derives its lists from.)
-RAWDST="$DESTDIR/etc/systemd/system/bt-raw-archive.service"
-RAWFROM=$(sed -n 's|^ExecStart=\(/.*\)/scripts/raw-capture-archive-all\.sh$|\1|p' "$SRC/systemd/bt-raw-archive.service")
-if [[ -z "$RAWFROM" ]]; then
-    echo "  ERROR: systemd/bt-raw-archive.service has no ExecStart naming scripts/raw-capture-archive-all.sh" >&2
-    FAILED=1
-elif [[ "$RAWFROM" != "$SRC" && ! -e "$RAWDST.disabled" ]]; then
-    # (A .disabled sibling: install_file skipped the file, and so does this.)
-    if (( APPLY )) && [[ -f "$RAWDST" ]]; then
-        if awk -v from="ExecStart=$RAWFROM/" -v to="ExecStart=$SRC/" \
-               'index($0, from) == 1 { $0 = to substr($0, length(from) + 1) } { print }' \
-               "$SRC/systemd/bt-raw-archive.service" > "$RAWDST.new" \
-           && chmod 0644 "$RAWDST.new" && mv -f "$RAWDST.new" "$RAWDST"; then
-            echo "  + ${RAWDST#"$DESTDIR"}: ExecStart rewritten to $SRC/scripts/"
-        else
-            rm -f "$RAWDST.new"
-            echo "    ERROR: could not rewrite ExecStart in $RAWDST" >&2; FAILED=1
-        fi
-    elif (( ! APPLY )); then
-        echo "  would rewrite ExecStart in /etc/systemd/system/bt-raw-archive.service to $SRC/scripts/"
-    else
-        echo "    ERROR: $RAWDST was not installed, so its ExecStart could not be rewritten" >&2; FAILED=1
-    fi
+# investigation machine's checkout. Installed from any other checkout it named a script that
+# is not there, and every install enabled it (outside review reaction, 2026-11-15). It is the
+# investigation machine's archive (archive/ in that checkout, its budgets), so from any other
+# checkout the unit and its timer are neither installed nor enabled.
+RAWEXEC=$(sed -n 's/^ExecStart=//p' "$SRC/systemd/bt-raw-archive.service")
+if [[ "$RAWEXEC" == "$SRC/scripts/raw-capture-archive-all.sh" ]]; then
+    RAWARCHIVE=1
+    install_file "$SRC/systemd/bt-raw-archive.service" /etc/systemd/system/bt-raw-archive.service 0644
+    install_file "$SRC/systemd/bt-raw-archive.timer"   /etc/systemd/system/bt-raw-archive.timer   0644
+else
+    RAWARCHIVE=0
+    echo "  · bt-raw-archive.service and .timer not installed: the unit runs ${RAWEXEC:-nothing},"
+    echo "    not this checkout's scripts/raw-capture-archive-all.sh (it is the investigation machine's archive)"
 fi
-install_file "$SRC/systemd/bt-raw-archive.timer"   /etc/systemd/system/bt-raw-archive.timer   0644
 
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
 # enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
@@ -708,7 +692,8 @@ run systemctl enable --now bt-trial-auto
 # whole point is that it runs when nobody remembers to.
 run systemctl enable --now bt-journal-backup.timer
 # The same for the raw-capture archive: it reads captures and never acts on the controller.
-run systemctl enable --now bt-raw-archive.timer
+# Only where it was installed: the investigation machine's checkout (above).
+(( RAWARCHIVE )) && run systemctl enable --now bt-raw-archive.timer
 run systemctl enable --now bt-dyndbg
 (( USBMON ))  && run systemctl enable --now bt-usbmon
 # Picks up the raised journal size cap. Restarting journald is safe: clients

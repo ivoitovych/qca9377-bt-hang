@@ -12408,12 +12408,26 @@ else
 fi
 # The raw-capture archiver's unit names a script by its absolute path. Installed
 # from a checkout other than the investigation machine's, it named one that was
-# not there (2026-11-15). From any checkout, the installed unit must name this
-# checkout's script, and that script must exist and be executable.
+# not there, and enabled it (2026-11-15). Now it is installed and enabled only
+# from the checkout its ExecStart names. Both branches are judged by the same
+# rule, whichever checkout this suite runs from: installed means it names this
+# checkout's executable archiver, with its timer beside it; not installed means
+# neither file is there, nothing enabled it, and the install says why. (A staged
+# install runs no systemctl, so the enable is judged by install.sh's own gate,
+# RAWARCHIVE, through its absence from the spy log.)
+SIRAWSRC=$(sed -n 's/^ExecStart=//p' systemd/bt-raw-archive.service)
 SIRAW=$(sed -n 's/^ExecStart=//p' "$SR/etc/systemd/system/bt-raw-archive.service" 2>/dev/null)
-[[ "$SIRAW" == "$PWD/scripts/raw-capture-archive-all.sh" && -x "$SIRAW" ]] \
-    && ok "the installed bt-raw-archive.service runs this checkout's archiver" \
-    || bad "the installed bt-raw-archive.service runs '$SIRAW', not $PWD/scripts/raw-capture-archive-all.sh"
+SIRAWEN=$(grep -c 'enable --now bt-raw-archive.timer' "$SS/spy.log" 2>/dev/null)
+if [[ "$SIRAWSRC" == "$PWD/scripts/raw-capture-archive-all.sh" ]]; then
+    [[ "$SIRAW" == "$SIRAWSRC" && -x "$SIRAW" && -e "$SR/etc/systemd/system/bt-raw-archive.timer" ]] \
+        && ok "from the investigation machine's checkout bt-raw-archive is installed and runs its archiver" \
+        || bad "bt-raw-archive.service installed from its own checkout runs '$SIRAW', not $SIRAWSRC"
+else
+    [[ -z "$SIRAW" && ! -e "$SR/etc/systemd/system/bt-raw-archive.timer" && "${SIRAWEN:-0}" == 0 \
+       && "$SIOUT" == *"bt-raw-archive.service and .timer not installed"* ]] \
+        && ok "from another checkout bt-raw-archive is neither installed nor enabled, and the install says why" \
+        || bad "from $PWD bt-raw-archive was installed ('$SIRAW') or enabled ($SIRAWEN), or the install did not say"
+fi
 
 # THE MODES ARE DERIVED FROM install.sh, not listed here. A hand-written table
 # of expected modes is a second copy of the installer that rots against it; the

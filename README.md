@@ -164,7 +164,8 @@ two-line addition to
 - **A start-up failure on the fixed driver.** At three boots (2026-11-05, 11-11 and 11-13, the
   last on Ubuntu's own `7.0.0-43` btusb) the controller came up reporting its firmware patch as
   already loaded, failed two LE commands, and Bluetooth was unavailable for the whole boot; a
-  power-off recovered it. Cause not established (`BT-16` in [`docs/issues.md`](docs/issues.md)).
+  power-off recovered it. Cause not established (filed in [`docs/issues.md`](docs/issues.md); its
+  dated state is in [`docs/STATUS.md`](docs/STATUS.md)).
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
   backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
   are released in BlueZ 5.88 (tables above).
@@ -258,8 +259,8 @@ comms/  lessons/      messages between the maintainers; what the project cost to
 contributions/        one dossier per possible contribution (CO-nn): findings, experiments,
                       log, patches and mails as sent; README.md there is the index
 results/              dated results of runs that belong to no single dossier (the list's CI run
-                      locally, the L2CAP hang sweep, the BlueZ 5.88 release check, the BT-16 and
-                      BT-17 records, the btusb emulation runs; most have their own README.md)
+                      locally, the L2CAP hang sweep, the BlueZ 5.88 release check, the start-up and
+                      resume failure records, the btusb emulation runs; most have their own README.md)
 patches/bluez/        the applied BlueZ patches, their verification script and mail notes;
   shared-mgmt/        the applied shared/mgmt fix and its unit tests, as mailed
   send-2026-10-18/    the two cleanups sent 2026-10-18, as mailed, with their re-test

@@ -287,6 +287,19 @@ next_trial_no() {
     echo $(( n + 1 ))
 }
 
+set_aside() {   # <trial dir> — move it out of the way, never over another; print the new path
+    # Named by the second, and two opens in one second (the suite's) gave the
+    # same name: `mv` then moved the directory INTO the first copy, and failed
+    # at the third (2026-11-15). A free name is found first, and `mv -T` never
+    # moves into a directory.
+    local base aside k=1
+    base="$1.unclosed-$(date -u +%Y%m%dT%H%M%S)"
+    aside="$base"
+    while [[ -e "$aside" ]]; do k=$((k + 1)); aside="$base-$k"; done
+    mv -T "$1" "$aside" || return 1
+    printf '%s\n' "$aside"
+}
+
 # The union of every pattern the close path asks of the kernel journal, handed
 # to journalctl as --grep where it has one (Ubuntu 24.04 does; the suite's stub
 # does not, and then the reads are unfiltered as before). Each local grep still
@@ -356,8 +369,7 @@ start)
     # steps.log and overwrite its state-before.txt (review T-09, 2026-11-15).
     # An existing directory is set aside, never reused.
     if [[ -e "$dir" ]]; then
-        aside="$dir.unclosed-$(date -u +%Y%m%dT%H%M%S)"
-        mv "$dir" "$aside" || { echo "bt-trial: cannot set aside $dir; nothing started" >&2; exit 1; }
+        aside=$(set_aside "$dir") || { echo "bt-trial: cannot set aside $dir; nothing started" >&2; exit 1; }
         echo "bt-trial: trial-$(printf '%02d' "$n") existed with no results row; kept as $(basename "$aside")" >&2
     fi
     mkdir -p "$dir"
@@ -418,8 +430,7 @@ autostart)
     # state-before.txt over the old one. An existing directory is set aside,
     # never reused: the row can be rebuilt from the journal, the directory cannot.
     if [[ -e "$dir" ]]; then
-        aside="$dir.unclosed-$(date -u +%Y%m%dT%H%M%S)"
-        mv "$dir" "$aside" || { echo "bt-trial: cannot set aside $dir; no auto-trial opened" >&2; exit 1; }
+        aside=$(set_aside "$dir") || { echo "bt-trial: cannot set aside $dir; no auto-trial opened" >&2; exit 1; }
         echo "bt-trial: trial-$(printf '%02d' "$n") existed with no results row; kept as $(basename "$aside")" >&2
     fi
     mkdir -p "$dir"
