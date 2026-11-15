@@ -146,8 +146,8 @@ UNITS=(
 DESTDIR="${BT_DESTDIR:-}"
 if [[ -n "$DESTDIR" ]]; then
     echo "!! BT_DESTDIR=$DESTDIR — staging uninstall; the SYSTEM WILL NOT BE TOUCHED."
-    echo "   Files go under the prefix; systemctl, udevadm and the btusb reload"
-    echo "   are skipped and printed instead of run."
+    echo "   Files go under the prefix; systemctl and udevadm"
+    echo "   are skipped and printed instead of run (btusb is never reloaded)."
     echo
     for i in "${!FILES[@]}"; do FILES[i]="$DESTDIR${FILES[i]}"; done
     for i in "${!DIRS[@]}";  do DIRS[i]="$DESTDIR${DIRS[i]}";  done
@@ -282,27 +282,16 @@ run systemctl restart systemd-journald
 echo
 
 echo "[5/5] restore btusb default (enable_autosuspend=Y)"
-# Counted, not `grep -q`: under pipefail the pipeline exits non-zero exactly
-# when the module IS loaded, so the restore would be skipped precisely when it
-# is needed. Read from /proc/modules, the file lsmod formats, through the SAME
-# seam as the usecount below: the presence check used lsmod, unseamed, so its
-# tests could choose "idle" or "in use" but never "loaded" — the runner's real
-# lsmod answered that (devtools/sandbox in CI, 2026-09-29).
+# The module is NEVER unloaded or reloaded here. On the investigation machine a
+# btusb reload resets the controller and can leave it dead (EX-046 in BRIEF.md),
+# so the restored default simply applies the next time btusb loads, which is
+# the next boot. The state is only reported, read from /proc/modules (the file
+# lsmod formats) through the BT_PROC_MODULES seam so tests can choose it.
 BT_PROC_MODULES="${BT_PROC_MODULES:-${BT_PROC:-/proc}/modules}"
 n_btusb=$(awk '$1 == "btusb" { n++ } END { print n + 0 }' "$BT_PROC_MODULES" 2>/dev/null)
 if (( ${n_btusb:-0} > 0 )); then
-    # Seamed for the same reason every other kernel-state read here is: the
-    # two branches below differ by whether the module is IN USE, and that is
-    # not a state a test may create on a real machine — forcing a usecount
-    # means holding the controller open, which is the one thing this project's
-    # tests must never do to the device under investigation.
     uc=$(awk '/^btusb/ {print $3}' "$BT_PROC_MODULES")
-    if [[ "${uc:-0}" == "0" ]]; then
-        run modprobe -r btusb
-        run modprobe btusb
-    else
-        echo "  btusb is in use (usecount=$uc) — will revert on next reboot"
-    fi
+    echo "  btusb is loaded (usecount=${uc:-0}) and is left loaded: the default applies at the next boot (a reload would reset the controller, EX-046)"
 else
     echo "  btusb not loaded — will pick up defaults on next load"
 fi

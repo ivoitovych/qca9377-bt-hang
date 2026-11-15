@@ -12610,19 +12610,17 @@ SBUSY=$(mktemp); printf 'btusb 73728 3 - Live 0x0000000000000000\n' > "$SBUSY"
 SRB=$(mktemp -d)
 SPMF=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SFREE" \
            ./uninstall.sh --apply 2>&1)
-# ASSERTED AS A DECISION, NOT AS AN EXECUTION. Staging now withholds every
-# system command, so `modprobe` cannot run here — and must not, since this
-# suite runs on the investigation machine and that reload resets the
-# controller. What is testable is that the idle branch was CHOSEN: the tool
-# names the command it withheld, which is the same evidence with none of the
-# consequence.
-[[ "$SPMF" == *"modprobe -r btusb"* && "$SPMF" == *"modprobe btusb"* ]] \
-   && [[ "$SPMF" == *"staging: NOT executed"* ]] \
-    && ok "an idle btusb takes the reload branch, and staging withholds the reload" \
-    || bad "uninstall.sh did not choose the idle-btusb reload branch"
+# NEVER A RELOAD (EX-046): a btusb reload resets the controller, so uninstall.sh
+# must not unload or reload the module at all, idle or in use. Both states are
+# driven from text; neither may name a modprobe command, and the spy stub on
+# PATH must never have been called.
+[[ "$SPMF" == *"left loaded: the default applies at the next boot"* && "$SPMF" != *"modprobe -r"* && "$SPMF" != *"modprobe btusb"* ]] \
+    && [[ ! -e "$SPM/spy.log" ]] \
+    && ok "an idle btusb is left loaded: the default applies at the next boot, no reload" \
+    || bad "uninstall.sh did not leave an idle btusb alone: $(grep -m1 btusb <<<"$SPMF")"
 SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
            ./uninstall.sh --apply 2>&1)
-[[ "$SPMB" == *"btusb is in use (usecount=3)"* && "$SPMB" != *"modprobe -r"* ]] \
+[[ "$SPMB" == *"btusb is loaded (usecount=3)"* && "$SPMB" != *"modprobe -r"* && "$SPMB" != *"modprobe btusb"* && ! -e "$SPM/spy.log" ]] \
     && ok "a btusb in use is left alone rather than force-unloaded" \
     || bad "uninstall.sh tried to unload a module that was in use"
 # And the third branch, the one every bare host took by default: no btusb line
@@ -12631,7 +12629,7 @@ SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
 SNONE=$(mktemp); : > "$SNONE"
 SPMN=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SNONE" \
            ./uninstall.sh --apply 2>&1)
-[[ "$SPMN" == *"btusb not loaded"* && "$SPMN" != *"modprobe -r"* && "$SPMN" != *"usecount"* ]] \
+[[ "$SPMN" == *"btusb not loaded"* && "$SPMN" != *"modprobe -r"* && ! -e "$SPM/spy.log" && "$SPMN" != *"usecount"* ]] \
     && ok "no btusb in the modules file is 'not loaded' — read from the file, not lsmod" \
     || bad "uninstall.sh's btusb presence did not follow BT_PROC_MODULES: $(grep -m1 btusb <<<"$SPMN")"
 rm -f "$SNONE"
