@@ -133,8 +133,10 @@ Recent detail may be shortened. Settled state is never dropped.
     on 10-23 09:40 after E3 #2 was closed by hand (row: 55 SCO setups, 0 timeouts). The boot unit
     opened **E3 #3**, labelled E3 but carrying the CO-02 module, so its row stays apart from E3's
     counts (`evidence/trials/E3/trial-03/NOTE-not-plain-E3.txt`). E3 #3 ended at that shutdown
-    and has **no row** in `evidence/trials/results.tsv`; its results are in that boot's journal, to
-    be recovered. The desktop capture runs again since 10-23 22:12:30 (STATUS).
+    and has **no row** in `evidence/trials/results.tsv` (row 3 there is a later boot, 10-30 on `-42`,
+    that reused the number and the directory); its result was recovered from the journal on 10-30:
+    63 links, 0 timeouts (`evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`;
+    corrected 2026-11-15). The desktop capture runs again since 10-23 22:12:30 (STATUS).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer that every reboot removes. Paused from 2026-10-11 to 10-29 (captures from 10-09 06:46 to 10-18 14:14 were lost to bt-trace's free-space floor meanwhile); restarted 10-29 on the operator's word with a 20 GB budget, and again on 10-30 after the `-42` reboot (`docs/tooling-index.md` has the command). Rules: §7, "Evidence".
 - **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
@@ -379,7 +381,7 @@ an error**; 50/72; subjects 49/46; checkpatch 0 errors under BlueZ's own config;
 **BlueZ takes patches by mail (`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is
 needed — the patch is the report.** `0002` has no `Fixes:` on purpose (pickaxe: a 2015 refactor).
 **v2 of both sent 2026-09-21** (message-only: quoted code re-indented, two lines wrapped).
-**The list's CI bot answered both v1 mails within 90 min (09-19 22:05/22:10 as the saved mails show it, in the mailbox's CEST, so most likely 20:05/20:10 UTC, 81 and 86 min after the 18:44 UTC send; an inference, the mails' headers are not in the repository; register §CB):** every
+**The list's CI bot answered both v1 mails within 90 min (09-19 22:05/22:10 as recorded, which against the 18:44 UTC send is 3 h 21 min, not 90; the time zone of one of the two is not settled, `patches/bluez/README.md`; register §CB):** every
 build, smatch, scan-build, valgrind and distcheck PASS; CheckPatch the one known quoted-line
 warning; **GitLint B3 — hard tabs in the quoted C of both messages — the only actionable item
 (v2 with spaces: operator's call, CB-02)**; TestFunctional FAIL is the bot's own — the same two
