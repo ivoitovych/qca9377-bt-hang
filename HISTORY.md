@@ -3324,6 +3324,11 @@ own indentation, and B3 counts every one. That is the only thing a v2 would chan
 a linter complaint deserves a v2 before a maintainer has said anything is the operator's call,
 recorded as open.
 
+*[Correction, 2026-11-16: "within ninety minutes" was not established. The replies' times are
+recorded as 22:05 and 22:10 on 09-19 with the time zone not settled; the repository holds no
+mailbox headers that settle it. Against the 18:44 UTC send, 22:05 and 22:10 read as UTC are
+3 h 21 min and 3 h 26 min. `BRIEF.md` §3 has the same correction.]*
+
 The third failure was the one that needed the discipline. `TestFunctional` had produced
 AddressSanitizer coredumps for both patches, in the same BAP transport tests, and a first
 reading found no patched function in any frame — suggestive, since the two patches share no
