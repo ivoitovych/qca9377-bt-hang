@@ -15099,7 +15099,7 @@ rm -rf "$INCS"
 # (2026-09-27 00:37:53). A sink-only update must leave the source in place, and
 # a null value must remove its key.
 if command -v python3 >/dev/null 2>&1; then
-    BAPOUT=$(python3 - scripts/bt-audio-policy.py <<'PYEOF'
+    BAPOUT=$(python3 -B - scripts/bt-audio-policy.py <<'PYEOF'
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("bap", sys.argv[1])
 bap = importlib.util.module_from_spec(spec); spec.loader.exec_module(bap)
@@ -16687,7 +16687,7 @@ rm -rf "$PA"
 
 # bt-ui-atspi.py: the start line says what the registry ended up with. Opted in
 # with every registration refused is not "NOT passive".
-UA=$(python3 -I - scripts/bt-ui-atspi.py <<'PYEOF'
+UA=$(python3 -I -B - scripts/bt-ui-atspi.py <<'PYEOF'
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("atspi", sys.argv[1])
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
