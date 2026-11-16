@@ -60,7 +60,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-15T01:42Z | [Test comprehensiveness](2026-08-15T0142Z-test-comprehensiveness.md) | the tree at `eaa9a14` | 90.1% line coverage, **76% mean comprehensiveness**. `bt-window` shipped and never executed; `bt-capdiff` at 93% of lines and **1 of 5 modes**; `bin/bt-capture` is Python and no instrument sees it. Adds `devtools/test-comprehension` |
 | 2026-08-15T15:04Z | [Verification on the investigation machine](2026-08-15T1504Z-verification-on-the-investigation-machine.md) | `9a11ab7` merged on `ed82166` | 566/567 where the tools are installed, **system binaries byte-identical** before and after — `farm_dir()` verified on the configuration that destroyed three of them 90 minutes earlier. Names the fourth instance of *a test whose subject is a tool's behaviour cannot be validated where the tool is missing* |
 | 2026-08-15T17:52Z | [Comprehensive code review](2026-08-15T1752Z-comprehensive-code-review.md) | the tree at `ed82166` | Every file, in priority order. **`main` fails its own coverage gate** on three stale exclusion ranges; five invariants nested inside another check's success branch in `tests/run-tests`; prose-behind-code named as the dominant defect class, concentrated where no invariant reaches |
-| 2026-08-16T00:22Z | [Fixes & elaboration for the code review](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md) | `main` at `944b1eb`, branch `review/2026-08-15T1752Z-fixes` | All 84 findings dispositioned — fixed / fixed-on-main / kept (REVIEWED-KEEP markers) / recorded; suite 602 green, coverage 89.6%, awk 88.0%. Adds CR-84 (mawk skips) and `tools/lib/trial-reclass.awk` |
+| 2026-08-16T00:22Z | [Fixes & elaboration for the code review](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md) | `main` at `944b1eb`, branch `review/2026-08-15T1752Z-fixes` (the branch name of 08-16; not checked since) | All 84 findings dispositioned — fixed / fixed-on-main / kept (REVIEWED-KEEP markers) / recorded; suite 602 green, coverage 89.6%, awk 88.0%. Adds CR-84 (mawk skips) and `tools/lib/trial-reclass.awk` |
 | 2026-08-17T00:22Z | [Source investigation 2026-08-16-2353](2026-08-17T0022Z-source-investigation-2026-08-16-2353.md) | Linux source, against `main` @ `1c336e7` | The one report here that reads the kernel rather than us. Locates `BT-1` as a chain across four components, and names the structural finding: the HCI core has **two watchdogs and one escalation path**, and `BT-1` is the case the escalation cannot reach. Corrects `EX-006` from its own output — `0x0428` *was* answered — which `EX-033` then observed directly six days later |
 | 2026-08-23T23:40Z | [EX-032 crash sites resolved](2026-08-23T2340Z-ex032-crash-sites-resolved.md) | `bluez 5.72-0ubuntu5.5`, stripped | Both `bluetoothd` crash sites named to file and line from the shipped binary, without symbols; falsifier stated and later confirmed against a core |
 | 2026-09-13 | [Foundation-file consistency](2026-09-13-foundation-file-consistency.md) | `5fbd6c2` | README, BRIEF, HISTORY: the central finding is in none of them. (Filename lacks the UTC time the convention requires — recorded, not renamed) |
@@ -167,7 +167,7 @@ them was implemented and **backed out** when it moved the numerator by six unexp
 lines; see the work log. The remedy is extraction to `tools/lib/`, as was done for
 `phase.awk`, and it is open.
 
-Verify: `tests/run-tests` (329 invariants) and `devtools/coverage`.
+Verify: `tests/run-tests` (329 invariants when this was written; the suite prints its own count now) and `devtools/coverage`.
 
 **Three assertions written during this work could not fail for the reason their names
 gave** — a row-width check blind to a blank column, a sandbox check using `[[ -e ]]` with
@@ -309,7 +309,7 @@ everything else is fixed or declined by the reaction, which will add its own tra
 | R2-04 / R2-05 / R2-07 | README: "kept current", contradictory baseline claims, no central finding | **partial** — R2-04 closed, R2-05/R2-07 open | `456daba` (R2-04) | "kept current" now points at `BRIEF.md` and says `issues.md` stops at `EX-021`. The alt-1 finding is still absent from README (`grep -c 'alt-1' README.md` in a finding paragraph → 0); waits on the bug-report rewrite |
 | R2-21 | `docs/issues.md` stale at EX-021 | **done** (re-run 2026-11-16) | in the tree | `grep -c 'EX-04' docs/issues.md` → 7 (≥1) |
 | R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | **done** (re-run 2026-11-16) | in the tree | `grep -c '2.19' docs/bug-report.md` → 1 (≥1; the one match is a table row, `EX-038`'s 2.191 s) and `grep -c -E '7\.6\|16\.2' docs/bug-report.md` → 0 |
-| R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | **done** (re-run 2026-11-16) | in the tree | `grep -c 'ls-files' tools/bt-trial` → 2 (≥1; the abort path refuses when tracked files are in the directory). `autostop)` is passive since 2026-09-19; the one `hci_alive` call left in it is behind the opt-in `BT_TRIAL_PROBE=1` (`tools/bt-trial:465-466`), so the old "→ 0 in `autostop)`" check no longer fits the code |
+| R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | **done** (re-run 2026-11-16) | in the tree | `grep -c 'ls-files' tools/bt-trial` → 2 (≥1; the abort path refuses when tracked files are in the directory). `autostop)` is passive since 2026-09-19; the one `hci_alive` call left in it is behind the opt-in `BT_TRIAL_PROBE=1` (`tools/bt-trial:487-488`, read 2026-11-16), so the old "→ 0 in `autostop)`" check no longer fits the code |
 | R2-105 | Commit path on the machine never runs the suite and nothing reads CI | **partial** — CI is read; suite still refused while a trial is open | this commit | `devtools/ci [sha]` reads the verdict on the machine (`--wait`, `--recent`); `devtools/status` prints a CI row and goes rc=1 on a red. The suite-on-machine half stays as designed: `run-tests` refuses during an open trial, correctly, so CI is the verdict while one is open |
 | R2-70 | `sanitize-logs.sh` redacts SIG base UUIDs; profile identity lost in every session log | open | — | `echo 0000110b-0000-1000-8000-00805f9b34fb \| tools/sanitize-logs.sh /dev/stdin /dev/stdout` prints it unchanged |
 | R2-76 | `bt-status` counts `discovery` lines as audio | **closed** | `456daba` | `\bsco\b` and `\besco\b`; the bare form is gone from `tools/bt-status` |
@@ -324,7 +324,7 @@ everything else is fixed or declined by the reaction, which will add its own tra
 
 The per-finding disposition — all 25 `FD` IDs — is the catalogue in
 [the fixes document](2026-09-17T2251Z-fixes-for-front-door-review.md), on branch
-`review/2026-09-17T2251Z-fixes`.
+`review/2026-09-17T2251Z-fixes` (the branch name of 09-17; whether it still exists is not checked here, and the 11-15 deletion of old remote branches did not touch the fixes document, which is a file on `main`).
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
@@ -536,6 +536,7 @@ track them. Read a file for its content; the date in its name is when it was wri
 | [review-reaction-plan-20261019-045758.md](review-reaction-plan-20261019-045758.md) | Review reaction plan — 2026-10-19 04:57 UTC |
 | [test-suite-synchronization-plan-20261019-045758.md](test-suite-synchronization-plan-20261019-045758.md) | Test-suite synchronization plan — 2026-10-19 04:57 UTC |
 | [verification-of-review-full-project-code-review-20260813-111346.md](verification-of-review-full-project-code-review-20260813-111346.md) | Verification of review 20260813-111346 — what was implemented, what stands, what was skipped |
+| [2026-11-16T0000Z-project-review-recheck-checks.md](2026-11-16T0000Z-project-review-recheck-checks.md) | Checks of the reviewer's recheck of the 2026-11-15 whole-project review (added 2026-11-16) |
 
 ## Adding a report
 

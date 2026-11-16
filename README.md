@@ -158,7 +158,8 @@ two-line addition to
   [`reviews/2026-11-12T1508Z-upstream-contributions-status.md`](reviews/2026-11-12T1508Z-upstream-contributions-status.md)).
   The first v2 candidate, whose second patch waits under `hdev->lock`, hangs the test guest with
   debug-only delays (3 of 3, 2026-11-15) and is not to be sent; the candidate is a
-  non-sleeping 2/2, with its checks and cover still to do (`docs/STATUS.md`, top).
+  non-sleeping 2/2, with its checkpatch and the bot's checks still to do; its cover was rewritten
+  on 2026-11-16 (`docs/STATUS.md`, top; `contributions/README.md`, "What to send").
   On the laptop the series ran from 2026-10-23 to 10-29 with three headsets
   ([`contributions/CO-02-sco-connect-reuses-closing-link/`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
 - **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,
@@ -296,11 +297,12 @@ archive/              (git-ignored, local) every raw HCI capture, compressed and
 cache/  tmp/          (git-ignored, local) upstream trees and tools; run outputs
 ```
 
-**Branches.** `main` is the record. By the convention in
-[`reviews/README.md`](reviews/README.md), an assessment is written on a branch
-`review/<UTC timestamp>` (report first, then the reaction on `review/<timestamp>-fixes`);
-which remote holds such a branch at a given time is not fixed (the 16 old remote branches were
-deleted on 2026-11-15; BRIEF, hand-off, "Old remote branches" lists what remains). Kernel findings are recorded on `main` as they
+**Branches.** `main` is the record. Some assessments of the repository were written on a
+branch `review/<UTC timestamp>` (the report first, then the reaction on `review/<timestamp>-fixes`);
+[`reviews/README.md`](reviews/README.md) states the file-naming convention for the assessments, not
+a branch convention, and mentions such branches only in two historical rows. Which remote holds
+such a branch at a given time is not fixed (the 16 old remote branches were deleted on
+2026-11-15; BRIEF, hand-off, "Old remote branches" lists what remains). Kernel findings are recorded on `main` as they
 are found (since 2026-10-09); held work lands on `main` by cherry-pick, never by merge. CI (`.github/workflows/checks.yml`) runs the suite, the
 coverage floors and the publish scan on every push; `devtools/ci` reads its verdict.
 
