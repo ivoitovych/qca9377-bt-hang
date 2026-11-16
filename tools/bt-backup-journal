@@ -126,7 +126,12 @@ for r in "${ROWS[@]}"; do
     # it while they still exist. This is the automatic half of the 08-31
     # repair: without it the marker would only ever be a complaint.
     if (( prefixed )); then
-        printf '  %-4s %s  PREFIX on disk — re-archiving in full\n' "$idx" "$short"
+        # Only a real run re-archives; --status and --dry-run say what would be.
+        if (( STATUS || DRY )); then
+            printf '  %-4s %s  PREFIX on disk — would be re-archived in full\n' "$idx" "$short"
+        else
+            printf '  %-4s %s  PREFIX on disk — re-archiving in full\n' "$idx" "$short"
+        fi
     fi
     want=$((want + 1))
     if (( STATUS )); then
