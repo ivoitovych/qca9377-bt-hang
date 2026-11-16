@@ -1,0 +1,12 @@
+RESULT stock full read sysstock: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT stock full read usrstock: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT stock journalctl -f sysstock: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT stock journalctl -f usrstock: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT patched full read syspatched: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT patched full read usrpatched: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT patched journalctl -f syspatched: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+RESULT patched journalctl -f usrpatched: expected 24000, lines 24000, missing 0, duplicates 0, out-of-order steps 0
+files: 76 (38 user, 0 .journal~)
+FINAL	-o export	patched f918d9ab360e6656 (exit 0)	stock f918d9ab360e6656 (exit 0)	SAME
+FINAL	-o export -r	patched 5ec92207de5c06c9 (exit 0)	stock 5ec92207de5c06c9 (exit 0)	SAME
+FINAL	-o cat -a	patched 78722850db960cf3 (exit 0)	stock 78722850db960cf3 (exit 0)	SAME

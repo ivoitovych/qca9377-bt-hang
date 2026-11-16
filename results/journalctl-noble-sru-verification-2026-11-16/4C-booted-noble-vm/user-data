@@ -1,0 +1,8 @@
+#cloud-config
+password: verify
+chpasswd: {expire: false}
+ssh_pwauth: false
+runcmd:
+  - [ mkdir, -p, /mnt/data ]
+  - [ mount, -o, ro, /dev/sr0, /mnt/data ]
+  - [ /bin/bash, -c, "bash /mnt/data/vm-run.sh > /root/vm-run.out 2>&1; cp /root/vm-run.out /dev/vdd 2>/dev/null; sync; echo o > /proc/sysrq-trigger" ]

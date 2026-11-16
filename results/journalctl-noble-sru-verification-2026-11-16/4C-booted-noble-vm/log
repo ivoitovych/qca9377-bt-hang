@@ -1,0 +1,26 @@
+[14:40:31] uname: 6.8.0-147-generic; image systemd: 255.4-1ubuntu8.18
+[14:40:31] cpu count 4, memory 3915 MB, user ubuntu: uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),24(cdrom),27(sudo),30(dip),105(lxd)
+[14:41:11] after the stock install: libsystemd-shared 255.4-1ubuntu8.19 systemd 255.4-1ubuntu8.19 
+[14:41:11] journalctl: systemd 255 (255.4-1ubuntu8.19)
+[14:41:13] journald running: active; journal dir: 6a7065f95d044ccb9755f330a0890996
+[14:41:18] user manager: active
+[14:41:18] === phase stock: systemd 255 (255.4-1ubuntu8.19)
+[14:41:49] manual rotation, files now: 12
+[14:42:29] manual rotation, files now: 24
+[14:43:09] manual rotation, files now: 36
+[14:43:24] writers finished; files: 38 (19 user)
+[14:43:32] follower exit status 143 (143 = stopped by us)
+[14:43:34] full read exit status 0, 49232 lines, stderr: 
+[14:43:35] journalctl --verify: exit status 0, 38 PASS, 0 FAIL
+[14:43:35] === installing the 8.20 test debs
+[14:43:45] install exit status 0; now: libsystemd-shared 255.4-1ubuntu8.20 systemd 255.4-1ubuntu8.20 
+[14:43:48] journald after the upgrade: active
+[14:43:48] === phase patched: systemd 255 (255.4-1ubuntu8.20)
+[14:44:19] manual rotation, files now: 50
+[14:44:59] manual rotation, files now: 62
+[14:45:40] manual rotation, files now: 74
+[14:45:55] writers finished; files: 76 (38 user)
+[14:46:03] follower exit status 143 (143 = stopped by us)
+[14:46:03] full read exit status 0, 97436 lines, stderr: 
+[14:46:09] journalctl --verify: exit status 0, 76 PASS, 0 FAIL
+[14:46:09] === final comparison on the static journal
