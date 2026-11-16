@@ -43,6 +43,12 @@ points; this folder answers them. Nothing was sent.
 - the build trees and kernel images;
 - the superseded first wording of the reduced patches.
 
+**The mails (added 2026-11-16):** `mail-from-send-20261114/` is a copy of the old
+`../send-20261114/mail/`: the request, the SCI request, the three covers and the full backports
+(`COPIED-FROM.md` there says which is which). The copy has its own `SHA256SUMS`; this
+directory's `SHA256SUMS` lists only the files that were here before, with this README's line
+updated.
+
 **For the operator:** the full prerequisite with the exception request (the current package), or
 the reduced one (this folder). The reduced 7.3.y request would carry patch 1 as a patch, since it
 is not a mainline commit.

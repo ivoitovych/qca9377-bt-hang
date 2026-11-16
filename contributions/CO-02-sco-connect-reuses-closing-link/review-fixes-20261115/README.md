@@ -109,3 +109,17 @@ still needs, from the project checkout:
 
 Open: the 3-of-33 hangs on the debug-only kernel of 11-14 were not re-examined. The deadlock above
 needs an advertising entry that the matrix never queues, so it does not explain them.
+
+## Note of 2026-11-16: the cover for the two-patch candidate
+
+`msg/cover-alt.txt` was a three-patch cover that quoted the sco-tester totals of the sleeping
+2/2 (`patches/main-v2/`). It now describes the two patches only (1/2 hold, 2/2 refuse without
+waiting) and quotes only numbers that section 2 above records for the alternative 2/2: sco-tester
+33 of the 35 posted cases (the two failures are the mismatch patch's), mgmt-tester 526/526,
+iso-tester 213/213, the late-park race cases 2/2 against 1/2 on base. The base figure 31 of 35 is
+a base measurement. **Not measured on this candidate, and said so in the cover:** the
+l2cap-tester and the laptop (the earlier cover text carried a v1 laptop result and the l2cap
+counts of another series; both removed). The raw guest logs behind section 2 are not in this
+directory. Still open, unchanged: the `Cc: stable` trailer form (operator), checkpatch, the bot's
+CI, the send commands, and CO-30's RFC re-test on this 2/2 (kernel work, not done). `SHA256SUMS`
+of this directory was made on 2026-11-16, after the cover was rewritten.

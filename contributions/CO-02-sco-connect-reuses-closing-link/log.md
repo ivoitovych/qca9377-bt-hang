@@ -956,3 +956,21 @@ Open: -ECONNABORTED or -EBUSY; whether a remote-set-up link should store the com
 instead of a one-time refusal; full setting versus air-mode bits only; a 4th patch in v8 or a
 separate patch. Not tested on the laptop. Raw logs, trees, images and SHA256SUMS:
 `/root/exp/agent-work/co02-mismatch-20261102/` (local).
+
+## 2026-11-16 — the entries after 11-02 (added from the records; nothing new was run)
+
+This log stopped on 11-02. What happened since is in these files, which are the record:
+- **2026-11-14:** v2 built, nothing sent (`send-v2-20261114/`, then `send-v2-review-fixes-20261114/`
+  after that day's outside review): v1's patches 2 and 3 folded, a new patch 3 (-EBUSY on a live
+  link, in-flight setup covered); sco-tester 31 to 35 of 35; the BlueZ tests ported.
+- **2026-11-15:** the outside review's lock-cycle point was confirmed: v2's 2/2 waits for the
+  disconnect worker under `hdev->lock` and hangs 3 of 3 against controller unregister with
+  debug-only delays (`review-fixes-20261115/README.md` section 1; the 11-14 claim "not new" is
+  withdrawn there). A 2/2 that does not sleep was written (`review-fixes-20261115/patches/alt-2of2/`);
+  the mismatch patch stays separate (`patches/standalone-3/`).
+- **The bot's mails:** `docs/STATUS.md` (2026-11-13) corrected the reading of the closed mirror
+  pull requests and the bot's CI results; the dossier's front-page banner of 11-12 predates it.
+- **2026-11-16:** the cover for the two-patch candidate was rewritten to describe two patches and
+  to quote only numbers measured on that candidate (`review-fixes-20261115/msg/cover-alt.txt`,
+  `review-fixes-20261115/README.md`, last section). `send-v2-20261114/SUPERSEDED.md` now names
+  the current candidate instead of the superseded `send-v2-review-fixes-20261114/`.

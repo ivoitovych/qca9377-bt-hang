@@ -4,6 +4,13 @@ Not sent. No Signed-off-by (the operator adds his own). Base: CO-02 v2 (`../co02
 `co02-v2-final` in `$W/linux-bn`) on bluetooth-next `da3cc02587c6`; the RFC is branch `co30-rfc`, one
 commit on top of it.
 
+**Note of 2026-11-16:** the base named above (`../co02-v2/kernel/`) is not in the repository, and
+that 2/2 is the sleeping one, which can deadlock (3 of 3 with delays, 2026-11-15) and is not to be
+sent. The numbers below (retry 0/3 to 3/3, the 27 of 30 links) were measured on it. The current
+CO-02 candidate is the non-sleeping 2/2
+(`contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/alt-2of2/`).
+**The RFC has not been re-tested on that candidate; this is open** (kernel work, not done).
+
 ## Contents
 
 - `kernel/0001-Bluetooth-SCO-defer-a-connect-until-the-link-being-a.patch`: `[RFC PATCH]`, 113 lines

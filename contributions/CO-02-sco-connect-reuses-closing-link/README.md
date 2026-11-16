@@ -1,5 +1,19 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
+> **Note of 2026-11-16 (newer than the banner below; `docs/STATUS.md` (its top block and row `U7`) and the
+> table "What to send" in `../README.md` are the current record):** v1 (2026-10-27) was sent and
+> has no human reply as of the last check; the closed mirror pull requests and the bot's CI
+> results are not a review (STATUS, corrected 2026-11-13). **v2 is not sent.** The v2 of
+> 2026-11-14 had a 2/2 that waits under `hdev->lock` and can deadlock against controller
+> unregister (3 of 3 with delays, 2026-11-15), so it is not to be sent. The candidate is patch 1
+> plus the non-sleeping 2/2, `review-fixes-20261115/patches/alt-2of2/`, cover
+> `review-fixes-20261115/msg/cover-alt.txt`; the mismatch patch later, alone. Still to do:
+> checkpatch, the bot's CI, send commands and a dry run; the stable trailer form is the
+> operator's. The v2 directories `send-v2-20261114/` and `send-v2-review-fixes-20261114/` are
+> superseded. The review file named in the banner below,
+> `reviews/2026-11-12T1508Z-upstream-contributions-status.md`, is at the project's top level:
+> `../../reviews/2026-11-12T1508Z-upstream-contributions-status.md`.
+
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record): **sent 2026-10-27, no human reply.** All four patches `new` in patchwork, not
 > archived. Sashiko (10-29) rated patch 2 `fail` alone; the next posting is **v2** (the series went
