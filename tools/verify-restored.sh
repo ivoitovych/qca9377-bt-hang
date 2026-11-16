@@ -83,6 +83,7 @@ else
               /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
               /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
               /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf \
+              /etc/systemd/system/bt-health-snapshot-event.service.d/10-device.conf \
               /usr/local/share/qca9377-bt-hang/installed-at \
               /usr/local/share/qca9377-bt-hang/mode
         } | sort -u)

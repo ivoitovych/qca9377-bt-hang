@@ -52,6 +52,7 @@ FILES=(
     /usr/local/bin/bt-retention
     /usr/local/bin/bt-archive
     /usr/local/bin/bt-backup-journal
+    /usr/local/bin/bt-journal-files
     /usr/local/bin/bt-snapshot
     /usr/local/bin/bt-actions
     /usr/local/bin/bt-boot-stats
@@ -86,6 +87,9 @@ FILES=(
     /etc/systemd/system/bt-trial-auto.service
     /etc/systemd/system/bt-journal-backup.service
     /etc/systemd/system/bt-journal-backup.timer
+    /etc/systemd/system/bt-journal-files.service
+    /etc/systemd/system/bt-journal-files.timer
+    /etc/systemd/system/bt-journal-files-shutdown.service
     /etc/systemd/system/bt-raw-archive.service
     /etc/systemd/system/bt-raw-archive.timer
     /usr/local/bin/bt-sanitize-logs
@@ -101,8 +105,11 @@ FILES=(
     /usr/local/share/qca9377-bt-hang/baseline.tsv
     /etc/systemd/system/bt-hang-watchdog.service
     /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+    # 20-verbose.conf: nothing in this tree creates it any more (an early install did);
+    # kept so a machine that still has one is cleaned.
     /etc/systemd/system/bt-hang-watchdog.service.d/20-verbose.conf
     /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
+    /etc/systemd/system/bt-health-snapshot-event.service.d/10-device.conf
     /etc/systemd/system/bt-health-snapshot.service
     /etc/systemd/system/bt-health-snapshot-event.service
     /etc/systemd/system/bt-health-snapshot.timer
@@ -117,6 +124,7 @@ DIRS=(
     /etc/systemd/journald.conf.d
     /etc/systemd/system/bt-hang-watchdog.service.d
     /etc/systemd/system/bt-health-snapshot.service.d
+    /etc/systemd/system/bt-health-snapshot-event.service.d
     /usr/local/share/qca9377-bt-hang
 )
 
@@ -129,6 +137,8 @@ UNITS=(
     bt-capture.service
     bt-trial-auto.service
     bt-journal-backup.timer
+    bt-journal-files.timer
+    bt-journal-files-shutdown.service
     bt-raw-archive.timer
 )
 

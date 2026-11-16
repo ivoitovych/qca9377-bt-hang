@@ -74,6 +74,7 @@ RAW_HERE=0
 RAWEXEC=$(sed -n 's/^ExecStart=//p' "$REPO/systemd/bt-raw-archive.service" 2>/dev/null)
 [[ "$RAWEXEC" == "$REPO/scripts/raw-capture-archive-all.sh" ]] && RAW_HERE=1
 nosrc=0
+HAVE_ZSTD=0; command -v zstd >/dev/null 2>&1 && HAVE_ZSTD=1
 
 echo "${B}Install verification${O} — checkout: $REPO"
 echo "─────────────────────────────────────────────────────────────"
@@ -81,6 +82,11 @@ for p in "${PAIRS[@]}"; do
     src="$REPO/${p%%:*}"; dst="${p##*:}"
     if (( ! RAW_HERE )) && [[ "${p%%:*}" == systemd/bt-raw-archive.* ]]; then
         printf '  %s·%s not expected from this checkout (its unit runs %s): %s\n' "$Y" "$O" "${RAWEXEC:-nothing}" "$dst"
+        continue
+    fi
+    # bt-journal-files and its units are installed only where zstd exists.
+    if (( ! HAVE_ZSTD )) && [[ "${p%%:*}" == tools/bt-journal-files || "${p%%:*}" == systemd/bt-journal-files* ]]; then
+        printf '  %s·%s not expected without zstd: %s\n' "$Y" "$O" "$dst"
         continue
     fi
     if [[ ! -e "$src" ]]; then
@@ -143,7 +149,8 @@ echo "${B}Services${O}"
 mapfile -t UNITS < <(
     { echo bluetooth
       grep -oE 'systemctl enable --now [a-z0-9.-]+' "$REPO/install.sh" 2>/dev/null | awk '{print $NF}'
-    } | sort -u | { if (( RAW_HERE )); then cat; else grep -vx 'bt-raw-archive.timer'; fi; }
+    } | sort -u | { if (( RAW_HERE )); then cat; else grep -vx 'bt-raw-archive.timer'; fi; } \
+      | { if (( HAVE_ZSTD )); then cat; else grep -vxE 'bt-journal-files.timer|bt-journal-files-shutdown.service'; fi; }
 )
 # In experiment mode the intervening units are stopped ON PURPOSE. Counting
 # that as drift would tell the reader to run install.sh, which reverts the
