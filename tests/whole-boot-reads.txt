@@ -10,7 +10,8 @@
 # suite (RT3) fails on a read that is not listed, and on a listed read the tools no longer
 # make. The review IDs are the review of 2026-10-19's findings for that tool.
 #
-# Found 2026-10-19 by the scan in tests/run-tests (wb_scan): 41 reads in 21 files.
+# Found 2026-10-19 by the scan in tests/run-tests (wb_scan): 41 reads in 21 files; 43 reads in
+# 23 files by 2026-11-16 (the list below is the count, derived with `cut -f1 | sort -u`).
 
 bin/bt-evidence	echo "wd_interventions=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"	pending
 bin/bt-health-snapshot	wd_log=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)	pending

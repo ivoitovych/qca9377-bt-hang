@@ -199,8 +199,8 @@ END {
         printf "  !! %d trial(s) FAILED with BT-1 NOT OBSERVED, excluded from every rate above.\n", tf
         print  "     The closer's probe got no answer, but the journal showed no HCI"
         print  "     command timeout: a silent failure, or a probe made after the adapter"
-        print  "     was powered off at shutdown (E3 #3 and #4 were the latter, STATUS"
-        print  "     2026-11-07). The row cannot tell which, so it enters neither the"
+        print  "     was powered off at shutdown (the older closer probed late; docs/STATUS.md"
+        print  "     names the trials where that was the cause). The row cannot tell which, so it enters neither the"
         print  "     numerator nor the denominator; read the boot's journal for it."
         for (k in fnx) {
             split(k, q, "|")

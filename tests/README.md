@@ -58,8 +58,8 @@ investigation. It would also make them unrepeatable.
 redirect. One call site missed a stub, and once the machine's own controller
 died, every run of this suite deposited a fabricated incident directory into
 `evidence/sessions/`. Ten accumulated beside one genuine collection. Now:
-- every `bt-trial` call goes through one of five wrappers (`trial`, `trial_in`,
-  `tl`, `tlt`, `tlnh`), and a check requires each to set both `BT_REPO` (where
+- every `bt-trial` call goes through one of six wrappers (`trial`, `trial_in`,
+  `tl`, `tlt`, `tlnh`, `tlru`), and a check requires each to set both `BT_REPO` (where
   `results.tsv` is written) and `BT_EVIDENCE_REPO` (where `bt-incident` writes);
 - a second check fails on a spelled-out `tools/bt-trial <verb>` call outside
   them (the read-only `report` calls set `BT_REPO` on their own line);
@@ -373,7 +373,7 @@ The upgrade rehearsal is what the investigation machine's next deploy does.
 - **The shutdown.** `systemctl stop bt-trial-auto`, as a shutdown runs it,
   closes the old trial with the new `bt-trial`.
 - **The way back.** `uninstall.sh --apply`.
-- **What it asserts** (17 checks):
+- **What it asserts** (20 checks, one `ok` line each in `tests/system-upgrade`):
   - the deploy ran nothing but file operations;
   - every destination holds the new file, and nothing else changed (a hash
     snapshot of every place an install writes, redirect-written files included);
