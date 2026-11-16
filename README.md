@@ -158,8 +158,8 @@ two-line addition to
   [`reviews/2026-11-12T1508Z-upstream-contributions-status.md`](reviews/2026-11-12T1508Z-upstream-contributions-status.md)).
   The first v2 candidate, whose second patch waits under `hdev->lock`, hangs the test guest with
   debug-only delays (3 of 3, 2026-11-15) and is not to be sent; the candidate is a
-  non-sleeping 2/2, with its checkpatch and the bot's checks still to do; its cover was rewritten
-  on 2026-11-16 (`docs/STATUS.md`, top; `contributions/README.md`, "What to send").
+  non-sleeping 2/2, with its checkpatch, the bot's checks and the send commands still to do; its cover was rewritten
+  on 2026-11-16 (the l2cap-tester and the laptop are marked not run in it; `docs/STATUS.md`, top; `contributions/README.md`, "What to send").
   On the laptop the series ran from 2026-10-23 to 10-29 with three headsets
   ([`contributions/CO-02-sco-connect-reuses-closing-link/`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
 - **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,

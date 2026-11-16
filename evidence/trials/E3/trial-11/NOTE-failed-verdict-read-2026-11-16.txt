@@ -1,0 +1,11 @@
+What "failed" means for the row "E3 #11 ... failed" (results.tsv, 2026-11-13T10:42:47+01:00).
+Read 2026-11-16 from this directory's own files and the row; nothing was re-measured.
+(The two trials that share this number are described in NOTE-two-trials-one-number.md.)
+
+- The row is the boot 680c448c trial: 49 s on 7.0.0-43-generic, BT-1 not observed, 0 SCO links,
+  0 timeouts, responds_after "no", previous shutdown "poweroff".
+- That boot had no Bluetooth at all: BT-16, third occurrence (docs/STATUS.md BT-16,
+  results/bt16-third-2026-11-13/). state-after.txt shows bluetooth.service "inactive" and
+  "responds unprobed".
+- So "failed" here is the closer's label for a boot whose controller never came up usable. It is
+  BT-16, not BT-1. The trial reports exclude such a row and name it (tools/lib/trial-summary.awk).

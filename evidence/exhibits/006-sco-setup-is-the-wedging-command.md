@@ -1,6 +1,6 @@
 # EX-006 — sco-setup-is-the-wedging-command
 
-**Historical claim (superseded in part by EX-009; one observation, `BRIEF.md` §5).** `HCI_Setup_Synchronous_Connection` (opcode 0x0428, SCO/eSCO link setup for HFP) was submitted, never answered, and timed out 2.169 s later. The controller's loss of HCI responsiveness begins at that boundary.
+**Historical claim.** [Superseded in part by EX-009; one observation, not the general signature, `BRIEF.md` §5.] `HCI_Setup_Synchronous_Connection` (opcode 0x0428, SCO/eSCO link setup for HFP) was submitted, never answered, and timed out 2.169 s later. The controller's loss of HCI responsiveness begins at that boundary.
 
 **⚠️ Superseded in part by [`EX-009`](009-sco-teardown-not-setup-in-this-incident.md).** A
 later instrumented failure shows the controller answering 0x0428 correctly within 2 ms and

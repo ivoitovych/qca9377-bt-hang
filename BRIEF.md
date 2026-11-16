@@ -108,7 +108,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; **replaced 2026-11-13 by the persistent `bt-raw-archive.timer`**, STATUS, the machine section; corrected 2026-11-16; budget 20 GB, the coordinator's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is now flagged at every session start (STATUS, the desktop capture);
   - an Ubuntu SRU for `dc16388d45ec` (less pressing: Ubuntu's next stable base should carry it; an inference);
   - the U6 SRU; the U7 and U17 PipeWire reports and the U15/U20 quirk entries (PipeWire's rules: the operator writes); the U11 opt-in proposal; U19's Launchpad report;
-  - a reply on Jiale Yao's power-off patch (patchwork 14864878; its comparison must be re-run first, CO-06);
+  - a reply on Jiale Yao's power-off patch (patchwork 14864878; its comparison was re-run in the research of 2026-11-01: 8 of 26 to 21 of 26 and 20 of 26, while the backlog-3 and removal cases still fail, CO-06; corrected 2026-11-16);
   - debug builds: GNOME Settings, and `btusb` for U8;
   - shellcheck; a second copy of the capture archive (§7); recording the running `bluetoothd` in `bt-trial` (§8a);
 - **Machine:**
@@ -189,9 +189,10 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - Send commands and a checked dry run exist only for CO-44 and CO-43 E; for the others they
 >     are to be made before the send.
 >   - **Not ready:** CO-02 v2. Its sleeping 2/2 deadlocks with debug delays (3 of 3, 11-15); the
->     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch and the bot's CI
->     are still to do; its cover, `msg/cover-alt.txt`, was rewritten on 11-16 (corrected 2026-11-16,
->     this said a cover was still to do).
+>     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch, the bot's CI
+>     and the send commands are still to do; the cover for the two-patch candidate was rewritten on
+>     2026-11-16 (`contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/msg/cover-alt.txt`;
+>     it marks the l2cap-tester and the laptop as not run; corrected 2026-11-16).
 >   - **Held:** CO-43 B2 and D v2 (D v2 breaks the system-resume rebind).
 >   - **Packages made since 11-13 carry no Signed-off-by**; the operator adds his own; the author
 >     line is his real name and address. Nothing sent.

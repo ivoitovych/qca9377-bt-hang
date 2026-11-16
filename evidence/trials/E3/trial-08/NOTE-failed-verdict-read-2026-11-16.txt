@@ -1,0 +1,15 @@
+What "failed" means for the row "E3 #8 ... failed" (results.tsv, 2026-11-12T17:52:46+01:00).
+Read 2026-11-16 from this directory's own files and the row; nothing was re-measured.
+
+- The row: BT-1 not observed, 0 SCO links, 0 timeouts, responds_after "no", usb_present "yes",
+  kernel 7.0.0-42-generic, previous shutdown "poweroff"; the trial lasted 7393 s.
+- sco-params.txt: no Setup Synchronous Connection inside the trial's window, in either capture path.
+- state-before.txt and state-after.txt: the controller 13d3:3503 present on 3-3 as hci0;
+  "tx timeouts 0 (this boot)"; "responds unprobed"; at the close bluetooth.service is "inactive".
+- Reading (an inference, the same as the one checked for E3 #4 in
+  trial-04/NOTE-verdict-checked-2026-11-07.txt): the closer's probe ran after the services had been
+  stopped, so its "responds_after no" says nothing about the controller. The row is stamped
+  17:52:46; the BT-17 incident (E3 #9) came later the same day, at 18:03 (docs/STATUS.md, BT-17).
+  The repository holds no check of this boot beyond these files.
+- So "failed" here is the closer's label for an unanswered probe, not a hang and not a BT-1
+  observation. The trial reports exclude such a row and name it (tools/lib/trial-summary.awk).

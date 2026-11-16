@@ -1,6 +1,6 @@
 # EX-007 — autonomous-profile-switch-triggers-hang
 
-**Historical claim (CORRECTED — see the refutation below).** The hang requires no operator action at the moment it occurs. In this incident BlueZ issued `HCI_Setup_Synchronous_Connection` 36 ms after the A2DP transport went idle, and **the controller never answered it**. What is established is the *consequence*; the claim originally made here about the *cause* of that command has been refuted.
+**Historical claim.** [CORRECTED: the cause claim was refuted on 2026-08-12; see the refutation below.] The hang requires no operator action at the moment it occurs. In this incident BlueZ issued `HCI_Setup_Synchronous_Connection` 36 ms after the A2DP transport went idle, and **the controller never answered it**. What is established is the *consequence*; the claim originally made here about the *cause* of that command has been refuted.
 
 **Relevance.** This explains why the failure appeared random and why it resisted deliberate reproduction — the operator kept it alive by interacting with it, and it died 77 s after they stopped, when a video ended. It also unifies every previously unexplained symptom: the hands-free/mono fallback, the recurring 'setting interface failed' (btusb changing the USB alternate setting to allocate isochronous bandwidth for SCO), and the AVDTP-teardown early-warning signature. It yields a minimal reproducer: play audio to a headset, stop it, wait.
 

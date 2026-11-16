@@ -82,9 +82,11 @@ holding only `NOTES.md` while the evidence sat elsewhere.
 
 ### The sessions so far
 
-*(This table lists the first four; later sessions — the threshold-missed and
-no-early-signal hangs of 2026-08-11, and the 2026-08-13 stock trials — follow the same
-layout and carry their own NOTES.)*
+*(This table lists the first four. On 2026-11-16 `sessions/` holds 30 directories, from
+`20260810-065803-observability-selftest` to `20261116-002107-shure-paired-in-handsfree-no-codec-row`,
+and the table is not extended; the later ones — the threshold-missed and no-early-signal hangs of
+2026-08-11, the 2026-08-13 stock trials, and the sessions since — follow the same layout and carry
+their own NOTES. `ls sessions/` is the list.)*
 
 | Session | What it shows |
 |---|---|

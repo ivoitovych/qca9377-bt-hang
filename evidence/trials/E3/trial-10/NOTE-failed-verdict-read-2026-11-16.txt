@@ -1,0 +1,13 @@
+What "failed" means for the row "E3 #10 ... failed" (results.tsv, 2026-11-12T22:46:44+01:00).
+Read 2026-11-16 from this directory's own files and the row; nothing was re-measured.
+
+- The row: BT-1 not observed, 0 SCO links, 0 timeouts, responds_after "no", usb_present "no",
+  enum_at_boot "no", kernel 7.0.0-42-generic, previous shutdown "reboot", duration 16698 s.
+- sco-params.txt: no Setup Synchronous Connection inside the trial's window, in either capture path.
+- state-before.txt and state-after.txt: both say "usb path absent", "hci -", "responds unprobed":
+  the controller 13d3:3503 was not on the USB bus at the start of the trial or at its end.
+- Reading: this is the stretch after the BT-17 loss of 18:03 (the device left the bus and stayed
+  off through a reboot until the 22:46 power-off, docs/STATUS.md BT-17, results/incident-2026-11-12-1803/).
+  So "failed" here means the controller was absent for the trial, which fits BT-17; it is
+  neither a BT-1 observation nor a new fault. The trial reports exclude such a row and name it
+  (tools/lib/trial-summary.awk).
