@@ -1,5 +1,13 @@
 # Linux kernel Bluetooth patches ready to send: a self-contained review document
 
+> **Note of 2026-11-16 (the document below is kept as it was given for review):** it is the
+> record of the packages as they stood on 2026-11-14, and several have changed since. The
+> recorded SHA-256 of the CO-21 cover letter (`7713f414…`) no longer matches the file, which
+> now hashes to `7a677049…` because the cover's change paragraph was rewritten. The other
+> packages changed as well (CO-02, CO-20, CO-21, CO-35, CO-43). The current package of every
+> contribution is named in the table "What to send" in `contributions/README.md`; this
+> document was not regenerated.
+
 *Prepared 2026-11-14 by the project <https://github.com/ivoitovych/qca9377-bt-hang> (fixes for
 the Linux Bluetooth stack found on a laptop with a QCA9377 controller, USB `13d3:3503`). Nothing
 in this document has been sent. Every patch is reproduced verbatim from the file named above it,

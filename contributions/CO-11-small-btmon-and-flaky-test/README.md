@@ -1,5 +1,12 @@
 # CO-11 — Small items: btmon for Ubuntu, the flaky BlueZ test
 
+> **Note of 2026-11-16 (newer than the banner below):** `ubuntu/ready-20261102/` is superseded.
+> For the other Ubuntu series the btmon debdiffs are in `ubuntu/ready-20261114/` (resolute
+> `5.85-4ubuntu0.6`, stonking `5.87-4ubuntu0.2`, renumbered after Ubuntu's own uploads of
+> 2026-11-10). For noble (5.72) the btmon fix travels in the one update
+> `../ubuntu-bluez-5.72-0ubuntu5.9-bundle/` (patches 1 and 2), together with CO-03, CO-37 and
+> CO-40; the table "What to send" in `../README.md` names it. Nothing is filed.
+
 > **Current state, 2026-11-12** (the index `../README.md` is the current record): (a) **ready to
 > file, not filed.** The live-capture test of 2026-11-02 settles the content: the first upstream
 > fix alone still aborts at 60 columns live, both fixes give 0 aborts in 264 runs, so the stable

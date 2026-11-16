@@ -1,5 +1,11 @@
 # CO-40 — Ubuntu BlueZ 5.72: backport `a6ac17f0e393` so a refused A2DP connect says "refused" (U29)
 
+> **Note of 2026-11-16 (newer than the "Next" line below):** done as proposed: the backport is
+> patch 10 of the one Ubuntu update `../ubuntu-bluez-5.72-0ubuntu5.9-bundle/` (with CO-03,
+> CO-11a and CO-37), tested there (`br-connection-unknown` 10/10 on base, `br-connection-refused`
+> 10/10 on the bundle). Nothing is filed; whether the bundle is one upload or several is the
+> operator's call (see the table "What to send" in `../README.md`).
+
 **What:** when a headset has dropped the laptop's key, Connect fails in GNOME as
 `br-connection-unknown`. The kernel refuses the A2DP channel with `ECONNREFUSED`. 5.72's
 `error_to_errno()` (`profiles/audio/a2dp.c`) turns that into `-EAGAIN`, which has no name in

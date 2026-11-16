@@ -9,6 +9,13 @@
 # CO-02 and CO-25 (--suppress-cc=all drops header Cc). The mails are format-patch output and carry
 # no To/Cc of their own. Before the send, scripts/pre-send-check.sh against a fresh BlueZ master
 # (README.md, "The send"). Sending is the operator's decision, every time.
+#
+# SUPERSEDED (2026-11-16): this package was replaced on 2026-11-14 by ../send-20261114/ (see
+# SUPERSEDED.md here). The real send is refused from this directory.
+if [[ "${1:-}" == "--send" ]]; then
+    echo "send.sh: superseded package; send from ../send-20261114/ (SUPERSEDED.md)" >&2
+    exit 2
+fi
 set -uo pipefail
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 AUTHOR=yaroslav.voytovych@gmail.com

@@ -1,5 +1,9 @@
 # CO-44 — MGMT: a command timeout is reported as "Authentication Failed" (BT-21)
 
+> **Note of 2026-11-16:** the paths `patch/0001-…` named under "The patch" and "The test" below
+> are the working copies (see `patch/SUPERSEDED.md`). The package to send is `send-20261113/`
+> (`kernel/`, `bluez/`, `send-commands.txt` STEP 2a as of 2026-11-14, dry runs OK on 11-14).
+
 **What:** `mgmt_errno_status()` (`net/bluetooth/mgmt.c`) maps `-ETIMEDOUT` to
 `MGMT_STATUS_AUTH_FAILED` (0x05). At the laptop's BT-17 incident (2026-11-12 18:03), the
 controller did not answer the kernel's Write Class of Device, and bluetoothd logged "Failed to

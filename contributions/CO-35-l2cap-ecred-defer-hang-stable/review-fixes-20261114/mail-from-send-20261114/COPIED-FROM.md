@@ -18,5 +18,10 @@ The two choices stay the operator's (`../NOTES-FOR-OPERATOR.md`, item 2):
 - the full prerequisite: send these files as they are;
 - the reduced prerequisite: use `../reduced/<line>/0001-...` in place of `0001-...` here, with
   `0002-...` unchanged, and write the 7.3.y request so that it carries patch 1 as a patch.
+  **It is not a drop-in:** the three covers here describe the whole first patch (they say it is
+  78 changed lines, a 149-line diff, more than the 100 lines the stable rules allow, and that it
+  is "sent whole as it was merged"), and the request says the same. With the reduced patch 1
+  (49 to 50 inserted lines, not a mainline commit) those sentences would be false, so the covers
+  and the request have to be rewritten first.
 
 Nothing here has been sent. Sums of these files: `SHA256SUMS` in this directory.

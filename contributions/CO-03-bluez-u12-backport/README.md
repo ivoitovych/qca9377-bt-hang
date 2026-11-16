@@ -1,13 +1,15 @@
 # CO-03 — U12: bluetoothd rebuild and the Ubuntu backport
 
-**State (2026-10-31):** backported, built and tested off the laptop. It is
-waiting for the operator's test on the laptop and decision on filing. The
+**State (2026-10-31; see the note of 2026-11-16 below for what is newer):** backported, built
+and tested off the laptop. It was waiting for the operator's test on the laptop and decision on
+filing; `docs/STATUS.md` records the package as staged on 2026-11-13, not installed. The
 work is in [`backport/`](backport/README.md):
 - five commits on `5.72-0ubuntu5.8`: BT-7, the helper part of `3d9900eb754d`,
   `a14d59725ef3` and `664a5d3785a1`;
 - the package `5.72-0ubuntu5.9~co03.1`;
-- a test plan run on base first: 0/70 → 70/70 on the trigger, and no other
-  test changed.
+- a test plan run on base first: the trigger lost A2DP 70 of 70 times before and 0 of 70 after
+  (the earlier "0/70 → 70/70" counted passes, the opposite way to `docs/STATUS.md`), and no
+  other test changed.
 
 **Note of 2026-11-16 (which build is staged):** the package staged in the headset kit
 (`artifacts/bluez-5.72-0ubuntu5.9~co03.1/bluez_5.72-0ubuntu5.9~co03.1_amd64.deb`, SHA-256
@@ -17,8 +19,11 @@ installing it: `dpkg-deb -I` gives `bluez 5.72-0ubuntu5.9~co03.1`, and its chang
 (`dpkg-deb -x`, `changelog.Debian.gz`) lists five patches: `co03-01` (adapter: short start
 discovery reply, `a734b06059cb`) and `co03-02` (a2dp: NULL stream in `transport_cb`,
 `0bed9886cff3`), which are the BT-7 fixes, and `co03-03` to `co03-05` (U12: `3d9900eb754d`'s
-helper part, `a14d59725ef3`, `664a5d3785a1`). Its `bluetoothd` has SHA-256 `59d2ea79...` (the
-value `docs/STATUS.md` gives). So the staged `~co03.1` build **does carry the BT-7 fixes**, as
+helper part, `a14d59725ef3`, `664a5d3785a1`). The daemon inside it, `usr/libexec/bluetooth/bluetoothd`,
+has SHA-256 `59d2ea79b4d98eb4f1e04de1d1622908a263885856cb13ea770109431f8a2453` (the full value is
+in the same checklist; `docs/STATUS.md` truncates it, and that value belongs to the daemon, not to
+the package). The `.deb` itself is **not in the repository**: it is a local artifact of the headset
+kit, and only its hash is recorded here. So the staged `~co03.1` build **does carry the BT-7 fixes**, as
 this page, BRIEF and STATUS say. The Ubuntu bundle's `5.72-0ubuntu5.9`
 (`../ubuntu-bluez-5.72-0ubuntu5.9-bundle/`) is a different build and **does not**: its notes
 say "the final CO-03 candidate left them out" (it carries only the three U12 patches). Both

@@ -181,4 +181,7 @@ journal export of each boot.
    it goes upstream. A stop in `sco_release_cb()` alone would not cover the `sco_event()`
    hang-up path above.
 4. [`homework/`](homework/README.md): the problem reproduced on master in PipeWire's VM tests
-   (Phase 0, done); fix variants through the same tests next (Phase 1).
+   (Phase 0, done); fix variants through the same tests next (Phase 1). *(Note of 2026-11-16:
+   no Phase 1 result is recorded in this dossier; the register row in `../README.md` says the
+   evidence package is ready and the next step is the operator's own report in his own words,
+   PipeWire's rules allowing no tool-written text.)*

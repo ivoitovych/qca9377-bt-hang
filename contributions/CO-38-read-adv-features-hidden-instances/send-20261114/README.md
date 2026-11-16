@@ -12,8 +12,9 @@ cover letter), authored "Iaroslav Voitovych", **without Signed-off-by** (he adds
 - The bot, kernel side: every check passes on both sides with identical tester results (the
   Signed-off-by checks only with a placeholder in a test copy). BlueZ side: TestFunctional failed
   2 of 3 on the patched side (two different BAP cases, "Failed to acquire") and passed 2 of 2 on
-  base; the series touches only two tester sources, so it looks like a flake under load (20 to 30)
-  but is **not shown** to be.
+  base in the first runs. **Shown later to be a flake** (`CHECKS.md`, over all 8 runs of the day:
+  patched failed 2 of 8, base 1 of 7, the same BAP/BASS case on base); the series touches only
+  two tester sources.
 
 **Left in the work area:** kernel images and tester binaries; the bot's large harness and tester
 logs (they print emulated controllers' addresses); intermediate patch copies; saved lore and

@@ -1,4 +1,8 @@
-# CO-39 send package (2026-11-14; nothing sent; one bot run still to read)
+# CO-39 send package (2026-11-14; nothing sent; the bot's base side was read the same day)
+
+> Note of 2026-11-16: the title said "one bot run still to read". It was read on 2026-11-14:
+> the base side passes except a CheckValgrind failure in BlueZ's unit test test-hog on master,
+> not ours; the patched side passes.
 
 Copied from `/root/exp/agent-work/lane4-bluez-20261114/co39/`; `CHECKS.md` (if present) and
 `PROGRESS.log` have the commands and results. BlueZ master `20ffd285b58f`; `adapter.c` unchanged

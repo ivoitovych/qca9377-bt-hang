@@ -2,7 +2,8 @@
 
 > **Current state, 2026-11-14: done.** The laptop runs `7.0.0-43-generic` with the stock btusb
 > (no `/lib/modules/7.0.0-43-generic/updates/`; `docs/issues.md` records `-43` stock boots from
-> 2026-11-12 22:57, boot `46cc4812`). Checked today on the installed module:
+> 2026-11-12 22:55, boot `46cc4812`; corrected 2026-11-16 from 22:57, the time `docs/STATUS.md`,
+> `docs/issues.md` and BRIEF give). Checked today on the installed module:
 > `scripts/btusb-has-device.py /lib/modules/7.0.0-43-generic/kernel/drivers/bluetooth/btusb.ko.zst`
 > → `FOUND 13d3:3503 x1`; control `… 0cf3 e300` → `FOUND 0cf3:e300 x1`. E3 is retired for this
 > kernel; nothing is left to contribute here.
@@ -15,8 +16,8 @@
 > btusb, then E3 retires. The post-install hook is ready, not installed.
 
 *(Note of 2026-11-16: the "State" paragraph below is the state of 2026-11-05 to 11-11 and is
-superseded by the banner above: done. The banner gives 22:57 for the `-43` boot; `docs/STATUS.md`
-gives 22:55 in two places. Which is right is not settled here: it needs the boot's journal.)*
+superseded by the banner above: done. The `-43` boot time is 22:55, as in `docs/STATUS.md`,
+`docs/issues.md` and BRIEF; the banner said 22:57 and was corrected.)*
 
 **State (2026-11-11, superseded):** waiting. It will probably arrive with Ubuntu's stable updates; a request would only
 make it sooner. **2026-11-11:** `7.0.0-43.43~24.04.1`, in noble-proposed since 11-05, carries it

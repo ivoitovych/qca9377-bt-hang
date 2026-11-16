@@ -97,6 +97,14 @@ The v2 package (`contributions/CO-02-…/send-v2-review-fixes-20261114/`) has tw
   second defect to the series.
 - **(a)**, `[PATCH v2 0/2]` (hold + folded fix), with the mismatch patch as its own submission.
 
+> **Note of 2026-11-16 (this page is a record of 2026-11-15 and is not rewritten):** the v2
+> package named above, `send-v2-review-fixes-20261114/`, is superseded: its 2/2 waits under
+> `hdev->lock` and hangs 3 of 3 against controller unregister with delays (2026-11-15), so it is
+> not to be sent. The candidate is 1/2 plus the non-sleeping 2/2 in
+> `contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/alt-2of2/`,
+> with its cover rewritten on 2026-11-16 in `.../msg/cover-alt.txt`. The lock question this page
+> calls open is answered there (`.../review-fixes-20261115/README.md`, section 1).
+
 (a) matches the dependencies. Answering Sashiko needs more than "folded": the cover must say why
 the synchronization is correct. That brings up the open question below.
 

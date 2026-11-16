@@ -1,5 +1,10 @@
 # CO-07 — U6: GNOME input meter fix for Ubuntu
 
+> **Note of 2026-11-16 (newer than "State: idea" below):** merged with CO-32. The six commits
+> apply to GNOME Settings 46.7 and were built for noble on 2026-11-14 (`build-20261114/`, with
+> CO-32's WirePlumber fix; the packages' own tests unchanged); the functional check needs the
+> laptop's audio. Next: CO-32 first, then Handsfree to A2DP three times with the panel open.
+
 > **Current state, 2026-11-12** (the index `../README.md` is the current record): **merged with
 > CO-32** (2026-11-01, `../research-2026-11-01/`). GNOME Settings 46.7 does re-target the meter, and
 > Ubuntu's 2-second WirePlumber patch (`U19`) then destroys it, so on Ubuntu the GNOME 47 fix alone

@@ -34,7 +34,7 @@ failing `LL Privacy - Remove Device 3` fails on both and does not involve mesh (
 tip). **Before a send:** the full mgmt-tester on CO-04 vs CO-04 + fix.
 
 **M-5, the lock-order cycle:** seen by another lane's unregister sweep in 2 of 35 boots on the tip,
-0 of 35 with CO-04 (`../CO-04-…/send-20261114/circular-count.txt`); not reproduced here in 60
+0 of 35 with CO-04 (`../CO-04-mesh-test-14888791/send-20261114/circular-count.txt`); not reproduced here in 60
 boots per kernel over three other scenarios. From the source it needs a queued
 `mesh_send_done_sync` still on the list when `hci_cmd_sync_clear()` walks it, i.e. the sync worker
 queued but not yet started. CO-04 removes that destroy callback; `fix-20261114/co04-message-note.md`

@@ -16,9 +16,12 @@ and the cover letter's paragraph on the system path (not tested; patch 3 acts on
 device's runtime PM status is RPM_RESUMING, "checked in the source only") rest on a premise
 that the D v2 finding above refutes: patch 3 does change the system path (it suppresses
 `needs_binding`). Do not reuse those texts. The cover's kmemleak line ("1 to 4 objects
-per run, then none in 12 of 12 runs") quotes the re-run kept in `../send-bt24-bt25-20261114/logs/`
-(12 of 12 leaking on E alone); the first run in
-`results/co43-d2-series-bt24-bt25-2026-11-14/RESULTS.md` had 11 of 12.
+per run, then none in 12 of 12 runs") quotes the **first run**, in
+`results/co43-d2-series-bt24-bt25-2026-11-14/RESULTS.md` (at most 4 objects per run, one of the
+12 runs with none: 11 of 12 leaking on E alone). It does not match the re-run kept in
+`../send-bt24-bt25-20261114/logs/kml-e.txt` (up to 5 objects, 12 of 12 leaking); the cover of
+`../send-bt24-bt25-20261114/` quotes the re-run's per-run counts. (Corrected 2026-11-16: the
+earlier note here said the series cover quoted the re-run.)
 
 The current package of every contribution is in the table "What to send" at the top of
 `contributions/README.md`.

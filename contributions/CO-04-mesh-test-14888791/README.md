@@ -1,5 +1,12 @@
 # CO-04 — syzbot's mesh_send_sync use-after-free: our independent fix
 
+> **Note of 2026-11-16 (newer than the state of 2026-10-29 below):** the package to send is
+> `review-fixes-20261114/` (mail form in `patch/`, `git am` form in `patch-bare/`), and
+> `send-20261114/` is superseded; the line "The send file is `patch/0001-…`" in
+> `send-20261114/README.md` names that older package. The code is unchanged since 10-29; the
+> 11-14 refresh on `da3cc02587c6` found a lockdep cycle at controller unregister on the tip in
+> 2 of 35 boots, none with this patch. See the table "What to send" in `../README.md`.
+
 **State (2026-10-29):** **send package ready for an outside review round; not sent.** "Bluetooth:
 MGMT: Fix use-after-free in mesh_send_sync()" on bluetooth-next `1081a6ef8f1e0` (`patch/`; results
 in `experiments/results-2026-10-29.md`; comparison with our V3 1/5 and the other pending patches in

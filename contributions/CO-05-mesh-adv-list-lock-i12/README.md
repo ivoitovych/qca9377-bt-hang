@@ -1,5 +1,10 @@
 # CO-05 — Mesh I12: advertising list changed without `hdev->lock`
 
+> **Note of 2026-11-16 (newer than the state of 2026-10-29 below):** the package to send is
+> `review-fixes-20261114/` (variant A with `Fixes:`, variant B without); `send-20261114/` is
+> superseded. The code is unchanged since 10-29, warnings 3 to 0 as before; mesh sending is held
+> for now. See the table "What to send" in `../README.md`.
+
 **Update (2026-11-01):** Cen Zhang's patchwork 14927631 (2026-10-30, `new`) takes `hdev->lock`
 around `hci_add_adv_instance()` in `mesh_send_sync()` and the other callers. 1/2 here no longer
 applies on top of it; CO-04 still does. If it lands, 1/2 needs a rebase or becomes redundant

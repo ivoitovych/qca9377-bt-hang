@@ -23,7 +23,10 @@ reading the journal 7 to 25 times faster.
 | `patches/ubuntu-noble-branch-commit.patch` | the same change as one commit on the packaging branch `ubuntu-noble` (head `e9f476fd65`, "Release systemd 255.4-1ubuntu8.19"), for a merge proposal |
 
 `NNNNNNN` stands for the Launchpad bug number. `<AUTHOR-NAME> <AUTHOR-EMAIL>` stands for whoever
-submits. Both are filled in, and the patch files renamed, once the bug exists.
+submits. Both are filled in, and the patch files renamed, once the bug exists. The
+`From: <AUTHOR-NAME> <AUTHOR-EMAIL>` line of `patches/ubuntu-noble-branch-commit.patch` and the
+changelog trailer of the debdiff are placeholders on purpose: the submitter's own identity goes
+there, so they are not to be replaced by anyone else.
 
 **Test build.** The source package builds with `dpkg-source -b`, and `quilt push -a` applies all 99
 patches on 8.19 with no fuzz. The binary build was amd64 only, in an ubuntu:24.04 container:

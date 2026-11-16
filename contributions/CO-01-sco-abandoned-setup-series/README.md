@@ -1,5 +1,11 @@
 # CO-01 — Test the abandoned-setup SCO series
 
+> **Note of 2026-11-16 (newer than the "State" lines below):** stalled upstream. The maintainer
+> pointed to Sashiko's findings on 2026-10-09 and there is no v4; the series no longer applies to
+> bluetooth-next. In QEMU it fixes its own tests and coexists with CO-02; nothing it fixes was
+> seen in 350 laptop captures. The next step is to wait; if a v4 appears, rerun the matrix
+> (about 20 minutes). The line "State: idea; nothing run yet" is the first state of this dossier.
+
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; this page below is its history): **stalled upstream.** The maintainer replied 2026-10-09
 > pointing to Sashiko's findings; no v4 since; the series no longer applies to bluetooth-next. The

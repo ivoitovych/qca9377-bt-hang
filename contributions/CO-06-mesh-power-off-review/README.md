@@ -1,5 +1,11 @@
 # CO-06 — Review reply on Jiale Yao's mesh power-off fix
 
+> **Note of 2026-11-16:** the rerun that the "State: blocked (2026-10-28)" line below calls
+> missing was done in the research of 2026-11-01: 8 of 26 became 21 of 26 and 20 of 26, the
+> backlog-3 and removal cases still fail, and the patch does not apply on top of CO-04. The
+> patch is still `new` upstream. A reply is blocked on the operator; if one is wanted, refresh
+> the lock trace and the removal cases (about 1 hour).
+
 > **Current state, 2026-11-12** (the index `../README.md` is the current record): **blocked.**
 > 14864878 is still `new` (patchwork, read 2026-11-12). The rerun is done (2026-11-01,
 > `../research-2026-11-01/`): 8/26 → 21/26 and 20/26; the backlog-3 and removal cases still fail; it

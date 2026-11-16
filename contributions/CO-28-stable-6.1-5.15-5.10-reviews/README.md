@@ -49,5 +49,8 @@ and `scripts/mail-lint.sh`.
 
 ## Next
 
+*(Note of 2026-11-16: this section is the plan from before the item was closed on 2026-11-01;
+nothing is to be watched for now, see the state line at the top.)*
+
 Watch for each review mail. If one appears, run the comparison on that rc and draft the reply.
 The send is the operator's decision. If the rcs are replaced by rc2s, the same applies to those.

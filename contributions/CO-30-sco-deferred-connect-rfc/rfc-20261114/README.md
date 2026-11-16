@@ -1,6 +1,8 @@
 # CO-30: deferred SCO connect, RFC package on top of CO-02 v2
 
-Not sent. No Signed-off-by (the operator adds his own). Base: CO-02 v2 (`../co02-v2/kernel/`, branch
+Not sent. No Signed-off-by (the operator adds his own). Base: CO-02 v2 (the sleeping 2/2, now
+superseded; its patches are in `contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/main-v2/`,
+and the directory named `co02-v2/kernel` when this was written is not in the repository; branch
 `co02-v2-final` in `$W/linux-bn`) on bluetooth-next `da3cc02587c6`; the RFC is branch `co30-rfc`, one
 commit on top of it.
 
@@ -24,8 +26,9 @@ CO-02 candidate is the non-sleeping 2/2
   BT_VOICE_TRANSPARENT" cases. If the maintainers want the retry test upstream, the first one is the
   candidate; the second is a measurement.
 - `results/`: summaries (`sco-tester-retry.txt`, `close-then-connect.txt`, `kernel-report-scan.txt`).
-  Raw logs: `$W/logs/run-co30-*.log`, `run-co30close2-*.log` (hashes in `../co02-v2/logs/SHA256SUMS`
-  after `scripts/finalize.sh`).
+  Raw logs: `$W/logs/run-co30-*.log`, `run-co30close2-*.log` (local only, not in the repository;
+  their hashes were to go into a `logs/SHA256SUMS` of the CO-02 v2 work, which is not in the
+  repository either).
 
 ## Results (QEMU/KVM, 4 CPUs, KASAN and lockdep, 256 MB guest; `p123` = CO-02 v2 alone, `rfc` = v2 + RFC)
 
