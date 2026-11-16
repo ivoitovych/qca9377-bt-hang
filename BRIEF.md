@@ -136,7 +136,7 @@ Recent detail may be shortened. Settled state is never dropped.
     and has **no row** in `evidence/trials/results.tsv` (row 3 there is a later boot, 10-30 on `-42`,
     that reused the number and the directory); its result was recovered from the journal on 10-30:
     63 links, 0 timeouts (`evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`;
-    corrected 2026-11-15). The desktop capture runs again since 10-23 22:12:30 (STATUS).
+    corrected 2026-11-15). The desktop capture runs again since 10-23 22:12:30 (STATUS). **Number reuse and `failed` rows (added 2026-11-16):** E3 #5 and #11 also reused a trial number (`evidence/trials/E3/trial-05/NOTE-two-uses-of-this-number.md`, `evidence/trials/E3/trial-11/NOTE-two-trials-one-number.md`); that reuse is recorded in those note files only, not in `results.tsv`. E3 #3 to #11 all carry the verdict `failed` with 0 links in `results.tsv`; notes for #3, #4 and #5 say what that means, and #6, #7, #8, #10 and #11 have none, so their `failed` is not explained in the repository. The trial reports (`tools/lib/trial-summary.awk`, `tools/lib/trial-sco-table.awk`) exclude a `failed` row with BT-1 not observed and name it, so none of these counts as a survival.
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`; since 2026-11-13 the persistent `bt-raw-archive.timer` runs it (STATUS, the machine section; corrected 2026-11-16), where before it was a transient timer that every reboot removed. The 10-11 to 10-30 history: paused from 2026-10-11 to 10-29 (captures from 10-09 06:46 to 10-18 14:14 were lost to bt-trace's free-space floor meanwhile); restarted 10-29 on the operator's word with a 20 GB budget, and again on 10-30 after the `-42` reboot (`docs/tooling-index.md` has the command). Rules: §7, "Evidence".
 - **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11; BT-12 to BT-15 are released, queued upstream or not ours, STATUS); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
@@ -310,9 +310,9 @@ fault is not specific to Disconnect.
   issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
   `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1; in stable 7.2.10 and
-  6.18.56 since 2026-10-11, 6.12.113 since 2026-10-15 and 6.6.160 since 2026-10-21; in the 6.1, 5.15 and 5.10 release candidates of 2026-10-17) — and that entry's setup/reset path was **untested here** (`DR-01`)
+  6.18.56 since 2026-10-11, 6.12.113 since 2026-10-15, 6.6.160 since 2026-10-21 and 6.1.191, 5.15.224 and 5.10.273 since 2026-10-30; this said "in the release candidates of 2026-10-17" until 2026-11-16) — and that entry's setup/reset path was **untested here** (`DR-01`)
   until 2026-09-26. ✅ *Since then:* the setup half alone (E1) ran 58 links / 3 boots /
-  2 headsets with 0 timeouts (`EX-055`, `EX-056`, `EX-058`); the exact entry (E3) ran 16 links /
+  2 headsets with 0 timeouts (`EX-058` carries the 58; `EX-056`'s 7 links are on boot `226965f1`, which `EX-058` also counts, and `EX-055` shows the setup loading, so the three are not summed); the exact entry (E3) ran 16 links /
   2 headsets with 0 timeouts (`EX-057`). **The missing entry is the cause**: on ROM firmware the
   first command after the stream dies; with the QCA firmware loaded it did not, in 74 links.
   The stable backport request went out 2026-10-02 (`docs/STATUS.md`).

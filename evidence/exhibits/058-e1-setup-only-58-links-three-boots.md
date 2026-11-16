@@ -1,6 +1,6 @@
 # EX-058 — e1-setup-only-58-links-three-boots
 
-**Claim.** A diagnostic btusb build that applies only the QCA setup part of the upstream entry (E1: BTUSB_QCA_ROME without BTUSB_WIDEBAND_SPEECH and without the reset callback) ran 58 SCO links over three boots and two headset models with all 58 hang-ups answered and 0 command timeouts, where the stock driver timed out in all 12 recorded instances.
+**Historical claim (corrected 2026-10-29: see the correction below).** A diagnostic btusb build that applies only the QCA setup part of the upstream entry (E1: BTUSB_QCA_ROME without BTUSB_WIDEBAND_SPEECH and without the reset callback) ran 58 SCO links over three boots and two headset models with all 58 hang-ups answered and 0 command timeouts, where the stock driver timed out in all 12 recorded instances.
 
 **Relevance.** Isolates the firmware setup from the entry's other effects: wideband, alt 1 and legacy 0x0428 are as in the deaths, the reset callback cannot have rescued anything, and the isolated change is enabling the QCA setup path, which loads the rampatch and NVM instead of leaving the controller on its ROM firmware. Per-link rows name the headset, air mode, alt-1 buffer count, seconds streamed and the outcome of the first command after the stream. The three boots are named by their ids, which do not change at the next reboot.
 

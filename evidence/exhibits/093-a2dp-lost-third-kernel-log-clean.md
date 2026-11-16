@@ -4,7 +4,7 @@
 > and the output contradicts it: four `SCO packet for unknown connection handle 8` lines.
 > The command and output below are kept unchanged.
 
-**Claim.** No kernel error and no HCI command timeout on boot af3f9840 from 14:00 to the time of capture, 2026-11-13: the controller is not involved.
+**Historical claim (superseded by EX-094).** No kernel error and no HCI command timeout on boot af3f9840 from 14:00 to the time of capture, 2026-11-13: the controller is not involved.
 
 **Relevance.** Separates U12 (userspace) from BT-1/BT-17 (controller).
 

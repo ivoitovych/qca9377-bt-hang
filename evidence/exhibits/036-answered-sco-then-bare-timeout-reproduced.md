@@ -27,7 +27,7 @@
 > The rest of the exhibit — the answered `0x0428`, `evt 5`, the interval, the counts —
 > re-derives unchanged. `EX-037` supersedes the reading.
 
-**Claim.** `EX-033`'s signature reproduced, seven days later, on a different peripheral and
+**Historical claim (two parts corrected 2026-09-02, see the banner at the top).** `EX-033`'s signature reproduced, seven days later, on a different peripheral and
 a different kernel: `0x0428` **answered** in 74.9 ms, `evt 5` transparent air mode, both alt
 probes then silence, and the fault arriving **2.152 s** later on the **bare**
 `command tx timeout` with no opcode. `EX-033` measured 2.076 s.

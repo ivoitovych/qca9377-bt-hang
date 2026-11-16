@@ -20,7 +20,7 @@
 > The answered `0x0428`, the handle, the interval and the 9 h 45 m untreated window all
 > re-derive unchanged. `EX-037` supersedes the reading.
 
-**Claim.** The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms,
+**Historical claim (corrected 2026-09-02, 2026-08-23 and 2026-09-19: see the banners).** The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms,
 allocated handle `0x0004`, completed the USB alternate-setting switch — and then a
 *different* command died 2.076 s later, logged in the **bare** form
 `command tx timeout` with no opcode. An untreated window of **35113.4 s (9 h 45 m)**

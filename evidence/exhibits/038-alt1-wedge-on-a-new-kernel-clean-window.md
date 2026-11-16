@@ -42,6 +42,10 @@ Also replayable from the archive, which holds the boot in full (87,102 records,
 $ journalctl --file /root/bt-journal-archive/boot-f5de8066.export.zst …
 ```
 
+*Note, 2026-11-16: the arguments after the file name were elided when this exhibit was written and
+are not recoverable from it, so this second command is not re-runnable as shown; the first command
+above is. (The review of 2026-11-15 asked for it in full.)*
+
 ## Output
 
 Verbatim, trimmed to the sequence and the counts (full output in the session directory).

@@ -58,6 +58,11 @@ auto
 | `EX-042` | ~90 ms | 2.147 s | ✔ |
 | **this** | **9,650 ms** | **11.874 s** | **✔** (`0x0406`, named) |
 
+*Correction note, 2026-11-16: the "~90 ms" for `EX-042` is unsupported; `BRIEF.md` §2 gives that
+exhibit's first-command delay as "not recorded". The "27-into-9 mismatch" below is the wording
+withdrawn on 2026-09-19 (`len 27 mtu 9` is a split into three 9-byte packets, not an overflow;
+`BRIEF.md` §1, `DR-02`).*
+
 Both instances where the log *names* the dying command name `0x0406 Disconnect, reason
 0x13`. The bare-timeout instances are the ones where the first command was an
 `hci_cmd_sync`-untracked one issued within ~40 ms — consistent, not contradictory.
@@ -105,3 +110,5 @@ seconds would have sent it — and `bt-state` is probe-free by default from 2026
 | session | `evidence/sessions/20260917-234432-alt1-wedge-first-under-original-config` |
 | confirms | `EX-033`, `EX-036`, `EX-037`, `EX-038`, `EX-040`, `EX-042` |
 | refines | the "2.15 s interval" reading in all of them |
+| exit status | not recorded in this exhibit (added 2026-11-16 as a statement of the gap: the extraction outputs above were kept without their exit statuses, and they cannot be recovered from this file) |
+| redacted | not recorded in this exhibit (added 2026-11-16; the boot id and the session path above are as written, and no redaction statement was kept) |

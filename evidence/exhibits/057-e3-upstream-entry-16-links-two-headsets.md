@@ -86,6 +86,8 @@ TOTAL over 1 boot(s): links 16   hang-ups answered 16   timeouts 0
 
 **Evidence window.** `2026-10-01T00:13:21+02:00` — `2026-10-01T03:15:57+02:00`
 
+*Note, 2026-11-16 (arithmetic on the output above, not a new measurement): the `Opcode 0x0406 failed: -107` at 01:00:03 falls where the last MOMENTUM 4 link ends: 00:55:33.107 plus 270.68 s is 01:00:03.79, and "SCO packet for unknown connection handle 9" is logged in the same second. So the -107 Disconnect is most likely that link's own hang-up, one of the 16, with the ledger counting it as "hangup-ok 59 ms" while the kernel reports the command itself as failed (the claim above says the adapter was switched off by rfkill then). Whether the ledger's "answered" and the kernel's "-107" describe the same Disconnect was not checked against the capture.*
+
 ## Provenance
 
 | field | value |
