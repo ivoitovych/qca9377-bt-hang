@@ -76,14 +76,17 @@ with `systemctl show bt-trial-auto -p TimeoutStopUSec`.
    btusb` and `modprobe btusb` as `tools-only: NOT executed`, which is its one remaining guard
    holding. Stop if a command that runs is anything but `install`.
 3. Ignore the advice it prints: `bt-mode mitigation` (writes the power settings live and enables
-   the watchdog), `./install.sh --apply` (printed by `bt-verify-install` on any drift), and the
-   "expect N" / "expect on" lines (mitigation mode's values; experiment mode reads `Y` and `auto`).
+   the watchdog), and the "expect N" / "expect on" lines (mitigation mode's values; experiment
+   mode reads `Y` and `auto`). `bt-verify-install` on drift names `./install.sh --tools-only`, the
+   deploy checklist; an older copy named `./install.sh --apply`, which must never be run here.
 4. `bt-mode status`: unchanged from step 1, and the files it moved aside are still `.disabled`.
 5. `sudo systemctl daemon-reload`, then `systemctl show bt-trial-auto -p TimeoutStopUSec` → `30s`
    and `systemctl is-enabled bt-hang-watchdog bt-health-snapshot.timer` → `disabled` twice.
 6. `sudo tools/bt-verify-install`: in sync. On drift, stop and report; never `--apply`.
-7. E3 untouched: `cat /sys/module/btusb/srcversion` → `D1DEA96A0C95BFAB05CEE01`, and
-   `modinfo -n btusb` names `…/updates/btusb.ko`.
+7. The kernel module is untouched: `cat /sys/module/btusb/srcversion` and `modinfo -n btusb`
+   print what they printed in step 1 (write both down there). No build is assumed: the machine
+   ran a self-built `btusb` (E3) at the time this route was written and has since gone back to
+   the stock one, so the values are whatever the machine had before the deploy.
 
 Write a `bt-trial step` note only after the deploy: before it, the installed `bt-mark` sends HCI
 Read Local Name with every mark.
@@ -105,6 +108,23 @@ path back to the pre-install state, including the few things `uninstall.sh` deli
 does not touch (collected metrics, and settings changed outside this repo).
 
 ### What it installs
+
+**The authority is `install.sh`** (its `install_file` calls and the `systemctl enable` lines;
+`tools/bt-verify-install` and `tools/verify-restored.sh` derive their lists from it): about
+seventy files and eleven enabled units, of which items 1 to 3 below are the original three.
+The rest, in short:
+
+- the **diagnostic and evidence tools** in `/usr/local/bin` with the awk and shell programs
+  they load from `/usr/local/bin/lib` (`bt-state`, `bt-trial`, `bt-diagnose`, `bt-archive`, …);
+- **passive capture**: `bt-capture` (always), `bt-trace` (when `btmon` is there), `bt-usbmon`
+  (when `tcpdump` is there), `bt-dyndbg` and the `bluetoothd -d` and journald drop-ins;
+- **`bt-trial-auto`**, which opens a trial at every boot and closes it at shutdown;
+- **archives**: the `bt-journal-backup` timer, the `bt-journal-files` timer and shutdown unit
+  (when `zstd` is there), and the `bt-raw-archive` timer, which is installed and enabled **only
+  from the checkout its unit's `ExecStart` names** (the investigation machine's), never from
+  another one.
+
+`--tools-only` installs all of these files and enables none of the units.
 
 **1. A watchdog** (`bt-hang-watchdog.service`) — reimplements the missing kernel handler
 in userspace. It tails the kernel log and, after 3 controller timeouts in 60 s, issues
