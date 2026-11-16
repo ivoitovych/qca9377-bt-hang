@@ -5,8 +5,10 @@
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 T="$ROOT/tools/bt-journal-files"
-W="$ROOT/tmp/test-bt-journal-files"
-rm -rf "$W"; mkdir -p "$W/src/mid1" "$W/stub" "$W/badzstd"
+# Outside the repository: bt-journal-files refuses an archive inside it (the copies carry
+# addresses), so the scratch tree cannot live under $ROOT/tmp.
+W=$(mktemp -d) || exit 2
+mkdir -p "$W/src/mid1" "$W/stub" "$W/badzstd"
 REAL_ZSTD=$(command -v zstd)
 printf '#!/bin/sh\necho "rotate called" >> "%s/rotate.log"\n' "$W" > "$W/stub/journalctl"
 chmod +x "$W/stub/journalctl"
@@ -60,4 +62,4 @@ before=$(find "$W/src" -type f | wc -l)
 check "the source directory is never changed" '[[ $before -eq 5 ]]'
 echo "passed $pass, failed $fail"
 rm -rf "$W"
-(( fail == 0 ))
+(( fail == 0 ))   # (the scratch tree is removed just above)

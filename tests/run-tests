@@ -2829,6 +2829,7 @@ rm -rf "$LC"
 # hciconfig (exit 1, or any non-zero) is still a failure, so the check can fail.
 lc_machine
 rm -f "$LC/bin/hciconfig"
+machine_stub "$LC/bin" uptime     # bt-trial start reads it; the farm below would hand it to the tripwire
 farm_dir "$LC/farm" hciconfig
 _trcol() {   # <column> -> that column of the last results row
     awk -F"\t" -v c="$1" 'NR==1{for(i=1;i<=NF;i++)k[$i]=i;next} END{print $k[c]}' "$LC/evidence/trials/results.tsv" 2>/dev/null
@@ -8052,12 +8053,19 @@ EHR=$(BT_JOURNAL_FIXTURE="$EHF" BT_METRICS="$EHF/metrics.tsv" tools/bt-env-histo
 [[ "$EHR" != *"early+late/?"* && "$EHR" != *"late/?"* ]] \
     && ok "the threshold is extracted, not dropped to ?" \
     || bad "a threshold present in the log was reported as unknown"
-# By COLUMN, not by two letters anywhere in the output: the autosuspend column
-# (4th) is N and the power column (5th) is on on one row. `*"N"*"on"*` was met
-# by any N followed by any "on" ("Nov", "on/?").
-awk '$4 == "N" && $5 == "on" { f = 1 } END { exit !f }' <<<"$EHR" \
-    && ok "autosuspend and power policy are joined from the metrics of that boot" \
-    || bad "the metrics join produced no values"
+# By COLUMN, and from a metrics file that exists: the fixture directory has none,
+# so the join was never exercised (the old check, `*"N"*"on"*`, was met by the
+# "N" of "NOT" and the "on" of "on/?" in the legend). Every fixture boot id
+# starts with the same eight characters, which is what the join keys on, so one
+# row serves all three boots. The first run above, with no metrics, must read "?".
+EHM=$(mktemp -d)
+printf 'timestamp\tboot_id\tbtusb_autosusp\tusb_power_ctrl\n2026-08-13T09:05:00+02:00\taaaaaaaa\tN\ton\n' > "$EHM/metrics.tsv"
+EHJ=$(BT_JOURNAL_FIXTURE="$EHF" BT_METRICS="$EHM/metrics.tsv" tools/bt-env-history 2>&1)
+(( $(awk '$4 == "N" && $5 == "on" { n++ } END { print n + 0 }' <<<"$EHJ") == 3 )) \
+    && (( $(awk '$4 == "?" && $5 == "?" { n++ } END { print n + 0 }' <<<"$EHR") == 3 )) \
+    && ok "autosuspend and power policy are joined from the metrics of that boot (3 rows with the file, 3 rows of ? without)" \
+    || bad "the metrics join produced no values: $(awk '$1 ~ /^-?[0-9]+$/ { print $4 "/" $5 }' <<<"$EHJ" | tr '\n' ' ')"
+rm -rf "$EHM"
 # The probes column counts COMPLETED snapshot runs. The fixture's boot 0 has
 # three "Starting ..." lines and two "Finished ..." lines (the third run died
 # before probing). Matching the unit description alone counted all five —
@@ -8864,6 +8872,7 @@ UMD=$(mktemp -d); mkdir -p "$UMD/empty" "$UMD/dbg" "$UMD/bin" "$UMD/old"
 : > "$UMD/dbg/3u"
 chmod 0755 "$UMD/old"
 printf '#!/bin/sh\nexit 0\n' > "$UMD/bin/tcpdump"; chmod +x "$UMD/bin/tcpdump"
+printf '#!/bin/sh\nexit 0\n' > "$UMD/bin/modprobe"; chmod +x "$UMD/bin/modprobe"   # --check loads usbmon; never the real one
 umd_run() {   # <capture dir>
     env PATH="$UMD/bin:$PATH" BT_SYSFS_USB="$UMD/empty" BT_USBMON_BUS=3 BT_USBMON_DEBUGFS="$UMD/dbg" \
         BT_USBMON_DIR="$1" BT_USBMON_GAPLOG="$1/gaps.log" bin/bt-usbmon --check 2>&1
@@ -16176,7 +16185,7 @@ rm -rf "$RM"
 # journalctl here is a stub on PATH; the device store is a seam pointed at an
 # empty directory and bluetoothctl is a stub, so nothing of the machine is read.
 SL=$(mktemp -d); mkdir -p "$SL/nomatch" "$SL/match" "$SL/grepfail" "$SL/grepsig" "$SL/store"
-printf '#!/bin/sh\necho "bluetoothctl $*" >> "%s/calls.log"\nexit 0\n' "$SL" > "$SL/bluetoothctl"; chmod +x "$SL/bluetoothctl"
+printf '#!/bin/sh\necho "bluetoothctl $*" >> "%s/calls.log"\necho "Device AA:BB:CC:00:00:01 Test Headset"\nexit 0\n' "$SL" > "$SL/bluetoothctl"; chmod +x "$SL/bluetoothctl"
 for _k in nomatch match grepfail grepsig; do cp "$SL/bluetoothctl" "$SL/$_k/bluetoothctl"; done
 # nomatch: the probe (-n 1) answers, the --grep read finds nothing and says so as journalctl does: exit 1, no error text
 cat > "$SL/nomatch/journalctl" <<'SLSTUB'
@@ -16186,7 +16195,7 @@ case "$*" in
     *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
 esac
 SLSTUB
-# match: one complete link, answered
+# match: four links, one of each outcome: answered, timed out, a failed Disconnect, still open
 cat > "$SL/match/journalctl" <<'SLSTUB'
 #!/bin/sh
 case "$*" in
@@ -16196,6 +16205,19 @@ case "$*" in
         echo "2026-11-15T10:00:02.000000+00:00 h kernel: Bluetooth: hci0 evt 5"
         echo "2026-11-15T10:00:07.000000+00:00 h kernel: Bluetooth: hci0: reason 0x13"
         echo "2026-11-15T10:00:07.100000+00:00 h kernel: Bluetooth: hci0: opcode 0x0406 status 0x00"
+        echo "2026-11-15T10:01:00.000000+00:00 h kernel: Bluetooth: hci0: dst aa:bb:cc:00:00:02 handle 0x0002"
+        echo "2026-11-15T10:01:01.000000+00:00 h kernel: Bluetooth: hci0: opcode 0x043d"
+        echo "2026-11-15T10:01:02.000000+00:00 h kernel: Bluetooth: hci0 evt 4"
+        echo "2026-11-15T10:01:03.000000+00:00 h kernel: Bluetooth: hci0: len 27 mtu 9"
+        echo "2026-11-15T10:01:09.000000+00:00 h kernel: Bluetooth: hci0: command 0x0406 tx timeout"
+        echo "2026-11-15T10:02:00.000000+00:00 h kernel: Bluetooth: hci0: dst aa:bb:cc:00:00:01 handle 0x0003"
+        echo "2026-11-15T10:02:01.000000+00:00 h kernel: Bluetooth: hci0: opcode 0x0428"
+        echo "2026-11-15T10:02:02.000000+00:00 h kernel: Bluetooth: hci0 evt 5"
+        echo "2026-11-15T10:02:05.000000+00:00 h kernel: Bluetooth: hci0: reason 0x13"
+        echo "2026-11-15T10:02:05.100000+00:00 h kernel: Bluetooth: hci0: opcode 0x0406 status 0x0c"
+        echo "2026-11-15T10:03:00.000000+00:00 h kernel: Bluetooth: hci0: dst aa:bb:cc:00:00:02 handle 0x0004"
+        echo "2026-11-15T10:03:01.000000+00:00 h kernel: Bluetooth: hci0: opcode 0x0428"
+        echo "2026-11-15T10:03:02.000000+00:00 h kernel: Bluetooth: hci0 evt 5"
         exit 0 ;;
     *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
 esac
@@ -16225,7 +16247,8 @@ _rc=$(sl_run nomatch)
 [[ "$_rc" == 0 ]] && grep -q '^links 0   hang-ups answered 0   timeouts 0$' "$SL/out" && grep -q '^setup' "$SL/out" \
     || SLBAD+=" [no match: rc=$_rc out='$(tail -1 "$SL/out")' err='$(head -c 80 "$SL/err")']"
 _rc=$(sl_run match)
-[[ "$_rc" == 0 ]] && grep -q '^links 1   hang-ups answered 1   timeouts 0$' "$SL/out" && grep -q 'hangup-ok 100 ms' "$SL/out" \
+[[ "$_rc" == 0 ]] && grep -q '^links 4   hang-ups answered 1   timeouts 1$' "$SL/out" && grep -q 'hangup-ok 100 ms' "$SL/out" \
+    && grep -q 'TIMEOUT 0x0406' "$SL/out" && grep -q 'DISC-FAILED 0x0c' "$SL/out" && grep -q 'Test Headset' "$SL/out" \
     || SLBAD+=" [match: rc=$_rc out='$(tail -1 "$SL/out")']"
 _rc=$(sl_run grepfail)
 [[ "$_rc" == 2 && ! -s "$SL/out" && "$(cat "$SL/err")" == *"failed"* ]] || SLBAD+=" [read failure with exit 1: rc=$_rc out='$(head -c 60 "$SL/out")']"
@@ -16241,6 +16264,10 @@ _o=$(PATH="$SL/nomatch:$PATH" BT_BLUEZ_STORE="$SL/store" "$SL/sco-ledger-boots.s
 [[ "$_rc" == 0 && "$_o" == *"TOTAL over 1 boot(s): links 0   hang-ups answered 0   timeouts 0"* && "$_o" != *UNREADABLE* ]] \
     && ok "sco-ledger-boots.sh counts a boot with no SCO line as one boot with zero links, not as UNREADABLE" \
     || bad "sco-ledger-boots.sh on a boot with no calls: rc=$_rc: $(grep -E 'TOTAL|UNREADABLE' <<<"$_o" | tr '\n' '|')"
+_o=$(PATH="$SL/match:$PATH" BT_BLUEZ_STORE="$SL/store" "$SL/sco-ledger-boots.sh" 3 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$_o" == *"TOTAL over 1 boot(s): links 4   hang-ups answered 1   timeouts 1"* && "$_o" == *"Test Headset"*" 2"* ]] \
+    && ok "sco-ledger-boots.sh totals the links of a boot and counts them per headset" \
+    || bad "sco-ledger-boots.sh over a boot with four links: rc=$_rc: $(grep -E 'TOTAL|Headset|unknown' <<<"$_o" | tr '\n' '|')"
 grep -q '^bluetoothctl devices' "$SL/calls.log" 2>/dev/null \
     && ok "sco-ledger.sh asked the stubbed bluetoothctl for names, never the machine's" \
     || bad "sco-ledger.sh did not reach the stubbed bluetoothctl: the fixture is not isolating it"
@@ -16486,6 +16513,7 @@ git -C "$KC/tree" init -q; git -C "$KC/tree" add -A; git -C "$KC/tree" -c user.n
 printf '%s\n' '--- a/net/bluetooth/mgmt.c' '+++ b/net/bluetooth/mgmt.c' '@@ -1 +1,2 @@' ' int a;' '+int b;' > "$KC/clean.patch"
 printf '%s\n' '--- a/net/bluetooth/mgmt.c' '+++ b/net/bluetooth/mgmt.c' '@@ -1 +1 @@' '-int zzz;' '+int b;' > "$KC/stale.patch"   # removes a line the file does not have: no fuzz can apply it
 printf '#!/bin/sh\nfor a in "$@"; do case "$a" in M=*) d="${a#M=}" ;; esac; done\necho obj > "$d/mgmt.o"\n' > "$KC/stubs/make"; chmod +x "$KC/stubs/make"
+printf '#!/bin/sh\necho 0.0.0-suite-fixture\n' > "$KC/stubs/uname"; chmod +x "$KC/stubs/uname"   # the script names the running kernel's build tree
 KCO=$(PATH="$KC/stubs:$PATH" "$KC/scripts/compile-mgmt-at.sh" "$KC/tree" "$KC/clean.patch" 2>&1); kcrc=$?
 KCS=$(PATH="$KC/stubs:$PATH" "$KC/scripts/compile-mgmt-at.sh" "$KC/tree" "$KC/stale.patch" 2>&1); kcsrc=$?
 (( kcrc == 0 )) && [[ "$KCO" == *"patched"*"make rc=0"* ]] && (( kcsrc == 1 )) && [[ "$KCS" == *"patch did not apply"* ]] \
@@ -16686,7 +16714,7 @@ rm -rf "$ST1"
 
 # T-12: `--section` hands its worker count on to the run it filters. It ran the
 # whole suite from the defaults, so `--serial --section X` measured something else.
-SECJ=$(awk '/^if \[\[ "\$\{1:-\}" == --section \]\]; then$/ { s = 1 } s { print } s && /^    exit \$rc$/ { exit }' tests/run-tests | grep -cF 'out=$("$0" --jobs "$SUITE_JOBS")' || true)
+SECJ=$(suite_cat | awk '/== --section \]\]; then$/ { s = 1 } s { print } s && /^    exit [$]rc$/ { exit }' | grep -cE 'out=.*--jobs "[$]SUITE_JOBS"' || true)
 (( ${SECJ:-0} == 1 )) \
     && ok "--section passes the call's own worker count to the run it filters (--serial is no longer dropped)" \
     || bad "--section starts its run from the defaults again: --serial / --jobs are dropped ($SECJ match(es) in its block)"
