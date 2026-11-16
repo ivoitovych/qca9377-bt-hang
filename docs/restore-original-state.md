@@ -43,7 +43,11 @@ diff -rq <backup>/etc-modprobe.d /etc/modprobe.d      # Only in /etc: btusb-qca9
 dpkg --verify bluez                                    # no output = all checksums match
 ```
 
-That is why restoration is *deletion of added files*, not restoration from backup.
+That is why restoration is, for the files the project created, *deletion of added files*.
+Not everything is a pure addition any more: when a destination already existed and was not
+this project's, `install.sh` keeps the original as `<dst>.pre-qca9377-bt-hang` and
+`uninstall.sh` moves it back (since 2026-09-20); and a file `bt-mode experiment` moved aside
+survives as `<dst>.disabled`, which `tools/verify-restored.sh` reports as still present.
 
 ---
 
@@ -76,13 +80,16 @@ Verify nothing is left with `./tools/verify-restored.sh`.
 Verify:
 
 ```bash
-cat /sys/module/btusb/parameters/enable_autosuspend   # expect Y
+cat /sys/module/btusb/parameters/enable_autosuspend   # expect Y after the next boot (N until then)
 systemctl status bt-hang-watchdog                     # expect: not found
 ls /etc/modprobe.d/btusb-qca9377.conf                 # expect: no such file
 ```
 
-⚠️ `enable_autosuspend` only flips back if `btusb` can be reloaded. If the module is in
-use the script says so and the change lands at the next boot.
+⚠️ **`btusb` is never reloaded** — not by `uninstall.sh`, and not as a step of this
+document. A reload kills even a healthy controller on this machine (`EX-046`, 2026-09-23;
+recovery needs a power-off). So `enable_autosuspend` is `N` until the next time `btusb`
+loads, which is the next boot: with the module loaded, the script reports its use count and
+leaves it alone. Expect `Y` in the check above only after a reboot.
 
 ⚠️ `power/control` returns to `auto` only after the device re-enumerates, since the udev
 rule applied at hotplug time. A reboot settles it.
@@ -126,7 +133,7 @@ shows **25** `tx timeout` events where the hardware produced **22**.
 | `systemctl stop/start bluetooth` | reverted — service `active`/`enabled` |
 | USB `unbind`/`bind` on `3-3` | runtime only; cleared by reboot |
 | `usb3-port3/disable` toggle | reverted — flag back to `0` |
-| `modprobe -r btusb && modprobe btusb` | runtime only |
+| `modprobe -r btusb && modprobe btusb` | runtime only; an early step of the investigation, since **forbidden** on this machine (`EX-046`): do not repeat it to undo anything |
 | `/root/exp/bluepiss` deleted | intentional; contents superseded by this repo |
 
 None of these persist across a reboot.

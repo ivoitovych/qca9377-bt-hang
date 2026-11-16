@@ -52,9 +52,9 @@ protocol around.
 The ladder defines **Build A** as `hdev->reset = btusb_qca_reset` only, and the ⚠️ beside C1
 warns about `btusb_setup_qca()` failing at HCI open. **That is no longer the main risk.**
 
-Since the plan was written there are **three controlled demonstrations that a USB reset
-destroys this controller** — `EX-023` (11.2 s to disconnect), the 2026-08-15 test (85.6 s),
-and `EX-026` (85.6 s, and the reset was not even ours). `hci_cmd_timeout()` calls
+Since the plan was written there are **two controlled demonstrations that a USB reset
+destroys this controller** — `EX-023` (11.2 s to disconnect) and the 2026-08-15 test
+(85.6 s) — and a third case, `EX-026` (85.6 s), after a reset this project did not issue. `hci_cmd_timeout()` calls
 `hdev->reset()` on the **first** timeout with no threshold.
 
 So Build A does not "install a recovery path". It **automates the operation we have three
@@ -720,8 +720,8 @@ autostop path IDENTICAL in deployed and tree
 
 So fixing the tree changes nothing until the fix is deployed — and deployment currently
 means `install.sh --apply`, which also runs `systemctl enable --now bt-hang-watchdog`
-(`install.sh:465`), the service whose USB reset has three demonstrations of destroying
-this controller. **A tools-only deployment path that enables no services is a prerequisite
+(`install.sh:465`), the service whose USB reset has two controlled demonstrations of destroying
+this controller (and a third case after a reset this project did not issue). **A tools-only deployment path that enables no services is a prerequisite
 for shipping this fix**, and does not exist yet.
 
 **The general rule, which the operator stated better than the backlog had:** a control

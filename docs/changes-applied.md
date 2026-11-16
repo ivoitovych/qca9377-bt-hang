@@ -91,6 +91,9 @@ In order:
 udevadm control --reload-rules          # reload udev ruleset
 modprobe -r btusb                       # unload (usecount was 0, device already absent)
 modprobe btusb                          # reload -> picks up enable_autosuspend=0
+#   ^ what was run on 2026-08-10, kept as the record. FORBIDDEN since: a btusb reload
+#     kills even a healthy controller on this machine (EX-046); install.sh no longer
+#     does it and the option applies at the next boot.
 systemctl daemon-reload
 systemctl enable --now bt-hang-watchdog # create symlink + start service
 ```
@@ -163,7 +166,14 @@ systemctl status bt-hang-watchdog              # expect: active, "device present
 ./uninstall.sh --apply  # actually revert
 ```
 
-### Manual — the complete set
+### Manual — the complete set OF THE 2026-08-10 INSTALL (not today's)
+
+⚠️ This list is the day-one install only. Today's install has about seventy files and
+eleven enabled units (the capture daemons, `bt-trial-auto`, the journal and raw-capture archive
+timers, `bt-dyndbg`, the `lib/` programs); doing only what is below would leave most of
+them running. For the current set use `./uninstall.sh --apply`, whose `FILES` and `UNITS`
+lists are the authority (`tests/run-tests` checks them against `install.sh`), and confirm
+with `./tools/verify-restored.sh`.
 
 ```bash
 # units
@@ -192,7 +202,8 @@ rmdir --ignore-fail-on-non-empty /usr/local/share/qca9377-bt-hang
 
 systemctl daemon-reload
 udevadm control --reload-rules
-modprobe -r btusb && modprobe btusb     # restores enable_autosuspend=Y
+# enable_autosuspend is Y again at the next boot. Do NOT reload btusb to get it
+# sooner: a reload kills even a healthy controller here (EX-046).
 ```
 
 ⚠️ Omitting the metrics units — as an earlier version of this list did — leaves
@@ -204,8 +215,8 @@ modprobe -r btusb && modprobe btusb     # restores enable_autosuspend=Y
 The two measures are independent — you can revert one and keep the other:
 
 - **Watchdog only:** `systemctl disable --now bt-hang-watchdog` (leave the files; harmless)
-- **Autosuspend only:** delete files 3 and 4, then `udevadm control --reload-rules` and
-  reload `btusb`
+- **Autosuspend only:** delete files 3 and 4, then `udevadm control --reload-rules`; the
+  change applies at the next boot (the module is never reloaded, EX-046)
 
 ### Restoring original config files
 
