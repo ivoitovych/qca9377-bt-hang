@@ -47,7 +47,8 @@ which_module() {
 	echo "unknown ($cur)"
 }
 # Fails closed: anything but a positive "no window, no trial" answer refuses.
-guard() {
+guard() { guard_state; [[ $EUID -eq 0 ]] || { echo "root required" >&2; exit 2; }; }
+guard_state() {   # the window and trial part of guard(), also run on its own by `guard-check`
 	local win tri wrc
 	if [[ ! -x "$REPO/tools/bt-window" || ! -x "$REPO/tools/bt-trial" ]]; then
 		echo "REFUSED: tools/bt-window or tools/bt-trial is missing or not executable, so an open window or trial cannot be ruled out." >&2; exit 3
@@ -60,13 +61,16 @@ guard() {
 	if [[ "$tri" == "trial OPEN"* ]]; then
 		echo "REFUSED: a trial is open (tools/bt-trial status). Close it first." >&2; exit 3
 	fi
-	if (( wrc != 0 )) || [[ -z "$win" ]]; then
+	# tools/bt-window exits 0 for "no window" and for an untreated open one (refused above),
+	# and 1 for a window that is CLOSED or TREATED (an intervention, or the device gone from
+	# the bus): its report starts "HCI non-response window". That is an answer, and not an open
+	# untreated window; anything else (no output, another status, an error) is not an answer.
+	if ! { (( wrc == 0 )) || { (( wrc == 1 )) && [[ "$win" == *"HCI non-response window"* ]]; }; } || [[ -z "$win" ]]; then
 		echo "REFUSED: tools/bt-window gave no usable answer (exit $wrc), so an open window cannot be ruled out." >&2; exit 3
 	fi
 	if [[ "$tri" != "no trial open"* ]]; then
 		echo "REFUSED: tools/bt-trial status gave no usable answer, so an open trial cannot be ruled out." >&2; exit 3
 	fi
-	[[ $EUID -eq 0 ]] || { echo "root required" >&2; exit 2; }
 }
 
 case "$cmd" in
@@ -90,6 +94,10 @@ patched-daemon)
 	[[ -f $DROPIN.disabled ]] && mv "$DROPIN.disabled" "$DROPIN"
 	systemctl daemon-reload && systemctl restart bluetooth
 	sleep 1; "$0" status
+	;;
+guard-check)
+	# Read-only: only the window and trial test of guard(), for a test of the guard itself.
+	guard_state; echo "guard passed"
 	;;
 load|restore)
 	# Refused outright, before anything is read or run: swapping bluetooth.ko

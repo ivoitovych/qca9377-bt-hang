@@ -675,7 +675,15 @@ for tc in tree.findall(".//testcase"):
 PY
 			done
 			if [[ -f "$OUT/functional.base.findings" && -f "$OUT/functional.patched.findings" ]]; then
-				verdict_from_classes functional "$OUT/functional.base.findings" "$OUT/functional.patched.findings"
+				# A configure or build that failed, or a junit file that is missing, means the
+				# tests did not run on that side: "PRE-EXISTING" (the same line on both sides)
+				# would turn two failed builds into a pass with exit 0.
+				fnotrun=$(grep -h -E '^(configure failed|build failed|functional: no junit result)' "$OUT/functional.base.findings" "$OUT/functional.patched.findings" | sort -u | head -2 | tr '\n' ';')
+				if [[ -n "$fnotrun" ]]; then
+					verdict functional "NOT RUN" "the functional tests did not run on at least one side: ${fnotrun%;}"; SKIPPED+=(functional)
+				else
+					verdict_from_classes functional "$OUT/functional.base.findings" "$OUT/functional.patched.findings"
+				fi
 			fi
 		fi
 	fi

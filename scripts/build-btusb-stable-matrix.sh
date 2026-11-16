@@ -19,7 +19,17 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMMIT="${1:?usage: build-btusb-stable-matrix.sh <commit> [<stable-branch>…]}"; shift
 BRANCHES=("$@")
-(( ${#BRANCHES[@]} )) || BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
+# The default list is a snapshot (the lines live on kernel.org on 2026-10-02): BT_STABLE_BRANCHES
+# (blank-separated) replaces it, and the list used is printed, so a stale default is visible.
+if (( ${#BRANCHES[@]} == 0 )); then
+	if [[ -n "${BT_STABLE_BRANCHES:-}" ]]; then read -r -a BRANCHES <<<"$BT_STABLE_BRANCHES"
+	else BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
+		echo "note: default branch list of 2026-10-02 (no 7.3.y); BT_STABLE_BRANCHES or arguments replace it" >&2
+	fi
+fi
+# The table entry that makes the pick count: the device the picked commit adds (default the
+# laptop's controller); BT_VID / BT_PID name another.
+ENTRY_RE="0x${BT_VID:-13d3}, 0x${BT_PID:-3503}"
 BASE="$HERE/cache/linux"
 LOGS="$HERE/tmp/btusb-matrix"; mkdir -p "$LOGS"
 J=$(nproc)
@@ -75,7 +85,7 @@ for b in "${BRANCHES[@]}"; do
 		pick="CONFLICT"
 		git -C "$TREE" diff --name-only --diff-filter=U >>"$log" 2>&1
 	fi
-	entry=$(grep -c "0x13d3, 0x3503" "$TREE/drivers/bluetooth/btusb.c" 2>/dev/null); entry=${entry:-0}
+	entry=$(grep -c "$ENTRY_RE" "$TREE/drivers/bluetooth/btusb.c" 2>/dev/null); entry=${entry:-0}
 	if [[ $pick == OK ]]; then build picked; pa=$BUILD; else pa="(not built)"; fi
 	[[ "$pick" == OK && "$pa" == rc=0* && "$entry" == 1 ]] || rc=1
 	# a control that does not build leaves the picked column unjudged: say so, and fail

@@ -128,6 +128,13 @@ def main():
         while rd(os.path.join(dev, "power", "runtime_status")) != "suspended" and time.monotonic() - t < 10:
             time.sleep(0.05)
         st = rd(os.path.join(dev, "power", "runtime_status"))
+        if not os.path.exists(dev):
+            # the device left the bus: that is the failure this script exists to provoke, not a
+            # reason to keep waiting for it to suspend
+            log("FAILURE at cycle %d: the device %s is gone from the USB bus" % (n + 1, dev))
+            log("leave the machine as it is until the evidence is collected, then power it off")
+            failed = True
+            break
         if st != "suspended":
             log("cycle %d: device %s after 10 s (something keeps it awake); waiting" % (n, st))
             time.sleep(interval)

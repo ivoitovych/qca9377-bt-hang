@@ -17,14 +17,21 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$HERE/cache/linux"
 C="${1:?usage: backport-check.sh <commit> [<stable-branch>…]}"; shift
 BRANCHES=("$@")
-(( ${#BRANCHES[@]} )) || BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
+if (( ${#BRANCHES[@]} == 0 )); then
+	if [[ -n "${BT_STABLE_BRANCHES:-}" ]]; then read -r -a BRANCHES <<<"$BT_STABLE_BRANCHES"
+	else BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
+		echo "note: default branch list of 2026-10-02 (no 7.3.y); BT_STABLE_BRANCHES or arguments replace it" >&2
+	fi
+fi
 OUT="$HERE/tmp/backport-check"
 rm -rf "$OUT"; mkdir -p "$OUT"
 git -C "$REPO" format-patch -q -1 --stdout "$C" > "$OUT/patch" || exit 2
 SUBJ=$(git -C "$REPO" log -1 --format=%s "$C")
 mapfile -t FILES < <(git -C "$REPO" show --format= --name-only "$C")
 echo "commit:  $(git -C "$REPO" log -1 --format='%h %s' "$C")"
-echo "in:      $(git -C "$REPO" tag --contains "$C" --list 'v*' | head -1 || echo 'no release tag')"
+# (`cmd | head -1 || echo` never reaches the echo: head's status is 0 for an empty list)
+FIRST_TAG=$(git -C "$REPO" tag --contains "$C" --list 'v*' | head -1)
+echo "in:      ${FIRST_TAG:-no release tag}"
 echo "files:   ${FILES[*]}"
 rc=0
 for b in "${BRANCHES[@]}"; do
