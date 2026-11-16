@@ -11,7 +11,7 @@ USB core question first, with D as btusb's fallback. This folder is that questio
 - `THREADS.md` — every message of the 2014 threads and the 2026-09 btusb series, summarised.
 - `scripts/` — the archive searches used (`hm-search.py`, `fetch.py`).
 
-Copied 2026-11-14 from `/root/exp/agent-work/bt18-usb-question-20261113/`. Left there: the
+Copied 2026-11-14 from `<work area>/bt18-usb-question-20261113/`. Left there: the
 fetched thread pages (`threads/`, 42 MB of other people's mail) and a wording checker. Changed on
 copy: the two references now point at mail-archive.com, because lore does not hold the 2014
 messages (`NOTES-FOR-OPERATOR.md`, item 5).

@@ -4735,7 +4735,7 @@ suite does not run on the laptop while a trial is open.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
-*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+*(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
 > `86ef0f58bdec` (`patches/mesh-tester/series/`): 1/2 tears the mesh
@@ -5201,7 +5201,7 @@ suite does not run on the laptop while a trial is open.
 
 ## BRIEF hand-off block as it stood on 2026-10-28 (moved verbatim; replaced by a fresh block)
 
-*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+*(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
 
 > **HAND-OFF (2026-10-18, after A1 and A2 were sent and the trial closer's decode was found
 > never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
@@ -5491,7 +5491,7 @@ suite does not run on the laptop while a trial is open.
 
 ## Hand-off of 2026-10-28 (moved from BRIEF.md verbatim on 2026-10-30, replaced by the 10-29/10-30 block)
 
-*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+*(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
 
 > **HAND-OFF (2026-10-28, after CO-02 was sent, every possible submission was re-checked
 > upstream, and the foundation documents were reviewed).** Current state of every issue and
@@ -5590,7 +5590,7 @@ suite does not run on the laptop while a trial is open.
 
 ## Hand-off of 2026-10-29/30 (moved from BRIEF.md verbatim on 2026-11-02, replaced by the 11-02 block)
 
-*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+*(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
 
 > **HAND-OFF (2026-10-29/30; read first; the 10-28 block is now at the end of `HISTORY.md`).**
 > STATUS has every row named here.
@@ -5732,7 +5732,7 @@ suite does not run on the laptop while a trial is open.
 
 ## BRIEF hand-off block as it stood on 2026-11-12 (moved verbatim on 2026-11-14; replaced by a fresh block)
 
-*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+*(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
 
 > **HAND-OFF (2026-11-02, brought to 2026-11-12; read first; the 10-29/30 block and the long X1
 > bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's

@@ -1,7 +1,7 @@
 # Sources for `question-linux-usb.txt` (2026-11-13)
 
 Code: bluetooth-next `da3cc02587c629420603df4395179ec82955c941`, read with
-`git -C /root/exp/agent-work/bt17-emu-20261113/linux show da3cc0258:<path>` and
+`git -C <work area>/bt17-emu-20261113/linux show da3cc0258:<path>` and
 `git … grep -n <pattern> da3cc0258 -- <path>`. History: `/root/exp/qca9377-bt-hang/cache/linux`
 (`git show -s`, `git log --full-history -S`). Threads: `THREADS.md` (saved pages in `threads/`).
 
@@ -115,7 +115,7 @@ https://www.mail-archive.com/linux-usb@vger.kernel.org/msg40098.html.
 
 ## 6. Recipients: `get_maintainer.pl` and the precedent
 
-Run by `scripts/getmaint.sh /root/exp/agent-work/bt17-emu-20261113/linux drivers/usb/core/driver.c drivers/usb/core/hub.c drivers/bluetooth/btusb_main.c`.
+Run by `scripts/getmaint.sh <work area>/bt17-emu-20261113/linux drivers/usb/core/driver.c drivers/usb/core/hub.c drivers/bluetooth/btusb_main.c`.
 That tree is the newest one here: HEAD `c85b3899eb7b` = `da3cc0258` plus local btusb patches only
 (`git diff --stat da3cc0258 HEAD`: `btusb_main.c` only), so `MAINTAINERS` is `da3cc0258`'s. The
 `cache/linux` worktrees checked are older (`linux-bt-next` `c9c15d4d8956`, 2026-09-23;
