@@ -1,0 +1,61 @@
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Wed, 3 Jan 2024 04:28:03 +0900
+Subject: sd-journal: make journal_file_read_tail_timestamp() notify to the caller that some new journal entries added
+Description: sd-journal: make journal_file_read_tail_timestamp() notify to the caller that some new journal entries added
+ .
+ journalctl calls fstat() for every open journal file for every entry it prints, so reading a
+ journal that is spread over many files costs a system call per file per entry. See
+ https://github.com/systemd/systemd/issues/31486. This is one of two upstream commits that
+ remove those calls; it is cherry-picked unchanged from upstream.
+ .
+ Tiny optimization for journal_file_find_newest_for_boot_id().
+Origin: upstream, commit:51b2bcf8356b847e7ab778adfad930691713c7ef
+Bug: https://github.com/systemd/systemd/issues/31486
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/NNNNNNN
+Applied-Upstream: v256
+
+(cherry picked from commit 51b2bcf8356b847e7ab778adfad930691713c7ef)
+---
+diff --git a/src/libsystemd/sd-journal/sd-journal.c b/src/libsystemd/sd-journal/sd-journal.c
+index d7136d250e..f082f3f6f9 100644
+--- a/src/libsystemd/sd-journal/sd-journal.c
++++ b/src/libsystemd/sd-journal/sd-journal.c
+@@ -449,6 +449,11 @@ static int journal_file_find_newest_for_boot_id(
+                 r = journal_file_read_tail_timestamp(j, f);
+                 if (r < 0)
+                         return log_debug_errno(r, "Failed to read tail timestamp while trying to find newest journal file for boot ID %s.", SD_ID128_TO_STRING(id));
++                if (r == 0) {
++                        /* No new entry found. */
++                        *ret = f;
++                        return 0;
++                }
+ 
+                 /* Refreshing the timestamp we read might have reshuffled the prioq, hence let's check the
+                  * prioq again and only use the information once we reached an equilibrium or hit a limit */
+@@ -2490,6 +2495,17 @@ static int journal_file_read_tail_timestamp(sd_journal *j, JournalFile *f) {
+         if (mo > rt) /* monotonic clock is further ahead than realtime? that's weird, refuse to use the data */
+                 return -ENODATA;
+ 
++        if (offset == f->newest_entry_offset) {
++                /* Cached data and the current one should be equivalent. */
++                if (!sd_id128_equal(f->newest_machine_id, f->header->machine_id) ||
++                    !sd_id128_equal(f->newest_boot_id, id) ||
++                    f->newest_monotonic_usec != mo ||
++                    f->newest_realtime_usec != rt)
++                        return -EBADMSG;
++
++                return 0; /* No new entry is added after we read last time. */
++        }
++
+         if (!sd_id128_equal(f->newest_boot_id, id))
+                 journal_file_unlink_newest_by_boot_id(j, f);
+ 
+@@ -2504,7 +2520,7 @@ static int journal_file_read_tail_timestamp(sd_journal *j, JournalFile *f) {
+         if (r < 0)
+                 return r;
+ 
+-        return 0;
++        return 1; /* Updated. */
+ }
+ 
+ _public_ int sd_journal_get_realtime_usec(sd_journal *j, uint64_t *ret) {
