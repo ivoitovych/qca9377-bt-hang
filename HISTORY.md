@@ -4555,8 +4555,8 @@ commit, so CI is the gate, and it worked as one.
   the square of the journal.
 - **The 2024 commits.** Two upstream commits of 2024 backport cleanly to Ubuntu 24.04's 255.4
   and remove most of the per-file system calls. A lane tested whether they also remove the
-  growth, using a fitted exponent b of time against files over synthetic journals and a copy of
-  the laptop's journal. They do not:
+  growth, using a fitted exponent b of time against files over synthetic journals and read-only
+  reads of the laptop's own journal files (never copied). They do not:
   - b is 2.14 → 2.11 on synthetic journals and 1.91 → 1.45 on the laptop's journal;
   - the constant falls by one to two orders of magnitude in a container (container figures,
     still to be measured on the laptop itself, where system calls are cheaper);
@@ -4575,6 +4575,57 @@ commit, so CI is the gate, and it worked as one.
 - The operator deleted the 16 old remote branches.
 - This file had not been updated since 11-14. A chapter is now owed before each break in the
   work, and the session start reports when the newest chapter is older than the newest commit.
+
+## A headset re-paired in the wrong mode, and a backport request built to stand alone (2026-11-16)
+
+**00:15: U21 a second time.** The operator had removed the Shure AONIC 50 and paired it again. It
+came back in Handsfree, and GNOME Settings showed no codec row. Two defects, recorded in STATUS and
+`docs/issues.md`:
+- (a) WirePlumber 0.4.17 keeps a device's chosen profile under a name built from its address. Removing
+  the device does not clear it, so a fresh pairing inherits the old choice.
+- (b) Settings has no Configuration row although the card offers 5 A2DP and 3 hands-free profiles.
+  This is U4's mismatch: the route names profile 3 while profile 261 is active.
+
+The 11.7 MB of dynamic-debug capture stayed local, with its hashes in the session notes.
+
+**The backport request (CO-46).** The operator asked for an Ubuntu 24.04 request that stands on its
+own: no reference to this project, numbers only from the laptop's journal, and a reproducer that
+cannot harm a maintainer's logs.
+- **Measured on the laptop itself.** The speed-up there is 7 to 25 times; in a container it looked
+  like 15 to 77. The shipped binary makes about 478 system calls per printed line, and a container
+  makes each one dearer, so the host's figure is the one quoted. `journalctl -b` on the laptop's
+  journal: 48 s against about 28 minutes.
+- **The laptop's journal is not a default one** (16 GB, up to 1 000 files). A default install keeps up
+  to about 100 archived files; the request says so and quotes 7 to 18 times for that range.
+- **Where the fix already is:**
+  - it is in every Ubuntu release since 24.10;
+  - it is in neither noble nor 8.19, which is in -proposed;
+  - it is not in upstream's v255-stable;
+  - no bug about it exists anywhere.
+
+  So it takes one Launchpad bug, after 8.19.
+- **The packaging:** two quilt patches in the style of 8.19's own cherry-picks, a debdiff, and a
+  packaging-branch commit. 8.19's only journal patch is a refactor that keeps its behaviour. The test
+  build and install in a fresh container gave identical output in 112 comparisons, including a file
+  being written.
+- **Corrections on the way:**
+  - "272 identical comparisons" had been the prototype's count; for the backport it is 36 + 2;
+  - the journal tests had run only on the prototype, until the package build ran them;
+  - "not a v255 material" was written during the v255 freeze.
+- **The review package** is one generated file (`build-review-package.py`). It is checked for this
+  project's name, local paths and tool names; the submitter's identity is a placeholder.
+- **The publish scan** stopped the research branch on systemd maintainers' published addresses and
+  on three journal file names. They were added to the list of published addresses.
+
+**The remaining growth.**
+- **The upstream PR** (#44579, a cached winner and runner-up) fixes rotated files but not
+  interleaved ones.
+- **Our priority-queue prototype** is flat for both. It is slower than the PR on rotated files.
+- **Correctness:** both gave output identical to main wherever journald's invariants hold. Where
+  they are broken, main's own order is undefined.
+- **What engaging upstream would take:** the author must understand and send the code, with no
+  agent opening PRs, and the tree's agent-guidance file adds a review marker. How to engage is the
+  operator's call.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 

@@ -95,9 +95,31 @@ at different priorities, on an older journal. It is not directly comparable with
      autopkgtests.
    - Packaging results: `results/journalctl-sru-packaging-2026-11-16/` on the research branch.
 2. **Review** by the operator's reviewers (`sru-noble-review-request.md`), then the operator files.
-3. **Upstream, the remaining growth:** compare the prototype with PR #44579.
-   - Open: the order across machine IDs, `-f`, and files that change while open.
-   - Whether to comment with data or propose a different design is the operator's decision.
+3. **Upstream, the remaining growth: measured 2026-11-16**
+   (`results/journalctl-file-scaling-remaining-2026-11-16/`, host, main at the PR's base `32d75628c4`):
+   - **PR #44579** (head `f26f6637ac`, a cached winner and runner-up) removes the growth for
+     sequential (rotated) files. Exponent 1.05; 397 000 lines/s at 800 files against main's 7 000.
+     It does not help interleaved files: at 400 files it gives 132 000 lines/s, main 131 000.
+   - **Our priority-queue prototype g** is flat in all layouts:
+     - interleaved at 400 files: 377 000 lines/s with one machine, 498 000 with three (2.8 and 7
+       times the PR);
+     - sequential: 1.1 to 1.7 times slower than the PR (235 000 at 800 files).
+   - **Correctness:** both are byte-identical to main in 336 comparisons. That covers 2 and 3
+     machines, overlapping boots, matches, cursors, reverse, `-f` on a live file, and files added or
+     removed mid-read. The journal unit tests pass 44 of 44.
+   - **The only differences** are on journals that break journald's invariants: monotonic time
+     restarting within a boot, or repeated sequence numbers. There, main's own order depends on scan
+     order, so no build is "right".
+   - **Before g could be proposed:**
+     - a test of its own;
+     - style fixes: two long lines and a test-only `#ifndef`;
+     - clang-tidy;
+     - a rebase over the PR, since both change `real_journal_next()`.
+   - **Upstream's rules:** systemd's CONTRIBUTING requires that the author understands the code and
+     that no agent opens PRs or posts. Its agent-guidance file requires a marker in `README.md` on
+     any source change. The PR's review so far is one maintainer comment that asks the author to
+     address the automated review's points first.
+   - How to engage (data on #44579, a separate PR, or nothing) is the operator's decision.
 4. **On the laptop** (operator's decision): installing a patched systemd; or fewer, larger files.
    Our scripts use `--list-boots`, `-b` and `grep -m1`, so they do not read the whole journal.
 
