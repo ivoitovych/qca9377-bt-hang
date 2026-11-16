@@ -4769,6 +4769,16 @@ stock 8.19 from noble-proposed against the 8.20 test build. Results are on `rese
   single-user desktop plausibly keeps 10 to 40. The laptop's 492 come from its own settings.
 - **The publish scan** stopped the first push: the intermediate commits named journal files with `@`. The
   items were committed again from their final files.
+- **The request revised (`main` `04520c2`):**
+  - Reviewer 7's points were all accepted, two of them partly. The record is
+    `reviews/2026-11-16T1300Z-co46-noble-sru-review-checks.md`.
+  - The title is neutral. Impact uses the host's 100-file runs. The Test Plan works on frozen copies with
+    `compare-frozen.sh`. "Where problems could occur" reports the open-reader results. The
+    `-EBADMSG` wording follows the source.
+  - Checking the revision found two more errors, both fixed: Impact said one fstat() per file per entry,
+    where the measurement shows several; and the Test Plan's write check reused one tag across the runs
+    before and after the upgrade.
+  - The review package was regenerated, with no hits, for the second review round before filing.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
