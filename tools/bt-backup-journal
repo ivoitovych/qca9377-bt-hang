@@ -97,7 +97,7 @@ mapfile -t ROWS < <(bt_journal --list-boots --no-pager 2>/dev/null \
 
 printf 'bt-backup-journal — %s retained boot(s), archive at %s\n\n' "${#ROWS[@]}" "$DEST"
 
-have=0; want=0; done_now=0; failed=0; skipped=0
+have=0; want=0; done_now=0; failed=0; skipped=0; refused=0
 for r in "${ROWS[@]}"; do
     IFS=$'\t' read -r idx bid <<< "$r"
     short="${bid:0:8}"
@@ -126,6 +126,17 @@ for r in "${ROWS[@]}"; do
     # it while they still exist. This is the automatic half of the 08-31
     # repair: without it the marker would only ever be a complaint.
     if (( prefixed )); then
+        # A re-archive that bt-archive REFUSED (the ring now holds fewer records than the
+        # prefix, or the archive cannot be counted) left its export beside the archive as
+        # shorter-boot-<id>.*. Trying again on every run would fail the timer unit for
+        # ever and rewrite that file: say so once per run and move on.
+        refusedfiles=("$DEST"/shorter-boot-"$short".export.*)
+        if (( ! STATUS && ! DRY && ${#refusedfiles[@]} > 0 )); then
+            printf '  %-4s %s  PREFIX on disk — a re-archive was refused earlier (%s kept); not retried, the longer archive stays\n' \
+                "$idx" "$short" "${refusedfiles[0]##*/}"
+            refused=$((refused + 1))
+            continue
+        fi
         # Only a real run re-archives; --status and --dry-run say what would be.
         if (( STATUS || DRY )); then
             printf '  %-4s %s  PREFIX on disk — would be re-archived in full\n' "$idx" "$short"
@@ -170,6 +181,7 @@ echo
 printf '  %s already archived, %s missing' "$have" "$want"
 (( DRY || STATUS )) || printf ', %s archived now, %s failed' "$done_now" "$failed"
 (( skipped > 0 )) && printf ', %s live boot skipped' "$skipped"
+(( refused > 0 )) && printf ', %s prefix kept (re-archive refused earlier)' "$refused"
 echo
 # PRESENT IS NOT COMPLETE, and this tool cannot tell the difference cheaply —
 # it tests for a file. Point at the check that does, rather than letting a

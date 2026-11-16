@@ -166,12 +166,25 @@ bt_journal_supports_grep() {
 # Counted rather than `grep -q` for the reason the whole repository counts:
 # `grep -c` exits 1 on zero matches, so under pipefail the caller would fail
 # exactly when the answer is "none", which is the common case.
+#
+# Status: 0 the journal was read; 2 THE READ FAILED OR WAS PARTIAL (the same rule as
+# bt_journal_lines below). The count is printed either way, so `n=$(bt_journal_count …)`
+# keeps working; a caller that must not record a failed read as zero tests the status:
+# `n=$(bt_journal_count …) || unread=1`. The count already read is a lower bound then.
 bt_journal_count() {   # <ere> <journalctl selector args...>
     local re="$1"; shift
-    local g=() n
+    local g=() n errf rcf jr
     bt_journal_supports_grep && g=(--grep="$re")
-    n=$(bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -cE "$re" || true)
+    errf=$(mktemp "${TMPDIR:-/tmp}/bt-journal-err.XXXXXX") || errf=/dev/null
+    rcf=$(mktemp "${TMPDIR:-/tmp}/bt-journal-rc.XXXXXX") || rcf=/dev/null
+    n=$( { bt_journal "$@" "${g[@]}" --no-pager 2>"$errf"; echo $? > "$rcf"; } | grep -cE "$re" || true)
+    jr=$(cat "$rcf" 2>/dev/null); jr=${jr:-2}
     echo "${n:-0}"
+    local failed=0
+    if (( jr >= 2 )) || { (( jr == 1 )) && [[ -s "$errf" ]]; }; then failed=1; fi
+    [[ "$errf" == /dev/null ]] || rm -f "$errf"
+    [[ "$rcf" == /dev/null ]] || rm -f "$rcf"
+    return $(( failed ? 2 : 0 ))
 }
 
 # The other unbounded question, and the last one: "when did this first happen?"
@@ -213,11 +226,28 @@ bt_journal_lines() {   # <ere> <journalctl selector args...> — the matching li
     return "$gr"
 }
 
+# Status: 0 a match (printed); 1 none, the journal was read; 2 none AND THE READ FAILED. A
+# match is a match whatever the reader did after it (grep -m1 ends the pipe, and journalctl
+# then dies of SIGPIPE, status 141), so the reader's status counts only when nothing matched.
 bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or empty
     local re="$1"; shift
-    local g=()
+    local g=() errf rcf line jr failed=0
     bt_journal_supports_grep && g=(--grep="$re")
-    bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -m1 -E "$re"
+    errf=$(mktemp "${TMPDIR:-/tmp}/bt-journal-err.XXXXXX") || errf=/dev/null
+    rcf=$(mktemp "${TMPDIR:-/tmp}/bt-journal-rc.XXXXXX") || rcf=/dev/null
+    # The reader's own status is written after it ends; a reader stopped by grep's early exit
+    # never gets that far, which is exactly the "found it" case and is not read at all.
+    line=$( { bt_journal "$@" "${g[@]}" --no-pager 2>"$errf"; echo $? > "$rcf"; } | grep -m1 -E "$re" || true)
+    jr=$(cat "$rcf" 2>/dev/null)
+    if [[ -n "$line" ]]; then
+        printf '%s\n' "$line"
+    elif [[ -n "$jr" ]] && { (( jr >= 2 )) || { (( jr == 1 )) && [[ -s "$errf" ]]; }; }; then
+        failed=1
+    fi
+    [[ "$errf" == /dev/null ]] || rm -f "$errf"
+    [[ "$rcf" == /dev/null ]] || rm -f "$rcf"
+    (( failed )) && return 2
+    [[ -n "$line" ]]
 }
 
 # ── KERNEL QUERIES, ONE FILE AT A TIME, IN PARALLEL ──────────────────────

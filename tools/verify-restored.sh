@@ -125,7 +125,11 @@ echo "3. Original settings restored"
 as=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo "-")
 case "$as" in
     Y) ok  "btusb enable_autosuspend = Y (original)" ;;
-    N) bad "btusb enable_autosuspend = N — still the mitigation value" ;;
+    # N is what a correct uninstall leaves in a btusb that is already loaded: uninstall.sh
+    # never reloads btusb (a reload kills the controller, EX-046), so the value changes at the
+    # next boot. The file that sets it at load time is checked in section 1; a leftover
+    # there is a failure, this running value is not.
+    N) info "btusb enable_autosuspend = N in the loaded module — the mitigation value stays until the next boot (uninstall does not reload btusb)" ;;
     *) info "btusb not loaded — defaults apply at next load" ;;
 esac
 

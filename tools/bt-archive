@@ -366,17 +366,20 @@ fi
 # The count runs whether or not $OUT exists: the old archive may carry another
 # extension (.gz on disk, .zst now), and the sweep below deletes exactly those.
 shopt -s nullglob
-OLD_N=0
+OLD_N=0; OLD_UNREADABLE=""
 for old in "$DEST_ABS"/boot-"${BID:0:8}".export.*; do
     [[ "$old" == *.prefix || "$old" == *.partial ]] && continue
     if od=$(decomp_for "$old"); then
-        on=$($od < "$old" 2>/dev/null | grep -c '^__CURSOR=' || true)
+        # the decompressor's own status counts: an archive that breaks half way gives
+        # a small count, and a small count must not read as "short enough to replace"
+        on=$({ $od < "$old" 2>/dev/null; echo $? > "$WORK/oldrc"; } | grep -c '^__CURSOR=' || true)
+        [[ "$(cat "$WORK/oldrc" 2>/dev/null)" == 0 ]] || on=-1
     else
         on=-1
     fi
     if (( on < 0 )); then
         # unreadable here: its size cannot be compared, so it cannot be replaced
-        OLD_N=$(( SRC_N + 1 ))
+        OLD_N=$(( SRC_N + 1 )); OLD_UNREADABLE+=" ${old##*/}"
     elif (( on > OLD_N )); then
         OLD_N=$on
     fi
@@ -384,7 +387,10 @@ done
 if (( SRC_N < OLD_N )); then
     SIDE="$DEST_ABS/shorter-boot-${BID:0:8}.export.$EXT"
     mv -f "$TMP" "$SIDE" 2>/dev/null
-    refuse "the new export holds $SRC_N record(s) but the archive on disk holds more or cannot be counted (${OLD_N}) — NOT replaced; the new export is kept as $SIDE"
+    if [[ -n "$OLD_UNREADABLE" ]]; then
+        refuse "the archive on disk could not be read here (${OLD_UNREADABLE# }), so it cannot be compared and is NOT replaced; the new export (${SRC_N} record(s)) is kept as $SIDE"
+    fi
+    refuse "the new export holds $SRC_N record(s) but the archive on disk holds $OLD_N — NOT replaced; the new export is kept as $SIDE"
 fi
 
 mv -f "$TMP" "$OUT" || refuse "could not place $OUT"
