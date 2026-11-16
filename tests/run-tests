@@ -2202,8 +2202,14 @@ echo "────────────────────────�
 # -f, and that the interval helper actually returns a number.
 offenders=$(grep -rnE "awk[^|]*-f [^ ]+\.awk[^|]*'" tools/ bin/ 2>/dev/null \
             | grep -vE "^tools/lib/|-f \"\\\$LIBDIR/[a-z-]+\.awk\" -f " || true)
-if [[ -z "$offenders" ]] && (( ${#SHFILES[@]} > 0 )) && [[ -d tools && -d bin ]]; then
-    ok "no tool passes an inline program alongside awk -f (${#SHFILES[@]} files)"
+# Positive control, because the scan ends in `|| true`: the same pattern must hit a planted
+# line, and the files it reads are counted (a missing tools/ would also print nothing).
+ofctl=$(printf "awk -f x.awk 'BEGIN { print 1 }' f\n" | grep -E "awk[^|]*-f [^ ]+\.awk[^|]*'" || true)
+ofn=$(ls tools/* bin/* 2>/dev/null | grep -c . || true)
+if [[ -z "$offenders" && -n "$ofctl" ]] && (( ${#SHFILES[@]} > 0 && ${ofn:-0} >= 50 )); then
+    ok "no tool passes an inline program alongside awk -f (${#SHFILES[@]} files; $ofn tools read; the pattern hits a planted line)"
+elif [[ -z "$offenders" ]]; then
+    bad "the awk -f scan found nothing but cannot be trusted: planted-line control '${ofctl:-no hit}', $ofn tool file(s) read"
 else
     bad "inline program alongside -f (it will be read as a filename):"
     sed 's/^/      /' <<<"$offenders"
@@ -3056,6 +3062,35 @@ else
     bad "close with a failing enumeration read: rc=$efrc, row (bt1_status enum_at_boot)='$EFROW' (want 'confirmed ?')"
 fi
 rm -rf "$LC/enumfail" "$LC/state-enumfail"
+
+# THE PROBE AND ABORT COUNTS OF THE ROW: a read that fails is "?", not 0 (a zero reads as "no
+# probe ran"), and a read that works is counted. The stub fails every `-u` read in the first
+# run and answers them in the second; the boot list and the kernel read answer in both.
+for _pf in fail good; do
+    mkdir -p "$LC/pf$_pf/bin"
+    if [[ $_pf == fail ]]; then _ur='echo "Failed to read journal: Input/output error" >&2; exit 1'
+    else _ur='case " $* " in *" -u bt-trace "*) echo "btmon exited (#1) — restarting" ;; *) echo "Finished Snapshot Bluetooth health metrics."; echo "Finished Snapshot Bluetooth health metrics." ;; esac; exit 0'; fi
+    cat > "$LC/pf$_pf/bin/journalctl" <<STUB
+#!/bin/sh
+case " \$* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -u "*) $_ur ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+esac
+exit 0
+STUB
+    chmod +x "$LC/pf$_pf/bin/journalctl"
+    trial_in "$LC/pf$_pf" "$LC/state-pf$_pf" PATH="$LC/pf$_pf/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+    trial_in "$LC/pf$_pf" "$LC/state-pf$_pf" --timeout 4 PATH="$LC/pf$_pf/bin:$LC/bin:$PATH" -- autostop >/dev/null 2>&1
+done
+PFFAIL=$(tsv_cells "$LC/pffail/evidence/trials/results.tsv" 2 probes btmon_aborts)
+PFGOOD=$(tsv_cells "$LC/pfgood/evidence/trials/results.tsv" 2 probes btmon_aborts)
+if [[ "$PFFAIL" == "? ?" && "$PFGOOD" == "2 1" ]]; then
+    ok "the row's probe and abort counts are '?' when their journal read fails and counted when it works"
+else
+    bad "probe/abort counts: failed read '$PFFAIL' (want '? ?'), good read '$PFGOOD' (want '2 1')"
+fi
+rm -rf "$LC/pffail" "$LC/pfgood" "$LC/state-pffail" "$LC/state-pfgood"
 
 # AND WHEN THE TRIAL SAW A SCO SETUP, WITH CAPTURES ON DISK, AS ON THE LAPTOP.
 # A close whose kernel journal shows a Setup Synchronous Connection writes
@@ -3952,9 +3987,10 @@ echo "────────────────────────�
 # documented cache location, and /root/exp/... backups are the provenance of
 # real captures. What is banned is the class that cannot outlive the session
 # that wrote it: /tmp/ (but not /var/tmp/), mktemp, and scratchpad paths.
-EXBAD=""
+EXBAD=""; EXN=0
 for ex in evidence/exhibits/[0-9][0-9][0-9]-*.md; do
     [[ -r "$ex" ]] || continue
+    EXN=$((EXN + 1))
     # Only the fenced command block is scanned. Prose in the same section may
     # legitimately NAME a banned path while explaining its removal — EX-018's
     # edit note does exactly that, and the first version of this check flagged
@@ -3964,8 +4000,16 @@ for ex in evidence/exhibits/[0-9][0-9][0-9]-*.md; do
           | grep -nE '(^|[^a-z])/tmp/|mktemp|scratchpad' || true)
     [[ -n "$hit" ]] && EXBAD="$EXBAD$ex: $hit"$'\n'
 done
-if [[ -z "$EXBAD" ]]; then
-    ok "no exhibit extraction command references a session-temporary path"
+# A negative scan ends in `|| true`, so it needs a positive control: the same pipeline over a
+# planted exhibit must hit, and the number of exhibits scanned is counted, or "nothing found"
+# could also mean "nothing read" (no exhibits, a changed heading, a broken pattern).
+EXCTL=$(printf '## Extraction method\n```console\ncat /tmp/x\n```\n## Output\n' \
+        | sed -n '/^## Extraction method/,/^## Output/p' | sed -n '/^```console/,/^```$/p' \
+        | grep -nE '(^|[^a-z])/tmp/|mktemp|scratchpad' || true)
+if [[ -z "$EXBAD" && -n "$EXCTL" ]] && (( EXN >= 50 )); then
+    ok "no exhibit extraction command references a session-temporary path ($EXN exhibits scanned; the pattern hits a planted /tmp path)"
+elif [[ -z "$EXBAD" ]]; then
+    bad "the exhibit scan found nothing but cannot be trusted: $EXN exhibit(s) read, planted-path control '${EXCTL:-no hit}'"
 else
     bad "session-temporary paths in extraction commands:"
     while IFS= read -r l; do [[ -n "$l" ]] && echo "        $l"; done <<<"$EXBAD"
@@ -6374,9 +6418,9 @@ rm -f "$VR/root/usr/local/bin/t03.disabled"
 # The mitigation value itself. N is what this project sets; Y is the original.
 echo N > "$VR/mod/enable_autosuspend"
 VRAS=$(vr_run); vrasrc=$?
-(( vrasrc != 0 )) && [[ "$VRAS" == *"still the mitigation value"* ]] \
-    && ok "verify-restored reports btusb autosuspend still disabled" \
-    || bad "the mitigation value passed as restored (rc=$vrasrc)"
+(( vrasrc == 0 )) && [[ "$VRAS" == *"the mitigation value stays until the next boot"* && "$VRAS" != *"✗ btusb"* ]] \
+    && ok "verify-restored notes btusb autosuspend N in the loaded module as expected after a correct uninstall (no reload), not as a failure" \
+    || bad "a correct uninstall followed by the verifier failed on the loaded module's N (rc=$vrasrc)"
 echo Y > "$VR/mod/enable_autosuspend"
 
 # A module that is not loaded is neither restored nor not — it is unknown, and
@@ -10842,6 +10886,20 @@ BKJRP=$(bkj_run "$BKJ")
     && ok "a real run still reports the prefix as being re-archived" \
     || bad "a real run lost its re-archiving line"
 rm -rf "$BKJ"
+# A re-archive that bt-archive refused left shorter-boot-<id>.* beside the archive. The next
+# run must not try again (it failed the timer unit on every run and rewrote that file): exit 0,
+# the archiver not called for that boot, the refusal said once.
+BKJ=$(bkj_setup)
+echo prefix > "$BKJ/dest/boot-e5f60718.export.zst"
+: >         "$BKJ/dest/boot-e5f60718.export.zst.prefix"
+echo shorter > "$BKJ/dest/shorter-boot-e5f60718.export.zst"
+BKJRF=$(bkj_run "$BKJ"); bkjrfrc=$?
+[[ "$bkjrfrc" == 0 && "$BKJRF" == *"a re-archive was refused earlier"* && "$BKJRF" == *"1 prefix kept"* \
+   && "$BKJRF" != *"re-archiving in full"* && "$BKJRF" != *"FAILED"* ]] \
+    && ! grep -qx -e '-1 --replace' -e '-1' "$BKJ/calls.log" 2>/dev/null \
+    && ok "bt-backup-journal does not retry a prefix whose re-archive was refused: exit 0, no call for that boot, the refusal named" \
+    || bad "bt-backup-journal retried or failed after a refused re-archive (rc=$bkjrfrc): $(grep -E 'PREFIX|FAILED|prefix kept' <<<"$BKJRF" | tr '\n' '|')"
+rm -rf "$BKJ"
 
 # ── bt-journal-files: the copy of every closed journal file ──────────────
 #
@@ -12180,6 +12238,7 @@ ui() {
         BT_UI_BASE="$UIT/base" BT_UI_HOME="$UIT/home" BT_UI_UID=4242 BT_UI_GID=4242 BT_UI_REPO="$UIT/repo" \
         BT_DYNDBG_CTL="$UICTL" BT_UI_APPDIR="$UIT/apps" BT_UI_CAPTURE_DIRS="$UIT/cap/capture $UIT/cap/trace" \
         BT_JOURNAL_FIXTURE="$UIT/fixture" BT_UI_EUID=0 BT_UI_MARK="$UIT/repo/bin/bt-mark" \
+        BT_UI_TRUST_UID="$(id -u)" BT_UI_TRUST_MASK=0 \
         "${extra[@]}" tools/bt-ui-capture "$@"
 }
 uic() { local n; n=$(grep -c -E -- "$1" "$2" 2>/dev/null || true); echo "${n:-0}"; }
@@ -12605,6 +12664,20 @@ uiok "stop-light then disable-light: units stopped, keeper removed, logs kept" \
 uil BT_UI_EUID=1000 -- enable-light >/dev/null 2>&1; uilr1=$?
 uil BT_UI_EUID=1000 -- start-light >/dev/null 2>&1; uilr2=$?
 uiok "enable-light and start-light refuse without root, making no call" uieq "$uilr1/$uilr2/$(wc -c < "$UICALLS")" "1/1/0"
+# A root-run script must be owned by root and not writable by others (the keeper runs it as
+# root every two minutes): the owner seam names another uid, the mask seam demands every bit
+# clear (this checkout has some set), and either way nothing is called or written. The
+# control is every other light-mode test here, which runs with the seams that match this tree.
+: > "$UICALLS"
+UILTO=$(uil BT_UI_TRUST_UID=$(( $(id -u) + 1 )) -- enable-light 2>&1); uilt1=$?
+UILTM=$(uil BT_UI_TRUST_MASK=0777 -- enable-light 2>&1); uilt2=$?
+UILTS=$(uil BT_UI_TRUST_UID=$(( $(id -u) + 1 )) -- start-light 2>&1); uilt3=$?
+uiok "enable-light and start-light refuse a script, directory or checkout not owned by root or writable by others, with the reason and no call" \
+    uieq "$uilt1/$uilt2/$uilt3/$(wc -c < "$UICALLS")/$([[ "$UILTO" == *"is owned by uid"* && "$UILTM" == *"is writable by group or others"* && "$UILTS" == *"refused"* ]] && echo said)/$(ls "$UIT/units" 2>/dev/null | wc -l)" "1/1/1/0/said/0"
+uil -- enable-light >/dev/null 2>&1
+uiok "the keeper's unit re-checks the owner and the mode before it runs the script, without shell variables or percent signs (systemd expands both)" \
+    uieq "$(grep -c -E '^ExecStart=.* find .* -maxdepth 0 -not -uid [0-9]+ -exec false [{][}] [+] -o -perm /0[0-9]+ -exec false [{][}] [+]' "$UIT/units/bt-ui-light-keeper.service")/$(grep -E '^ExecStart=' "$UIT/units/bt-ui-light-keeper.service" | grep -c '[%]')/$(grep -E '^ExecStart=' "$UIT/units/bt-ui-light-keeper.service" | grep -c '[$]')" "1/0/0"
+uil -- disable-light >/dev/null 2>&1
 # the narrowed system-bus monitor, run as the unit would run it
 echo 3 > "$UISTATE/monitor-lines"
 : > "$UICALLS"
@@ -13039,6 +13112,21 @@ SSDROP="$SR/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf"
     && ok "both systemd drop-ins carry the non-default device" \
     || bad "a drop-in is missing or does not name 0cf3:e300"
 
+# THE DEFAULT DEVICE, AS WELL. Every staged install above uses the control device 0cf3:e300, so the
+# laptop's own controller (13d3:3503, the install's default) was covered by the dry run only. Same
+# staging root rules, a root of its own: the udev rules name 13d3/3503 (the kernel's own spelling
+# of PRODUCT for the remove rule), and no device drop-in is written for the default.
+SR_KEEP="$SR"; SR=$(mktemp -d)
+SDEFOUT=$(stage_install); sdefrc=$?
+SDEFU="$SR/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"; SDEFS="$SR/etc/udev/rules.d/51-bluetooth-health-snapshot.rules"
+(( sdefrc == 0 )) && [[ "$(grep -c ERROR <<<"$SDEFOUT")" == 0 ]] \
+   && grep -q 'idVendor}=="13d3"' "$SDEFU" && grep -q 'idProduct}=="3503"' "$SDEFU" \
+   && grep -q 'ENV{PRODUCT}=="13d3/3503\*"' "$SDEFS" \
+   && [[ ! -e "$SR/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf" ]] \
+    && ok "install.sh --apply for the default device 13d3:3503 writes its udev rules (PRODUCT 13d3/3503) and no device drop-in" \
+    || bad "staged install for the default device (rc=$sdefrc): udev rule $(grep -o 'idVendor}=="[0-9a-f]*"' "$SDEFU" 2>/dev/null | head -1), $(grep -m1 ERROR <<<"$SDEFOUT")"
+rm -rf "$SR"; SR="$SR_KEEP"
+
 # ── "nothing pre-existing is modified" ───────────────────────────────────
 # A file this project does not own, in a directory it writes into. It must come
 # through both the second install and the uninstall untouched.
@@ -13179,6 +13267,20 @@ SRUPU=$(stage_at "$SRUP"); srupurc=$?
     && ok "uninstall after an upgrade removes the project's file rather than restoring its older copy" \
     || bad "uninstall after an upgrade (rc=$srupurc): bt-mark $([[ -e "$SRUP/usr/local/bin/bt-mark" ]] && head -c 40 "$SRUP/usr/local/bin/bt-mark")"
 rm -rf "$SRUP"
+
+# --tools-only ARMS NOTHING, so it writes no first-install stamp (the stamp says when the
+# mitigation first went in; a tools-only deploy would relabel every earlier boot "before"),
+# and its closing text does not tell the reader to expect an enabled watchdog or N.
+SRTO=$(mktemp -d)
+SRTOI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRTO/no-such-trial" \
+        BT_DESTDIR="$SRTO" ./install.sh --tools-only 2>&1); srtorc=$?
+(( srtorc == 0 )) && [[ ! -e "$SRTO/usr/local/share/qca9377-bt-hang/installed-at" \
+   && "$SRTOI" == *"first-install stamp: not written under --tools-only"* \
+   && "$SRTOI" == *"Files deployed; nothing was armed"* \
+   && "$SRTOI" != *"# expect N"* && "$SRTOI" != *"the watchdog arms itself at boot"* ]] \
+    && ok "install.sh --tools-only writes no first-install stamp and its closing text says nothing was armed (no 'expect N')" \
+    || bad "install.sh --tools-only (rc=$srtorc): stamp $([[ -e "$SRTO/usr/local/share/qca9377-bt-hang/installed-at" ]] && echo WRITTEN || echo absent); $(grep -E 'stamp|expect N|armed' <<<"$SRTOI" | head -3 | tr '\n' '|')"
+rm -rf "$SRTO"
 
 # A FAILED STEP must fail the banner. run() accumulates failures on purpose
 # (later removals are independent; a partial revert should remove what it
@@ -15772,20 +15874,21 @@ rf_last() {   # <tool> <args...> — run with a bound; print the exit status
     echo $?
 }
 RFBAD=''
-for _spec in "bt-actions -b" "bt-actions --since" "bt-actions --until" \
-             "bt-capdiff --since" "bt-capdiff --until" "bt-capdiff -n" \
-             "bt-context -b" "bt-context -C" \
-             "bt-logvolume -b" "bt-logvolume --since" "bt-logvolume -n" \
-             "bt-phase -b" "bt-phase --incident-gap" \
-             "bt-sco --dir" \
-             "bt-exhibit new some-slug --claim" "bt-exhibit new some-slug --why" \
-             "bt-exhibit new some-slug --cmd" "bt-exhibit new some-slug --boots"; do
+RFSPECS=("bt-actions -b" "bt-actions --since" "bt-actions --until" \
+         "bt-capdiff --since" "bt-capdiff --until" "bt-capdiff -n" \
+         "bt-context -b" "bt-context -C" \
+         "bt-logvolume -b" "bt-logvolume --since" "bt-logvolume -n" \
+         "bt-phase -b" "bt-phase --incident-gap" \
+         "bt-sco --dir" \
+         "bt-exhibit new some-slug --claim" "bt-exhibit new some-slug --why" \
+         "bt-exhibit new some-slug --cmd" "bt-exhibit new some-slug --boots")
+for _spec in "${RFSPECS[@]}"; do
     read -r -a _a <<<"$_spec"
     _rc=$(rf_last "${_a[@]}")
     [[ "$_rc" == 2 ]] || RFBAD+=" [$_spec -> $_rc]"
 done
 [[ -z "$RFBAD" ]] \
-    && ok "a two-word option given last exits 2 at once in all 18 option loops, none spins" \
+    && ok "a two-word option given last exits 2 at once in all ${#RFSPECS[@]} listed option loops, none spins" \
     || bad "a two-word option given last did not exit 2:$RFBAD"
 # bt-sco's bare --window is documented (it means the default window), so it is
 # not an error: it must simply return, whatever the answer.
@@ -15797,7 +15900,8 @@ _rc=$(rf_last bt-sco --window)
 # derived, not listed. A `shift 2` is safe when it is guarded (|| ...), when the
 # value is required by ${2:?...}, or when the line is the library's own check.
 RFUNG=$(grep -rnE 'shift 2( ;;|;|$)' tools bin 2>/dev/null \
-        | grep -vE 'shift 2 \|\|' | grep -vE '\$\{2:\?' | grep -vE 'tools/lib/journal\.sh' || true)
+        | grep -vE 'shift 2 \|\|' | grep -vE '\$\{2:\?' \
+        | grep -vE 'tools/lib/journal\.sh:[0-9]+: +(if \[\[ "\$\{2:-\}" =~ .*shift 2; else boot=0; shift; fi ;;|rest\+=\("\$a" "\$2"\); shift 2 ;;)$' || true)
 [[ -z "$RFUNG" ]] \
     && ok "no unguarded 'shift 2' in tools/ or bin/" \
     || bad "unguarded 'shift 2' in an option loop: $(head -3 <<<"$RFUNG" | tr '\n' '|')"
@@ -15875,6 +15979,16 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_C
 (( rfbrc2 == 0 )) && [[ -e "$RFB/dest/boot-c1315c25.export.xz" && ! -e "$RFB/dest/boot-c1315c25.export.gz" ]] \
     && ok "bt-archive --replace with an equally long export in another compressor still supersedes the old one" \
     || bad "bt-archive --replace of equal length across compressors: rc=$rfbrc2"
+# A corrupt old archive is not "few records": it cannot be counted, so it cannot be replaced
+# (a half-readable one used to count its readable prefix and lose to any export), and the
+# refusal says "could not be read", not a record count.
+rm -f "$RFB/dest"/boot-c1315c25.export.* "$RFB/dest"/shorter-boot-*
+printf 'this is not a gzip stream' > "$RFB/dest/boot-c1315c25.export.gz"
+RFBC=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_COMP="xz -T0" BT_ARCHIVE_EXT=xz BT_ARCHIVE_DECOMP="xz -dc" \
+       tools/bt-archive -1 --replace 2>&1); rfbcrc=$?
+(( rfbcrc != 0 )) && [[ "$RFBC" == *"could not be read here"*"NOT replaced"* && -e "$RFB/dest/boot-c1315c25.export.gz" ]] \
+    && ok "bt-archive --replace refuses an old archive its decompressor fails on, and says it could not be read" \
+    || bad "bt-archive --replace over a corrupt archive (rc=$rfbcrc): $(tail -1 <<<"$RFBC")"
 RFBH=$(tools/bt-archive --help 2>&1)
 [[ "$RFBH" == *"--replace"* ]] \
     && ok "bt-archive --help documents --replace" \
@@ -16177,6 +16291,23 @@ _rc=$(PATH="$RM/stubs:$PATH" "$RM/repo/scripts/runtime-mgmt-test.sh" trigger x 2
 [[ -z "$RMG" && ! -e "$RM/calls.log" ]] \
     && ok "runtime-mgmt-test.sh guard() refuses (exit 3) when bt-window or bt-trial is missing, failing, silent, unintelligible or reports an open window or trial; no stub was called" \
     || bad "runtime-mgmt-test.sh guard() failed open:$RMG calls: $(cat "$RM/calls.log" 2>/dev/null | tr '\n' '|')"
+# A window that is CLOSED or TREATED makes the real bt-window print its report and exit 1; that
+# is an answer, not an open untreated window, and the guard must let it through (it answered
+# "no usable answer (exit 1)" for every verb after an incident had been dealt with). The
+# read-only `guard-check` verb stops after the window and trial test, so nothing acts.
+rm_gc() {   # <bt-window body> <bt-trial body> — status and output of `guard-check`
+    printf '#!/bin/sh\n%s\n' "$1" > "$RM/repo/tools/bt-window"
+    printf '#!/bin/sh\n%s\n' "$2" > "$RM/repo/tools/bt-trial"
+    chmod +x "$RM/repo/tools/bt-window" "$RM/repo/tools/bt-trial"
+    PATH="$RM/stubs:$PATH" "$RM/repo/scripts/runtime-mgmt-test.sh" guard-check 2>&1; echo "rc=$?"
+}
+RMC=$(rm_gc 'echo "HCI non-response window"; echo "  1 INTERVENTION(S) - this window is CENSORED"; exit 1' 'echo "no trial open"')
+RMN=$(rm_gc 'echo "No HCI command timeout this boot."; exit 0' 'echo "no trial open"')
+RMX=$(rm_gc 'echo "Failed to read the journal"; exit 1' 'echo "no trial open"')
+RMW=$(rm_gc 'echo "HCI non-response window"; echo "Untreated and running."; exit 0' 'echo "no trial open"')
+[[ "$RMC" == *"guard passed"*"rc=0" && "$RMN" == *"guard passed"*"rc=0" && "$RMX" == *"REFUSED"*"rc=3" && "$RMW" == *"REFUSED"*"rc=3" && ! -e "$RM/calls.log" ]] \
+    && ok "runtime-mgmt-test.sh guard() accepts a closed or treated window (bt-window exit 1 with its report) and no window, and still refuses an open untreated one and an error exit 1" \
+    || bad "runtime-mgmt-test.sh guard() on a closed window: closed='$(tr '\n' '|' <<<"$RMC")' none='$(tr '\n' '|' <<<"$RMN")'"
 rm -rf "$RM"
 
 # N-02: sco-ledger.sh on a boot that reads fine and holds no SCO call. journalctl
@@ -16718,6 +16849,203 @@ SECJ=$(suite_cat | awk '/== --section \]\]; then$/ { s = 1 } s { print } s && /^
 (( ${SECJ:-0} == 1 )) \
     && ok "--section passes the call's own worker count to the run it filters (--serial is no longer dropped)" \
     || bad "--section starts its run from the defaults again: --serial / --jobs are dropped ($SECJ match(es) in its block)"
+
+echo
+echo "review fixes, second round — journal reads, the installer, scripts and the private-wording check"
+echo "────────────────────────────────────────────────────────────────────────────────────────────────"
+
+# bt_journal_count and bt_journal_first used to swallow a read that failed or was cut short:
+# a count of what was read looked like the count, and "no match" like an answer. They now
+# return 2 for a failed read (the count or nothing is still printed), as bt_journal_lines does.
+# The journalctl is a stub: it prints two matching lines, then fails the way a half-readable
+# journal does (a message on stderr, exit 1).
+JR=$(mktemp -d); mkdir -p "$JR/part" "$JR/fine" "$JR/none" "$JR/tmp"
+printf '#!/bin/sh\necho "kernel: a tx line one"\necho "kernel: a tx line two"\necho "Failed to read journal file: Input/output error" >&2\nexit 1\n' > "$JR/part/journalctl"
+printf '#!/bin/sh\necho "kernel: a tx line one"\necho "kernel: a tx line two"\nexit 0\n' > "$JR/fine/journalctl"
+printf '#!/bin/sh\necho "Failed to read journal file: Input/output error" >&2\nexit 1\n' > "$JR/none/journalctl"
+chmod +x "$JR"/*/journalctl
+jr_call() {   # <stub dir> <function> — prints "out|status"
+    local o r
+    o=$(env -u BT_JOURNAL_FIXTURE TMPDIR="$JR/tmp" PATH="$JR/$1:$PATH" BT_JOURNAL_DIR="$JR/no-journal-dir" \
+        bash -c 'source tools/lib/journal.sh; '"$2"' "tx line" -k -b 0; echo "status=$?"' 2>/dev/null); r=${o##*status=}
+    echo "$(grep -v '^status=' <<<"$o" | head -1)|$r"
+}
+JRBAD=''
+[[ "$(jr_call part bt_journal_count)" == "2|2" ]]  || JRBAD+=" [count over a failed read: $(jr_call part bt_journal_count)]"
+[[ "$(jr_call fine bt_journal_count)" == "2|0" ]]  || JRBAD+=" [count over a good read: $(jr_call fine bt_journal_count)]"
+[[ "$(jr_call part bt_journal_first)" == "kernel: a tx line one|0" ]] || JRBAD+=" [first over a read that matched before it failed: $(jr_call part bt_journal_first)]"
+[[ "$(jr_call none bt_journal_first)" == "|2" ]]   || JRBAD+=" [first over a read that failed with no match: $(jr_call none bt_journal_first)]"
+[[ "$(jr_call fine bt_journal_first)" == "kernel: a tx line one|0" ]] || JRBAD+=" [first over a good read: $(jr_call fine bt_journal_first)]"
+[[ -z "$(ls "$JR/tmp")" ]] || JRBAD+=" [temporary files left: $(ls "$JR/tmp" | tr '\n' ' ')]"
+[[ -z "$JRBAD" ]] \
+    && ok "journal.sh: bt_journal_count and bt_journal_first return 2 for a failed or partial read and keep their output; a match found before the failure is still a match; no temporary file is left" \
+    || bad "journal.sh count/first over failed reads:$JRBAD"
+rm -rf "$JR"
+
+# bt-incident's manifest says whether a timeline was made (its comment promised it and nothing
+# wrote it). The timeline comes from the bt-timeline.sh beside the tool; INCENV is the
+# declared machine of the bt-incident tests above.
+BM2=$(mktemp -d); mkdir -p "$BM2/repo"
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$BM2/repo" tools/bt-incident manifest-timeline-check >/dev/null 2>&1
+mapfile -t _bm2 < <(find "$BM2/repo" -name MANIFEST.txt 2>/dev/null)
+(( ${#_bm2[@]} == 1 )) && [[ "$(grep -c '^timeline=' "${_bm2[0]}")" == 1 ]] \
+    && ok "bt-incident's manifest carries a timeline= line ($(grep '^timeline=' "${_bm2[0]}" | cut -c1-40))" \
+    || bad "bt-incident's manifest has no timeline= line (${#_bm2[@]} manifest(s))"
+rm -rf "$BM2"
+
+# scripts that read a journal or a store: a failed read is not a zero or a "none".
+SX=$(mktemp -d); mkdir -p "$SX/fail" "$SX/silent" "$SX/three"
+printf '#!/bin/sh\necho "Failed to read journal" >&2\nexit 1\n' > "$SX/fail/journalctl"
+printf '#!/bin/sh\nexit 1\n' > "$SX/silent/journalctl"
+printf '#!/bin/sh\necho a\necho b\necho c\n' > "$SX/three/journalctl"
+chmod +x "$SX"/*/journalctl
+jst() { PATH="$SX/$1:$PATH" scripts/journal-scan-time.sh -k -b 0 2>&1; echo "rc=$?"; }
+JSF=$(jst fail); JSS=$(jst silent); JST3=$(jst three)
+[[ "$JSF" == *"NOT a zero"*"rc=2" && "$JSS" == "lines 0 "*"rc=0" && "$JST3" == "lines 3 "*"rc=0" ]] \
+    && ok "journal-scan-time.sh: a failed journalctl is exit 2 with no count; a silent no-match is lines 0; a read is counted" \
+    || bad "journal-scan-time.sh: failed='$(tail -2 <<<"$JSF" | tr '\n' '|')' silent='$(head -1 <<<"$JSS")' three='$(head -1 <<<"$JST3")'"
+# archive-budget-check.py: a directory with no store in it is said, not "nothing is full"
+mkdir -p "$SX/arch"
+ABC=$(python3 -I scripts/archive-budget-check.py "$SX/arch" 2>&1); abcrc=$?
+[[ "$abcrc" == 0 && "$ABC" == *"holds no archive store"*"nothing was checked"* ]] \
+    && ok "archive-budget-check.py says an archive directory holds no store instead of printing nothing" \
+    || bad "archive-budget-check.py over an empty archive root (rc=$abcrc): $ABC"
+# patch-id-compare.sh: SAME is 0, DIFFERENT is 1, no patch id is 2 (an empty id is no answer)
+git init -q "$SX/g"
+printf '%s\n' 'diff --git a/f b/f' '--- a/f' '+++ b/f' '@@ -1 +1 @@' '-one' '+two' > "$SX/p1.patch"
+cp "$SX/p1.patch" "$SX/p2.patch"
+printf '%s\n' 'diff --git a/f b/f' '--- a/f' '+++ b/f' '@@ -1 +1 @@' '-one' '+three' > "$SX/p3.patch"
+: > "$SX/p4.patch"
+scripts/patch-id-compare.sh "$SX/g" "$SX/p1.patch" "$SX/p2.patch" >/dev/null 2>&1; pic1=$?
+scripts/patch-id-compare.sh "$SX/g" "$SX/p1.patch" "$SX/p3.patch" >/dev/null 2>&1; pic2=$?
+scripts/patch-id-compare.sh "$SX/g" "$SX/p1.patch" "$SX/p4.patch" >/dev/null 2>&1; pic3=$?
+[[ "$pic1/$pic2/$pic3" == "0/1/2" ]] \
+    && ok "patch-id-compare.sh exits 0 for SAME, 1 for DIFFERENT and 2 when a patch id could not be made" \
+    || bad "patch-id-compare.sh exit statuses: same/different/empty = $pic1/$pic2/$pic3 (want 0/1/2)"
+# stable-queue-check.sh: a failed fetch is 2 (no answer), apart from the 1 of "not in the queue"
+mkdir -p "$SX/curl-fail" "$SX/curl-page"
+printf '#!/bin/sh\nexit 22\n' > "$SX/curl-fail/curl"
+printf '#!/bin/sh\necho "<html>nothing here</html>"\n' > "$SX/curl-page/curl"
+chmod +x "$SX"/curl-*/curl
+PATH="$SX/curl-fail:$PATH" scripts/stable-queue-check.sh 0001-foo 6.6 >/dev/null 2>&1; sqc1=$?
+PATH="$SX/curl-page:$PATH" scripts/stable-queue-check.sh 0001-foo 6.6 >/dev/null 2>&1; sqc2=$?
+[[ "$sqc1/$sqc2" == "2/1" ]] \
+    && ok "stable-queue-check.sh: a failed fetch is exit 2, a page without the patch is exit 1" \
+    || bad "stable-queue-check.sh: fetch failed/not in queue = $sqc1/$sqc2 (want 2/1)"
+# r2-checks.sh: a count of no match is one 0, and a file that is not there is said
+R2C=$(bash -c 'source <(sed -n "/^c() {/p" scripts/r2-checks.sh); c tests/README.md "zzz-no-such-text-zzz"; c no/such/file x' 2>&1)
+[[ "$R2C" == $'0\n(no file no/such/file)' ]] \
+    && ok "r2-checks.sh's count helper prints one 0 for no match and names a missing file" \
+    || bad "r2-checks.sh count helper: $(tr '\n' '|' <<<"$R2C")"
+# The find expression the keeper's unit uses for its owner and mode check does what its comment
+# says: a path that is not owned by the given uid, or is writable by others, makes find exit
+# non-zero; one that is owned by it and not writable by others, zero.
+KF=$(mktemp -d); mkdir -p "$KF/ok" "$KF/open" "$KF/other"; chmod 755 "$KF/ok" "$KF/other"; chmod 777 "$KF/open"
+kf_find() {   # <path> <uid>
+    find "$1" -maxdepth 0 -not -uid "$2" -exec false {} + -o -perm /022 -exec false {} + 2>/dev/null; echo $?
+}
+[[ "$(kf_find "$KF/ok" "$(id -u)")" == 0 && "$(kf_find "$KF/open" "$(id -u)")" != 0 && "$(kf_find "$KF/other" "$(( $(id -u) + 1 ))")" != 0 ]] \
+    && ok "the keeper unit's find test passes an owned, closed path and fails a world-writable one and one owned by another uid" \
+    || bad "the keeper unit's find test: ok=$(kf_find "$KF/ok" "$(id -u)") open=$(kf_find "$KF/open" "$(id -u)") other=$(kf_find "$KF/other" "$(( $(id -u) + 1 ))")"
+rm -rf "$KF"
+
+# The light mode's gnome-shell filter (scripts/bt-ui-atspi.py --check-filter), fixture in and the
+# expected keep/drop lines out. It needs no bus and no GObject, and was exercised only by the
+# standalone proof script, which neither the suite nor CI ran.
+UF=$(mktemp -d)
+grep -v '^#' tests/fixtures/ui-atspi-shell-filter.tsv | cut -f2- > "$UF/in"
+grep -v '^#' tests/fixtures/ui-atspi-shell-filter.tsv > "$UF/want"
+python3 -I scripts/bt-ui-atspi.py --check-filter < "$UF/in" > "$UF/got" 2>/dev/null
+UFK=$(grep -c '^keep	gnome-shell' "$UF/got" || true); UFD=$(grep -c '^drop	gnome-shell' "$UF/got" || true)
+UFC=$(grep -c '^drop	gnome-shell	PropertyChange	accessible-name	label	Sun Nov 15 14:32' "$UF/got" || true)
+cmp -s "$UF/got" "$UF/want" && [[ "$UFK/$UFD/$UFC" == "7/10/1" ]] \
+    && ok "the light mode's gnome-shell filter keeps the drawn state of toggles (7 kept) and drops the rest (10 dropped), the clock's per-minute label among them" \
+    || bad "the light mode's shell filter differs from its fixture: kept/dropped/clock = $UFK/$UFD/$UFC"
+rm -rf "$UF"
+
+# CI's identity job after a forced update of main: the range is empty (origin/main IS the tip),
+# and the job used to look at the tip alone. A rewritten commit below the tip went unseen; the
+# newest 50 commits are examined now. The job's script is read out of checks.yml.
+CJ=$(mktemp -d)
+awk '/name: Every pushed commit/ { s = 1 } s && /^        run: \|$/ { r = 1; next }
+     r { if ($0 ~ /^          /) { sub(/^          /, ""); print } else if ($0 ~ /^$/) print; else exit }' .github/workflows/checks.yml > "$CJ/job.sh"
+git init -q --bare "$CJ/o.git"; git init -q -b main "$CJ/w"; git -C "$CJ/w" remote add origin "$CJ/o.git"
+git -C "$CJ/w" config user.name Wanted; git -C "$CJ/w" config user.email wanted@example.com
+GIT_AUTHOR_NAME=Other GIT_AUTHOR_EMAIL=other@example.com GIT_COMMITTER_NAME=Other GIT_COMMITTER_EMAIL=other@example.com \
+    git -C "$CJ/w" commit -q --allow-empty -m "a rewritten commit by someone else"
+git -C "$CJ/w" commit -q --allow-empty -m "second"; git -C "$CJ/w" commit -q --allow-empty -m "third, the tip"
+git -C "$CJ/w" push -q origin main 2>/dev/null
+( cd "$CJ/w" && env BEFORE=0000000000000000000000000000000000000000 AFTER="$(git rev-parse HEAD)" WANT="Wanted <wanted@example.com>" bash "$CJ/job.sh" >"$CJ/out" 2>&1 ); cjrc=$?
+(( cjrc == 1 )) && grep -q '::error::' "$CJ/out" && grep -q '^3 commit(s) examined' "$CJ/out" \
+    && ok "CI's identity job examines the newest 50 commits when the range is empty: a foreign commit below the tip fails it (3 examined)" \
+    || bad "CI's identity job on an empty range with a foreign commit below the tip (rc=$cjrc): $(tail -2 "$CJ/out" | tr '\n' '|')"
+rm -rf "$CJ"
+
+# devtools/repo-scan's private-wording check, on a scratch repository and a scratch list named by
+# BT_PRIVATE_WORDING (the real list is never read here and none of its words appear in this
+# file): a planted phrase in an ADDED line is refused, a clean addition passes, an empty list is
+# refused rather than reported clean, a missing list says the check was not run, and --all never
+# applies it (older text is a separate decision).
+PW=$(mktemp -d); git init -q -b main "$PW/r"; git -C "$PW/r" config user.name t; git -C "$PW/r" config user.email t@example.com
+printf 'base\n' > "$PW/r/a.txt"; git -C "$PW/r" add -A; git -C "$PW/r" commit -q -m base
+printf '# a scratch list\nzzplanted-phrase-zz\n' > "$PW/list.txt"
+printf '# a scratch list with comments only\n\n' > "$PW/empty.txt"
+printf 'text with zzplanted-phrase-zz inside\n' > "$PW/r/bad.txt"; git -C "$PW/r" add bad.txt
+PWBAD=$(BT_PRIVATE_WORDING="$PW/list.txt" devtools/repo-scan "$PW/r" 2>&1); pwbadrc=$?
+git -C "$PW/r" reset -q; rm -f "$PW/r/bad.txt"
+printf 'a harmless added line\n' > "$PW/r/good.txt"; git -C "$PW/r" add good.txt
+PWOK=$(BT_PRIVATE_WORDING="$PW/list.txt" devtools/repo-scan "$PW/r" 2>&1); pwokrc=$?
+PWEMPTY=$(BT_PRIVATE_WORDING="$PW/empty.txt" devtools/repo-scan "$PW/r" 2>&1); pwemrc=$?
+PWMISS=$(BT_PRIVATE_WORDING="$PW/no-such-list.txt" devtools/repo-scan "$PW/r" 2>&1); pwmirc=$?
+git -C "$PW/r" commit -q -m "add good"; printf 'zzplanted-phrase-zz again\n' > "$PW/r/old.txt"; git -C "$PW/r" add old.txt; git -C "$PW/r" commit -q -m "older text"
+PWALL=$(BT_PRIVATE_WORDING="$PW/list.txt" devtools/repo-scan "$PW/r" --all 2>&1); pwallrc=$?
+(( pwbadrc == 1 )) && [[ "$PWBAD" == *"wording that describes how the work is done"* ]] \
+    && (( pwokrc == 0 )) && [[ "$PWOK" == *"no private-list wording in the added lines"* ]] \
+    && (( pwemrc == 1 )) && [[ "$PWEMPTY" == *"wording list is empty"* ]] \
+    && (( pwmirc == 0 )) && [[ "$PWMISS" == *"private wording list not on this machine — that check was not run"* ]] \
+    && (( pwallrc == 0 )) && [[ "$PWALL" != *"wording"* ]] \
+    && ok "repo-scan's private-wording check refuses a planted phrase in an added line, passes a clean one, refuses an empty list, says 'not run' for a missing one, and leaves --all alone" \
+    || bad "repo-scan private wording: planted rc=$pwbadrc, clean rc=$pwokrc, empty rc=$pwemrc, missing rc=$pwmirc, --all rc=$pwallrc"
+rm -rf "$PW"
+# BT_PUSH_REMOTE: a commit that only a private remote holds is not published, so a push to
+# origin scans its additions too (a leak assembled at run time); without the variable every
+# remote counts, as before. The new-branch (all-zero base) case.
+PR=$(mktemp -d); git init -q -b main "$PR/r"; git -C "$PR/r" config user.name t; git -C "$PR/r" config user.email t@example.com
+printf 'base\n' > "$PR/r/a.txt"; git -C "$PR/r" add -A; git -C "$PR/r" commit -q -m base
+_p1='12:34'; _p2='56:78'; _p3='9a:bc'
+printf 'seen %s:%s:%s\n' "$_p1" "$_p2" "$_p3" > "$PR/r/leak.txt"; git -C "$PR/r" add -A; git -C "$PR/r" commit -q -m "a leak, pushed only to private"
+git -C "$PR/r" update-ref refs/remotes/private/main HEAD
+printf 'clean\n' > "$PR/r/b.txt"; git -C "$PR/r" add -A; git -C "$PR/r" commit -q -m "clean"
+git -C "$PR/r" rm -q leak.txt; git -C "$PR/r" commit -q -m "the leak removed again"; pr2=$(git -C "$PR/r" rev-parse HEAD)
+git -C "$PR/r" update-ref refs/remotes/origin/main "$(git -C "$PR/r" rev-parse HEAD~3)"
+# the leak is no longer in the tree, so only the per-commit lines can show it
+PROLD=$(devtools/repo-scan "$PR/r" --range 0000000000000000000000000000000000000000 "$pr2" 2>&1); prold=$?
+PRNEW=$(BT_PUSH_REMOTE=origin devtools/repo-scan "$PR/r" --range 0000000000000000000000000000000000000000 "$pr2" 2>&1); prnew=$?
+(( prold == 0 )) && (( prnew == 1 )) && [[ "$PRNEW" == *"real MAC/BSSID found"* ]] \
+    && ok "repo-scan --range on a new branch judges 'published' against the remote named by BT_PUSH_REMOTE (a commit only a private remote holds is scanned for origin), and the pre-push hook sets it" \
+    || bad "repo-scan with BT_PUSH_REMOTE (rc=$prnew; without it rc=$prold)"
+HKP=$(grep -c 'BT_PUSH_REMOTE="$REMOTE_NAME"' devtools/hooks/pre-push || true)
+(( ${HKP:-0} == 1 )) || bad "devtools/hooks/pre-push does not hand its remote name to repo-scan"
+rm -rf "$PR"
+# the allow-list's wide entries are narrowed: noreply only at GitHub's hosts, unit instances only
+# with a unit suffix. (Addresses assembled here; they would otherwise be flagged in this file.)
+AL=$(mktemp -d); git init -q -b main "$AL/r"; git -C "$AL/r" config user.name t; git -C "$AL/r" config user.email t@example.com
+printf 'x\n' > "$AL/r/a.txt"; git -C "$AL/r" add -A; git -C "$AL/r" commit -q -m base
+_at='@'
+printf 'ok: noreply%sgithub.com and modprobe%sloop.service and systemd-coredump%s1-2-3.service\n' "$_at" "$_at" "$_at" > "$AL/r/ok.txt"
+printf 'no: noreply%sexample-company.test and modprobe%sevil.test and systemd-x%sevil.test\n' "$_at" "$_at" "$_at" > "$AL/r/no.txt"
+git -C "$AL/r" add ok.txt; ALOK=$(devtools/repo-scan "$AL/r" 2>&1); alokrc=$?
+git -C "$AL/r" reset -q; git -C "$AL/r" add no.txt; ALNO=$(devtools/repo-scan "$AL/r" 2>&1); alnorc=$?
+(( alokrc == 0 )) && (( alnorc == 1 )) && [[ "$ALNO" == *"email address found"* ]] \
+    && ok "repo-scan: noreply passes only at GitHub's hosts and unit instance names only with a unit suffix; the same local parts at another host are refused" \
+    || bad "repo-scan allow-list narrowing: listed forms rc=$alokrc, other hosts rc=$alnorc: $(grep -E '^      ' <<<"$ALNO" | tr '\n' ' ')"
+rm -rf "$AL"
+# bluez-tester-compare.sh -h stops at the end of its header, not into the code
+BTH=$(scripts/bluez-tester-compare.sh -h 2>&1)
+[[ -n "$BTH" && "$BTH" != *"set -uo pipefail"* ]] \
+    && ok "bluez-tester-compare.sh --help prints its header and no line of code" \
+    || bad "bluez-tester-compare.sh --help runs into the code: $(tail -2 <<<"$BTH" | tr '\n' '|')"
+rm -rf "$SX"
 
 echo
 echo "the tests may not write to the real evidence tree"
