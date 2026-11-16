@@ -5,17 +5,19 @@
 #
 #   1. scripts/checkpatch.pl --strict -g HEAD
 #   2. make M=net/bluetooth W=1   (extra warnings)        -Werror on the objects
-#   3. make M=net/bluetooth C=2   (sparse on every file)  — sparse's findings
-#      in mgmt.c are compared with HEAD~1, so only NEW ones count against the patch
+#   3. make M=net/bluetooth C=1   (sparse on the files that are rebuilt: mgmt.c is
+#      touched first) — sparse's findings in mgmt.c are compared with HEAD~1, so
+#      only NEW ones count against the patch
 #
 #   scripts/kernel-preflight.sh <full-kernel-worktree>
 #
 # Needs a tree prepared by scripts/build-bluetooth-fulltree.sh (.config,
 # modules_prepare) and `sparse` installed. Writes build output in the tree only.
 set -uo pipefail
-TREE="${1:-$(dirname "${BASH_SOURCE[0]}")/../cache/full-bt-next}"   # default: the bluetooth-next worktree
-BT_SPARSE="${BT_SPARSE:-$(dirname "${BASH_SOURCE[0]}")/../cache/sparse/sparse}"   # default: the current sparse built there
-[[ -x "$BT_SPARSE" ]] || BT_SPARSE=sparse
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # absolute: every path below is used after the cd
+TREE="${1:-$REPO/cache/full-bt-next}"   # default: the bluetooth-next worktree
+BT_SPARSE="${BT_SPARSE:-$REPO/cache/sparse/sparse}"   # default: the current sparse built there
+if [[ -x "$BT_SPARSE" ]]; then BT_SPARSE="$(readlink -f -- "$BT_SPARSE")"; else BT_SPARSE=sparse; fi
 cd "$TREE" || exit 2
 J=$(nproc)
 rc=0

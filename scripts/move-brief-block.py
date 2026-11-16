@@ -8,10 +8,19 @@ hand-off blocks are replaced, never stacked, and the old text is kept verbatim i
 import sys
 from pathlib import Path
 
-root = Path("/root/exp/qca9377-bt-hang")
+root = Path(__file__).resolve().parent.parent   # this checkout, wherever it is
+if len(sys.argv) != 5:
+    sys.exit(__doc__)
 first, last, heading, repl = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3], Path(sys.argv[4])
 brief = (root / "BRIEF.md").read_text().split("\n")
 history = root / "HISTORY.md"
+# The range is checked BEFORE anything is written: HISTORY.md is appended to
+# first, and a range outside the file would append a wrong or empty block to it
+# and then rewrite BRIEF.md.
+if not (1 <= first <= last <= len(brief)):
+    sys.exit(f"range {first}..{last} is outside BRIEF.md (1..{len(brief)}); nothing was written")
+if not repl.is_file() or not repl.read_text().strip():
+    sys.exit(f"{repl} is missing or empty; nothing was written")
 block = brief[first - 1:last]
 print("first moved:", block[0][:100])
 print("last moved: ", block[-1][:100])

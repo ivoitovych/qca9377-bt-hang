@@ -14,7 +14,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOL = os.path.join(HERE, "bt-trace-archive.py")
-PROJECT_TMP = "/root/exp/qca9377-bt-hang/tmp"
+PROJECT_TMP = os.path.join(os.path.dirname(HERE), "tmp")   # this checkout's tmp/, wherever it is
 SAMPLES = ["bt-20260924-182910.btsnoop", "bt-20260924-183217.btsnoop", "bt-20260924-183220.btsnoop"]
 failures = 0
 

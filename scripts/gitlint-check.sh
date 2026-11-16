@@ -1,7 +1,10 @@
 #!/bin/bash
-# gitlint-check.sh — run gitlint on the commit message of each patch file the
-# way the BlueZ CI bot does: BlueZ's own .gitlint, message = everything above
-# the first "---" with the mail headers stripped.
+# gitlint-check.sh — run gitlint on the commit message of each patch file with
+# the BlueZ TREE's own .gitlint; message = everything above the first "---" with
+# the mail headers stripped. This is NOT the file the BlueZ CI bot uses: the bot
+# has its own gitlint file (title limit 80, Fixes:/Link:/URL exceptions), and
+# scripts/ci-local.sh runs that one (default <action-ci>/gitlint). For the bot's
+# verdict use ci-local.sh; this script answers "does the tree's own config pass".
 #
 #   scripts/gitlint-check.sh <bluez-tree> <patch>...
 #

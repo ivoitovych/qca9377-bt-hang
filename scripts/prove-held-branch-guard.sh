@@ -3,7 +3,11 @@
 # guard (kernel/*, and since 2026-09-26 plan/* and the other private-only families, since
 # 2026-10-09 config/* → private remote only), for when the suite cannot run (trial open).
 set -uo pipefail
-cd /root/exp/qca9377-bt-hang || exit 2
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2   # this checkout, wherever it is
+# The scratch repositories carry a throwaway identity, so repo-save is asked for
+# its configuration-identity switch for this run; it honours it only for scratch
+# repositories whose remotes are local paths, which is all that is built here.
+export BT_REPO_SAVE_CONFIG_IDENTITY=1
 SCRATCH=$(mktemp -d)
 pass=0; fail=0
 ok()  { echo "  ✓ $*"; pass=$((pass+1)); }

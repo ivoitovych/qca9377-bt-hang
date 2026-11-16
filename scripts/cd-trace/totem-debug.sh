@@ -21,18 +21,19 @@ if pgrep -x totem >/dev/null; then
     exit 2
 fi
 
-ENVV=(XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0
-      DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+U="${BT_DESKTOP_USER:-i}"; UID_N="$(id -u "$U")" || exit 2   # as scripts/user-pw-dump.sh
+ENVV=(XDG_RUNTIME_DIR=/run/user/$UID_N WAYLAND_DISPLAY=wayland-0
+      DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$UID_N/bus
       GST_DEBUG_NO_COLOR=1 "GST_DEBUG_FILE=$LOG" "GST_DEBUG=$CATS")
 
-runuser -u i -- env "${ENVV[@]}" totem &
+runuser -u "$U" -- env "${ENVV[@]}" totem &
 echo "totem started (pid $!), GStreamer log: $LOG"
 if [[ -n "$URI" ]]; then
     for _ in 1 2 3 4 5 6 7 8 9 10; do
-        runuser -u i -- env "${ENVV[@]}" gdbus introspect --session --dest org.gnome.Totem \
+        runuser -u "$U" -- env "${ENVV[@]}" gdbus introspect --session --dest org.gnome.Totem \
             --object-path /org/gnome/Totem >/dev/null 2>&1 && break
         read -r -t 1 < /dev/zero || true
     done
-    runuser -u i -- env "${ENVV[@]}" totem "$URI"
+    runuser -u "$U" -- env "${ENVV[@]}" totem "$URI"
     echo "opened $URI"
 fi

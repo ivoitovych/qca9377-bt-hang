@@ -13,7 +13,8 @@
 # The diff itself is copied byte for byte; the script refuses to write if the
 # part after "---" differs from v1 in anything but the inserted changelog.
 # Writes patches/bluez/v2/<same file names>. Deterministic: run it twice, get
-# the same bytes. Prepared for the operator's decision (CB-02); nothing here
+# the same bytes. The v2 it derives was posted to the list (patches/bluez/README.md
+# keeps the state); the script stays to reproduce those bytes. Nothing here
 # sends anything.
 #
 #   scripts/build-v2.sh

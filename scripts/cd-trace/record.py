@@ -19,7 +19,10 @@ out.mkdir(parents=True, exist_ok=True)
 
 pw = open(out / "pw-top.txt", "w")
 pwp = subprocess.Popen(
-    ["runuser", "-u", "i", "--", "env", "XDG_RUNTIME_DIR=/run/user/1000", "pw-top", "-b"],
+    # the desktop user as scripts/user-pw-dump.sh takes it: BT_DESKTOP_USER, default i
+    ["runuser", "-u", __import__("os").environ.get("BT_DESKTOP_USER", "i"), "--", "env",
+     "XDG_RUNTIME_DIR=/run/user/%d" % __import__("pwd").getpwnam(__import__("os").environ.get("BT_DESKTOP_USER", "i")).pw_uid,
+     "pw-top", "-b"],
     stdout=pw, stderr=subprocess.STDOUT)
 
 

@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 
 API = "https://gitlab.gnome.org/api/v4/projects/1618"
-DRAFTS = Path("/root/exp/qca9377-bt-hang/contributions/X1-gvfs-cdda-readahead/submission-drafts.md")
+DRAFTS = Path(__file__).resolve().parents[2] / "contributions/X1-gvfs-cdda-readahead/submission-drafts.md"   # this checkout's
 UPLOAD = "/uploads/fc2a0287cabeeca50d0265b12f442889/gvfs-cdda-track-test.py"
 PROGRAM_SHA = "3e52485addf56cc80d9cee923d79de84dc6f1b361b54dc9da56b4ab0f7b6e520"
 ME = "ivoitovych"

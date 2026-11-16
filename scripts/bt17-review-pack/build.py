@@ -10,10 +10,12 @@ import re
 import subprocess
 import sys
 
-ROOT = "/root/exp/qca9377-bt-hang"
-TREE = "/root/exp/agent-work/bt17-emu-20261113/linux"
-BASE = "da3cc0258"
 HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(HERE))   # this checkout, wherever it is
+# A kernel tree that holds BASE (git show reads the base files from it). The
+# work area this used to name is gone; pass a tree through BT17_BASE_TREE.
+TREE = os.environ.get("BT17_BASE_TREE", os.path.join(ROOT, "cache", "linux"))
+BASE = "da3cc0258"
 CO43 = "contributions/CO-43-btusb-runtime-resume-failure"
 CO44 = "contributions/CO-44-mgmt-timeout-reported-as-auth-failed"
 EMU = "results/bt17-emulation-2026-11-13"

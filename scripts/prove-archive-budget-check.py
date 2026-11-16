@@ -13,7 +13,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHECK = os.path.join(HERE, "archive-budget-check.py")
 ARCHIVER = os.path.join(HERE, "bt-trace-archive.py")
-PROJECT_TMP = "/root/exp/qca9377-bt-hang/tmp"
+PROJECT_TMP = os.path.join(os.path.dirname(HERE), "tmp")   # this checkout's tmp/, wherever it is
 failures = 0
 
 

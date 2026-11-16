@@ -1,16 +1,17 @@
 #!/bin/bash
-# export-kernel-review.sh — the reviewer package for the held kernel patch, as
-# plain files, taken from the held branch without checking it out: everything
-# under patches/kernel/ (the patch, its README, the reviewer brief
-# REVIEW-TASK.md, the reproducer) and the exhibits the README cites.
+# export-kernel-review.sh — the reviewer package for the kernel patch
+# patches/kernel/0001-*, as plain files, taken from a branch without checking
+# it out: everything under patches/kernel/ (the patch, its README, the reviewer
+# brief REVIEW-TASK.md, the reproducer) and the exhibits the README cites.
 # Nothing is pushed anywhere; the operator hands the directory over.
-# The brief itself lives on the held branch, not here: it describes the
-# finding, and this public file must not (BRIEF §7).
+# The source is `main` by default (the files are on main since 2026-10-09);
+# BT_HELD_BRANCH=<branch> reads another one, e.g. the private
+# kernel/mgmt-flush-status where an older copy of the files may still be.
 #
 #   scripts/export-kernel-review.sh            writes tmp/review-kernel-0001/
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BR="${BT_HELD_BRANCH:-kernel/mgmt-flush-status}"
+BR="${BT_HELD_BRANCH:-main}"
 OUT="$REPO/tmp/review-kernel-0001"
 rm -rf "$OUT"; mkdir -p "$OUT"
 mapfile -t FILES < <(git -C "$REPO" ls-tree -r --name-only "$BR" -- patches/kernel evidence/exhibits)

@@ -6,8 +6,8 @@ set -u
 S=${1:-"2026-10-22 09:00"}
 U=${2:-"2026-10-22 12:00"}
 RE='command( 0x[0-9a-f]+)? tx timeout|Setup Synchronous|opcode 0x0428'
-OUT=/root/exp/qca9377-bt-hang/tmp/journal-speed
-cd "$OUT" || exit 1
+OUT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/tmp/journal-speed"   # this checkout's tmp/
+mkdir -p "$OUT" && cd "$OUT" || exit 1
 echo "window: $S .. $U"
 
 t0=$(date +%s.%N)
