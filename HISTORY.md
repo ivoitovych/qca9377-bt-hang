@@ -4711,6 +4711,25 @@ suite does not run on the laptop while a trial is open.
   The two source points the reviewer cites were confirmed in v255.4, and the experiments were
   started.
 
+**Public text keeps findings, and the second recheck.**
+- **What the reviewer found:** the project reviewer verified our checks file at `bbec102f` and
+  found it accurate. The reviewer's own errors were confirmed: `bt-status`, U13, the passwords,
+  CO-03, U8. The new items were the restore verifier, the light-mode keeper's ownership check,
+  and CO-46's register entries.
+- **The privacy problem:** text on `main` was describing how the work is done.
+- **The operator's decision (2026-11-16): fix forward, without a history rewrite.**
+  - Review messages on `main` keep their findings only; the full text is kept privately.
+  - The CO-46 package builder reads a private wording list.
+  - `devtools/repo-scan` now refuses added lines matching that list. On a machine without the
+    list, it says the check was not run.
+  - Older text stays in history.
+- **CI** was green on `d331c8e`.
+- **The second-round fixes:** three passes were started (documents, packages, code and tests).
+  The first two finished.
+- **Interrupted:** the code pass and the backport's safety experiments were interrupted that
+  afternoon and resumed from what was on disk. The experiments' results for the frozen test set,
+  the open-reader vacuum test, the old format and imported journals were not yet committed.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
