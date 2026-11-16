@@ -808,6 +808,8 @@ sweep (40 boots) never hit it: the window needs a done step still queued at remo
 
 ## BT-9 — Simultaneous discovery can end without the kernel ever stopping it; every later scan is refused Busy
 
+**Status 2026-11-16 (the state of 10-09 follows): done.** Our backports are released in 6.12.113, 6.6.160 and 6.1.191, and the BlueZ emulator leak fix and the BlueZ test series are released in BlueZ 5.88 (`docs/STATUS.md`; the **Since** paragraph below). Nothing is owed.
+
 **Status 2026-10-09: already fixed upstream; missing from the 6.12, 6.6 and 6.1 stable
 lines, which the `dc16388d45ec` backport is about to expose.** `EX-062`.
 
@@ -897,7 +899,7 @@ fix, the pair turns the hang into a pass and the full l2cap-tester runs 111/111
 (`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).
 **Reportable:** the CO-35 send package (an option-2 request for 7.3.y and 7.2.y, backport series
 for 6.18.y, 6.12.y and 6.6.y): an outside review, then the operator's decision. **2026-11-02:** 7.2.y
-has ended (7.2.15), so the request is for 7.3.y only (`send-20261102/`); nothing sent as of 11-12. 6.1.y, 5.15.y
+has ended (7.2.15), so the request is for 7.3.y only (the package then was `send-20261102/`, superseded; since 2026-11-16 the package to send is `review-fixes-20261114/` in the CO-35 dossier, `contributions/README.md`, "What to send"); nothing sent as of 11-16. 6.1.y, 5.15.y
 and 5.10.y: the pair does not apply; no fix yet (open). Not specific to this controller.
 
 ## BT-11 — KASAN use-after-free in `iso_conn_hold_unless_zero` on Ubuntu 7.0.0-38's code
@@ -1547,7 +1549,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   during the MOMENTUM session — one appeared later that boot during a Shure mSBC link
   (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
-  earbud-specific unless the earbuds also go silent on E3 — that test is next.
+  earbud-specific unless the earbuds also go silent on E3 — that test is next. *(The 10-01
+  state: "next" is not current; see the dated state below.)*
   **State 2026-11-16 (from `docs/STATUS.md` and the CO-18 row of `contributions/README.md`):**
   the recordings mined on 11-11 show the earbuds receiving 100 % CRC-valid mSBC with signal, so the
   silence is on their side; CO-18 was dropped as a kernel item (research 2026-11-01); the
@@ -1653,6 +1656,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
 - **U12 — an application opening the microphone while A2DP is starting loses A2DP until the headset reconnects; only Handsfree remains** *(confirmed in the HCI capture, the logs and the source, 2026-10-19; fixed upstream in BlueZ 5.80, not in Ubuntu 24.04)*.
 
+  **Two counts, kept apart (added 2026-11-16):** this section records the three occurrences that were examined in the capture and the logs (10-19, 10-31, 11-13). The 11-11 mining of the journal (`results/laptop-only-work-2026-11-11/recordings-mining/`, `docs/STATUS.md` row `U12`) found nine occurrences in the journal, seven of them not recorded before, three after 11-02; those were not examined one by one.
+
   **What happened** (local time):
   - **[operator]** At 19:43 GNOME Settings offered only "Handsfree - MOMENTUM 4" as output; the headphones (A2DP) entry was gone. The screenshot is kept with the raw evidence.
   - **[log] The chain** (`EX-064`): at 19:33:58.577 Google Chrome opens a playback stream, and at .636 bluetoothd resumes the MOMENTUM 4's A2DP transport for it, sending AVDTP Start (`EX-063`). At .674 Chrome opens a microphone stream. At .676 WirePlumber switches the headset from `a2dp-sink` to `headset-head-unit-msbc`, and at .678 it releases the A2DP transport while the Start is pending. bluetoothd's `a2dp_cancel()` aborts the setup: AVDTP Abort at .678, 42 ms after the Start.
@@ -1733,7 +1738,7 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - `PreferredBearer` (Luiz Augusto von Dentz, 2025-02-26, first in BlueZ 5.80) does not help: master exposes it only for a device known on both bearers (`device_prefer_bearer_str()`, `src/device.c:391-393`).
   - Listing a device whose Flags say "not discoverable" is by design: with a discovery filter set, 5.72 treats every report as discoverable (`device_is_discoverable()`, `src/adapter.c:7141-7142`); GNOME's `Discoverable` filter field makes the adapter discoverable while scanning, it does not filter results.
 
-  **Three parts, three owners:**
+  **Three parts, three owners** (the dossiers: BlueZ `contributions/CO-27-le-only-pairing-u13/`; GNOME `contributions/CO-42-gnome-bluetooth-silent-pairing-failure/`; the headset's firmware has none):
   1. **The headset** advertises connectable LE with Flags `0x00` under its public BR/EDR address, and answers LE pairing with "Pairing not supported". Shure's firmware.
   2. **BlueZ** reads Flags `0x00` as no information, so it never learns the BR/EDR side from the advertising, and it has no fallback when LE pairing is refused as not supported. A patch candidate: track whether the Flags field was present, and treat a present Flags without "BR/EDR Not Supported" as BR/EDR support (then `select_conn_bearer()` prefers BR/EDR for equal times, `:2513-2516`). The risk to weigh: LE-only devices that send Flags `0x00`.
   3. **GNOME Settings** shows no error for a failed `Pair()`: the row returns to "Not set up" with nothing said. **Read in source 2026-11-07 (`U29`):** gnome-bluetooth 46.0 `lib/bluetooth-settings-widget.c:944-951` logs a failed setup and shows nothing (`//FIXME show an error?`); the same on master.
@@ -1969,6 +1974,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
 - **U29 — a headset that no longer accepts the laptop's key: Connect fails as "br-connection-unknown"; after Forget, setting it up outside pairing mode fails, and GNOME says nothing** *(observed by the operator 2026-11-07 about 11:16–11:19; read in the bluetoothd journal, the desktop journal, the HCI capture and the source; the MOMENTUM 4; BlueZ 5.72, GNOME Settings 46.7, gnome-bluetooth 46.0)*. The GNOME half is `U13`'s silent failure, now found in source.
 
+  **Owners** (added 2026-11-16; dossiers in `contributions/README.md`): the headset (it dropped the key, why unknown, and its refusals are correct); BlueZ, for the "unknown" name (`CO-40-ubuntu-bluez-a2dp-connection-refused-backport/`, `a6ac17f0e393` as a 5.72 backport), the temporary row kept by non-discoverable reports (`CO-39-bluez-temporary-device-kept-by-non-discoverable-reports/`) and the emulator's ignored reason (`CO-41-bluez-emulator-io-cap-negative-reply-reason/`); GNOME, for showing nothing (`CO-42-gnome-bluetooth-silent-pairing-failure/`).
+
   **What happened:**
   - **[operator]** The MOMENTUM 4 was listed in the Bluetooth panel as "Not set up"; clicking it changed nothing, and it seemed the headset was not in pairing mode. Switched off, it stayed listed. Switched on in pairing mode, it connected and played the test sound.
   - **[operator, asked 2026-11-07]** Whether the headset was paired with another device or reset between 11-04 and 11-06, and whether the operator clicked Forget at 09:41: **not remembered; both unknown for good.** The Lenovo earbuds: switched off by the operator within about a minute before the pairing attempts (the exact time not remembered). **[log]** This matches: the earbuds' link was ended from their side at 11:17:02.19 (`dev_disconnected() … reason 3`), exactly 60 s before the first click (11:18:02.48), and bluetoothd logged nothing more from them (its last line in the collection is 11:21:42; collected 11:32). Unrelated to the headset's failure.
@@ -1981,7 +1988,7 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
     - Every run logged `avdtp_connect_cb() … Connection refused (111)`. The profile line reads `Resource temporarily unavailable (11)` without the fix and `Connection refused (111)` with it.
     - **Control.** With no ACL held, authentication fails during link setup and gives `Permission denied (13)` and `br-connection-unknown` on both builds (5/5 each). The fix changes nothing on that path.
     - **Not reproduced:** Hands-free failing first (the emulated peer offered A2DP only), a real headset dropping its key, and the laptop's kernel (the guest runs the image's CI kernel).
-    - Scripts, result tables and checksums: `results/u29-emulator-2026-11-07/` §1; the raw runs stay in `/root/exp/agent-work/u29-t1-a2dp-backport/`.
+    - Scripts, result tables and checksums: `results/u29-emulator-2026-11-07/` §1; the raw runs were in a work area directory that is not in the tree.
   - **[log] The headset was removed from the laptop at 09:41:42.75:** `btd_device_set_temporary() temporary 1`, removal from the accept list, then at the disconnect (09:41:44.81) "Removing temporary device" and `Unpair Device` (mgmt `0x001b`). That is BlueZ's `RemoveDevice` path. The Bluetooth panel was open 09:41:26–09:41:46 (`app-gnome-gnome\x2dbluetooth\x2dpanel-475925.scope`). **[inference]** A Forget in the panel; who clicked it is not recorded.
   - **[capture] 11:16:09, the headset connected by itself:** Accept Connection Request (.509), three Link Key Requests (11:16:11.018, 12.620, 13.818), each answered with a Negative Reply (the laptop has no key now). No IO Capability exchange followed; the headset disconnected at 11:16:14.275, "Remote User Terminated Connection (0x13)". That connection created the device in BlueZ (`device_create()` 11:16:10.138), unpaired, which is the "Not set up" row.
   - **[capture] 11:18:02 – 11:18:51, ten clicks, ten refusals:** each `Pair Device` paged the headset, sent Authentication Requested, gave a Negative Reply to the Link Key Request, and answered the IO Capability Request ("DisplayYesNo", "Dedicated Bonding - MITM required"). About 50 ms later the headset ended it: `Simple Pairing Complete` and `Auth Complete` "Pairing Not Allowed (0x18)" (first at 11:18:03.132). BlueZ: `pair_device_complete() Rejected (0x0b)`; GNOME Settings: `Setting up /org/bluez/hci0/dev_… failed: GDBus.Error:org.bluez.Error.AuthenticationRejected: Authentication Rejected`, ten times, nothing on screen.
@@ -2133,3 +2140,9 @@ None of that is an argument about Linux. It is an argument about *selection*: th
 failure is filtered out of bug trackers by its own statistics, not by its rarity in the
 field. That is a defensible point and worth making in a report — it explains why a
 maintainer may never have seen it despite it being common.
+
+*Dated note, 2026-11-16: written before the cause was known. For this fault the cause was one
+missing device-table entry (`dc16388d45ec`), so the reason it was unreported is that a single USB
+ID lacked an entry, not that the failure is statistically filtered out. "Despite it being common"
+and "persisted for years" were never measured here, and "roughly fifteen tools" has long been
+exceeded (`docs/tooling-index.md`). Read the section as the 09-2026 reasoning, not as a finding.*
