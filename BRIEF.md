@@ -142,7 +142,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11; BT-12 to BT-15 are released, queued upstream or not ours, STATUS); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
 - **Who works where:**
   - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge. The old remote branches were deleted on 2026-11-15 (see the hand-off below).
-  - The test-suite maintainer works on the branch `tests/test-suite` and merges `main` into it on their side (`comms/`; the branches `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main` that this line named before 2026-11-16 are among the 16 deleted on 2026-11-15, §0 hand-off below).
+  - The test-suite maintainer works on the branch `tests/test-suite` and rebases it onto `main` when `main` moves (`comms/2026-11-13T0100Z-from-test-suite-maintainer-to-everyone.md`; this line said "merges `main` into it" until 2026-11-16; the branches `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main` that this line named before 2026-11-16 are among the 16 deleted on 2026-11-15, §0 hand-off below).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
@@ -172,7 +172,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row (nothing was sent on 11-13 or 11-14). What to send, and from
 > which directory, is the "What to send" table of `contributions/README.md` (the record;
 > `contributions/rd-2026-11-14.md` is the 11-14 working page: every possible contribution with its
-> state when it was written, the R&D left, and the results of the five work lanes; it is not
+> state when it was written, the R&D left, and the results of five parallel passes; it is not
 > kept current).
 >
 > - **The machine (read 11-14, STATUS "The investigation machine"):** Ubuntu `7.0.0-43` with the
@@ -189,8 +189,9 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - Send commands and a checked dry run exist only for CO-44 and CO-43 E; for the others they
 >     are to be made before the send.
 >   - **Not ready:** CO-02 v2. Its sleeping 2/2 deadlocks with debug delays (3 of 3, 11-15); the
->     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch, the bot's CI
->     and a cover are still to do.
+>     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch and the bot's CI
+>     are still to do; its cover, `msg/cover-alt.txt`, was rewritten on 11-16 (corrected 2026-11-16,
+>     this said a cover was still to do).
 >   - **Held:** CO-43 B2 and D v2 (D v2 breaks the system-resume rebind).
 >   - **Packages made since 11-13 carry no Signed-off-by**; the operator adds his own; the author
 >     line is his real name and address. Nothing sent.
@@ -208,14 +209,16 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > - **New findings 11-14:** a lockdep cycle at controller unregister on the bluetooth-next tip
 >   (`cmd_sync_work_lock` vs `unregister_lock` via `mesh_next()`), 2 of 35 boots, none with CO-04;
 >   **CO-14 confirmed**: every mesh send pending at controller removal leaks (kmemleak, 86 objects
->   in 10 boots, with and without CO-04), and a fix in `mgmt_index_removed()` takes it to 0 (lane 1,
->   regression runs still going).
-> - **Lanes still running at this writing** (the lanes' directories `lane<N>-*-20261114/` in the work area; deleted 11-14 after their results were ported, see below): 1 CO-14
->   (fix's mgmt-tester runs, the hung-controller lockdep case); 2 CO-30 (the deferred-connect RFC on
->   v2); 3 CO-38's BlueZ TestFunctional failures (2 of 3 patched; flake not shown), then CO-12's
->   clamp-or-design package; 4 CO-41 and CO-39 (no report yet); 5 the btmon CVE and CO-11a's
->   renumbered debdiffs. Their results are leads until checked on copy.
-> - **Porting a lane's output into the repository (learned 11-14, five failed pushes):** run
+>   in 10 boots, with and without CO-04), and a fix in `mgmt_index_removed()` takes it to 0 (the
+>   regression runs were still going on 11-14).
+> - **Five passes were still running at 11-14** (their directories in the work area were deleted
+>   11-14 after their results were ported, see below; state as of 11-16 in brackets): 1 CO-14
+>   (the fix's mgmt-tester runs, the hung-controller lockdep case); 2 CO-30 (the deferred-connect RFC on
+>   v2; not re-tested on the non-sleeping 2/2); 3 CO-38's BlueZ TestFunctional failures (shown on
+>   11-16 to be a flake: patched failed 2 of 8 runs, base 1 of 7), then CO-12's
+>   clamp-or-design package; 4 CO-41 and CO-39 (their packages were made on 11-14, nothing
+>   sent); 5 the btmon CVE and CO-11a's renumbered debdiffs. Their results were leads until checked on copy.
+> - **Porting a pass's output into the repository (learned 11-14, five failed pushes):** run
 >   `tmp/port-check/check.sh <dir>` (a machine-local script, not in a clone: executable bits, the suite's timeout spelling), then
 >   `git add -A` and `devtools/repo-scan` before `devtools/save`. Leave in the work area: tester
 >   and bot harness logs (emulated controllers' addresses), saved lore/patchwork pages and other
@@ -223,7 +226,15 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   wait on session-temporary paths. Placeholder addresses (`@example.invalid`) become the
 >   operator's real one in authored files and `example.com` in throwaway identities.
 > - **CI:** green on every push since `2a3f253` (11-14); two red runs that day were ported
->   scripts without the executable bit and with a non-canonical timeout grep.
+>   scripts without the executable bit and with a non-canonical timeout grep. **Not true after
+>   11-14:** `HISTORY.md`'s chapters of 11-15 and 11-16 record red runs on both days; read CI
+>   with `devtools/ci`, not from this line (corrected 2026-11-16).
+> - **After this block was written (11-15 and 11-16; the detail is in `HISTORY.md`):** the
+>   whole-project review of 11-15 and its two rechecks, with the fixes they asked for; CO-46, the
+>   noble stable-update request for upstream's `journalctl` fix and its one-file review package
+>   (`contributions/CO-46-systemd-journalctl-file-count-slowdown/`); the keeper for light mode in
+>   `tools/bt-ui-capture` (it survives reboots); U21's second occurrence on 11-16 (a forgotten
+>   headset paired again in Handsfree, STATUS).
 > - **Open for the operator:**
 >   - **Old remote branches: done 2026-11-15.** The operator deleted the 16 the test-suite
 >     maintainer's 11-13 note lists (each backed up first), `ci/upstream-ci-local` among them (its
@@ -312,7 +323,7 @@ fault is not specific to Disconnect.
   fails (`-110`), and on unblock two USB resets leave the device off the bus (`000`, hci0
   DOWN) — USB loss once more only *after* an intervention.
 - **Every recovery tried on an already-wedged controller failed** (`EX-039`); the one reset
-  issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
+  issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`; "the one" is that incident's: `HISTORY.md` Phase 10, 08-10 to 08-11, also records an early reset that worked, so it was not the only one; corrected 2026-11-16).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
   `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1; in stable 7.2.10 and
   6.18.56 since 2026-10-11, 6.12.113 since 2026-10-15, 6.6.160 since 2026-10-21 and 6.1.191, 5.15.224 and 5.10.273 since 2026-10-30; this said "in the release candidates of 2026-10-17" until 2026-11-16) — and that entry's setup/reset path was **untested here** (`DR-01`)
@@ -744,7 +755,9 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
    `scripts/pre-send-check.sh` against a fetched `origin/master`. How the v2 came about:
    the bot's only actionable finding is hard tabs in the quoted C
    of both commit messages. A v2 with spaces clears GitLint and changes no code; a v2 for a
-   linter before a maintainer has replied may read as noise. Operator's decision. **v2 is
+   linter before a maintainer has replied may read as noise. Operator's decision *(history: the
+   v2 was then sent on 2026-09-21 at 22:47 CEST, as the start of this item says; the next two
+   sentences describe the state before that, corrected 2026-11-16)*. **v2 is
    prepared in `patches/bluez/v2/`** (`scripts/build-v2.sh`, diff byte-identical to v1):
    gitlint 0, checkpatch 0/0, `git am` 6/6; `BT_PATCH_DIR=patches/bluez/v2 scripts/build-mails.sh`
    lays changelog, note, diffstat. Two separate mails as before, on his word only.
