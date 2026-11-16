@@ -21,9 +21,10 @@
 # So: no hciconfig, no btmgmt, no bluetoothctl, no rfkill writes, no sysfs
 # writes — AND NO D-BUS, which is the one that had to be argued rather than
 # assumed. It reads the journal and reads sysfs. `bt-trial autostop` is the
-# cautionary example — its hci_alive() issues an HCI Read_Local_Name at every
-# shutdown, which is why EX-029's thirteen clean hours end in a touched
-# terminator (BL-08).
+# cautionary example, historically: until 2026-09-19 its hci_alive() issued an
+# HCI Read_Local_Name at every shutdown, which is why EX-029's thirteen clean
+# hours end in a touched terminator (BL-08). `autostop` is passive now and
+# probes only under BT_TRIAL_PROBE=1.
 #
 # THE BLUEZ SECTION IS WHY THAT LIST GAINED D-BUS. Reading org.bluez properties
 # over D-Bus is a userspace read of cached state and very probably issues no
@@ -125,8 +126,21 @@ ln -sfn "$DIR" "$LATEST"
 
 # ── fine filters: all of these are now free ──────────────────────────────
 K="$DIR/kernel.log"; A="$DIR/all.log"
+# The controller's USB path is found by VID/PID (BT_VID/BT_PID, default
+# 13d3:3503), not assumed: after a re-enumeration it is no longer 3-3. When the
+# device is not there to be found, or the tree has no idVendor files at all
+# (a fixture), 3-3 stays the path that is looked for.
+SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+USBDEV=""; USBTREE=0
+for d in "$SYSFS"/*; do
+    [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+    USBTREE=1
+    if [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]]; then
+        USBDEV=$(basename "$d"); break
+    fi
+done
 grep -E "opcode 0x0428|opcode 0x043d|Looking for Alt no|command( 0x[0-9a-f]+)? tx timeout|setting interface failed" "$K" > "$DIR/f-fault.log" 2>/dev/null
-grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
+grep -E "usb ${USBDEV:-3-3}|xhci_hcd|USB disconnect|device descriptor|unable to enumerate" "$K"         > "$DIR/f-usb.log"        2>/dev/null
 grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
 # ── crashes: SCOPED TO THE BLUETOOTH STACK, and the rest kept separately ──
 #
@@ -221,8 +235,9 @@ SCONARROW=$(grep -cE 'len [0-9]+ mtu 9$' "$K" 2>/dev/null || true)
 SCOWIDE=$(grep -cE 'len [0-9]+ mtu (1[0-9]|[2-9][0-9]+)$' "$K" 2>/dev/null || true)
 
 # Device presence read from sysfs — a read, never a probe.
-SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
-PRESENT="no"; [[ -e "$SYSFS/3-3" ]] && PRESENT="yes"
+PRESENT="no"
+if [[ -n "$USBDEV" ]]; then PRESENT="yes"
+elif (( ! USBTREE )) && [[ -e "$SYSFS/3-3" ]]; then PRESENT="yes"; fi
 HCI="none"; for p in "${BT_SYSFS_BT:-/sys/class/bluetooth}"/hci*; do [[ -e "$p" ]] && HCI=$(basename "$p") && break; done
 
 FIRST_TMO=$(grep -E "command( 0x[0-9a-f]+)? tx timeout" "$K" 2>/dev/null | head -1 | awk '{print $1}')
