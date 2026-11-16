@@ -26,7 +26,8 @@
 #   bt-ui-capture [plan]          print every change start/stage-restart would
 #                                 make; change nothing (the default)
 #   bt-ui-capture start           apply the RUNTIME settings and start the
-#                                 passive monitors (root)
+#                                 passive monitors (root; "passive" = they only
+#                                 listen; see the light-mode note below)
 #   bt-ui-capture stage-restart   write — do not apply — the settings that need
 #                                 a PipeWire/WirePlumber restart (root)
 #   bt-ui-capture status          what is active, where the logs are, sizes
@@ -76,6 +77,14 @@
 #           daemon-reload, no restart: they take effect when the user's
 #           services next start (logout/login with no other session, or boot).
 #   collect writes only under the session directory.
+#
+# NOT PASSIVE, ONE STEP: start-light's accessibility recorder is started with
+#           --register-shell-events, which REGISTERS the event types the shell
+#           filter keeps with the AT-SPI registry (RegisterEvent); GNOME Shell
+#           emits nothing for events nobody has registered. The registration is
+#           this connection's, and goes when the recorder stops. `start` (the
+#           session monitors) registers nothing. docs/ui-capture.md and the
+#           recorder's docstring (scripts/bt-ui-atspi.py) say the same.
 #
 # NEVER: restarts or signals pipewire, wireplumber, bluetoothd or gnome-shell;
 # touches the Bluetooth adapter (no power, connect, rfkill, hciconfig, btmgmt);
@@ -1005,6 +1014,8 @@ case "$cmd" in
     unstage)        unstage_main ;;
     collect)        collect_main "$@" ;;
     _monitor)       monitor_main "$@" ;;
-    -h|--help|help) sed -n '2,92p' "$0" ;;
+    # The header up to its first blank line, wherever that falls: a fixed range
+    # went stale with every line added (it once ran on into the code).
+    -h|--help|help) sed -n '2,/^$/p' "$0" ;;
     *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect|start-light|stop-light|status-light|enable-light|disable-light)" ;;
 esac
