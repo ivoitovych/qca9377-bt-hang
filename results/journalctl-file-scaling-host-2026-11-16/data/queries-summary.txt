@@ -1,0 +1,33 @@
+env       set    query                       a time s  b time s    a lines    b lines capped a/b  speed-up
+host      synth  -b                              7.07      0.22      10000      10000 0/0         32.8x (time)
+host      synth  -b -1                           7.38      0.22      10000      10000 0/0         33.2x (time)
+host      synth  -u unit                         0.46      0.07          1          1 0/0         6.3x (time)
+host      synth  --since 1 day before end      120.02    120.03      30963     866212 1/1         28.0x (rate)
+host      synth  -n 100                          0.52      0.11        100        100 0/0         4.7x (time)
+host      synth  -k -b                           6.81      0.21      10000      10000 0/0         32.0x (time)
+host      synth  --list-boots                    4.35      0.56        161        161 0/0         7.7x (time)
+host      synth  -g rare word                  120.02    120.03          0          0 1/1         not finished
+host      real   -b                            120.02     48.24     321336    4535424 1/0         35.1x (rate)
+host      real   -b -1                         120.02    120.04     313888    8317266 1/1         26.5x (rate)
+host      real   -u unit                         0.29      0.07         38         38 0/0         4.3x (time)
+host      real   --since 1 day before end      120.02    120.02     268576    7160422 1/1         26.7x (rate)
+host      real   -n 100                          0.32      0.10        100        100 0/0         3.2x (time)
+host      real   -k -b                         120.03     53.88     308170    5011216 1/0         36.2x (rate)
+host      real   --list-boots                    0.18      0.15          3          3 0/0         1.2x (time)
+host      real   -g rare word                  120.01    120.02          0          0 1/1         not finished
+container synth  -b                             13.81      0.19      10000      10000 0/0         71.9x (time)
+container synth  -b -1                          13.46      0.21      10000      10000 0/0         65.2x (time)
+container synth  -u unit                         0.09      0.07          1          1 0/0         1.3x (time)
+container synth  --since 1 day before end      120.02    120.03      16142    1176264 1/1         72.9x (rate)
+container synth  -n 100                          1.10      0.09        100        100 0/0         12.5x (time)
+container synth  -k -b                          14.19      0.20      10000      10000 0/0         71.5x (time)
+container synth  --list-boots                    5.02      0.55        161        161 0/0         9.1x (time)
+container synth  -g rare word                  120.02    120.03          0         93 1/1         not finished
+container real   -b                            120.02     97.12     135078    9155912 1/0         83.8x (rate)
+container real   -b -1                         120.02    120.04     122294    8645132 1/1         70.7x (rate)
+container real   -u unit                         0.38      0.07         38         38 0/0         5.2x (time)
+container real   --since 1 day before end      120.02    120.02      91550    6248452 1/1         68.2x (rate)
+container real   -n 100                          0.84      0.10        100        100 0/0         8.8x (time)
+container real   -k -b                         120.02    105.29     122862    9772680 1/0         90.7x (rate)
+container real   --list-boots                   76.14      0.15          2          3 1/0         not finished
+container real   -g rare word                  120.01    120.02          0          0 1/1         not finished
