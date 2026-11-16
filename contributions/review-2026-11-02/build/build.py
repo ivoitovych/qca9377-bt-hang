@@ -8,13 +8,16 @@ in the order of ORDER below. Missing items are reported, not invented.
 """
 import html
 import json
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SECTIONS = Path("/root/exp/agent-work/review-doc-20261102")
+# The section files' directory: the first argument, or REVIEW_DOC_SECTIONS (since 2026-11-16 no
+# path is written here; the 2026-11-02 run read them from its directory in the work area).
+SECTIONS = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("REVIEW_DOC_SECTIONS", "."))
 SECTION_FILES = ["kernel-sco.md", "kernel-mesh.md", "stable-qca.md", "bluez-ubuntu.md", "audio.md"]
 ORDER = ["CO-25", "CO-04", "CO-38", "CO-12", "CO-05", "CO-02", "CO-21", "CO-30",
          "CO-35", "CO-22", "CO-23", "CO-03", "CO-11", "CO-19", "CO-36", "CO-32"]
@@ -24,12 +27,31 @@ FORBIDDEN = [
     (re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+"), "email address or message id"),
     (re.compile(r"https?://", re.I), "URL"),
     (re.compile(r"\b(?:[0-9A-F]{2}:){5}[0-9A-F]{2}\b", re.I), "device address"),
-    (re.compile(r"compaction", re.I), "forbidden word"),
-    (re.compile(r"\b(claude|anthropic|chatgpt|openai|gemini|grok|copilot|llm|\bAI\b)", re.I), "assistant name"),
     (re.compile(r"(?<!-)\b(family|household|kitchen)\b", re.I), "wording"),
-    (re.compile(r"\b(agent|subagent|work area|agent-work)\b", re.I), "internal process"),
+    (re.compile(r"\bwork area\b", re.I), "internal process"),
     (re.compile(r"/root/|/tmp/|contributions/|\.\./", re.I), "local path"),
 ]
+
+
+def private_wording():
+    """The private wording list that devtools/repo-scan reads (../private-config/publish-wording.txt
+    beside the main checkout, or BT_PRIVATE_WORDING), as compiled patterns; None if unreadable.
+    Kept out of the repository because a public list would publish its words (2026-11-16)."""
+    path = os.environ.get("BT_PRIVATE_WORDING")
+    if not path:
+        try:
+            common = subprocess.run(
+                ["git", "-C", str(HERE), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                capture_output=True, text=True, check=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            return None
+        path = str(Path(common).parent.parent / "private-config" / "publish-wording.txt")
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    pats = [re.compile(ln.strip()) for ln in lines if ln.strip() and not ln.lstrip().startswith("#")]
+    return pats or None
 
 
 def split_items(text):
@@ -72,13 +94,17 @@ def main():
         md = md.replace(old, new)
     (HERE / "review-package.md").write_text(md, encoding="utf-8")
 
+    private = private_wording()
+    checks = FORBIDDEN + [(rx, "private list") for rx in private or []]
     problems = 0
     for lineno, line in enumerate(md.splitlines(), 1):
-        for rx, what in FORBIDDEN:
+        for rx, what in checks:
             for m in rx.finditer(line):
                 problems += 1
                 print(f"CHECK {what}: line {lineno}: {m.group(0)!r} :: {line.strip()[:120]}")
     print(f"checks: {problems} finding(s); {len(md.splitlines())} lines; {len(md)} chars")
+    if private is None:
+        print("NOT CHECKED against the private wording list: it could not be read", file=sys.stderr)
 
     body = subprocess.run(
         ["pandoc", "-f", "markdown-smart-implicit_figures", "-t", "html5", "-s", "--toc", "--toc-depth=2",

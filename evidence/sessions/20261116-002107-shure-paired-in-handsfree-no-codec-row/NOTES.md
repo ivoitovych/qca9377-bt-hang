@@ -43,7 +43,7 @@ $ grep -rn "AA_BB_CC_00_00_01" ~/.local/state/wireplumber/   (run as the desktop
 ```
 (`default-routes` and `default-nodes` also hold the Shure's entries.)
 ```
-$ ls -la --time-style=full-iso /home/i/.local/state/wireplumber/
+$ ls -la --time-style=full-iso ~/.local/state/wireplumber/   (as the desktop user)
 -rw-rw-r-- 1 i i   233 2026-10-26 05:40:00.030041679 +0100 default-profile
 -rw-rw-r-- 1 i i   720 2026-11-15 03:06:26.330025765 +0100 policy-bluetooth
 ```
