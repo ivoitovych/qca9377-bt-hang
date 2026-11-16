@@ -1,0 +1,35 @@
+uid=1001(tester) gid=1001(tester) groups=1001(tester)
+journal directories present before: ls: cannot access '/run/log/journal': No such file or directory /var/log/journal 
+
+################ /usr/bin/journalctl
+journalctl under test: /usr/bin/journalctl (systemd 255 (255.4-1ubuntu8.18))
+journal files are written under: /tmp/journalctl-scaling.FJwoVA (removed at the end); the system journal is not read or written
+writing 400 files of 1000 entries each, archived, 5 files per boot ...
+
+     K      lines    seconds      lines/s       us/entry
+    25      25004       2.92         8564          116.8
+    50      50009      12.79         3910          255.7
+   100      56432      40.01         1411          708.9
+   200      21737      40.01          543         1840.4
+   400      10576      40.01          264         3782.9
+
+exponent b of (time to read everything) ~ K^b, K >= 50: 2.30   (2 = quadratic, 1 = linear)
+
+################ /bins/b/journalctl
+journalctl under test: /bins/b/journalctl (systemd 255 (255))
+journal files are written under: /tmp/journalctl-scaling.Wawm3m (removed at the end); the system journal is not read or written
+writing 400 files of 1000 entries each, archived, 5 files per boot ...
+
+     K      lines    seconds      lines/s       us/entry
+    25      25004       0.12       207589            4.8
+    50      50009       0.35       140990            7.1
+   100     100000       1.11        89837           11.1
+   200     100000       2.94        34043           29.4
+   400     100000       6.68        14962           66.8
+
+exponent b of (time to read everything) ~ K^b, K >= 50: 2.11   (2 = quadratic, 1 = linear)
+
+################ safety check: /var/log, /run/log, /etc/systemd, /tmp, /var/tmp before and after
+identical: 52 entries (path type size mtime), no difference
+journal directories present after: ls: cannot access '/run/log/journal': No such file or directory /var/log/journal 
+leftover scaling directories in /tmp: 0
