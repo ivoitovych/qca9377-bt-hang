@@ -1,18 +1,11 @@
 From: Yu Watanabe <watanabe.yu+github@gmail.com>
 Date: Wed, 3 Jan 2024 04:28:03 +0900
 Subject: sd-journal: make journal_file_read_tail_timestamp() notify to the caller that some new journal entries added
-Description: sd-journal: make journal_file_read_tail_timestamp() notify to the caller that some new journal entries added
- .
- journalctl calls fstat() for every open journal file for every entry it prints, so reading a
- journal that is spread over many files costs a system call per file per entry. See
- https://github.com/systemd/systemd/issues/31486. This is one of two upstream commits that
- remove those calls; it is cherry-picked unchanged from upstream.
- .
- Tiny optimization for journal_file_find_newest_for_boot_id().
-Origin: upstream, commit:51b2bcf8356b847e7ab778adfad930691713c7ef
+Origin: upstream, https://github.com/systemd/systemd/commit/51b2bcf8356b847e7ab778adfad930691713c7ef
 Bug: https://github.com/systemd/systemd/issues/31486
-Bug-Ubuntu: https://bugs.launchpad.net/bugs/NNNNNNN
-Applied-Upstream: v256
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/NNNNNNN
+
+Tiny optimization for journal_file_find_newest_for_boot_id().
 
 (cherry picked from commit 51b2bcf8356b847e7ab778adfad930691713c7ef)
 ---
