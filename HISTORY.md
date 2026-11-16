@@ -14,7 +14,7 @@ at the end · the eleven BlueZ commits released in BlueZ 5.88 (2026-11-05), and 
 contribution outside Bluetooth, two gvfs merge requests for audio-CD playback (2026-11-07) — "A
 count is not a number, two merge requests, and a release nobody announced here" · the laptop's
 last full day on the self-built btusb, a headset that forgot the laptop, and a second dead boot
-(11-07 to 11-12) · an emulated controller, twelve kernel items made ready and five lanes at once
+(11-07 to 11-12) · an emulated controller, twelve kernel items made ready and five investigations at once
 (11-13 to 11-14) · a whole-project review, a deadlock in our own patch and journalctl measured
 (11-15 to 11-16) · a headset re-paired in the wrong mode and a backport request built to stand
 alone (11-16). *(The last four entries were added 2026-11-16; the current state is
@@ -4454,7 +4454,7 @@ and noble-security the same day.
 
 ---
 
-## An emulated controller, twelve kernel items made ready, and five lanes at once (2026-11-13 → 11-14)
+## An emulated controller, twelve kernel items made ready, and five investigations at once (2026-11-13 → 11-14)
 
 **11-13: BT-17 taken apart in emulation.** The controller that died at 18:03 on 11-12 could not be
 studied on the laptop, so it was rebuilt in QEMU: real btusb against an emulated `13d3:3503` over
@@ -4475,8 +4475,8 @@ commits were landed on `main` one by one, as its maintainer asked.
 machine was read again (sysfs and module files only), and the records were corrected; CO-09
 closed.
 
-**11-14: five lanes of work at once.** The operator asked for the remaining research to be
-pushed toward sends while away, in five parallel lanes, each taking one task after another;
+**11-14: five investigations at once.** The operator asked for the remaining research to be
+pushed toward sends while away, in five parallel investigations, each taking one task after another;
 nothing was sent anywhere. What they produced, each result re-checked in the raw logs before it
 was recorded:
 - **btusb (CO-43):** a harness that fails when it should (each fix broken and seen to give the
@@ -4524,7 +4524,7 @@ The reaction recorded each finding as confirmed, partly right or wrong
 (`reviews/2026-11-15T1751Z-project-review-fixes-reaction-checks.md`). It fixed the five weak
 points that same day: the "What to send" table now names full paths, and a script checks them;
 installers and test scripts say what they do not undo; a trial that is set aside never lands on
-another. A lane brought the front pages back into agreement with the exhibits. The reviewer's
+another. A documents pass brought the front pages back into agreement with the exhibits. The reviewer's
 re-check that evening (27 fixed, 26 partly, 26 not addressed, 4 waiting for the operator) found
 the pattern behind most of what was left: **each correction had been applied to one copy of a
 fact at a time**, so the second row of documents (dossier front pages, `docs/issues.md`'s
@@ -4577,7 +4577,7 @@ commit, so CI is the gate, and it worked as one.
   N entries from F files costs about N × F. Rotation keeps adding files, so the cost grows with
   the square of the journal.
 - **The 2024 commits.** Two upstream commits of 2024 backport cleanly to Ubuntu 24.04's 255.4
-  and remove most of the per-file system calls. A lane tested whether they also remove the
+  and remove most of the per-file system calls. A second measurement tested whether they also remove the
   growth, using a fitted exponent b of time against files over synthetic journals and read-only
   reads of the laptop's own journal files (never copied). They do not:
   - b is 2.14 → 2.11 on synthetic journals and 1.91 → 1.45 on the laptop's journal;
@@ -4669,7 +4669,7 @@ desktop, not an exotic one.
 
 **The recheck of the project review, answered.** The reviewer rechecked all 83 findings on
 `a8d0eb45`: 27 fixed, 26 partly, 26 not addressed, 4 waiting for the operator, and 11 new items.
-- **The fixes:** four fix lanes, one per area, checked each item before fixing it. Their 39
+- **The fixes:** four fix passes, one per area, checked each item before fixing it. Their 39
   commits were combined on one branch and put on `main`.
 - **Where the reviewer was wrong:**
   - `bt-status` does not hard-code the device; the false part was "every tool".
@@ -4682,7 +4682,7 @@ desktop, not an exotic one.
 suite does not run on the laptop while a trial is open.
 - **The first run:** 12 suite invariants failed. Among them were a vacuous metrics test, a test
   that the new repository guard of `bt-journal-files` refused, and three unstubbed machine tools,
-  one of them `modprobe`. One lane fixed them, running the full suite in a container, which a trial
+  one of them `modprobe`. They were fixed by running the full suite in a container, which a trial
   does not block.
 - **The next two runs:** the isolation job caught Python bytecode written into `scripts/` by two
   module-loading checks and then by a third. `-B` fixed each, and CI was green on `d5695d8`.
@@ -4708,8 +4708,8 @@ suite does not run on the laptop while a trial is open.
   - host-only headline numbers;
   - corrected wording on the file-count limit, `-EBADMSG`, the container cause and the exponents.
 
-  The two source points the reviewer cites were confirmed in v255.4. The experiments went to
-  lane 11.
+  The two source points the reviewer cites were confirmed in v255.4, and the experiments were
+  started.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
@@ -5751,9 +5751,9 @@ suite does not run on the laptop while a trial is open.
 >   local suite). The first cause, a script without its executable bit, is fixed (11-07); later
 >   ones (boot-range parser fixture, systemd unit checks, sandbox decoys, the install round trip)
 >   are listed in STATUS "Repository health", not yet examined. `devtools/ci --wait` after pushes.
-> - **Agents:** the weekly limit of 11-02 ended 2026-11-05 09:00. The rule that remains: cheap
->   agents for per-file reviews, the main context synthesises. Three X1 agents ran 11-02/03 in
->   containers (`/root/exp/agent-work/x1-cdsim-20261102/`); none is running.
+> - **Background work:** the weekly limit of 11-02 ended 2026-11-05 09:00. Three X1 experiments
+>   ran 11-02/03 in containers (in the work area); none is running. *(This bullet was reworded
+>   on 2026-11-16, the only edit inside this moved block.)*
 > - **The review round is open; nothing from it is acted on yet.** The package
 >   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
 >   reviewers) was read by six reviewers; their points, each checked, are in

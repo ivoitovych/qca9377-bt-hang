@@ -281,6 +281,33 @@ if [[ -n "$mails" ]]; then
 fi
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 
+# --- private wording -------------------------------------------------------
+# Words that describe how the work is done rather than what it found. A public list
+# would publish them itself, so the list lives in the private configuration checkout
+# beside the main checkout (../private-config/publish-wording.txt), or wherever
+# BT_PRIVATE_WORDING names. It applies to ADDED lines only — staged additions or a
+# push — never to --all: older text is a separate decision (operator, 2026-11-16).
+# On a machine without the list (CI) the check says so and does not pass silently.
+if [[ "$SCOPE" == "staged additions" || "$SCOPE" == pushed* ]]; then
+    MAINROOT=$(cd "$(git rev-parse --git-common-dir)/.." 2>/dev/null && pwd)
+    WORDLIST="${BT_PRIVATE_WORDING:-$MAINROOT/../private-config/publish-wording.txt}"
+    if [[ -r "$WORDLIST" ]]; then
+        wpats=$(grep -vE '^[[:space:]]*(#|$)' "$WORDLIST")
+        if [[ -z "$wpats" ]]; then
+            report "the private wording list is empty — refusing to report clean:" "$WORDLIST"
+        else
+            mapfile -t whits < <(grep -nE -f <(printf '%s\n' "$wpats") <<<"$CONTENT" | cut -c1-160 | head -20)
+            if (( ${#whits[@]} )); then
+                report "wording that describes how the work is done (private list):" "${whits[@]}"
+            else
+                pass "no private-list wording in the added lines"
+            fi
+        fi
+    else
+        (( QUIET )) || echo "  · private wording list not on this machine — that check was not run"
+    fi
+fi
+
 # --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)
 (( ${bins:-0} > 0 )) && report "binary capture tracked ($bins) — cannot be sanitised" \

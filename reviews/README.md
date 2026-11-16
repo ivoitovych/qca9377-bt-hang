@@ -518,8 +518,9 @@ track them. Read a file for its content; the date in its name is when it was wri
 | [2026-11-15T0115Z-submitted-status-review-reviewer-7-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-7-verbatim.md) | Submitted contributions status — outside reviewer 7's answer |
 | [2026-11-15T0300Z-submitted-status-review-checks.md](2026-11-15T0300Z-submitted-status-review-checks.md) | Checks of the five answers to the 2026-11-15 submitted-contributions status report |
 | [2026-11-15T1751Z-project-review-fixes-reaction-checks.md](2026-11-15T1751Z-project-review-fixes-reaction-checks.md) | Checks of the reviewer's reaction to the fixes after the 2026-11-15 whole-project review |
-| [2026-11-15T1751Z-project-review-fixes-reaction-verbatim.md](2026-11-15T1751Z-project-review-fixes-reaction-verbatim.md) | The whole-project review of 2026-11-15: the reviewer's reaction to the fixes |
-| [2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md](2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md) | The whole-project review of 2026-11-15: the reviewer's message with the recheck |
+| [2026-11-15T1751Z-project-review-fixes-reaction-findings.md](2026-11-15T1751Z-project-review-fixes-reaction-findings.md) | The whole-project review of 2026-11-15: the reviewer's reaction to the fixes (findings) |
+| [2026-11-16T0000Z-project-review-recheck-reaction-findings.md](2026-11-16T0000Z-project-review-recheck-reaction-findings.md) | The whole-project review of 2026-11-15: the findings of the reviewer's recheck |
+| [2026-11-16T1300Z-co46-noble-sru-review-reviewer-7-verbatim.md](2026-11-16T1300Z-co46-noble-sru-review-reviewer-7-verbatim.md) | CO-46 noble stable-update request: reviewer 7's answer |
 | [EXTERNAL-SOURCES-TASK.md](EXTERNAL-SOURCES-TASK.md) | External-sources review task — the open defects of the QCA9377 (`13d3:3503`) project |
 | [coverage-of-review-full-project-code-review-20260813-111346.md](coverage-of-review-full-project-code-review-20260813-111346.md) | Actionable-item coverage — review 20260813-111346 |
 | [elaboration-of-review-results-20260813-165243.md](elaboration-of-review-results-20260813-165243.md) | Elaboration of review results — 20260813-165243 |

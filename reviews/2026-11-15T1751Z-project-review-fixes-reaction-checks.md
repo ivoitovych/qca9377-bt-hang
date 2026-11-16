@@ -1,6 +1,6 @@
 # Checks of the reviewer's reaction to the fixes after the 2026-11-15 whole-project review
 
-The reaction is stored as `2026-11-15T1751Z-project-review-fixes-reaction-verbatim.md`. It reads
+The reaction's findings are in `2026-11-15T1751Z-project-review-fixes-reaction-findings.md`. It reads
 the commits `be5e9f5`…`6c5fbab` against the review (`162d3b9`). It is an opinion, not the truth:
 each point was checked against the tree on 2026-11-15, 17:50–19:00 UTC. Verdicts:
 - **right**: the reviewer is right, and it is fixed;

@@ -37,9 +37,9 @@ $ journalctl --since "2026-11-16 00:14" --no-pager -o short-iso-precise _COMM=wi
 
 ### The stored state (read-only)
 ```
-$ grep -rn "AA_BB_CC_00_00_01" /home/i/.local/state/wireplumber/   (run with the real address)
-/home/i/.local/state/wireplumber/policy-bluetooth:2:saved-headset-profile:bluez_card.AA_BB_CC_00_00_01=headset-head-unit-msbc
-/home/i/.local/state/wireplumber/default-profile:6:bluez_card.AA_BB_CC_00_00_01=headset-head-unit-msbc
+$ grep -rn "AA_BB_CC_00_00_01" ~/.local/state/wireplumber/   (run as the desktop user, with the real address)
+~/.local/state/wireplumber/policy-bluetooth:2:saved-headset-profile:bluez_card.AA_BB_CC_00_00_01=headset-head-unit-msbc
+~/.local/state/wireplumber/default-profile:6:bluez_card.AA_BB_CC_00_00_01=headset-head-unit-msbc
 ```
 (`default-routes` and `default-nodes` also hold the Shure's entries.)
 ```

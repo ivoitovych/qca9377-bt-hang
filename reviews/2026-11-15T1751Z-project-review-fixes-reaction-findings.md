@@ -1,13 +1,14 @@
 # The whole-project review of 2026-11-15: the reviewer's reaction to the fixes
 
 *Received 2026-11-15 ~17:50 UTC. The reviewer of the whole-project review (`162d3b9`, on a
-separate branch) read the eleven commits `be5e9f5`…`6c5fbab` on `main`. The text is kept as
-received, except that one branch name is replaced by "[a separate branch]". What we checked,
-point by point, is in `2026-11-15T1751Z-project-review-fixes-reaction-checks.md`.*
+separate branch) read the eleven commits `be5e9f5`…`6c5fbab` on `main`. This page keeps the
+review's findings as written; a closing offer about the file's form is left out (2026-11-16:
+public files keep a review's content, not its running commentary). What we checked, point by
+point, is in `2026-11-15T1751Z-project-review-fixes-reaction-checks.md`.*
 
 ---
 
-I read the eleven commits that landed on `main` after the review (`be5e9f5` to `6c5fbab`) and compared each with the finding it answers. I read the diffs only; I did not run the suite.
+The reviewer read the eleven commits that landed on `main` after the review (`be5e9f5` to `6c5fbab`) and compared each with the finding it answers, from the diffs only; the suite was not run.
 
 **Overall: about 7 out of 10.** The dangerous items were fixed quickly and mostly well. The drift between documents, which was the largest group of findings, and the privacy findings were not touched.
 
@@ -40,5 +41,3 @@ Still as found on `main`:
 - `<AUTHOR-EMAIL>` is now in 20 files (17 at the review).
 - `bt-trial start` still truncates a reused trial directory.
 - The work-area path is still in 2,716 files, and none of the wording in section 3.2 was changed.
-
-If you want this as a file next to the review (the project's convention is a reaction record), say so and I will write it.

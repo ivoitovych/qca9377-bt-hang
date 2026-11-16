@@ -2,12 +2,10 @@
 
 *Received 2026-11-16 ~13:00 UTC, relayed by the operator. The package reviewed is
 `contributions/CO-46-systemd-journalctl-file-count-slowdown/review-package.md` (main `229eb8c`).
-Kept as received. What we checked, point by point, will be in
+Kept as received, without the reply's elapsed-time header line. What we checked, point by point, will be in
 `2026-11-16T1300Z-co46-noble-sru-review-checks.md`.*
 
 ---
-
-Worked for 3m 1s
 
 Verdict: this is worth pursuing as a Noble SRU, but I would revise the request before calling it upload-ready. I found no demonstrated correctness defect in the two-commit selection. The main weaknesses are the verification procedure, several overstated safety claims, and the presentation of the measurements.
 

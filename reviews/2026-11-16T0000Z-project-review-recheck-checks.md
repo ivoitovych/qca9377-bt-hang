@@ -1,6 +1,6 @@
 # Checks of the reviewer's recheck of the 2026-11-15 whole-project review
 
-The reviewer's message is stored as `2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md`.
+The findings of the reviewer's message are in `2026-11-16T0000Z-project-review-recheck-reaction-findings.md`.
 The recheck itself (`3f8e8f62`, two files) is on a separate branch, like the review (`162d3b9`).
 It read `main` at `a8d0eb45`. It is an opinion, not the truth: each item was looked up again on
 `main` at `d6a8053` on 2026-11-16 and fixed where it held. Verdicts:
