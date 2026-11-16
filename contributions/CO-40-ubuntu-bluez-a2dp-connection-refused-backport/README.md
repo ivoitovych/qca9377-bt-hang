@@ -32,5 +32,5 @@ update, or file it alone. The operator files.
 **Refs:**
 - `docs/issues.md` U29;
 - `results/u29-emulator-2026-11-07/` §1, with the raw runs in
-  `/root/exp/agent-work/u29-t1-a2dp-backport/`;
+  `<work area>/u29-t1-a2dp-backport/`;
 - the second reviewer's report `reviews/2026-11-07T1341Z-u29-source-investigation-reviewer-2-verbatim.md`.

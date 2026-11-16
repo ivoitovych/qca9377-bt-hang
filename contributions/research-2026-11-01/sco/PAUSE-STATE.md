@@ -104,11 +104,11 @@ Testers in `bin/` (BlueZ `b0bf49270d44` + each author's mail, `git am`):
 - `sco-tester-co02`
 
 ## Resume (one command per call)
-1. Check that the `both` l2cap run ended: `grep -n "end " /root/exp/agent-work/research-sco/progress.log`
-2. `/root/exp/agent-work/research-sco/scripts/run-matrix.sh 1 1 base,co01,co02 sco-tester-co01,sco-tester-co02,l2cap-tester-co01`
-3. `/root/exp/agent-work/research-sco/scripts/run-matrix.sh 3 1 both,co01 sco-tester-co01,sco-tester-co02`
+1. Check that the `both` l2cap run ended: `grep -n "end " <work area>/research-sco/progress.log`
+2. `<work area>/research-sco/scripts/run-matrix.sh 1 1 base,co01,co02 sco-tester-co01,sco-tester-co02,l2cap-tester-co01`
+3. `<work area>/research-sco/scripts/run-matrix.sh 3 1 both,co01 sco-tester-co01,sco-tester-co02`
    (the logs for run 1 exist and are skipped, so runs 2 and 3 are added)
-4. Optional SMP: `/root/exp/agent-work/research-sco/scripts/build-kernels.sh smp /root/exp/qca9377-bt-hang/tmp/co02-w2/frag-smp.config both-smp=5528bc09a1ad21a2c80b3808e68d0944627a9406`,
+4. Optional SMP: `<work area>/research-sco/scripts/build-kernels.sh smp /root/exp/qca9377-bt-hang/tmp/co02-w2/frag-smp.config both-smp=5528bc09a1ad21a2c80b3808e68d0944627a9406`,
    then `run-matrix.sh 3 4 both-smp sco-tester-co01,sco-tester-co02`
 5. Optional CO-30 check at the bluetooth-next tip:
    `build-kernels.sh up2 - tipco02=7ac22ae8fa1b7bf1c4b70893790fae201555ba00 tiprfc=98bc5ffb5088ffda7f60b274286c0cc3cbc51b8e`,
@@ -116,10 +116,10 @@ Testers in `bin/` (BlueZ `b0bf49270d44` + each author's mail, `git am`):
    `/root/exp/qca9377-bt-hang/tmp/co02-w2/bin/sco-tester-exp` with
    `-p "Reconnect During Disconnect Retry"`. run-matrix takes `bin/<name>`: copy that binary into
    `bin/` first with `cp`.
-6. `python3 -I /root/exp/agent-work/research-sco/scripts/summarize-runs.py <logs/run-*.log>`
+6. `python3 -I <work area>/research-sco/scripts/summarize-runs.py <logs/run-*.log>`
    (list the files; no glob)
 7. Keep the capture scan output:
-   `python3 -I /root/exp/agent-work/research-sco/scripts/sco-setup-scan.py --jobs 3 /root/exp/qca9377-bt-hang/archive/bt-trace`
+   `python3 -I <work area>/research-sco/scripts/sco-setup-scan.py --jobs 3 /root/exp/qca9377-bt-hang/archive/bt-trace`
    in the background, and save it as `logs/capture-scan.txt` via a helper.
 8. Write the final report (per item, table, files). The draft conclusions are below.
 

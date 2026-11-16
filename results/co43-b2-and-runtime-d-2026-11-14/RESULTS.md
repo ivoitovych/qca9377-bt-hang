@@ -7,9 +7,9 @@ btusb. Nothing touched the host's Bluetooth. Nothing was sent. All raw logs are 
 86 run logs: none (measured, `grep -v kreports=0 logs/metrics.txt` is empty).
 
 Layout: `harness/` (copy with the fixes), `patches/` (format-patch, no Signed-off-by), `logs/`.
-Kernel trees: `/root/exp/agent-work/lane1-btusb-20261114/lx` (built with `harness/build-kernel.sh`),
+Kernel trees: `<work area>/lane1-btusb-20261114/lx` (built with `harness/build-kernel.sh`),
 images in `../img/` with `.commit` records. Images `base`, `b2`, `ab2d` are the existing ones from
-`/root/exp/agent-work/bt17-emu-20261113/img/` (sha256 of the image is the second line of each run log).
+`<work area>/bt17-emu-20261113/img/` (sha256 of the image is the second line of each run log).
 
 ## 1. Harness fixes (reviewer 7)
 

@@ -18,7 +18,7 @@ Bluetooth VM tests, then run every candidate fix through the same tests.
   - a BlueZ shutdown crash, outside CO-36.
 
   Its per-run results, scripts and container helpers are in `part2/`. The full pytest logs
-  stay in the work area, `/root/exp/agent-work/co36/`.
+  stay in the work area, `<work area>/co36/`.
 
 ## Setup
 
@@ -176,7 +176,7 @@ read as IPv4 addresses, translation file names read as emails).
 Local experiments only, not proposed changes: under PipeWire's rules any
 change sent upstream is the operator's own. Everything is in
 [`v2v3-20261101/`](v2v3-20261101/); the large pytest logs stay in
-`/root/exp/agent-work/co36-v2v3-20261101/`.
+`<work area>/co36-v2v3-20261101/`.
 
 - **Variants** on master `4cfc4711`: V2 sends from the resend timer only
   when the transport is ACTIVE (one condition); V3 stops the timer in

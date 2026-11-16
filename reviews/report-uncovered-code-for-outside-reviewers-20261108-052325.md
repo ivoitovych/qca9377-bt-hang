@@ -4917,7 +4917,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 ```bash
      7 │ # Log: logs/build-<name>.log ; the configure line is the first line of it.
 »    8 │ set -u
-»    9 │ top=/root/exp/agent-work/u29-t1-a2dp-backport
+»    9 │ top=<work area>/u29-t1-a2dp-backport
 »   10 │ name=$1
 »   11 │ case $name in
 »   12 │ base) dir=$top/src/bluez-5.72-base ;;
@@ -4950,7 +4950,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 ```bash
      9 │ # stdout.log, commands.txt).
 »   10 │ set -eu
-»   11 │ top=/root/exp/agent-work/u29-t1-a2dp-backport
+»   11 │ top=<work area>/u29-t1-a2dp-backport
 »   12 │ arm=$1
 »   13 │ name=${2:-$arm}
 »   14 │ U29_REPS=${3:-${U29_REPS:-5}}
@@ -4984,7 +4984,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 3–8](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-emulator-2026-11-07/u29-t1-a2dp-backport/scripts/sums.sh#L3-L8)
 ```bash
      2 │ # Source hashes (both sides) and SHA256SUMS over the runs.
-»    3 │ top=/root/exp/agent-work/u29-t1-a2dp-backport
+»    3 │ top=<work area>/u29-t1-a2dp-backport
 »    4 │ cd "$top" || exit 1
      5 │ {
 »    6 │   for side in base patched; do
@@ -5010,7 +5010,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 ```bash
      4 │ # Log: logs/build.log
 »    5 │ set -u
-»    6 │ top=/root/exp/agent-work/u29-t2-temporary-lifetime
+»    6 │ top=<work area>/u29-t2-temporary-lifetime
 »    7 │ mkdir -p "$top/logs"
 »    8 │ conf='./configure CFLAGS="-std=gnu17 -g -O2" --enable-tools --enable-testing --enable-experimental --enable-deprecated --enable-external-ell --enable-monitor --enable-client --disable-obex --disable-cups --disable-mesh --disable-midi --disable-manpages --localstatedir=/var --sysconfdir=/etc --prefix=/usr'
 »    9 │ echo "configure line: $conf" > "$top/logs/build.log"
@@ -5026,7 +5026,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 4–10](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-emulator-2026-11-07/u29-t2-temporary-lifetime/scripts/make-sums.sh#L4-L10)
 ```bash
      3 │ # logs) plus the source files and the binaries used.
-»    4 │ top=/root/exp/agent-work/u29-t2-temporary-lifetime
+»    4 │ top=<work area>/u29-t2-temporary-lifetime
 »    5 │ cd "$top" || exit 1
      6 │ {
 »    7 │     find runs scripts tests logs -type f ! -name '*.pyc' | sort | xargs sha256sum
@@ -5041,7 +5041,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 6–21](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-emulator-2026-11-07/u29-t2-temporary-lifetime/scripts/run-all.sh#L6-L21)
 ```bash
      5 │ # Usage: run-all.sh
-»    6 │ top=/root/exp/agent-work/u29-t2-temporary-lifetime
+»    6 │ top=<work area>/u29-t2-temporary-lifetime
      7 │ chain() {
 »    8 │     arm=$1
 »    9 │     for n in 0 1 2; do
@@ -5066,7 +5066,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 ```bash
      6 │ #         btmon-dut.log, *.btsnoop, events.jsonl, summary.json, command.txt)
 »    7 │ set -eu
-»    8 │ top=/root/exp/agent-work/u29-t2-temporary-lifetime
+»    8 │ top=<work area>/u29-t2-temporary-lifetime
 »    9 │ arm=$1
 »   10 │ n=$2
 »   11 │ run=$top/runs/$arm-$n
@@ -5112,7 +5112,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 3–8](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-gnome-pairing-feedback-2026-11-07/scripts/build-mr137.sh#L3-L8)
 ```bash
      2 │ # Second image: same Dockerfile, MR 137 diff applied unedited to the copy of the source.
-»    3 │ A=/root/exp/agent-work/u29-g1-gnome-pairing-feedback
+»    3 │ A=<work area>/u29-g1-gnome-pairing-feedback
 »    4 │ echo "$(date +%H:%M:%S) build-mr137 start" >> $A/PROGRESS.log
 »    5 │ docker build --build-arg APPLY_DIFF=yes -f $A/docker/Dockerfile -t u29-gnome-bluetooth:mr137 $A > $A/runs/build-mr137.log 2>&1
 »    6 │ rc=$?
@@ -5126,7 +5126,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 3–8](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-gnome-pairing-feedback-2026-11-07/scripts/build.sh#L3-L8)
 ```bash
      2 │ # Build the image. Run from anywhere; uses absolute paths.
-»    3 │ A=/root/exp/agent-work/u29-g1-gnome-pairing-feedback
+»    3 │ A=<work area>/u29-g1-gnome-pairing-feedback
 »    4 │ echo "$(date +%H:%M:%S) build start" >> $A/PROGRESS.log
 »    5 │ docker build --pull -f $A/docker/Dockerfile -t u29-gnome-bluetooth:master $A > $A/runs/build.log 2>&1
 »    6 │ rc=$?
@@ -5140,7 +5140,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 4–10](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-gnome-pairing-feedback-2026-11-07/scripts/run-mr137.sh#L4-L10)
 ```bash
      3 │ # e.g.   run-mr137.sh mr137 out-mr137 AuthenticationRejected,AuthenticationFailed,AuthenticationCanceled 1
-»    4 │ A=/root/exp/agent-work/u29-g1-gnome-pairing-feedback
+»    4 │ A=<work area>/u29-g1-gnome-pairing-feedback
 »    5 │ mkdir -p $A/runs/$2
 »    6 │ echo "$(date +%H:%M:%S) run-mr137 $1 start" >> $A/PROGRESS.log
 »    7 │ docker run --rm -e ERRORS=$3 -e CONTROL=$4 -v $A/runs/$2:/out -v $A/tests:/work/tests:ro u29-gnome-bluetooth:$1 sh /work/tests/in-container-mr137.sh > $A/runs/$2.log 2>&1
@@ -5155,7 +5155,7 @@ Scripts of finished experiments; whether bash coverage should count them at all 
 [lines 3–8](https://github.com/ivoitovych/qca9377-bt-hang/blob/c5defd7d94b75daa693ca44947c3c629822ed8c9/results/u29-gnome-pairing-feedback-2026-11-07/scripts/run.sh#L3-L8)
 ```bash
      2 │ # Run the test in the container. Default network, no extra capabilities, no host sockets.
-»    3 │ A=/root/exp/agent-work/u29-g1-gnome-pairing-feedback
+»    3 │ A=<work area>/u29-g1-gnome-pairing-feedback
 »    4 │ echo "$(date +%H:%M:%S) run start" >> $A/PROGRESS.log
 »    5 │ docker run --rm -v $A/runs/out:/out -v $A/tests:/work/tests:ro u29-gnome-bluetooth:master sh /work/tests/in-container.sh > $A/runs/run.log 2>&1
 »    6 │ rc=$?

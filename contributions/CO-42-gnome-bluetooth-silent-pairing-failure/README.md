@@ -46,6 +46,6 @@ before resuming the 2021 agent-API thread.
 **Refs:**
 - `docs/issues.md` U29 and U13;
 - `results/u29-gnome-pairing-feedback-2026-11-07/`, with the raw runs in
-  `/root/exp/agent-work/u29-g1-gnome-pairing-feedback/`;
+  `<work area>/u29-g1-gnome-pairing-feedback/`;
 - reviews `reviews/2026-11-07T1515Z-u29-reviewer-2-fourth-message-verbatim.md` and
   `reviews/2026-11-07T2000Z-u29-reviewer-2-fifth-message-verbatim.md`.

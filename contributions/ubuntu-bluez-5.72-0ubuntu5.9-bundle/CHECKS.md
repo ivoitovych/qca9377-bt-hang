@@ -1,6 +1,6 @@
 # bluez 5.72-0ubuntu5.9 bundle: checks, 2026-11-14 (UTC)
 
-Work area: `/root/exp/agent-work/lane5-status-stable-20261114/bluez-572-bundle/`. Nothing was filed, sent or installed on the host; every build and test ran in docker containers or QEMU/KVM guests started inside them (`co03-noble-build:1`, `co03-noble-vm:1`, `bluez-action-ci:60348956fc7b`; only `/dev/kvm` was passed in). Scripts: `bin/`; logs: `logs/`; per-run raw files stay beside their scripts (`l2runs/`, `co40/runs/`, `exit/*/`, `btmon-live/out/`, `btmon-replay/out/`). Hashes: `SHA256SUMS`.
+Work area: `<work area>/lane5-status-stable-20261114/bluez-572-bundle/`. Nothing was filed, sent or installed on the host; every build and test ran in docker containers or QEMU/KVM guests started inside them (`co03-noble-build:1`, `co03-noble-vm:1`, `bluez-action-ci:60348956fc7b`; only `/dev/kvm` was passed in). Scripts: `bin/`; logs: `logs/`; per-run raw files stay beside their scripts (`l2runs/`, `co40/runs/`, `exit/*/`, `btmon-live/out/`, `btmon-replay/out/`). Hashes: `SHA256SUMS`.
 Marks: **measured** = a command ran and its log is named; **from source** = read from a file; **inferred** = reasoning from those.
 
 ## 1. The base (measured)

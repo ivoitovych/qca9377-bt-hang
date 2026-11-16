@@ -12,7 +12,7 @@
 - `build/` — the sources: the front page, the page styles, `build.py` (joins the section files,
   scans for addresses, links, local paths and wording, renders with pandoc) and
   `followups-build.py`. The per-item section files were written in local work areas under
-  `/root/exp/agent-work/review-doc-20261102/` (not tracked); the assembled `review-package.md`
+  `<work area>/review-doc-20261102/` (not tracked); the assembled `review-package.md`
   here is the complete text.
 
 Both are also kept as private pages for the operator. The reviewers' own texts are not stored

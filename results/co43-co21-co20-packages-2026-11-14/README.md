@@ -1,7 +1,7 @@
 # The btusb series on E, and the CO-21 and CO-20 send packages (2026-11-14)
 
 QEMU emulation only (real btusb on bluetooth-next `da3cc02587c6`, an emulated controller through
-usbip; KASAN and lockdep). Copied from `/root/exp/agent-work/lane1-btusb-20261114/task3/`; the
+usbip; KASAN and lockdep). Copied from `<work area>/lane1-btusb-20261114/task3/`; the
 kernel tree and images stayed there. Full write-up: [`RESULTS.md`](RESULTS.md); `logs/SHA256SUMS`
 is relative to `logs/`.
 

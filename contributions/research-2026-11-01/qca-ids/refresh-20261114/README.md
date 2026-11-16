@@ -1,6 +1,6 @@
 # CO-22 rechecked on the stable tips of 2026-11-14 (nothing sent)
 
-Copied from `/root/exp/agent-work/lane5-status-stable-20261114/co22/` (one change: `asus.sh`
+Copied from `<work area>/lane5-status-stable-20261114/co22/` (one change: `asus.sh`
 sets the throwaway committer `check@example.com`, where the run used `@example.invalid`). `CHECKS.md` has every
 command and result.
 

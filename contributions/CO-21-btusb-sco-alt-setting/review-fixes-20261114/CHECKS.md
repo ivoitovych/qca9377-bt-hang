@@ -1,6 +1,6 @@
-# CO-21 v2: air mode first, one-pass count under hdev->lock (2026-11-14, lane 6)
+# CO-21 v2: air mode first, one-pass count under hdev->lock (2026-11-14, track 6)
 
-`WA` = `/root/exp/agent-work/lane6-btusb-20261114/`. Patches in `WA/out/co21/` (`0000-cover-letter.patch`, 0001, 0002),
+`WA` = `<work area>/lane6-btusb-20261114/`. Patches in `WA/out/co21/` (`0000-cover-letter.patch`, 0001, 0002),
 on bluetooth-next `da3cc02587c6`; branch `l6-co21v2` in `WA/lx2` (`l6-co21` = the earlier two-count version).
 Author Iaroslav Voitovych, no Signed-off-by. Nothing sent; the host's Bluetooth untouched.
 
@@ -27,7 +27,7 @@ Source, `lx2` at `l6-co21v2`:
 - The event handlers that change `state`, `air_mode`, `type` and the list all run under `hci_dev_lock()` (the code
   at `hci_event.c` `hci_conn_complete_evt`/`hci_sync_conn_complete_evt`), so a plain walk under the lock is consistent;
   the RCU variant is no longer needed.
-Not run: KCSAN (no instrumented kernel was built; the lane's builds are KASAN + lockdep).
+Not run: KCSAN (no instrumented kernel was built; the builds of that day are KASAN + lockdep).
 
 ## The five scenarios, base against patched (`harness/spec-u.txt`, `harness/run-batch-usbip.sh`)
 

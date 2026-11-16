@@ -61,7 +61,7 @@ Directed Advertising Timeout.
   - With the patch, the reply there reads "Timeout" instead of "Authentication Failed",
     which is the more accurate of the two.
 - **Logs:** `logs/excerpt.txt` (the new case's lines and every tester's totals, with each full
-  log's SHA-256). The full logs stay local in `agent-work/bt17-mgmt-timeout/logs/` with
+  log's SHA-256). The full logs stay local in `<work area>/bt17-mgmt-timeout/logs/` with
   `SHA256SUMS`: they carry the emulated controllers' addresses, which the publishing scan
   cannot tell from real ones.
 - **Seen on the way, not fixed:** `unpair_device_complete()` (`mgmt.c:3134`) passes the

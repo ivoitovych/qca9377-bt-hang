@@ -32,7 +32,7 @@ at the guest's exit; it was not analysed.
 **Changed on copy:** the three written-for-this-update patches' DEP-3 `Author:` and the changelog
 trailer give the operator's own address (the work area had a placeholder); the debdiff carries the
 same lines. Left in the work area
-(`/root/exp/agent-work/lane5-status-stable-20261114/bluez-572-bundle/`): the built `.deb`s and
+(`<work area>/lane5-status-stable-20261114/bluez-572-bundle/`): the built `.deb`s and
 `.debian.tar.xz`, the `.dsc`, Ubuntu's full `debian/` tree and the build logs (Ubuntu's and
 Debian's own changelog and maintainer history), and the raw run folders (guest output, 145 MB).
 

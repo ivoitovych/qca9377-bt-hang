@@ -36,5 +36,5 @@ duration fix lands, and CO-12 may go out as an RFC (D5): send the series now wit
 explanation, or hold the timeout cases until CO-12 is settled and send the listing case alone.
 The operator decides and runs the sends.
 
-**Work area** (local; raw logs, SHA256SUMS): `/root/exp/agent-work/co38-ready-20261102/`;
-earlier: `/root/exp/agent-work/co12-rework-20261101/`.
+**Work area** (local; raw logs, SHA256SUMS): `<work area>/co38-ready-20261102/`;
+earlier: `<work area>/co12-rework-20261101/`.

@@ -8,7 +8,7 @@ Scripts in the worker's `tmp/co35/`; the full output of the last run of every me
 ## How the series were made
 
 ```
-$ git -C cache/linux worktree add --detach /root/exp/agent-work/co35/am-6.18.y v6.18.59   (also 6.12.114, 6.6.160)
+$ git -C cache/linux worktree add --detach <work area>/co35/am-6.18.y v6.18.59   (also 6.12.114, 6.6.160)
 $ git -C …/am-6.18.y -c user.name="Iaroslav Voitovych" -c user.email=… am backports/6.18.y/0001-… backports/6.18.y/0002-…
 Applying: Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
 Applying: Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer

@@ -5,7 +5,7 @@
 ## Evidence (three independent items)
 
 1. **The config, recreated as `build.sh` makes it** (measured; `scripts/recreate-config.sh`, logs `logs/config-v6.6.162.txt`, `logs/config-v7.3.4.txt`, full results `logs/dotconfig-<tag>.txt`).
-   Exported the source of the tag from lane 5's kernel repository (`git archive`, read only), copied `doc/tester.config` (`cache/co02-w2c-bluez/doc/tester.config`, sha256 `814e84767ff48b81...`) to `.config`, appended `hungtask.config` (`b813f88225e988dc...`), ran `make ARCH=x86 olddefconfig`, as `co35/build.sh` does. Result for both v6.6.162 and v7.3.4:
+   Exported the source of the tag from track 5's kernel repository (`git archive`, read only), copied `doc/tester.config` (`cache/co02-w2c-bluez/doc/tester.config`, sha256 `814e84767ff48b81...`) to `.config`, appended `hungtask.config` (`b813f88225e988dc...`), ran `make ARCH=x86 olddefconfig`, as `co35/build.sh` does. Result for both v6.6.162 and v7.3.4:
 
    ```
    CONFIG_KASAN=y
@@ -20,7 +20,7 @@
    CONFIG_PROVE_RCU=y
    ```
    and no `# CONFIG_KASAN is not set` / `# CONFIG_PROVE_LOCKING is not set` / `# CONFIG_LOCKDEP is not set` line. The export trees were deleted afterwards.
-2. **The compile logs of the real builds** (lane 5's `co35/logs/build-<tag>-<variant>.log`, the first full build of each tag): `CC kernel/locking/lockdep.o`, `CC kernel/locking/lockdep_proc.o` and `CC mm/kasan/common.o`, `report.o`, `init.o`, `generic.o`, `report_generic.o`, `shadow.o` appear in `build-v6.6.162-pair.log`, `build-v6.12.117-pair.log`, `build-v6.18.63-pair.log` (`mm/kasan/common.o` and `kernel/locking/lockdep.o` found; `grep -a -c`) and `build-v7.3.4-base.log`. (The later builds of each tag are incremental, so they do not recompile those objects.) Commands: `grep -a -m8 -i "kasan\|lockdep" <log>`.
+2. **The compile logs of the real builds** (track 5's `co35/logs/build-<tag>-<variant>.log`, the first full build of each tag): `CC kernel/locking/lockdep.o`, `CC kernel/locking/lockdep_proc.o` and `CC mm/kasan/common.o`, `report.o`, `init.o`, `generic.o`, `report_generic.o`, `shadow.o` appear in `build-v6.6.162-pair.log`, `build-v6.12.117-pair.log`, `build-v6.18.63-pair.log` (`mm/kasan/common.o` and `kernel/locking/lockdep.o` found; `grep -a -c`) and `build-v7.3.4-base.log`. (The later builds of each tag are incremental, so they do not recompile those objects.) Commands: `grep -a -m8 -i "kasan\|lockdep" <log>`.
 3. **The scan of the patched runs.** `summary-<tag>-pair.txt` ends in `kernel=<ver>-dirty  clean`; `scripts/kernel-report-scan.py` counts lockdep, KASAN and hung-task reports (13 report kinds); the patched runs are clean and the base runs show `hung-task=7`. So the statement "no lockdep or KASAN report" is a statement about kernels that could have produced one.
 
 Not found: a boot-log line ("KernelAddressSanitizer initialized", "Lock dependency validator") in the saved logs; the test-runner console logs in `co35/logs/case-*.log` keep the `Linux version` line but not the early boot messages. Evidence 1 and 2 stand without it.

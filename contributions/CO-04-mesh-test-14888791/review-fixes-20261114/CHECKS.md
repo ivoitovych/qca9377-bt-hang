@@ -1,4 +1,4 @@
-# Lane 3, task 3 (2026-11-14): acting on the outside review, checks
+# Track 3, task 3 (2026-11-14): acting on the outside review, checks
 
 Nothing was sent. [measured] = command output (logs named), [source] = read from the code, [inferred] = reasoning. Trees: bluetooth-next `da3cc02587c629420603df4395179ec82955c941`, BlueZ master `20ffd285b58facfd1f2478d159a5f941b09d5be1`. Author of every patch `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>`, no Signed-off-by.
 

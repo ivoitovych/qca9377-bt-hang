@@ -2,7 +2,7 @@
 
 QEMU emulation only (real btusb on bluetooth-next, an emulated `13d3:3503` through usbip;
 KASAN, lockdep). Nothing ran on the laptop. Copied from the work area
-`/root/exp/agent-work/lane1-btusb-20261114/task1/`; the kernel tree and images stayed there
+`<work area>/lane1-btusb-20261114/task1/`; the kernel tree and images stayed there
 (`lx/`, branches `lane1-ab2`, `lane1-ab2d-dbg`, `lane1-ab2dn-dbg`). The full write-up is
 [`RESULTS.md`](RESULTS.md); `logs/SHA256SUMS` is relative to `logs/`.
 

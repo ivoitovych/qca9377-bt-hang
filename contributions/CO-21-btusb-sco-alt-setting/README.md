@@ -8,7 +8,7 @@ logs: `../../results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/`.
 
 **The redesign's two patches** (the ones tested on 11-11) are now in the repository:
 [`patches-20261101/`](patches-20261101/) (copied 2026-11-14 from
-`/root/exp/agent-work/co21-redesign-20261101/patches-v0/`). They are item 9 of the outside
+`<work area>/co21-redesign-20261101/patches-v0/`). They are item 9 of the outside
 review document `../../reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`.
 
 **State (2026-11-01):** confirmed in source and by a model test; a candidate fix compiles and
@@ -20,7 +20,7 @@ after a failed mSBC second setup; and it keeps the last link-up's mode with mixe
 
 **Redesign (2026-11-01, evening; local, not sent, never loaded):** the alternate setting is
 derived from the SCO links that are up. Two patches on bluetooth-next `42b8c2d72926`
-(`/root/exp/agent-work/co21-redesign-20261101/patches-v0/`, checkpatch `--strict` clean, W=1
+(`<work area>/co21-redesign-20261101/patches-v0/`, checkpatch `--strict` clean, W=1
 builds x86_64 and i386 with 0 warnings):
 1. core: a `conn->air_mode` field set from the Synchronous Connection Complete event of a link
    that came up, and a helper counting the up SCO links per air mode (+33 lines);

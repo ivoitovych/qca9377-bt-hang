@@ -1,6 +1,6 @@
 # btusb E3 kernel hook: install and rollback (operator commands; NOT run by anyone yet)
 
-Files (paths are relative to the work directory `/root/exp/agent-work/laptop-e3-autobuild-20261111/solution`):
+Files (paths are relative to the work directory `<work area>/laptop-e3-autobuild-20261111/solution`):
 
 | file | installs to |
 |---|---|
@@ -18,9 +18,9 @@ Files (paths are relative to the work directory `/root/exp/agent-work/laptop-e3-
 ## Install (root)
 
     install -d -m 755 /usr/local/lib/btusb-e3
-    install -m 755 /root/exp/agent-work/laptop-e3-autobuild-20261111/solution/usr/local/sbin/btusb-e3 /usr/local/sbin/btusb-e3
-    install -m 644 /root/exp/agent-work/laptop-e3-autobuild-20261111/solution/usr/local/lib/btusb-e3/entry-dc16388d45ec.patch /usr/local/lib/btusb-e3/entry-dc16388d45ec.patch
-    install -m 755 /root/exp/agent-work/laptop-e3-autobuild-20261111/solution/etc/cron.daily/btusb-e3 /etc/cron.daily/btusb-e3
+    install -m 755 <work area>/laptop-e3-autobuild-20261111/solution/usr/local/sbin/btusb-e3 /usr/local/sbin/btusb-e3
+    install -m 644 <work area>/laptop-e3-autobuild-20261111/solution/usr/local/lib/btusb-e3/entry-dc16388d45ec.patch /usr/local/lib/btusb-e3/entry-dc16388d45ec.patch
+    install -m 755 <work area>/laptop-e3-autobuild-20261111/solution/etc/cron.daily/btusb-e3 /etc/cron.daily/btusb-e3
     install -d -m 755 /etc/kernel/postinst.d /etc/kernel/header_postinst.d /etc/kernel/postrm.d
     ln -s /usr/local/sbin/btusb-e3 /etc/kernel/postinst.d/50-btusb-e3
     ln -s /usr/local/sbin/btusb-e3 /etc/kernel/header_postinst.d/50-btusb-e3

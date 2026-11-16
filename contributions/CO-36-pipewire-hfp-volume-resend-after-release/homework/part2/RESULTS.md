@@ -8,8 +8,8 @@ controllers.  Every claim is marked: **log** (with the file), **source**
 
 ## Setup and deviations from the homework's runs
 
-- Tree: a copy of `agent-work/co03/pw` (master `4cfc4711`, build
-  `build-v0-asan`) into `agent-work/co36/pw`, without co03's core files
+- Tree: a copy of `<work area>/co03/pw` (master `4cfc4711`, build
+  `build-v0-asan`) into `<work area>/co36/pw`, without co03's core files
   and test mounts (`scripts/copy-tree.sh`).  No PipeWire file changed.
 - Runner: `scripts/vmrun.sh` = the homework's `ci/bluez-tests.sh` with
   this area's test file mounted; results go to `results/<run>-results.jsonl`,
@@ -119,7 +119,7 @@ The full table, with rates and evidence paths, is in `TEST-PLAN.md`,
    `a2dp_exit` → `plugin_cleanup` at exit, during the teardown of
    `test_co36_short_link[6]`, BlueZ `ebbb4ee31ad7` (CI's commit).  1 of
    about 150 AG bluetoothd shutdowns.  Not PipeWire, not CO-36; worth its
-   own entry.  `agent-work/co03/pw` holds many bluetoothd cores from
+   own entry.  `<work area>/co03/pw` holds many bluetoothd cores from
    another campaign; whether they are the same fault is not checked.
 9. **Every no-link `+VGS` path works**: WirePlumber's route restore sends
    `+VGS: 6` when the HFP profile is selected, before any link (log,
@@ -156,7 +156,7 @@ gain).  Sources: `homework/unit/README.md` lines 95–122 and the table above.
 Rates and ranges:
 
 ```
-python3 -I /root/exp/agent-work/co36/scripts/ranges.py <results files of final-tables.sh>
+python3 -I <work area>/co36/scripts/ranges.py <results files of final-tables.sh>
 ```
 output: `results/ranges-all.txt`, e.g.
 `t214_hangup_near_deadline: n=6 short=4 leak=4 down=[1158.1..1585.6] lateVGM=[1502.4..1506.5] end_to_late=[7.1..344.7]`
@@ -165,7 +165,7 @@ and `t307z_policy_probes_restore_zero:links: n=24 short=24 leak=24 down=[60.3..1
 The bluetoothd fault:
 
 ```
-grep -n "host.0.0.bluetoothd     #[0-9]" /root/exp/agent-work/co36/results/r05-t224-x10-pytest-log.txt
+grep -n "host.0.0.bluetoothd     #[0-9]" <work area>/co36/results/r05-t224-x10-pytest-log.txt
 ```
 first lines of output:
 ```
@@ -180,7 +180,7 @@ first lines of output:
 WirePlumber 0.4.17's build error:
 
 ```
-grep -n "error:" /root/exp/agent-work/co36/logs/t308-build.log
+grep -n "error:" <work area>/co36/logs/t308-build.log
 ```
 output:
 ```
@@ -193,7 +193,7 @@ has it as a warning and the build completes).
 HSP offers only "off" (T230):
 
 ```
-python3 -I -c "import json,sys; [print(json.dumps(json.loads(l)['devices'])) for l in open(sys.argv[1]) if '\"t230_hsp_long\"' in l]" /root/exp/agent-work/co36/results/r02-all-once-results.jsonl
+python3 -I -c "import json,sys; [print(json.dumps(json.loads(l)['devices'])) for l in open(sys.argv[1]) if '\"t230_hsp_long\"' in l]" <work area>/co36/results/r02-all-once-results.jsonl
 ```
 output (shortened): `"EnumProfile": ["off"], "Profile": ["off"]`; the AG log in the same
 record has `spa_bt_device_check_profiles: device ...: profiles 00000020`
@@ -202,17 +202,17 @@ and `Transport /org/bluez/hci0/dev_00_AA_01_01_00_42/fd46 available for profile 
 ## How to rerun
 
 ```
-/root/exp/agent-work/co36/scripts/copy-tree.sh
-/root/exp/agent-work/co36/scripts/run-t005.sh /root/exp/agent-work/co36/logs/t005-meson-test.log
-/root/exp/agent-work/co36/scripts/vmrun.sh r04-timing-x5 5 --reruns 0 -k "t214_ or t215f_ or t216_ or t221_ or t227r_ or t228w_"
-/root/exp/agent-work/co36/scripts/vmrun.sh r05-t224-x10 10 --reruns 0 -k "test_co36_short_link or test_co36_remote_hangup or t210_ or t213_"
-/root/exp/agent-work/co36/scripts/vmrun.sh r08-l3-x5 5 --reruns 0 -k "t306_ or t306z_ or t307_ or t307z_"
-/root/exp/agent-work/co36/scripts/vmrun.sh r09-more-x3 3 --reruns 0 -k "t212_ or t219_ or t225r_ or t232p_ or t238_ or t239_ or t215f_ or t228r_"
-/root/exp/agent-work/co36/scripts/vmrun.sh r02-all-once 1 --reruns 0 -k "t230_ or t234_"
-/root/exp/agent-work/co36/scripts/make-wp0417-tree.sh
-/root/exp/agent-work/co36/scripts/build-wp0417-relaxed2.sh /root/exp/agent-work/co36/logs/t308-build-relaxed2.log
-/root/exp/agent-work/co36/scripts/vmrun-tree.sh pw-wp0417 build-wp0417-relaxed2-asan r06b-t308-x5 5 --reruns 0 -k t308_
-/root/exp/agent-work/co36/scripts/final-tables.sh
+<work area>/co36/scripts/copy-tree.sh
+<work area>/co36/scripts/run-t005.sh <work area>/co36/logs/t005-meson-test.log
+<work area>/co36/scripts/vmrun.sh r04-timing-x5 5 --reruns 0 -k "t214_ or t215f_ or t216_ or t221_ or t227r_ or t228w_"
+<work area>/co36/scripts/vmrun.sh r05-t224-x10 10 --reruns 0 -k "test_co36_short_link or test_co36_remote_hangup or t210_ or t213_"
+<work area>/co36/scripts/vmrun.sh r08-l3-x5 5 --reruns 0 -k "t306_ or t306z_ or t307_ or t307z_"
+<work area>/co36/scripts/vmrun.sh r09-more-x3 3 --reruns 0 -k "t212_ or t219_ or t225r_ or t232p_ or t238_ or t239_ or t215f_ or t228r_"
+<work area>/co36/scripts/vmrun.sh r02-all-once 1 --reruns 0 -k "t230_ or t234_"
+<work area>/co36/scripts/make-wp0417-tree.sh
+<work area>/co36/scripts/build-wp0417-relaxed2.sh <work area>/co36/logs/t308-build-relaxed2.log
+<work area>/co36/scripts/vmrun-tree.sh pw-wp0417 build-wp0417-relaxed2-asan r06b-t308-x5 5 --reruns 0 -k t308_
+<work area>/co36/scripts/final-tables.sh
 ```
 
 A new run id writes new files; reusing one appends to its results file.

@@ -269,13 +269,13 @@ L2/L3 (`tests/test_co36_hfp_volume_resend.py`, runs p0-1 to p0-8,
 | T303/T307 0.2–0.6 s captures | no link at all | the policy's 500 ms switch delay |
 | T305 restore timeout 0 | **leak, 2 of 2** | the policy itself ended the link at 48–54 ms |
 
-### Part 2 (agent-work/co36, 2026-10-31 22:50:06 to 23:50:12 CET)
+### Part 2 (<work area>/co36, 2026-10-31 22:50:06 to 23:50:12 CET)
 
 Same master, same image, same build options; `--reruns 0`, so every
 attempt is one record; `CO36_REPEAT=n` gives n runs on fresh VMs.
 "In window" = the link ended before 1.5 s and no new link came before
 the deadline; runs outside it are counted apart, never as passes.
-Evidence paths are under `agent-work/co36/`; per-run lines in
+Evidence paths are under `<work area>/co36/`; per-run lines in
 `results/summary-all.txt`, ranges in `results/ranges-all.txt`.
 
 | Test | Class | Master | Rate | Evidence |

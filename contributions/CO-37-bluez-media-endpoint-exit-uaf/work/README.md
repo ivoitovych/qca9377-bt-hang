@@ -84,7 +84,7 @@ harness stopped the bus at the same moment), which skips the power-off
 (`src/main.c:1534-1538`):
 
 ```console
-$ grep -n -e "Terminating" -e "Disconnected from D-Bus" -e "has been disabled" -e "ERROR: AddressSanitizer" /root/exp/agent-work/co03/runs/exitcheck-base-t311x10/pytest.log
+$ grep -n -e "Terminating" -e "Disconnected from D-Bus" -e "has been disabled" -e "ERROR: AddressSanitizer" <work area>/co03/runs/exitcheck-base-t311x10/pytest.log
 4255:… host.0.0.bluetoothd :  bluetoothd[52]: Terminating
 4280:… host.0.0.bluetoothd :  bluetoothd[52]: Disconnected from D-Bus. Exiting.
 4565:… host.0.0.bluetoothd :  ==52==ERROR: AddressSanitizer: heap-use-after-free …
@@ -122,7 +122,7 @@ the deferred removal completes, `media_endpoint_remove()` reads
 **The same read, seen independently** (another campaign, BlueZ at
 ebbb4ee31ad7 of 2026-09-18, which contains 7482aceece70; ASan, Fedora 44
 PipeWire CI image; once in about 150 shutdowns):
-`/root/exp/agent-work/co36/results/r05-t224-x10-pytest-log.txt:151544-151576`
+`<work area>/co36/results/r05-t224-x10-pytest-log.txt:151544-151576`
 [quoted] has `media_endpoint_remove profiles/audio/media.c:312` ←
 `a2dp_unregister_sep a2dp.c:2838` ← `a2dp_sep_unlock a2dp.c:3533` ←
 `transport_a2dp_suspend transport.c:465` ← `media_transport_free
@@ -215,9 +215,9 @@ READ of 1 byte 645 bytes inside a 680-byte region allocated in
 `device.c:6167` is the same line in Ubuntu's tree:
 
 ```console
-$ grep -n "^void device_set_rssi_with_delta" /root/exp/agent-work/exit-uaf/repo-5.72/src/device.c /root/exp/agent-work/co03/build-f44/base/src/device.c
-/root/exp/agent-work/exit-uaf/repo-5.72/src/device.c:6154:void device_set_rssi_with_delta(struct btd_device *device, int8_t rssi,
-/root/exp/agent-work/co03/build-f44/base/src/device.c:6160:void device_set_rssi_with_delta(struct btd_device *device, int8_t rssi,
+$ grep -n "^void device_set_rssi_with_delta" <work area>/exit-uaf/repo-5.72/src/device.c <work area>/co03/build-f44/base/src/device.c
+<work area>/exit-uaf/repo-5.72/src/device.c:6154:void device_set_rssi_with_delta(struct btd_device *device, int8_t rssi,
+<work area>/co03/build-f44/base/src/device.c:6160:void device_set_rssi_with_delta(struct btd_device *device, int8_t rssi,
 ```
 
 5.72: `git apply` fails (5.72 has `g_slist_free(adapter->load_keys)` between
@@ -312,9 +312,9 @@ move `adapter.c`/`a2dp.c`; 144 of 152 bytes; allocated at `media.c:1463`.
 Its free frame `a2dp.c:2618` is the destroy callback call, as here:
 
 ```console
-$ grep -n "sep->destroy(sep->user_data);" /root/exp/agent-work/exit-uaf/repo-5.72/profiles/audio/a2dp.c /root/exp/agent-work/co03/build-f44/base/profiles/audio/a2dp.c
-/root/exp/agent-work/exit-uaf/repo-5.72/profiles/audio/a2dp.c:2611:		sep->destroy(sep->user_data);
-/root/exp/agent-work/co03/build-f44/base/profiles/audio/a2dp.c:2618:		sep->destroy(sep->user_data);
+$ grep -n "sep->destroy(sep->user_data);" <work area>/exit-uaf/repo-5.72/profiles/audio/a2dp.c <work area>/co03/build-f44/base/profiles/audio/a2dp.c
+<work area>/exit-uaf/repo-5.72/profiles/audio/a2dp.c:2611:		sep->destroy(sep->user_data);
+<work area>/co03/build-f44/base/profiles/audio/a2dp.c:2618:		sep->destroy(sep->user_data);
 ```
 )
 
@@ -484,7 +484,7 @@ To copy into the project (small, written here):
   failing run per tree, cut from the full logs, in `runs/asan-reports.txt`.
   The pytest outputs (`runs/*/*-[0-9]*.log`), the full guest logs
   (`.debug.log`) and the suite logs stay in the work area,
-  `/root/exp/agent-work/exit-uaf/`.
+  `<work area>/exit-uaf/`.
 - `progress.log`
 - `upstream-fix/` (format-patch of 7e3212fa2, for reference); 7482aceece70
   is BlueZ master's own commit and is not copied
@@ -507,44 +507,44 @@ The final commits: series `3c8e880f8` (fix 1), `5534b2688` (fix 2),
 `1dbce15de`. A fresh rerun with them (new tree names):
 
 ```console
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build base 14bd6ab65 1a1d7376a 17e1a36cc 7c0926ecf
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build series 14bd6ab65 3c8e880f8 5534b2688 1a1d7376a 17e1a36cc 7c0926ecf
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build fix1only 14bd6ab65 3c8e880f8 1a1d7376a
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test base acquired_transport 10 rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test series acquired_transport 10 rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test fix1only test_a2dp_exit_with_acquired_transport 10 exit-rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh check base
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh check series
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh suite base suite
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh suite series suite
-$ /root/exp/agent-work/exit-uaf/scripts/checkpatch.sh /root/exp/agent-work/exit-uaf/patches/master/0001-media-Fix-use-after-free-of-app-when-removing-a-lock.patch /root/exp/agent-work/exit-uaf/patches/master/0002-media-Fix-use-after-free-releasing-endpoints-on-adap.patch /root/exp/agent-work/exit-uaf/patches/master/0003-test-Cover-A2DP-endpoint-release-with-an-acquired-tr.patch
+$ <work area>/exit-uaf/scripts/asan-tree.sh build base 14bd6ab65 1a1d7376a 17e1a36cc 7c0926ecf
+$ <work area>/exit-uaf/scripts/asan-tree.sh build series 14bd6ab65 3c8e880f8 5534b2688 1a1d7376a 17e1a36cc 7c0926ecf
+$ <work area>/exit-uaf/scripts/asan-tree.sh build fix1only 14bd6ab65 3c8e880f8 1a1d7376a
+$ <work area>/exit-uaf/scripts/asan-tree.sh test base acquired_transport 10 rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test series acquired_transport 10 rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test fix1only test_a2dp_exit_with_acquired_transport 10 exit-rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh check base
+$ <work area>/exit-uaf/scripts/asan-tree.sh check series
+$ <work area>/exit-uaf/scripts/asan-tree.sh suite base suite
+$ <work area>/exit-uaf/scripts/asan-tree.sh suite series suite
+$ <work area>/exit-uaf/scripts/checkpatch.sh <work area>/exit-uaf/patches/master/0001-media-Fix-use-after-free-of-app-when-removing-a-lock.patch <work area>/exit-uaf/patches/master/0002-media-Fix-use-after-free-releasing-endpoints-on-adap.patch <work area>/exit-uaf/patches/master/0003-test-Cover-A2DP-endpoint-release-with-an-acquired-tr.patch
 ```
 
 How the recorded runs were made (trees as listed in `runs/TREES.md`):
 
 ```console
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build base-t0 14bd6ab65 e4694315f
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build fix1 14bd6ab65 3c8e880f8 e4694315f
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build fix12 14bd6ab65 3c8e880f8 9f40136a4 e4694315f 17e1a36cc
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build disc-revert 14bd6ab65 1dbce15de 17e1a36cc
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test base-t0 acquired_transport 10 rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test fix12 acquired_transport 10 rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test fix1 test_a2dp_exit_with_acquired_transport 10 exit-rate
-$ /root/exp/agent-work/exit-uaf/scripts/update-tests.sh 1a1d7376a 7c0926ecf base-t0 fix12
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh suite base-t0 suite2
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh suite fix12 suite2
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test base-t0 acquired_transport 10 final-rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test fix12 acquired_transport 10 final-rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test disc-revert "test_exit_discovering and bus" 10 rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh test base-t0 "test_exit_discovering and bus" 10 disc-rate
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build v572 03b684514
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh remake v572 "CFLAGS=-g -O2 -Wno-error"
-$ /root/exp/agent-work/exit-uaf/scripts/use-master-tools.sh v572 base-t0
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh build v572fix 03b684514 c72936943 99e56936b 11d09e35b
-$ /root/exp/agent-work/exit-uaf/scripts/asan-tree.sh remake v572fix "CFLAGS=-g -O2 -Wno-error"
-$ /root/exp/agent-work/exit-uaf/scripts/use-master-tools.sh v572fix base-t0
-$ /root/exp/agent-work/exit-uaf/scripts/run-572.sh
-$ /root/exp/agent-work/exit-uaf/scripts/run-checks.sh
+$ <work area>/exit-uaf/scripts/asan-tree.sh build base-t0 14bd6ab65 e4694315f
+$ <work area>/exit-uaf/scripts/asan-tree.sh build fix1 14bd6ab65 3c8e880f8 e4694315f
+$ <work area>/exit-uaf/scripts/asan-tree.sh build fix12 14bd6ab65 3c8e880f8 9f40136a4 e4694315f 17e1a36cc
+$ <work area>/exit-uaf/scripts/asan-tree.sh build disc-revert 14bd6ab65 1dbce15de 17e1a36cc
+$ <work area>/exit-uaf/scripts/asan-tree.sh test base-t0 acquired_transport 10 rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test fix12 acquired_transport 10 rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test fix1 test_a2dp_exit_with_acquired_transport 10 exit-rate
+$ <work area>/exit-uaf/scripts/update-tests.sh 1a1d7376a 7c0926ecf base-t0 fix12
+$ <work area>/exit-uaf/scripts/asan-tree.sh suite base-t0 suite2
+$ <work area>/exit-uaf/scripts/asan-tree.sh suite fix12 suite2
+$ <work area>/exit-uaf/scripts/asan-tree.sh test base-t0 acquired_transport 10 final-rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test fix12 acquired_transport 10 final-rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test disc-revert "test_exit_discovering and bus" 10 rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh test base-t0 "test_exit_discovering and bus" 10 disc-rate
+$ <work area>/exit-uaf/scripts/asan-tree.sh build v572 03b684514
+$ <work area>/exit-uaf/scripts/asan-tree.sh remake v572 "CFLAGS=-g -O2 -Wno-error"
+$ <work area>/exit-uaf/scripts/use-master-tools.sh v572 base-t0
+$ <work area>/exit-uaf/scripts/asan-tree.sh build v572fix 03b684514 c72936943 99e56936b 11d09e35b
+$ <work area>/exit-uaf/scripts/asan-tree.sh remake v572fix "CFLAGS=-g -O2 -Wno-error"
+$ <work area>/exit-uaf/scripts/use-master-tools.sh v572fix base-t0
+$ <work area>/exit-uaf/scripts/run-572.sh
+$ <work area>/exit-uaf/scripts/run-checks.sh
 ```
 
 (`build` refuses an existing `runs/<name>`; use a new name. The two

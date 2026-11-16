@@ -1,6 +1,6 @@
 # CO-22 refresh: the ASUS ROME pair against today's stable tips, 2026-11-14 (UTC)
 
-Work area: `/root/exp/agent-work/lane5-status-stable-20261114/co22/` (scripts `asus.sh`, `run-all.sh`; logs in `logs/`; mail in `mail/`; hashes in `SHA256SUMS`). Nothing was sent; the project tree was not written to. Trees: depth-1 fetches of the stable tags and depth-2 fetches of the two mainline commits from the GitHub mirrors (`../k-fetch.sh`, `../k-fetch2.sh`).
+Work area: `<work area>/lane5-status-stable-20261114/co22/` (scripts `asus.sh`, `run-all.sh`; logs in `logs/`; mail in `mail/`; hashes in `SHA256SUMS`). Nothing was sent; the project tree was not written to. Trees: depth-1 fetches of the stable tags and depth-2 fetches of the two mainline commits from the GitHub mirrors (`../k-fetch.sh`, `../k-fetch2.sh`).
 
 ## 1. Facts
 

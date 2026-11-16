@@ -1,6 +1,6 @@
 # CO-11a refreshed for the newer Ubuntu series, and CVE-2026-105460 checked on 5.72 (2026-11-14; nothing filed)
 
-Copied from `/root/exp/agent-work/lane5-status-stable-20261114/task4/`. The 11-02 files in
+Copied from `<work area>/lane5-status-stable-20261114/task4/`. The 11-02 files in
 `../ready-20261102/` are kept; for noble the btmon fixes now travel in the one 5.72 bundle
 (`../../../ubuntu-bluez-5.72-0ubuntu5.9-bundle/`).
 
@@ -23,7 +23,7 @@ fix `6475b75e7e0e`, BlueZ 5.88, `Fixes: 7d103ce15295`):
   two outputs stay in the work area: they are heap contents printed as addresses and keys).
 - Ubuntu lists noble (and xenial to jammy, resolute, stonking) as `needs-triage`, no patch; the
   fix applies to the bundle and to 5.8 without conflict in either order.
-- **The lane's reading:** it is the security team's to carry (a USN across series), not patch 11
+- **The reading:** it is the security team's to carry (a USN across series), not patch 11
   of the bundle; if a noble security upload takes `5.72-0ubuntu5.9` first, the bundle becomes
   `5.10`. The useful step is telling the security team that 5.72 is affected, with the 5-line
   backport. If the patch is ever carried, the upstream commit's tool-attribution trailer is

@@ -245,4 +245,4 @@ hci_ufilter` is 16 bytes with padding). The emulator caught it; fixed before any
   `harness/run-guest-hostcpu.sh` passes `-cpu host`, so the guest sees the Ryzen.
 - `harness/run-matrix.sh <tag> <first> <last>` runs the repeat matrix.
 
-Paths in the scripts are those of the work directory `/root/exp/agent-work/bt17-emu-20261113/`.
+Paths in the scripts are those of the work directory `<work area>/bt17-emu-20261113/`.

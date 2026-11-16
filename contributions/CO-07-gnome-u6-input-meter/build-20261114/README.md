@@ -1,7 +1,7 @@
 # CO-07 + CO-32 built for noble (2026-11-14; nothing installed or filed)
 
 The two halves of the Sound panel's dead input meter, as noble packages. Copied from
-`/root/exp/agent-work/lane5-status-stable-20261114/task5/` (fetched pages and the build logs
+`<work area>/lane5-status-stable-20261114/task5/` (fetched pages and the build logs
 left there). Both newest in noble on 2026-11-14 08:22 UTC, nothing in proposed.
 
 - **CO-32 / U19, WirePlumber** `0.4.17-1ubuntu4.1` → `4.2`

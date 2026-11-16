@@ -105,7 +105,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - **the CO-02 module on the laptop:** ran from 10-23 to the 10-29 15:20 shutdown on `-38`; `-42` ran without it, and the laptop left `-42` on 11-12 (above; corrected 2026-11-16);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacks five CVE fixes of 2026-10-07 (STATUS), then the U12 backport request (CO-03); **U12 struck again 2026-10-31 13:42** (`EX-084`–`EX-088`): the backport is the remedy. It is built and VM-tested as of 10-31: `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes and the U12 backport, and on the trigger it goes from losing A2DP 70/70 to 0/70 (`contributions/CO-03-bluez-u12-backport/backport/`). It has been staged on disk since 11-13 and runs after the next bluetoothd start; the test with the MOMENTUM 4 is still the operator's (hand-off below; corrected 2026-11-15);
-  - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; **replaced 2026-11-13 by the persistent `bt-raw-archive.timer`**, STATUS, the machine section; corrected 2026-11-16; budget 20 GB, the coordinator's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is now flagged at every session start (STATUS, the desktop capture);
+  - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; **replaced 2026-11-13 by the persistent `bt-raw-archive.timer`**, STATUS, the machine section; corrected 2026-11-16; budget 20 GB, the coordinator's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is flagged by a start-up check (STATUS, the desktop capture);
   - an Ubuntu SRU for `dc16388d45ec` (less pressing: Ubuntu's next stable base should carry it; an inference);
   - the U6 SRU; the U7 and U17 PipeWire reports and the U15/U20 quirk entries (PipeWire's rules: the operator writes); the U11 opt-in proposal; U19's Launchpad report;
   - a reply on Jiale Yao's power-off patch (patchwork 14864878; its comparison was re-run in the research of 2026-11-01: 8 of 26 to 21 of 26 and 20 of 26, while the backlog-3 and removal cases still fail, CO-06; corrected 2026-11-16);
@@ -146,14 +146,14 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
-ready that day, the outside-review document, the Ubuntu bundle, the five lanes; the 11-12 block
+ready that day, the outside-review document, the Ubuntu bundle, the five tracks; the 11-12 block
 moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-12** (the registers reconciled
 with each other and with upstream; the hand-off brought to 11-12; the reset count corrected to two
 controlled tests). Before that,
 **2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
 hand-off bullet moved to the end of `HISTORY.md` verbatim and replaced; BlueZ 5.88 carries all
 eleven applied commits; the machine re-read; two "HANG" trial verdicts examined (no hang; BT-16 found); the
-agents bullet ended). 2026-11-03: X1's final review rounds. 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
+bullet on background work ended). 2026-11-03: X1's final review rounds. 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
 2026-10-30: the hand-off rewritten for the `-42` boot. 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
@@ -172,7 +172,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row (nothing was sent on 11-13 or 11-14). What to send, and from
 > which directory, is the "What to send" table of `contributions/README.md` (the record;
 > `contributions/rd-2026-11-14.md` is the 11-14 working page: every possible contribution with its
-> state when it was written, the R&D left, and the results of five parallel passes; it is not
+> state when it was written, the R&D left, and the results of five groups of items; it is not
 > kept current).
 >
 > - **The machine (read 11-14, STATUS "The investigation machine"):** Ubuntu `7.0.0-43` with the
@@ -212,14 +212,14 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   **CO-14 confirmed**: every mesh send pending at controller removal leaks (kmemleak, 86 objects
 >   in 10 boots, with and without CO-04), and a fix in `mgmt_index_removed()` takes it to 0 (the
 >   regression runs were still going on 11-14).
-> - **Five passes were still running at 11-14** (their directories in the work area were deleted
+> - **Five groups of items were open at 11-14** (their directories in the work area were deleted
 >   11-14 after their results were ported, see below; state as of 11-16 in brackets): 1 CO-14
 >   (the fix's mgmt-tester runs, the hung-controller lockdep case); 2 CO-30 (the deferred-connect RFC on
 >   v2; not re-tested on the non-sleeping 2/2); 3 CO-38's BlueZ TestFunctional failures (shown on
 >   11-16 to be a flake: patched failed 2 of 8 runs, base 1 of 7), then CO-12's
 >   clamp-or-design package; 4 CO-41 and CO-39 (their packages were made on 11-14, nothing
 >   sent); 5 the btmon CVE and CO-11a's renumbered debdiffs. Their results were leads until checked on copy.
-> - **Porting a pass's output into the repository (learned 11-14, five failed pushes):** run
+> - **Porting results into the repository (learned 11-14, five failed pushes):** run
 >   `tmp/port-check/check.sh <dir>` (a machine-local script, not in a clone: executable bits, the suite's timeout spelling), then
 >   `git add -A` and `devtools/repo-scan` before `devtools/save`. Leave in the work area: tester
 >   and bot harness logs (emulated controllers' addresses), saved lore/patchwork pages and other
@@ -504,7 +504,7 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   that period was kept separately, on held branches (`kernel/mgmt-flush-status`, `diag/*`,
   `plan/*`, `postponed/*`, `review/*`). It comes back as
   **new commits that copy vetted files**, each naming its source branch and commit, never as a
-  `git merge`: a merge would publish the branch history, which also holds working-session
+  `git merge`: a merge would publish the branch history, which also holds
   material that is not project content. The held-branch machinery stays: `repo-save` still
   pushes held branches to the separate remote only, never to `origin` (tested;
   `scripts/prove-held-branch-guard.sh`).

@@ -7,8 +7,8 @@ experiment was built and run by a separate worker; the checks marked **[checked]
 here against the raw runs.
 
 The raw runs (debug logs, btmon, dbus-monitor, `.btsnoop`) are 49 MB and stay on the
-investigation machine under `/root/exp/agent-work/u29-t1-a2dp-backport/runs/` and
-`/root/exp/agent-work/u29-t2-temporary-lifetime/runs/`. Their checksums are the `SHA256SUMS` in
+investigation machine under `<work area>/u29-t1-a2dp-backport/runs/` and
+`<work area>/u29-t2-temporary-lifetime/runs/`. Their checksums are the `SHA256SUMS` in
 each folder here. This folder holds the scripts, the tests, the result tables, the commands and
 the upstream patch, enough to repeat both experiments.
 

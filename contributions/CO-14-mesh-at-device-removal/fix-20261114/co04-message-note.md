@@ -4,8 +4,8 @@
 
 **What is measured / quoted / inferred**
 
-- **Quoted (the other lane's log, read only):** on the tip `da3cc02587c6` (kernel `7.3.0-gda3cc02587c6`),
-  `/root/exp/agent-work/lane3-mgmt-20261114/mesh-logs/UnregSweep-plain-17.log` lines 751-790, also `-plain-28`:
+- **Quoted (the other track's log, read only):** on the tip `da3cc02587c6` (kernel `7.3.0-gda3cc02587c6`),
+  `<work area>/lane3-mgmt-20261114/mesh-logs/UnregSweep-plain-17.log` lines 751-790, also `-plain-28`:
   ```
   WARNING: possible circular locking dependency detected
   mesh-tester-gat/60 is trying to acquire lock:
@@ -22,7 +22,7 @@
   lockdep cycles in 60 boots each** (backlog 10 boots, 4 + 3 controllers each; a fine sweep of the removal time
   around the end of a transmission, 10 boots of 12 controllers, offsets 470 to 534 ms in 1 ms steps; a controller
   that stops answering and is then removed, 10 boots of 6). So my natural-timing runs did not hit it. They are not
-  evidence that it is absent from the tip: the other lane's two hits are.
+  evidence that it is absent from the tip: the other track's two hits are.
 - **Inferred from the source (why it is rare):** the cycle needs `hci_cmd_sync_clear()` (`hci_sync.c:675`) to
   find a queued `mesh_send_done_sync` entry on `cmd_sync_work_list` and call its destroy callback, `mesh_next()`
   (`mgmt.c:1137-1145` at the tip: `hci_cmd_sync_queue(hdev, mesh_send_done_sync, NULL, mesh_next)`), which calls
@@ -34,7 +34,7 @@
 
 **CO-04 removes it:** CO-04 gives `mesh_send_done_sync()` no destroy callback (its message says "hci_cmd_sync_clear()
 no longer calls hci_cmd_sync_queue() through mesh_next() at unregister"), so the only path to
-`hci_cmd_sync_queue()` from `hci_cmd_sync_clear()` is gone: 0 of 35 in the other lane's sweep against 2 of 35 on
+`hci_cmd_sync_queue()` from `hci_cmd_sync_clear()` is gone: 0 of 35 in the other track's sweep against 2 of 35 on
 the tip.
 
 **Should CO-04's message name it?** Yes, in one short paragraph. Today the message names the inversion only for

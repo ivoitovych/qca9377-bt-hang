@@ -1,7 +1,7 @@
 # CO-14 — mesh at device removal: pending sends leak with their socket (M-4); the lock-order cycle (M-5)
 
 **State (2026-11-14): reproduced in emulation; a fix written on top of CO-04; nothing sent.**
-`fix-20261114/` (copied from `/root/exp/agent-work/lane1-btusb-20261114/task4/`; `RESULTS.md`
+`fix-20261114/` (copied from `<work area>/lane1-btusb-20261114/task4/`; `RESULTS.md`
 there has every command and result; `logs/totals.txt` the counts). STATUS rows `M-4`, `M-5`;
 `docs/issues.md` the evidence.
 
@@ -33,7 +33,7 @@ everywhere). mgmt-tester only in part: the full run takes ~75 min per kernel and
 failing `LL Privacy - Remove Device 3` fails on both and does not involve mesh (not run on the
 tip). **Before a send:** the full mgmt-tester on CO-04 vs CO-04 + fix.
 
-**M-5, the lock-order cycle:** seen by another lane's unregister sweep in 2 of 35 boots on the tip,
+**M-5, the lock-order cycle:** seen by another track's unregister sweep in 2 of 35 boots on the tip,
 0 of 35 with CO-04 (`../CO-04-mesh-test-14888791/send-20261114/circular-count.txt`); not reproduced here in 60
 boots per kernel over three other scenarios. From the source it needs a queued
 `mesh_send_done_sync` still on the list when `hci_cmd_sync_clear()` walks it, i.e. the sync worker

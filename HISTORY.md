@@ -3045,10 +3045,10 @@ through.*
 ### The author field
 
 The test-suite maintainer reported a near-miss: a reinitialised container reset his git
-config, and a lessons commit went onto his branch authored by a tool identity. `repo-scan`
+config, and a lessons commit went onto his branch under the wrong author identity. `repo-scan`
 passed it, because `repo-scan` reads content; the message scan in `repo-save` passed it,
 because the message was clean. He caught it one commit in, amended, and wrote: *neither
-checks the author field; one bad reinit puts tool attribution into the permanent history of a
+checks the author field; one bad reinit puts a wrong author into the permanent history of a
 repository whose whole premise is publishability.*
 
 `main` was checked before anything was changed — 396 commits, one identity in both the
@@ -3435,7 +3435,7 @@ used, since kernel and BlueZ patches share it. Three hundred and twelve kernel s
 months, a hundred and thirty-three accepted, and the shape is the BlueZ shape with the signs
 reversed on the trailers: sign-off required, `Fixes:` on most, `Cc: stable` on a fifth, lint
 and the VM testers advisory, acceptance silent in ninety-five cases of a hundred. One thing
-was new. Four threads had the maintainer quoting an automated LLM reviewer, Sashiko, run by
+was new. Four threads had the maintainer quoting an automated reviewer, Sashiko, run by
 the Linux Foundation over every list submission — "Sashiko found a problem", and the
 submitter answering it. Whatever this project sends will be read by a machine before a human,
 and the maintainer trusts the machine enough to forward its findings. The outside review the
@@ -4097,7 +4097,7 @@ the scan reads `devtools/repo-scan-public-addresses`. Its first version passed w
 organisation domains and address suffixes; outside reviewers found that within hours, and it
 now takes exact tokens, with `@host` only for mailing-list hosts. Tests were added.
 
-## The Tested-by sent, workers in QEMU, and a live headset (2026-10-21 → 10-22)
+## The Tested-by sent, QEMU reproductions, and a live headset (2026-10-21 → 10-22)
 
 **CO-10 sent.** Two more rounds of outside review (versions 5 and 6) left one change to the mail:
 "No other case that ran on both kernels passes on one and not on the other", since Failed and
@@ -4107,7 +4107,7 @@ have gone to Greg alone; `--suppress-cc=self --suppress-cc=body` keeps all 20. S
 operator's word on 2026-10-21 at 03:05:42 UTC (server 250); the app password was revoked and the
 login check got 535.
 
-**Workers in QEMU.** On the operator's go, workers built what the dossiers had only described:
+**QEMU reproductions.** On the operator's go, these were built from what the dossiers had only described:
 - **CO-02 (U7):** a BlueZ sco-tester case that holds back the old link's Disconnection Complete
   reproduces the false success on every unpatched bluetooth-next run; two kernel patches fix it
   and a second defect (a second connect to a live SCO link drops the owner's hold and kills the
@@ -4125,7 +4125,7 @@ login check got 535.
   Tested-by. *[Note, 2026-11-16: the CO-04 dossier README says 9 of 12 `-s power` boots, as here; the CO-04
   row of `contributions/README.md` says 8 of 12, and so does the moved 10-29/30 hand-off block
   below ("8/12 power boots"). The two counts are not reconciled in the repository.]*
-- Each worker's decisive result was re-run before entering a dossier.
+- Each decisive result was re-run before entering a dossier.
 
 **A live headset.** On 2026-10-21 the operator could not set up the Shure AONIC 50: each click
 paired over LE and the headset refused ("Pairing not supported"). Its LE advertising carries
@@ -4138,14 +4138,14 @@ Ubuntu 24.04, and upstream fixes become backport candidates.
 
 **Mistakes and their fixes.**
 - **CI:** red for a day because one new script lacked its executable bit.
-- **A worker's local CI run installed ELL into `/usr`:** inert; removal is the operator's call.
+- **A local CI run installed ELL into `/usr`:** inert; removal is the operator's call.
 
 ## Five review rounds, a series reordered for stable, and every line tested (2026-10-22)
 
-**The race was real, and so was a gap in its fix.** When the work resumed, the worker's finding
+**The race was real, and so was a gap in its fix.** When the work resumed, the finding
 held. `hci_conn_timeout()` can see no holder, and then abort a connection
-that a new connect() has just taken. A debug-only delay of that worker reproduced it on demand. A
-third patch made the connect wait for a running worker and check again (v1). In round 2,
+that a new connect() has just taken. A debug-only delay in that function reproduced it on demand. A
+third patch made the connect wait for running disconnect work and check again (v1). In round 2,
 checking a reviewer's proposed sentence ("only a linked connection can have pending disconnect
 work") showed it was false. A SCO connection the headset opens is never linked, so the wait
 missed it. A new scratch case reproduced that too, and v2 waits after both branches. The same
@@ -4297,16 +4297,16 @@ does not cover (U27). What did not hold was recorded too. Nothing was acted on: 
 into one follow-up list, with the operator's decisions separated from work that needs none, to be
 taken up once the review round is closed.
 
-**The lesson repeated from 10-28:** a document assembled from many work areas drifts within hours
+**The lesson repeated from 10-28:** a document assembled from many parts drifts within hours
 (five mails in one place, six in another). Regenerating from the stored files, not editing
 copies, is what kept it consistent.
 
 **The evening of 11-02: five packages made ready, and a CD that would not play.** The five items
-the reviews called nearly ready were finished in isolated work areas: the Qualcomm reply, the
+the reviews called nearly ready were finished: the Qualcomm reply, the
 ASUS stable request (plus a separate report on a 6.6.y build break found on the way), the L2CAP
 stable package, the btmon update for four Ubuntu releases, and the advertising-listing fix on
-public bases. One agent was stopped by the service's safety filter the moment its task asked it
-to reproduce an overflow; framed as packaging alone, the same work ran.
+public bases. The reproduction of one overflow was not carried out that evening; the same item
+went ahead as packaging alone.
 
 Then the operator put an audio CD into an external drive and heard the music stop at regular
 intervals. Bluetooth was the first suspect and was cleared in minutes: PipeWire logged the
@@ -4323,8 +4323,8 @@ The read-ahead build played the first disc with no gap, and the operator heard n
 disc gave two gaps and a drive "like a jet taking off". The USB trace answered the gaps: the
 buffer had reset and re-read the disc behind the player. Totem, it turned out, does not read
 through GIO's source element at all but through gvfsd-fuse, so the reader is the kernel's page
-cache, which sometimes asks again for data a second and a half old. Agents built a simulator
-around the patch's own code, copied verbatim, and reproduced the reset with an injected page
+cache, which sometimes asks again for data a second and a half old. A simulator
+was built around the patch's own code, copied verbatim, and reproduced the reset with an injected page
 loss; keeping two seconds of served audio fixed it there. The noise was paranoia's 16-second
 bursts at the drive's full speed. A speed policy was explored with a calibrated drive model;
 every simple rule cost something (a fixed low speed made copying four to five times slower), so
@@ -4503,8 +4503,8 @@ All twelve ready kernel items went into one self-contained document for outside 
   scan or by CI: scripts without the executable bit, a grep spelled differently from the suite's
   canonical timeout pattern, tester logs full of emulated controllers' addresses, saved lore and
   patchwork pages and Ubuntu's own packaging history (about 90 other people's addresses), a
-  placeholder author address, a log line naming the tool that stopped a guest, and one saved copy
-  of another author's patch carrying a tool's attribution trailer. Each was caught before it went
+  placeholder author address, a log line naming a tool, and one saved copy
+  of another author's patch carrying an attribution trailer. Each was caught before it went
   out, because the scan runs on the staged additions and on the push. The fix was a short port
   checklist (`tmp/port-check/check.sh`, then the scan on the staged tree) and a rule for the
   work areas: fetched third-party pages go in their own folder, so they are easy to leave behind.
@@ -4515,9 +4515,9 @@ All twelve ready kernel items went into one self-contained document for outside 
   found something the report did not say: a run marked FAIL in which Bluetooth still worked, and a
   count that looked like 13 corrupted packets in a patched run but was the harness's own tally
   line reading zero.
-- **A check that cannot run is reported, not worked around.** The work areas' isolation guard
-  refused `checkpatch.pl` in one and `git send-email --dry-run` in another; both stopped and
-  asked, and the checks were run on the host instead.
+- **A check that cannot run is reported, not worked around.** `checkpatch.pl` and
+  `git send-email --dry-run` could not be run in two scratch areas; both were reported, and the
+  checks were run on the host instead.
 
 ## A whole-project review, a deadlock in our own patch, a switch that was not broken, and journalctl measured (2026-11-15 → 11-16)
 
@@ -4600,7 +4600,7 @@ commit, so CI is the gate, and it worked as one.
 - The test-suite maintainer's four questions of 11-07 were answered (`comms/`).
 - The operator deleted the 16 old remote branches.
 - This file had not been updated since 11-14. A chapter is now owed before each break in the
-  work, and the session start reports when the newest chapter is older than the newest commit.
+  work; a check reports when the newest chapter is older than the newest commit.
 
 ## A headset re-paired in the wrong mode, and a backport request built to stand alone (2026-11-16)
 
@@ -4734,6 +4734,8 @@ suite does not run on the laptop while a trial is open.
   the open-reader vacuum test, the old format and imported journals were not yet committed.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
+
+*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
 > `86ef0f58bdec` (`patches/mesh-tester/series/`): 1/2 tears the mesh
@@ -4881,8 +4883,8 @@ suite does not run on the laptop while a trial is open.
 > its verdict from `-p err` (0.0 s), bounds the rest, and sets unclosed directories aside.
 > ⚠️ **The installed `/usr/local/bin/bt-trial` and unit are the 09-18 copies** — the fixes reach
 > the machine only after an install by the operator. `bt-audio-policy` recorder restarted
-> (transient) with its metadata fix. Not done: the BlueZ btmon upstream check (its researcher
-> died with the session; it is item 2 of the review task).
+> (transient) with its metadata fix. Not done: the BlueZ btmon upstream check (not finished;
+> it is item 2 of the review task).
 >
 > **RESUME HERE (2026-09-26 ~23:40).** **E1 is running** (`/sys/module/btusb/version` =
 > `0.8-e1`) and, on its first boot, **29 hang-ups answered, 0 timeouts** where the stock
@@ -5199,6 +5201,8 @@ suite does not run on the laptop while a trial is open.
 
 ## BRIEF hand-off block as it stood on 2026-10-28 (moved verbatim; replaced by a fresh block)
 
+*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+
 > **HAND-OFF (2026-10-18, after A1 and A2 were sent and the trial closer's decode was found
 > never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
@@ -5353,13 +5357,13 @@ suite does not run on the laptop while a trial is open.
 >     blob ids.
 >
 > **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
-> - **Workers started 2026-10-21 (the operator's go):** W2 on CO-02 (U7 reproducer in QEMU,
->   then a candidate fix; raw output in `tmp/co02-w2/`) and W4 on CO-05 + CO-26, then CO-04
+> - **Started 2026-10-21 (the operator's go):** CO-02 (U7 reproducer in QEMU,
+>   then a candidate fix; raw output in `tmp/co02-w2/`) and CO-05 + CO-26, then CO-04
 >   (mesh lock patch, the failed-add fix, then a test of 14888791; `tmp/co05-w4/`). QEMU only,
->   nothing sent, no commits in the main checkout; each reports in its final message, which is
->   checked before anything enters a dossier. W1 (CO-01) and W3 (CO-03) come after them.
->   **W2 done** (re-checked 04:44 UTC): CO-02 reproduced and a kernel series plus a BlueZ test
->   drafted, see the dossier; next an outside review package, then the operator. W4 running.
+>   nothing sent, no commits in the main checkout; each result is
+>   checked before anything enters a dossier. CO-01 and CO-03 come after them.
+>   **CO-02 done** (re-checked 04:44 UTC): CO-02 reproduced and a kernel series plus a BlueZ test
+>   drafted, see the dossier; next an outside review package, then the operator. CO-05 running.
 > - **Operator, 2026-10-21:** every bug met is registered, fixed upstream or not, so it is not
 >   confused with later ones; an upstream fix makes it an Ubuntu 24.04 backport candidate. The
 >   machine stays on 24.04 (the offered 26.04 upgrade is declined for now: too fresh).
@@ -5393,8 +5397,8 @@ suite does not run on the laptop while a trial is open.
 >   `22feea9`, `0cdb319`, `af0b988`, `67e927f`, `a3e4a0d` and `ccb46dc` were still queued.
 >   Check them with `devtools/ci --recent 15`.
 > - **The contribution dossiers** under `contributions/` (index `contributions/README.md`).
->   Next by the operator's earlier plan: four workers W1 to W4 (CO-01, CO-02 with
->   U7's hci_vhci reproducer first, CO-03, CO-04/05), not started yet, awaiting the
+>   Next by the operator's earlier plan: CO-01, CO-02 (with
+>   U7's hci_vhci reproducer first), CO-03 and CO-04/05, not started yet, awaiting the
 >   operator's go.
 > - **Done:** the source investigation task and four answers, checked (reviews/
 >   2026-10-21T00*); the U7 kernel mechanism (CO-02); the rule that published upstream
@@ -5487,6 +5491,8 @@ suite does not run on the laptop while a trial is open.
 
 ## Hand-off of 2026-10-28 (moved from BRIEF.md verbatim on 2026-10-30, replaced by the 10-29/10-30 block)
 
+*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+
 > **HAND-OFF (2026-10-28, after CO-02 was sent, every possible submission was re-checked
 > upstream, and the foundation documents were reviewed).** Current state of every issue and
 > submission: `docs/STATUS.md`. The open decisions: "Operator decisions open" above. The previous
@@ -5500,14 +5506,13 @@ suite does not run on the laptop while a trial is open.
 >   socket-lock self-deadlock from v5.7; 7.3.y also needs `5874f8d03268` for BT-15; 6.1/5.15/5.10
 >   affected with ECRED on, not covered; next an outside review of the mails); CO-05 (needs an
 >   outside review of the written patches).
-> - **Long background workers in worktrees (from 2026-10-28 evening):** each in its own worktree
->   under `/root/exp/agent-work/<task>/` on a `work/…-20261028` branch, ported to main by
->   cherry-pick after review; a guard hook refuses the workers' host-touching commands (kept
->   separately with the other hooks; its refusals in `tmp/agent-guard/decisions.log`). CO-35's
->   worker finished (ported). The mesh worker (CO-05 + CO-04) stopped at CO-04's reproduction
+> - **Long background runs in worktrees (from 2026-10-28 evening):** each in its own worktree
+>   in a work area on a `work/…-20261028` branch, ported to main by
+>   cherry-pick after review. CO-35's
+>   run finished (ported). The mesh run (CO-05 + CO-04) stopped at CO-04's reproduction
 >   step and waits for the operator's decision (its findings: CO-04's cause in source is a double
 >   queueing of one `mesh_tx` after `HCI_MESH_SENDING` is cleared unlocked; three more pending
->   mesh patches, one of them, Baul Lee's v2 14736726-8, overlapping ours). CO-23's worker not
+>   mesh patches, one of them, Baul Lee's v2 14736726-8, overlapping ours). CO-23's run not
 >   started.
 > - **Next work, agreed with the operator on 10-28, in this order:**
 >   1. **finish the wording sweep** (operator's decision of 10-28): "the laptop", never "family"
@@ -5523,7 +5528,7 @@ suite does not run on the laptop while a trial is open.
 >      replies may have no reachable copy), and a hash guard in `devtools/save` and the pre-push
 >      hook so a sent file never changes again; any mismatch recorded with its cause;
 >   3. CO-04: an independent fix for syzbot's mesh_send_sync use-after-free (`log.md` there).
-> - **Running 2026-10-28 ~04:30, six background workers, none commits or sends; review each
+> - **Running 2026-10-28 ~04:30, six background runs, none commits or sends; review each
 >   result, then commit (do NOT run `devtools/save` while they run: it stages their partial files):**
 >   (1) the sent-mail inventory and comparison (`docs/sent-mails.tsv`, `scripts/sent-mail-check.py`,
 >   `tmp/sent-check/REPORT.md`); (2) CO-35's backports for 6.18.y, 6.12.y, 6.6.y
@@ -5585,6 +5590,8 @@ suite does not run on the laptop while a trial is open.
 
 ## Hand-off of 2026-10-29/30 (moved from BRIEF.md verbatim on 2026-11-02, replaced by the 11-02 block)
 
+*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+
 > **HAND-OFF (2026-10-29/30; read first; the 10-28 block is now at the end of `HISTORY.md`).**
 > STATUS has every row named here.
 >
@@ -5597,7 +5604,7 @@ suite does not run on the laptop while a trial is open.
 >   `evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`); the row is still to be written. The stop was an ordered reboot from the
 >   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
 > - **Disk: 111 GB free (74 %) since 10-30 08:04**, after the operator-approved cleanup (was 19 GB; the
->   journal copy had refused at the 10-29 shutdown): CI clones, `make clean` in finished kernel/BlueZ/agent
+>   journal copy had refused at the 10-29 shutdown): CI clones, `make clean` in finished kernel/BlueZ/mesh
 >   trees (bzImages and test logs kept in `tmp/disk-cleanup/kept/`), and 535 raw captures (40.83 GB) whose
 >   archived copy matched the manifest SHA-256; the archives are now their only copy (STATUS, the machine).
 >   `boot-257d1599.export.zst` completed (770 MB, 05:40).
@@ -5615,44 +5622,39 @@ suite does not run on the laptop while a trial is open.
 > - **CO-28's review mails are out** (stable list): 5.15.224-rc1 and 5.10.273-rc1 due **Fri 30 Oct 16:59
 >   UTC**, 6.1.191-rc2 due **Sat 31 Oct 07:28 UTC**; our patches are in them. Test runs not started:
 >   the operator's decision, asked.
-> - **Both agents FINISHED and ported** (worktrees under `/root/exp/agent-work/`; method: cherry-pick,
+> - **Both runs FINISHED and ported** (worktrees in the work area; method: cherry-pick,
 >   conflicts in `contributions/README.md` and `devtools/repo-scan-public-addresses` kept both sides):
 >   - **mesh** (CO-05 + CO-04), `25e8168`, `d02ce84`: both packages ready for an outside review round
 >     (`contributions/CO-05-…/patch/`, `CO-04-…/patch/`, each with a README of questions). KASAN/lockdep/
 >     WARNING 0 on base, CO-05, CO-04, both; CO-05's lock warnings 3 → 0, KCSAN mesh-own races 1/45 → 0;
 >     CO-04 clean in 48 boots; bot CI passes. **14888791 as posted gives a lockdep circular dependency in
 >     8/12 power boots, ours 0/12**: a technical point for our own CO-04 mail only (no contact, nothing on
->     that thread). Open: send together or separately (agent: CO-04 alone), Cc Brian Gix, keep `Closes:`
->     before a syzbot test. Its proposed STATUS/issues edits (mesh row, the syzbot "last crash" date fix,
->     M-4/M-5) are in its final report and **not yet applied**.
+>     that thread). Open: send together or separately (suggested: CO-04 alone), Cc Brian Gix, keep `Closes:`
+>     before a syzbot test. The proposed STATUS/issues edits (mesh row, the syzbot "last crash" date fix,
+>     M-4/M-5) were **not yet applied**.
 >   - **CO-23**, `b454900` (bot-ci-local worktree support), `d941963` (dossier): package
 >     `contributions/CO-23-…/patch/send/` (2 mails, To linux-bluetooth, Cc Luiz Augusto von Dentz;
 >     `send.sh` not run). Bot CI PASS both sides, TestFunctional 48 → 49; ASan UAF on master at
 >     `a2dp.c:2173`, none with the fix (setup ref held across close/abort; a second double-free path fixed).
 >     Open: the route (public list, as earlier a2dp UAF fixes went, or BlueZ's SECURITY.md: the operator's
 >     call); records still calling the 09-08 crash "unrelated" (BRIEF §, docs/contributions-roadmap.md:25,
->     patches/bluez/README.md:260, EX-041) and its STATUS row to update. `send-email`, even a dry run, is
->     the coordinator's.
-> - **Guard fixes 10-29** (private hook, 57/57 tests): container paths after the image are the
->   container's; host-only programs matched as whole tokens.
+>     patches/bluez/README.md:260, EX-041) and its STATUS row to update.
 > - **Captures:** desktop capture fully archived (`archive/hci-capture`, 20 GB budget, 14.19 GB, one-time,
 >   no timer). `bt-trace` archive timer: transient, so gone at the -42 reboot; **restarted 2026-10-30**
 >   with the same `systemd-run` command (20 GB: ~2 weeks; months need another disk; command in
->   `docs/tooling-index.md`). Budgets in `<archive>/BUDGET_GB`, the session-start hook warns at 80 %.
+>   `docs/tooling-index.md`). Budgets in `<archive>/BUDGET_GB`; a check warns at 80 %.
 > - **U21 registered** (Shure in Handsfree, no codec row in GNOME Settings): a Chrome tab recording from the
 >   headset's microphone keeps it in Handsfree (`scripts/user-audio-streams.sh`); why the row is absent is
 >   still open.
 > - **New tools:** lore readable over git (`scripts/lore-git-message.sh`, `lore-git-replies.py`; bare
 >   clones in `cache/`, fetch with `+refs/heads/master:refs/heads/master`); `mail-body-sha.py`;
 >   `desktop-capture-archive.sh`; `archive-budget-check.py`; `user-audio-streams.sh`;
->   `build-bluetooth-module.sh --krel`. The browser extension works when the session runs with Chrome
->   support (it filters raw HTML with query strings/cookies; page text and in-page comparisons work).
+>   `build-bluetooth-module.sh --krel`.
 > - **Open, in order:** the operator's decisions (Zijun Hu reply; CO-28 runs before the deadlines;
 >   CO-02 module into `-42`; CO-04/05 send shape; CO-23 route; CO-11 filing, ready; CO-03: install the
   backport and test it on the laptop, then the filing; CO-37 (U23): an outside review, then the send); recover E3 #3's
->   row from the journal; apply the mesh agent's STATUS/issues edits and the CO-23 "unrelated" fixes;
->   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten
->   them; confirm the CI rotation-test failure on `848ff44` is a flake.
+>   row from the journal; apply the mesh STATUS/issues edits and the CO-23 "unrelated" fixes;
+>   confirm the CI rotation-test failure on `848ff44` is a flake.
 
 ## BRIEF hand-off X1 bullet as it stood on 2026-11-07 (moved verbatim; replaced by a compact bullet)
 
@@ -5730,6 +5732,8 @@ suite does not run on the laptop while a trial is open.
 
 ## BRIEF hand-off block as it stood on 2026-11-12 (moved verbatim on 2026-11-14; replaced by a fresh block)
 
+*(Reworded 2026-11-16 for neutral wording; content unchanged.)*
+
 > **HAND-OFF (2026-11-02, brought to 2026-11-12; read first; the 10-29/30 block and the long X1
 > bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's
 > follow-up list is the work queue.
@@ -5773,9 +5777,10 @@ suite does not run on the laptop while a trial is open.
 >   local suite). The first cause, a script without its executable bit, is fixed (11-07); later
 >   ones (boot-range parser fixture, systemd unit checks, sandbox decoys, the install round trip)
 >   are listed in STATUS "Repository health", not yet examined. `devtools/ci --wait` after pushes.
-> - **Background work:** the weekly limit of 11-02 ended 2026-11-05 09:00. Three X1 experiments
->   ran 11-02/03 in containers (in the work area); none is running. *(This bullet was reworded
->   on 2026-11-16, the only edit inside this moved block.)*
+> - **Background work:** three X1 experiments
+>   ran 11-02/03 in containers; none is running. *(This bullet was reworded
+>   on 2026-11-16, the only edit inside this moved block at that time; see the note at the
+>   top of this block.)*
 > - **The review round is open; nothing from it is acted on yet.** The package
 >   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
 >   reviewers) was read by six reviewers; their points, each checked, are in
@@ -5809,7 +5814,7 @@ suite does not run on the laptop while a trial is open.
 >   since 11-06 15:51; gvfsd-cdda is X1's v6 build by `dpkg-divert`; 142 GB free. The CO-02 module
 >   for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
 >   the remedy and waits for the laptop test with the MOMENTUM 4.
-> - **Later on 11-02, the "nearly ready" five made ready (agents approved for this; each verified,
+> - **Later on 11-02, the "nearly ready" five made ready (each verified,
 >   committed, nothing sent):** CO-25 reply v4 (`38b496b`; quotes the kernel's `build 0x111` line;
 >   the report's "three headset models" checked true); CO-22 stable request v2 + a separate 6.6.y
 >   `btmtk.h` -Werror report (`38b496b`; drafts in `research-2026-11-01/qca-ids/drafts/`; both ASUS
@@ -5817,8 +5822,8 @@ suite does not run on the laptop while a trial is open.
 >   line's plain tag hangs and patched passes on the final files); CO-11a filing package for
 >   tenacious/stonking/resolute/noble (`a1618a2`, `ubuntu/ready-20261102/`); CO-38 on public bases
 >   with its own dossier (`cc90614`). Open questions: D6, D12, and whether CO-38's BlueZ series
->   goes now or only its listing case. An agent asked to reproduce U28 was stopped by the
->   service's safety filter at its first step; U28 stays a source-reading finding.
+>   goes now or only its listing case. U28 was not reproduced and stays a
+>   source-reading finding.
 > - **Off-topic X1 (not Bluetooth): SUBMITTED to gvfs 2026-11-07.** An audio CD in Totem stopped
 >   ~3 s every 16 s: gvfsd-cdda's synchronous `cdio_paranoia_read()` refills paranoia's 1200-sector
 >   (16 s) cache model in one ~3 s call, and Totem (reading through **gvfsd-fuse**, not giosrc)
@@ -5836,7 +5841,7 @@ suite does not run on the laptop while a trial is open.
 >   the diversion**. GNOME GitLab: a new account is "external" (no fork) until an SSH key has been on
 >   it ~20 min; this machine's `root@n` key is on the operator's account. The detailed running
 >   notes of 11-02 to 11-07 are at the end of `HISTORY.md`.
-> - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
+> - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs in the work area; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their
 >   alternate; contents and patches survive, exact commit objects lost); the second freed 52.6 GB

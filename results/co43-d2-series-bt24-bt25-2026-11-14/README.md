@@ -1,7 +1,7 @@
 # CO-43: D v2, the A + B2 + D series, and fixes for BT-24 and BT-25 (2026-11-14)
 
 QEMU emulation only, as in `../co43-b2-and-runtime-d-2026-11-14/`. Copied from the work area
-`/root/exp/agent-work/lane1-btusb-20261114/task2/`; the kernel tree stayed there (`lx/`,
+`<work area>/lane1-btusb-20261114/task2/`; the kernel tree stayed there (`lx/`,
 branches `lane1-final`: the series; `lane1-ef`: E + the two fixes). Full write-up:
 [`RESULTS.md`](RESULTS.md); `logs/SHA256SUMS` is relative to `logs/`.
 

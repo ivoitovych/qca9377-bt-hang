@@ -21,17 +21,17 @@ Code: the helper text is byte-identical to the mainline commit's, except on the 
 
 Config as the package: `doc/tester.config` + `hungtask.config`, `make ARCH=x86 olddefconfig` (the built `.config`s are `logs/dotconfig-built-*.txt`: KASAN, PROVE_LOCKING, LOCKDEP `=y`). Kernel version strings: `6.6.162-00002-g...`, `6.12.117-00002-g...`, `6.18.63-00002-g...`, `7.3.4-00003-g...` (two or three commits above the tag).
 
-| line | case "L2CAP Ext-Flowctl Server - Accept 2 Close 1": plain tag (lane 5, same tags) | with the reduced pair | whole l2cap-tester with the reduced pair | against the full pair, case by case |
+| line | case "L2CAP Ext-Flowctl Server - Accept 2 Close 1": plain tag (track 5, same tags) | with the reduced pair | whole l2cap-tester with the reduced pair | against the full pair, case by case |
 |---|---|---|---|---|
 | v7.3.4 | HANG (180 s; hung-task reports 7) | Passed 1.040 s | 111 of 111 passed | 0 cases differ |
 | v6.18.63 | HANG (7) | Passed 1.062 s | 93 passed, 18 failed (all "Set PHY"/PHY cases) | 0 cases differ |
 | v6.12.117 | HANG (7) | Passed 1.074 s | 79 passed, 32 not passed (one timed out: "BR/EDR Client PIN Code Change Sec - Success") | 0 cases differ |
 | v6.6.162 | HANG (7); reconfirmed in this work area, see the end | Passed 1.017 s | 79 passed, 32 not passed (same timed-out case) | 0 cases differ |
 
-- "Against the full pair": `scripts/compare-tester-verdicts.py` of lane 5's whole-tester log of the full pair (same tag) against ours: "cases with different verdicts: 0; not-passed sets identical: True" for all four lines (`logs/compare-reduced-vs-full.txt`). The 7.3.y run includes `5874f8d03268`, as lane 5's `pair-sci` run (without it the whole tester stalls in "SCI Fast Mode" on 7.3.4, with or without the full prerequisite).
+- "Against the full pair": `scripts/compare-tester-verdicts.py` of track 5's whole-tester log of the full pair (same tag) against ours: "cases with different verdicts: 0; not-passed sets identical: True" for all four lines (`logs/compare-reduced-vs-full.txt`). The 7.3.y run includes `5874f8d03268`, as track 5's `pair-sci` run (without it the whole tester stalls in "SCI Fast Mode" on 7.3.4, with or without the full prerequisite).
 - Kernel-report scan (`kernel-report-scan.py`): all eight reduced-pair logs "clean" (no lockdep, KASAN or hung-task report). Warnings in `net/bluetooth` during the builds: none (`logs/btwarn-*-red*.log` are empty).
 - checkpatch (`cache/checkpatch`, `--no-tree`, `logs/reduced-checks.txt`): the prerequisite on every line: 0 errors; warnings only the unknown-commit-id artefact for the `[ Upstream commit ]` line (no tree) and "syzkaller without Fixes:" (the same as the full commit's); patch 2: 0 errors, the unknown-commit artefact.
-- The base logs for 6.18.y, 6.12.y and 7.3.y are lane 5's (identical tags); the plain tag's whole tester cannot finish (the case hangs), so no base whole-tester run exists for any line.
+- The base logs for 6.18.y, 6.12.y and 7.3.y are track 5's (identical tags); the plain tag's whole tester cannot finish (the case hangs), so no base whole-tester run exists for any line.
 
 ## Applies on the release candidates (measured, `logs/apply-on-rc-tips.txt`)
 

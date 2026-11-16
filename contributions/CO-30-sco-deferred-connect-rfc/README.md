@@ -28,5 +28,5 @@ link is gone, so `connect()` returns -EINPROGRESS and the socket gets its own li
 refinement for the 3 of 30 first; whether the -ECONNABORTED → -EINPROGRESS change in that window
 is acceptable for applications other than PipeWire.
 
-Earlier work: `../research-2026-11-01/sco/`. Copied from `/root/exp/agent-work/lane2-sco-20261114/co30-rfc/`
+Earlier work: `../research-2026-11-01/sco/`. Copied from `<work area>/lane2-sco-20261114/co30-rfc/`
 (fetched third-party pages and the bot's large logs left there).

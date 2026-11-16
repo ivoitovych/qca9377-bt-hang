@@ -68,7 +68,7 @@ The row reads "Not Set Up" before and after in every case. No dialog or banner a
 
 **Not here:** the screenshots (binary), the container build logs, and the fetched GitLab JSON and
 handbook pages (they carry contributors' details). All stay with checksums in `SHA256SUMS` under
-`/root/exp/agent-work/u29-g1-gnome-pairing-feedback/runs/`; and the pairing-spinner phase (the
+`<work area>/u29-g1-gnome-pairing-feedback/runs/`; and the pairing-spinner phase (the
 mock fails at once). No real BlueZ was used.
 
 Run: `scripts/build.sh`, `scripts/run.sh`; with !137: `scripts/build-mr137.sh`, `scripts/run-mr137.sh mr137 out-mr137 AuthenticationRejected,AuthenticationFailed,AuthenticationCanceled 1`.

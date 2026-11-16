@@ -2,7 +2,7 @@
 
 Local work, 2026-11-07, not sent anywhere. Built and run by a separate worker in QEMU guests on
 emulated `btvirt` controllers. The checks marked **[checked]** were repeated here against the
-raw runs, which stay with checksums under `/root/exp/agent-work/u29-t3-lifetime-patch/runs/`
+raw runs, which stay with checksums under `<work area>/u29-t3-lifetime-patch/runs/`
 (`SHA256SUMS` here).
 
 **The patch.** `patch/0001-adapter-Don-t-keep-temporary-devices-alive-with-non-.patch`, on BlueZ

@@ -33,6 +33,6 @@ The final CO-23 test (`f006e025f`) differs from the second version only
 in Python and `doc/` (reconnect once the link is down), so the C builds
 are valid for it.
 
-`runs/ext-v572` used `/root/exp/agent-work/exit-uaf/runs/v572/src`
+`runs/ext-v572` used `<work area>/exit-uaf/runs/v572/src`
 (BlueZ 5.72 + master's test tools, built by the earlier campaign) with
 the tests of `srcs/stack` (`scripts/asan-ext.sh`).

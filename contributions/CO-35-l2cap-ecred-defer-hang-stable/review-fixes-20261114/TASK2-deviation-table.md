@@ -1,6 +1,6 @@
 # CO-35 deviations from mainline, per backport line (2026-11-14)
 
-Method (measured): `diff` of the mainline commit as exported by `git format-patch` (`upstream/608e0b7a675b.patch`, `upstream/32d86e048d8e.patch`, from lane 5's kernel repository, read only) against each package patch `send-20261114/mail/<line>/000{1,2}-*.patch` (byte-identical to `send-20261102/`). Every line of the diff output is in the table; nothing else differs except the mail headers (new blob ids, `Subject: [PATCH <line> n/2]`), the added `[ Upstream commit <sha> ]` line, the added `[ backport: ... ]` note, and the added `Signed-off-by` of the submitter.
+Method (measured): `diff` of the mainline commit as exported by `git format-patch` (`upstream/608e0b7a675b.patch`, `upstream/32d86e048d8e.patch`, from track 5's kernel repository, read only) against each package patch `send-20261114/mail/<line>/000{1,2}-*.patch` (byte-identical to `send-20261102/`). Every line of the diff output is in the table; nothing else differs except the mail headers (new blob ids, `Subject: [PATCH <line> n/2]`), the added `[ Upstream commit <sha> ]` line, the added `[ backport: ... ]` note, and the added `Signed-off-by` of the submitter.
 
 Marks: **code** = the resulting code differs from mainline's; **annotation** = a context-analysis annotation dropped (no code change); **context** = only hunk offsets, context lines or lines that do not exist in the tree.
 

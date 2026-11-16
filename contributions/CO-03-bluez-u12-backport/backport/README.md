@@ -9,7 +9,7 @@ controllers. Nothing was installed on the laptop, sent or filed.
 The test plan, with the per-test results of both builds side by side, is
 [`TEST-PLAN.md`](TEST-PLAN.md).
 
-**Where things are.** The work was done in `/root/exp/agent-work/co03/`,
+**Where things are.** The work was done in `<work area>/co03/`,
 and its scripts use that path. This folder is the record:
 - the documents, scripts, tests, patches and build logs;
 - the test fixture as a patch (`test-fixture-patch/`);
@@ -27,7 +27,7 @@ Base: `bluez_5.72-0ubuntu5.8` (noble-security and noble-updates, the
 newest noble version on 2026-10-31):
 
 ```console
-$ /root/exp/agent-work/co03/scripts/noble-versions.py bluez
+$ <work area>/co03/scripts/noble-versions.py bluez
 noble 5.72-0ubuntu5.8 Updates 2026-10-21T06:52:19.803814+00:00
 noble 5.72-0ubuntu5.8 Security 2026-10-13T19:55:24.540698+00:00
 noble 5.72-0ubuntu5 Release 2024-04-07T11:27:12.669730+00:00
@@ -224,27 +224,27 @@ All commands from the host, one per line; each script runs its work in a
 container (`co03-noble-build:1`, `co03-noble-vm:1`, `co36-pw-ci:f44`).
 
 ```console
-$ docker build -t co03-noble-build:1 /root/exp/agent-work/co03/docker/noble-build
-$ docker build -t co03-noble-vm:1 /root/exp/agent-work/co03/docker/noble-vm
-$ /root/exp/agent-work/co03/scripts/fetch-source.sh 5.72-0ubuntu5.8
-$ /root/exp/agent-work/co03/scripts/make-tree.sh
-$ /root/exp/agent-work/co03/scripts/export-upstream.sh
+$ docker build -t co03-noble-build:1 <work area>/co03/docker/noble-build
+$ docker build -t co03-noble-vm:1 <work area>/co03/docker/noble-vm
+$ <work area>/co03/scripts/fetch-source.sh 5.72-0ubuntu5.8
+$ <work area>/co03/scripts/make-tree.sh
+$ <work area>/co03/scripts/export-upstream.sh
   (then the commits as in section 1: backport-step.sh, backport-commit.sh,
    commit-with-msg.sh; the hand edits are described in the commit notes)
-$ python3 -I /root/exp/agent-work/co03/scripts/make-debian-patches.py /root/exp/agent-work/co03/src/bluez noble-5.72-0ubuntu5.8 co03/u12-backport /root/exp/agent-work/co03/debian-patches
-$ /root/exp/agent-work/co03/scripts/make-pkg-trees.sh
-$ /root/exp/agent-work/co03/scripts/build-pkgs.sh
-$ /root/exp/agent-work/co03/scripts/check-am.sh
-$ /root/exp/agent-work/co03/scripts/build-asan-all.sh
-$ /root/exp/agent-work/co03/scripts/build-asan.sh sink nocheck
-$ /root/exp/agent-work/co03/scripts/build-f44.sh base backport sink
-$ /root/exp/agent-work/co03/scripts/build-tools.sh
-$ /root/exp/agent-work/co03/scripts/plan-l2.sh base v0
-$ /root/exp/agent-work/co03/scripts/plan-l3.sh base v0
-$ /root/exp/agent-work/co03/scripts/plan-l2.sh backport v2
-$ /root/exp/agent-work/co03/scripts/plan-l3.sh backport v2
-$ /root/exp/agent-work/co03/scripts/exit-uaf-check.sh
-$ python3 -I /root/exp/agent-work/co03/scripts/summarize.py /root/exp/agent-work/co03/runs/v0-l2rates/results.jsonl /root/exp/agent-work/co03/runs/v2-l2rates/results.jsonl
+$ python3 -I <work area>/co03/scripts/make-debian-patches.py <work area>/co03/src/bluez noble-5.72-0ubuntu5.8 co03/u12-backport <work area>/co03/debian-patches
+$ <work area>/co03/scripts/make-pkg-trees.sh
+$ <work area>/co03/scripts/build-pkgs.sh
+$ <work area>/co03/scripts/check-am.sh
+$ <work area>/co03/scripts/build-asan-all.sh
+$ <work area>/co03/scripts/build-asan.sh sink nocheck
+$ <work area>/co03/scripts/build-f44.sh base backport sink
+$ <work area>/co03/scripts/build-tools.sh
+$ <work area>/co03/scripts/plan-l2.sh base v0
+$ <work area>/co03/scripts/plan-l3.sh base v0
+$ <work area>/co03/scripts/plan-l2.sh backport v2
+$ <work area>/co03/scripts/plan-l3.sh backport v2
+$ <work area>/co03/scripts/exit-uaf-check.sh
+$ python3 -I <work area>/co03/scripts/summarize.py <work area>/co03/runs/v0-l2rates/results.jsonl <work area>/co03/runs/v2-l2rates/results.jsonl
 ```
 
 The worktrees `build/{base,backport,sink,tools}` and
@@ -349,7 +349,7 @@ rework); `logs/*superseded-origin-headers*` (first backport package build).
 ## 9. 2026-11-01: the exact three-patch package, the runner, the companion
 
 After the review round (outside reviewers' findings, each checked here first).
-Work area `/root/exp/agent-work/co03/review-20261101/` (SHA256SUMS, 450
+Work area `<work area>/co03/review-20261101/` (SHA256SUMS, 450
 files; logs local); kept here: `debian-patches-3patch/`, `expected/`,
 `runs-20261101/` (verdicts and per-run JSONL), the new scripts and tests.
 

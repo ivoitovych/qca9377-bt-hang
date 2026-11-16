@@ -70,11 +70,11 @@ bluetoothctl/btmgmt.
 
 ## 1. What is in the kit
 
-Everything is under `/root/exp/agent-work/laptop-headset-session-20261111/kit`. The desktop
+Everything is under `<work area>/laptop-headset-session-20261111/kit`. The desktop
 user cannot read `/root`, so copy it once (root terminal):
 
 ```
-sudo cp -a /root/exp/agent-work/laptop-headset-session-20261111/kit /home/i/headset-kit
+sudo cp -a <work area>/laptop-headset-session-20261111/kit /home/i/headset-kit
 sudo chown -R i:i /home/i/headset-kit
 ```
 
@@ -91,7 +91,7 @@ sudo chown -R i:i /home/i/headset-kit
 | `bin/after-session.py` | read-only: turns your marks into a report (section 6) | root |
 | `bin/device-ids-from-journal.py` | read-only: the exact Bluetooth name (and ids, if any) PipeWire matched on, for a quirk entry | desktop user |
 
-Rehearsal evidence is under `/root/exp/agent-work/laptop-headset-session-20261111/logs/`
+Rehearsal evidence is under `<work area>/laptop-headset-session-20261111/logs/`
 (index in section 9; checksums in `SHA256SUMS`).
 
 ---
@@ -727,7 +727,7 @@ patch series and on the dossier's function-by-function comparison **[quoted]** `
 The version `5.72-0ubuntu5.9~co03.1` sorts below Ubuntu's future `5.72-0ubuntu5.9`, so a later archive update
 replaces it **and with the drop-in gone silently takes the two BT-7 fixes and the U12 backport away** (decision D3).
 
-### Rehearsal logs (all under `/root/exp/agent-work/laptop-headset-session-20261111/logs/`)
+### Rehearsal logs (all under `<work area>/laptop-headset-session-20261111/logs/`)
 
 | log | shows |
 |---|---|
@@ -765,7 +765,7 @@ replaces it **and with the drop-in gone silently takes the two BT-7 fixes and th
 While preparing the rehearsal I tried to copy the laptop's two bluetooth.service drop-ins into my work folder. The hook
 refused: *"agent-isolation-guard: the command writes under a system or private path (cp -p
 /etc/systemd/system/bluetooth.service.d/10-debug.conf /etc/systemd/system/). Agents work only in containers or QEMU guests
-and in their own worktree under /root/exp/agent-work/. If the task truly needs this, stop and report it as a blocking
+and in their own worktree under <work area>/. If the task truly needs this, stop and report it as a blocking
 question."* I stopped that step without retrying. The rehearsal used fixtures I wrote by hand from what I had read of
 those files (same `ExecStart=` lines); the decisive facts (the effective ExecStart and what the package install does) do not
 depend on byte-identical copies, but a copy of the real files would have been stronger. Question: should the real files be

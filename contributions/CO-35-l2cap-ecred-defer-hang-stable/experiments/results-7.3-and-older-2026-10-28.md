@@ -115,7 +115,7 @@ tag, the tested bases are still the newest; no 6.12.y release carries `5bd0dec15
 ## 2. 7.3.y: v7.3 with and without the pair
 
 Builds (`tmp/co35/step1-builds.sh`, `builds-2.sh` → `pick-build.sh`, worktree
-`/root/exp/agent-work/co35/linux-7.3.y`; `git cherry-pick --no-commit` in the order given):
+`<work area>/co35/linux-7.3.y`; `git cherry-pick --no-commit` in the order given):
 ```
 v7.3 plain                                   make rc=0  bzImage-bt10-7.3-plain     09501f27638a32f8…
 v7.3 + 608e0b7a675b2 + 32d86e048d8ef          make rc=0  bzImage-bt10-7.3-pair      b9fb56d0528231920…
@@ -324,7 +324,7 @@ its mutex is `chan_lock`, above; so it would not build either; inferred, not bui
 Control that the ECRED wrapper still shows the hang where it exists: v6.6.160's control image of
 the backport round (`tmp/co02-w2c/img/bzImage-bt10-66-ctl`, read only).
 
-Builds (`builds-2.sh`, worktree `/root/exp/agent-work/co35/linux-old`, gcc 13.3): v6.1.190,
+Builds (`builds-2.sh`, worktree `<work area>/co35/linux-old`, gcc 13.3): v6.1.190,
 v5.15.223, v5.10.272 plain, `make rc=0` each; `CONFIG_BT=y`, `CONFIG_KASAN=y`,
 `CONFIG_PROVE_LOCKING=y` in each `.config`; `CONFIG_BT_LE_L2CAP_ECRED` does not exist there.
 

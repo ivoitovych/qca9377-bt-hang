@@ -1,13 +1,13 @@
-# CO-20 patch 1 as a standalone mail (2026-11-14, lane 6)
+# CO-20 patch 1 as a standalone mail (2026-11-14, track 6)
 
-`WA` = `/root/exp/agent-work/lane6-btusb-20261114/`. `WA/out/co20/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch`,
+`WA` = `<work area>/lane6-btusb-20261114/`. `WA/out/co20/0001-Bluetooth-btusb-Report-SCO-receive-failures-by-cause.patch`,
 the package's patch 1 unchanged, on `da3cc02587c6` (`git apply --check` OK; branch `l6-co20` in `WA/lx2`). No Signed-off-by,
 no cover letter, no `Fixes:`. It does not use anything from patch 2. Patch 2 is held; see `NOTES.md`.
 
 ## Emulator, base against patch 1 alone (`harness/spec-co20.txt`, `run-batch-usbip.sh`)
 
 Kernels (`img/*.commit`): `base-u` = `da3cc02587c6`, `co20p1` = base + patch 1 only. Emulator `harness/usbip-bt-emu.py`
-(lane 1's, with a new judge `--expect p1`: no "corrupted SCO packet", at least one "unknown handle dropped", no
+(track 1's, with a new judge `--expect p1`: no "corrupted SCO packet", at least one "unknown handle dropped", no
 debug "closed handle" line). `rx-cycles`: 20 calls, one mSBC link with data in flight at the hang-up. `rx-unknown`: two
 links up, five packets injected for a handle that never was a link. Three runs each; `logs/summaries/co20.txt`: 12 of 12 PASS
 (base judged `--expect noisy`: "corrupted SCO packet" present; patched: absent).

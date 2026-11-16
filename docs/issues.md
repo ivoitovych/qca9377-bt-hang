@@ -754,7 +754,7 @@ this controller.
 
 **Status 2026-11-14: reproduced in emulation; a fix written; checked on copy; mgmt-tester only
 in part.** `contributions/CO-14-mesh-at-device-removal/` (from the work area
-`/root/exp/agent-work/lane1-btusb-20261114/task4/`).
+`<work area>/lane1-btusb-20261114/task4/`).
 
 **What it is** (bluetooth-next `da3cc02587c6`, source reading): a Mesh Send that has not started
 sits on `hdev->mesh_pending`. When the controller is removed, `hci_cmd_sync_clear()` frees only

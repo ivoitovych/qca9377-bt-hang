@@ -3,7 +3,7 @@
 Everything here was done without touching the controller and without installing anything:
 journal, sysfs and capture reads, builds, and runs in containers and QEMU guests. Packages,
 built modules and kernel trees stay outside the repository, in
-`/root/exp/agent-work/laptop-*-20261111/`. Each directory keeps its scripts and raw outputs;
+`<work area>/laptop-*-20261111/`. Each directory keeps its scripts and raw outputs;
 `SHA256SUMS` where present.
 
 | directory | what it holds | the main result |
@@ -49,4 +49,4 @@ SHA-256 `6204f47e30c99ad7d3bc0230136638f282278d824a27ea16dfa04d670418f5e5`,
 
 ## Left out of this copy
 
-The publishing scan refuses text shaped like an address, so these stay only in `/root/exp/agent-work/laptop-*-20261111/`: `lsinitramfs-42.txt`, `make-ci-mails.py`, the hook tests' `lib.sh` and four of its logs (`s2`, `s4`, `s5`, `s9`). `patterns_final.tsv` here omits the apport hook's own lines, so it differs from the hash in `SHA256SUMS`.
+The publishing scan refuses text shaped like an address, so these stay only in `<work area>/laptop-*-20261111/`: `lsinitramfs-42.txt`, `make-ci-mails.py`, the hook tests' `lib.sh` and four of its logs (`s2`, `s4`, `s5`, `s9`). `patterns_final.tsv` here omits the apport hook's own lines, so it differs from the hash in `SHA256SUMS`.

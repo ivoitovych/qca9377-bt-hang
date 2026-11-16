@@ -8,7 +8,7 @@ removed by terminating it. Nothing touched the host's Bluetooth. Nothing was sen
 | tag | tree |
 |---|---|
 | `m-tip` | bluetooth-next `da3cc02587c6` (detached) |
-| `m-co04` | tip + CO-04, rebased on the tip by the other lane (`CO-04/patch-next-bare/`, `git am`: clean) [`lane1-co04`] |
+| `m-co04` | tip + CO-04, rebased on the tip by the other track (`CO-04/patch-next-bare/`, `git am`: clean) [`lane1-co04`] |
 | `m-fix` | `m-co04` + the patch below [`lane1-co14`] |
 
 All three: the same config (BlueZ tester config, KASAN, lockdep, kmemleak; `harness/build-kml.sh`).
@@ -100,7 +100,7 @@ checkpatch `--strict --no-tree`: only the missing Signed-off-by. No Signed-off-b
 backlog (10 boots, above); a fine sweep of the removal time around the end of a transmission, one Mesh Send
 (Count 20), 10 boots x 12 controllers, offsets 470 to 534 ms in 1 ms steps (`logs/summary-lockdep.txt`); a
 controller that stops answering (SIGSTOP with a Set Local Name pending) and is then removed, 10 boots x 6
-controllers (`logs/summary-hung.txt`). **I did not reproduce it.** The other lane's log has it on the tip, 2 of 35
+controllers (`logs/summary-hung.txt`). **I did not reproduce it.** The other track's log has it on the tip, 2 of 35
 boots (`UnregSweep-plain-17`, `-28`; their `CO-04/circular-count.txt`: tip 2/35, CO-04 0/35, CO-05 2/35, both
 0/35). Their splat lines are quoted in `co04-message-note.md`.
 
@@ -119,7 +119,7 @@ with CO-04 against 2 of 35 on the tip). Its message now names an inversion only 
 
 ## Open
 
-- The lockdep cycle is not reproduced by me; only the other lane's log shows it.
+- The lockdep cycle is not reproduced by me; only the other track's log shows it.
 - `mgmt-tester` not run in full on any of the three kernels; the subsets above.
 - kmemleak under-reports in some boots (counts above); the never-completed count is the upper bound.
 - The fix completes the pending sends silently. Whether userspace should get Mesh Packet Complete (or an error)
