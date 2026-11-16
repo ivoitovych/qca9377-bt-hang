@@ -199,7 +199,7 @@ what was built, and why it differs.
 | HC-01 | `devtools/coverage --uncovered` — list the missing lines | done | `7e9e9f2` | `devtools/coverage --uncovered tools/bt-sco` |
 | HC-02 | `devtools/awk-coverage` — statement coverage via `gawk --profile` | done | `eeef93d` | `devtools/awk-coverage` → 88.2% |
 | HC-03 | Exclusion list with reasons + executed-line self-check | done | `d58866f` | add a bogus entry; the run aborts |
-| HC-04 | Two CI floors, one per language | done | `331e7a2` | `--min 80` shell, `--min 85` awk in `checks.yml` |
+| HC-04 | Two CI floors, one per language | done | `331e7a2` | `--min 80` shell, `--min 85` awk in `checks.yml` when it landed; on 2026-11-16 `checks.yml` has `--min 80` shell and `--min 95` awk (and `--min 75` comprehensiveness, `--min 80` python) |
 | HC-05 | Fold the CI-gated round trip into the measurement (206 lines) | **open** — recommended first | — | see §5 of the report |
 | HC-06 | Work the long tail with `--uncovered` (~266 lines, ~25 tools) | **open** | — | `devtools/coverage --uncovered` |
 | HC-07 | Extract remaining inline awk to `tools/lib/*.awk` | **open** | — | shrinks the exclusion list rather than growing it |
@@ -280,7 +280,7 @@ runs rots exactly like the documentation it was meant to replace.
 Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
 **28.5%** after UT-07 + CS-02/03/05, **38.3%** (1692/4423) after the watchdog, the six
 seam conversions and `bt-incident`, and **72.6%** (3685/5073) after session 3's twenty
-tools. The CI floor is a ratchet below the current figure — 30 until session 3, now 65.
+tools. The CI floor is a ratchet below the current figure — 30 until session 3, then 65 (the shell floor in `checks.yml` is 80 on 2026-11-16).
 If `devtools/coverage` prints materially less than the last figure, something regressed
 and the register is stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
 join fix in `devtools/coverage` both moved the denominator — the trend is what matters.)
@@ -307,9 +307,9 @@ everything else is fixed or declined by the reaction, which will add its own tra
 | R2-01 / R2-100 | Two suite invariants cannot pass on any host; CI red since 08-25 | **closed** | `456daba` | `compgen -G` at `:7887`; suffix derived at `:7410`; each driven to fail on purpose. Actions green on `456daba` (run 35148266458), `00138a7`, `2839ecc` — first greens since `d70cb2e` |
 | R2-58 | `--tools-only` reinstalls files `bt-mode experiment` moved aside; baseline reverted 08-19 | **tool fixed; machine pending operator** | `456daba` | `install_file()` and the generated udev rule skip any destination with a `.disabled` sibling and say so; both-direction staged test in `tests/run-tests` (R2-102). Verified live: active files dated **Sep 1 05:45 — this side's own deploy** beside `.disabled` from Aug 15. The pair is still on the machine: which treatment the series continues under was the operator's decision (`BRIEF` §9.5, decided 09-16: original configuration, executed 09-17), recorded in `EX-042`. **Reopened and closed 09-18**: the fix guarded `install_file()` and the 50- rule but not the third generated file, `51-bluetooth-health-snapshot.rules`; a `--tools-only` deploy at 07:40 wrote it beside its `.disabled` sibling. `bt-verify-install` showed it within minutes; the file was byte-identical to the `.disabled` copy, removed, rules reloaded; no udev event and no snapshot unit ran in the interval (journal checked). The skip now covers all three and the staged test asserts three, both directions |
 | R2-04 / R2-05 / R2-07 | README: "kept current", contradictory baseline claims, no central finding | **partial** — R2-04 closed, R2-05/R2-07 open | `456daba` (R2-04) | "kept current" now points at `BRIEF.md` and says `issues.md` stops at `EX-021`. The alt-1 finding is still absent from README (`grep -c 'alt-1' README.md` in a finding paragraph → 0); waits on the bug-report rewrite |
-| R2-21 | `docs/issues.md` stale at EX-021 | open | — | `grep -c 'EX-04' docs/issues.md` → ≥1 |
-| R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | open | — | `grep -c '2.19' docs/bug-report.md` → ≥1 |
-| R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | open | — | `grep -c 'ls-files' tools/bt-trial` → ≥1; `grep -c hci_alive tools/bt-trial` → 0 in `autostop)` |
+| R2-21 | `docs/issues.md` stale at EX-021 | **done** (re-run 2026-11-16) | in the tree | `grep -c 'EX-04' docs/issues.md` → 7 (≥1) |
+| R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | **done** (re-run 2026-11-16) | in the tree | `grep -c '2.19' docs/bug-report.md` → 1 (≥1; the one match is a table row, `EX-038`'s 2.191 s) and `grep -c -E '7\.6\|16\.2' docs/bug-report.md` → 0 |
+| R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | **done** (re-run 2026-11-16) | in the tree | `grep -c 'ls-files' tools/bt-trial` → 2 (≥1; the abort path refuses when tracked files are in the directory). `autostop)` is passive since 2026-09-19; the one `hci_alive` call left in it is behind the opt-in `BT_TRIAL_PROBE=1` (`tools/bt-trial:465-466`), so the old "→ 0 in `autostop)`" check no longer fits the code |
 | R2-105 | Commit path on the machine never runs the suite and nothing reads CI | **partial** — CI is read; suite still refused while a trial is open | this commit | `devtools/ci [sha]` reads the verdict on the machine (`--wait`, `--recent`); `devtools/status` prints a CI row and goes rc=1 on a red. The suite-on-machine half stays as designed: `run-tests` refuses during an open trial, correctly, so CI is the verdict while one is open |
 | R2-70 | `sanitize-logs.sh` redacts SIG base UUIDs; profile identity lost in every session log | open | — | `echo 0000110b-0000-1000-8000-00805f9b34fb \| tools/sanitize-logs.sh /dev/stdin /dev/stdout` prints it unchanged |
 | R2-76 | `bt-status` counts `discovery` lines as audio | **closed** | `456daba` | `\bsco\b` and `\besco\b`; the bare form is gone from `tools/bt-status` |
@@ -451,6 +451,89 @@ dossier each. The table below is kept as it stood that day.
 | CO-08 | `U10` PipeWire quirk entry | **blocked** — the operator's test sound per mode | `docs/STATUS.md`, `U10` | the `U10` row records the test |
 | CO-09 | The QCA9377 entry in Ubuntu's kernel | open — watch; a request is the operator's | `docs/STATUS.md` | `scripts/btusb-has-device.py` FOUND on a stock Ubuntu btusb |
 | CO-10 | Tested-by on 6.6.160-rc2 | **blocked** — operator's decision; due 2026-10-22 07:53 UTC | — | sent, or the deadline passed |
+
+*State on 2026-11-16, for the rows whose Status above is stale (the table itself is kept as it
+stood; `contributions/README.md` and `docs/STATUS.md` are current):* CO-02: the series was sent on
+2026-10-27 and v2 is being prepared (`docs/STATUS.md`, Submissions). CO-03: built and tested,
+staged on disk since 2026-11-13, not filed; the headset test is the operator's. CO-08: still waits
+for the operator's test sound per mode. CO-09: `7.0.0-43`, which carries the entry, has run on the
+laptop since 2026-11-12 22:55. CO-10: sent 2026-10-21 (`docs/STATUS.md`, the Tested-by row). The
+others (CO-01, CO-04 to CO-07): see their rows in `contributions/README.md`; this table does not
+track them.
+
+## Files not listed in the tables above
+
+Added 2026-11-16. These files were in this directory but had no row. Each is listed with its
+own first heading and nothing else: no verdict is given here, and the register above does not
+track them. Read a file for its content; the date in its name is when it was written.
+
+| File | First heading |
+|---|---|
+| [2026-09-19T2100Z-first-reviewer-followup-kernel-mgmt-status.md](2026-09-19T2100Z-first-reviewer-followup-kernel-mgmt-status.md) | The first reviewer's follow-up on the kernel finding — 2026-09-19T21:00Z |
+| [2026-09-20T0200Z-deep-review-followup-verbatim.md](2026-09-20T0200Z-deep-review-followup-verbatim.md) | Follow-up to the deep review — verbatim, from the operator's paste of 2026-09-20 |
+| [2026-09-26-source-review-followup.md](2026-09-26-source-review-followup.md) | Source review — follow-up comments, 2026-09-26 |
+| [2026-09-26-source-review-report.md](2026-09-26-source-review-report.md) | QCA9377 Bluetooth Hang: Source-Level Review and Upstream Fix Assessment |
+| [2026-09-27-research-gnome-settings.md](2026-09-27-research-gnome-settings.md) | GNOME Settings Sound panel: U4 (Configuration row) and U6 (input meter), against upstream code |
+| [2026-09-27-research-pipewire-wireplumber.md](2026-09-27-research-pipewire-wireplumber.md) | U1–U6 against upstream PipeWire / WirePlumber — source research (2026-09-27) |
+| [2026-10-13T0200Z-u11-outside-research-text.md](2026-10-13T0200Z-u11-outside-research-text.md) | U11 outside research, the text |
+| [2026-10-13T0200Z-u11-outside-research-web-sources.md](2026-10-13T0200Z-u11-outside-research-web-sources.md) | u11 reviewer 2: web source check |
+| [2026-10-13T0200Z-u11-outside-research.md](2026-10-13T0200Z-u11-outside-research.md) | U11 outside research: claim check |
+| [2026-11-12T1508Z-upstream-contributions-status.md](2026-11-12T1508Z-upstream-contributions-status.md) | Upstream contributions: what was accepted, what is still waiting (2026-11-12 15:08 UTC) |
+| [2026-11-12T1537Z-all-contributions-explained.md](2026-11-12T1537Z-all-contributions-explained.md) | Every contribution, past, present and possible, explained (2026-11-12 15:37 UTC) |
+| [2026-11-13T0003Z-bt17-source-investigation-task.md](2026-11-13T0003Z-bt17-source-investigation-task.md) | Source investigation task — `BT-17`: an idle QCA9377 Bluetooth controller never came back from USB runtime suspend, was reset off the bus, and returned only after a power-off (2026-11-12) |
+| [2026-11-13T0120Z-registers-and-contributions-status.md](2026-11-13T0120Z-registers-and-contributions-status.md) | The registers, the bugs and the contributions: where each one stands (2026-11-13 01:20 UTC) |
+| [2026-11-13T0200Z-bt17-source-investigation-reviewer-1-verbatim.md](2026-11-13T0200Z-bt17-source-investigation-reviewer-1-verbatim.md) | BT-17 source investigation — the first outside reviewer's answer |
+| [2026-11-13T0230Z-bt17-source-investigation-reviewer-2-verbatim.md](2026-11-13T0230Z-bt17-source-investigation-reviewer-2-verbatim.md) | BT-17 source investigation — the second outside reviewer's answer |
+| [2026-11-13T0300Z-bt17-source-investigation-reviewer-3-verbatim.md](2026-11-13T0300Z-bt17-source-investigation-reviewer-3-verbatim.md) | BT-17 source investigation — the third outside reviewer's answer |
+| [2026-11-13T0330Z-bt17-source-investigation-reviewer-6-verbatim.md](2026-11-13T0330Z-bt17-source-investigation-reviewer-6-verbatim.md) | BT-17 source investigation — the sixth outside reviewer's answer |
+| [2026-11-13T0400Z-bt17-source-investigation-reviewer-7-verbatim.md](2026-11-13T0400Z-bt17-source-investigation-reviewer-7-verbatim.md) | BT-17 source investigation — the seventh outside reviewer's answer |
+| [2026-11-13T1100Z-bt17-patches-intermediate-review.md](2026-11-13T1100Z-bt17-patches-intermediate-review.md) | Intermediate review: btusb resume-failure patches (CO-43) and the MGMT timeout status (CO-44) |
+| [2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md](2026-11-13T1530Z-bt17-patches-reviewer-2-verbatim.md) | BT-17 patches — the second outside reviewer's assessment |
+| [2026-11-13T1600Z-bt17-patches-review-reviewer-1-verbatim.md](2026-11-13T1600Z-bt17-patches-review-reviewer-1-verbatim.md) | BT-17 patches — outside reviewer 1's review of the intermediate document |
+| [2026-11-13T1600Z-bt17-patches-review-reviewer-2-verbatim.md](2026-11-13T1600Z-bt17-patches-review-reviewer-2-verbatim.md) | BT-17 patches — outside reviewer 2's review of the intermediate document |
+| [2026-11-13T1600Z-bt17-patches-review-reviewer-3-verbatim.md](2026-11-13T1600Z-bt17-patches-review-reviewer-3-verbatim.md) | BT-17 patches — outside reviewer 3's review of the intermediate document |
+| [2026-11-13T1600Z-bt17-patches-review-reviewer-6-verbatim.md](2026-11-13T1600Z-bt17-patches-review-reviewer-6-verbatim.md) | BT-17 patches — outside reviewer 6's review of the intermediate document |
+| [2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md](2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md) | BT-17 patches — outside reviews of the intermediate document (four, then a fifth): our checks, and the plan |
+| [2026-11-13T1700Z-bt17-patches-review-reviewer-7-verbatim.md](2026-11-13T1700Z-bt17-patches-review-reviewer-7-verbatim.md) | BT-17 patches — outside reviewer 7's review of the intermediate document |
+| [2026-11-13T1740Z-bt17-open-work-answer-reviewer-1-verbatim.md](2026-11-13T1740Z-bt17-open-work-answer-reviewer-1-verbatim.md) | BT-17 open work — outside reviewer 1's answer to the task document |
+| [2026-11-13T1740Z-bt17-open-work-answer-reviewer-2-verbatim.md](2026-11-13T1740Z-bt17-open-work-answer-reviewer-2-verbatim.md) | BT-17 open work — outside reviewer 2's answer to the task document |
+| [2026-11-13T1740Z-bt17-open-work-answer-reviewer-3-verbatim.md](2026-11-13T1740Z-bt17-open-work-answer-reviewer-3-verbatim.md) | BT-17 open work — outside reviewer 3's answer to the task document |
+| [2026-11-13T1740Z-bt17-open-work-answer-reviewer-6-verbatim.md](2026-11-13T1740Z-bt17-open-work-answer-reviewer-6-verbatim.md) | BT-17 open work — outside reviewer 6's answer to the task document |
+| [2026-11-13T1740Z-bt17-open-work-answer-reviewer-7-verbatim.md](2026-11-13T1740Z-bt17-open-work-answer-reviewer-7-verbatim.md) | BT-17 open work — outside reviewer 7's answer to the task document |
+| [2026-11-13T1740Z-bt17-open-work-for-outside-reviewers.md](2026-11-13T1740Z-bt17-open-work-for-outside-reviewers.md) | BT-17 patches — open work for outside reviewers, in parallel with ours (2026-11-13) |
+| [2026-11-13T1750Z-bt17-open-work-answers-checks.md](2026-11-13T1750Z-bt17-open-work-answers-checks.md) | BT-17 open work — answers to the task document, and our checks |
+| [2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md](2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md) | Linux kernel Bluetooth patches ready to send: a self-contained review document |
+| [2026-11-14T0300Z-kernel-patches-review-reviewer-1-verbatim.md](2026-11-14T0300Z-kernel-patches-review-reviewer-1-verbatim.md) | Kernel patches ready to send — outside reviewer 1's answer |
+| [2026-11-14T0300Z-kernel-patches-review-reviewer-2-verbatim.md](2026-11-14T0300Z-kernel-patches-review-reviewer-2-verbatim.md) | Kernel patches ready to send — outside reviewer 2's answer |
+| [2026-11-14T0300Z-kernel-patches-review-reviewer-3-verbatim.md](2026-11-14T0300Z-kernel-patches-review-reviewer-3-verbatim.md) | Kernel patches ready to send — outside reviewer 3's answer |
+| [2026-11-14T0300Z-kernel-patches-review-reviewer-6-verbatim.md](2026-11-14T0300Z-kernel-patches-review-reviewer-6-verbatim.md) | Kernel patches ready to send — outside reviewer 6's answer |
+| [2026-11-14T0300Z-kernel-patches-review-reviewer-7-verbatim.md](2026-11-14T0300Z-kernel-patches-review-reviewer-7-verbatim.md) | Kernel patches ready to send — outside reviewer 7's answer |
+| [2026-11-14T1300Z-bt17-open-work-reviewer-3-checks.md](2026-11-14T1300Z-bt17-open-work-reviewer-3-checks.md) | BT-17 open work — reviewer 3's answer, and our checks (2026-11-14) |
+| [2026-11-14T1400Z-kernel-patches-review-answers-checks.md](2026-11-14T1400Z-kernel-patches-review-answers-checks.md) | Kernel patches ready to send — five outside answers, and our checks (2026-11-14) |
+| [2026-11-15T0115Z-submitted-contributions-status.md](2026-11-15T0115Z-submitted-contributions-status.md) | Submitted, not yet accepted: live status and options (2026-11-15) |
+| [2026-11-15T0115Z-submitted-status-review-reviewer-1-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-1-verbatim.md) | Submitted contributions status — outside reviewer 1's answer |
+| [2026-11-15T0115Z-submitted-status-review-reviewer-2-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-2-verbatim.md) | Submitted contributions status — outside reviewer 2's answer |
+| [2026-11-15T0115Z-submitted-status-review-reviewer-3-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-3-verbatim.md) | Submitted contributions status — outside reviewer 3's answer |
+| [2026-11-15T0115Z-submitted-status-review-reviewer-6-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-6-verbatim.md) | Submitted contributions status — outside reviewer 6's answer |
+| [2026-11-15T0115Z-submitted-status-review-reviewer-7-verbatim.md](2026-11-15T0115Z-submitted-status-review-reviewer-7-verbatim.md) | Submitted contributions status — outside reviewer 7's answer |
+| [2026-11-15T0300Z-submitted-status-review-checks.md](2026-11-15T0300Z-submitted-status-review-checks.md) | Checks of the five answers to the 2026-11-15 submitted-contributions status report |
+| [2026-11-15T1751Z-project-review-fixes-reaction-checks.md](2026-11-15T1751Z-project-review-fixes-reaction-checks.md) | Checks of the reviewer's reaction to the fixes after the 2026-11-15 whole-project review |
+| [2026-11-15T1751Z-project-review-fixes-reaction-verbatim.md](2026-11-15T1751Z-project-review-fixes-reaction-verbatim.md) | The whole-project review of 2026-11-15: the reviewer's reaction to the fixes |
+| [2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md](2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md) | The whole-project review of 2026-11-15: the reviewer's message with the recheck |
+| [EXTERNAL-SOURCES-TASK.md](EXTERNAL-SOURCES-TASK.md) | External-sources review task — the open defects of the QCA9377 (`13d3:3503`) project |
+| [coverage-of-review-full-project-code-review-20260813-111346.md](coverage-of-review-full-project-code-review-20260813-111346.md) | Actionable-item coverage — review 20260813-111346 |
+| [elaboration-of-review-results-20260813-165243.md](elaboration-of-review-results-20260813-165243.md) | Elaboration of review results — 20260813-165243 |
+| [fixes-full-project-code-review-20260813-123326.md](fixes-full-project-code-review-20260813-123326.md) | Fixes for the full project code review — 2026-08-13 12:33 |
+| [project-completion-plan-20261019-045758.md](project-completion-plan-20261019-045758.md) | Project completion plan — 2026-10-19 04:57 UTC |
+| [report-test-suite-work-for-main-branch-maintainer-20261019-110000-corrected.md](report-test-suite-work-for-main-branch-maintainer-20261019-110000-corrected.md) | Report: the test-suite work, for the main branch maintainer — checked and corrected |
+| [report-test-suite-work-for-main-branch-maintainer-20261019-110000.md](report-test-suite-work-for-main-branch-maintainer-20261019-110000.md) | Report: the test-suite work, for the main branch maintainer |
+| [report-uncovered-code-for-outside-reviewers-20261108-052325.md](report-uncovered-code-for-outside-reviewers-20261108-052325.md) | Report: the code the test suite never runs, for outside reviewers' coverage ideas |
+| [review-comprehensive-code-review-20261019-014718.md](review-comprehensive-code-review-20261019-014718.md) | Comprehensive code review — 2026-10-19 01:47 UTC |
+| [review-entry-level-ingestion-second-maintainer-20261019-223627.md](review-entry-level-ingestion-second-maintainer-20261019-223627.md) | Entry-level review for ingestion: a second project maintainer — 2026-10-19 22:36 UTC |
+| [review-full-project-code-review-20260813-111346.md](review-full-project-code-review-20260813-111346.md) | Full project code review — 2026-08-13 11:13 |
+| [review-reaction-plan-20261019-045758.md](review-reaction-plan-20261019-045758.md) | Review reaction plan — 2026-10-19 04:57 UTC |
+| [test-suite-synchronization-plan-20261019-045758.md](test-suite-synchronization-plan-20261019-045758.md) | Test-suite synchronization plan — 2026-10-19 04:57 UTC |
+| [verification-of-review-full-project-code-review-20260813-111346.md](verification-of-review-full-project-code-review-20260813-111346.md) | Verification of review 20260813-111346 — what was implemented, what stands, what was skipped |
 
 ## Adding a report
 
