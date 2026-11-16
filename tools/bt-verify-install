@@ -66,12 +66,28 @@ if (( ${#PAIRS[@]} == 0 )); then
     exit 1
 fi
 
+# bt-raw-archive is installed only from the checkout its unit's ExecStart names
+# (install.sh decides the same way): from any other checkout it is neither
+# installed nor enabled, so it must not be reported as "NOT INSTALLED" there,
+# where no install could ever fix it (review N-09, 2026-11-15).
+RAW_HERE=0
+RAWEXEC=$(sed -n 's/^ExecStart=//p' "$REPO/systemd/bt-raw-archive.service" 2>/dev/null)
+[[ "$RAWEXEC" == "$REPO/scripts/raw-capture-archive-all.sh" ]] && RAW_HERE=1
+nosrc=0
+
 echo "${B}Install verification${O} — checkout: $REPO"
 echo "─────────────────────────────────────────────────────────────"
 for p in "${PAIRS[@]}"; do
     src="$REPO/${p%%:*}"; dst="${p##*:}"
+    if (( ! RAW_HERE )) && [[ "${p%%:*}" == systemd/bt-raw-archive.* ]]; then
+        printf '  %s·%s not expected from this checkout (its unit runs %s): %s\n' "$Y" "$O" "${RAWEXEC:-nothing}" "$dst"
+        continue
+    fi
     if [[ ! -e "$src" ]]; then
-        printf '  %s?%s missing in repo: %s\n' "$Y" "$O" "${p%%:*}"; continue
+        # An artifact install.sh names that the checkout does not have is a
+        # defect of the checkout, and counts: it used to print and still exit 0.
+        printf '  %s✗%s MISSING IN CHECKOUT: %s (install.sh installs it)\n' "$R" "$O" "${p%%:*}"
+        nosrc=$((nosrc+1)); continue
     fi
     if [[ ! -e "$dst" ]]; then
         # A file moved aside by `bt-mode experiment` is deliberately absent, not
@@ -127,7 +143,7 @@ echo "${B}Services${O}"
 mapfile -t UNITS < <(
     { echo bluetooth
       grep -oE 'systemctl enable --now [a-z0-9.-]+' "$REPO/install.sh" 2>/dev/null | awk '{print $NF}'
-    } | sort -u
+    } | sort -u | { if (( RAW_HERE )); then cat; else grep -vx 'bt-raw-archive.timer'; fi; }
 )
 # In experiment mode the intervening units are stopped ON PURPOSE. Counting
 # that as drift would tell the reader to run install.sh, which reverts the
@@ -161,8 +177,9 @@ systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null | tr ' ' '\n'
 
 echo
 echo "─────────────────────────────────────────────────────────────"
-if (( drift || missing )); then
+if (( drift || missing || nosrc )); then
     printf '%s%d in sync, %d drifted, %d not installed%s\n' "$R" "$same" "$drift" "$missing" "$O"
+    (( nosrc )) && printf '%s%d artifact(s) install.sh names are missing in the checkout itself%s\n' "$R" "$nosrc" "$O"
     # THE ADVICE IS THE DEPLOY CHECKLIST, NEVER THE ARMING INSTALL (VI1, the
     # review of 2026-10-19). This line used to read "Run: sudo ./install.sh
     # --apply", the one command the investigation machine must never run (its
