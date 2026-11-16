@@ -45,6 +45,15 @@ done
 
 refuse() { echo "bt-journal-files: REFUSING — $*" >&2; exit 2; }
 
+# The archive may not be inside the repository: the files carry MAC addresses and
+# BSSIDs and must not be committable (the same guard as bt-archive, review T-11).
+REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd -P)}"
+REPO=$(realpath -m "$REPO")
+DEST_ABS=$(realpath -m "$DEST_ROOT")
+case "$DEST_ABS/" in
+	"$REPO"/*) refuse "$DEST_ABS is inside the repository — journal files carry BSSIDs and must not be committable" ;;
+esac
+
 command -v zstd >/dev/null 2>&1 || refuse "zstd not found"
 [[ -d "$SRC_ROOT" ]] || refuse "no journal directory at $SRC_ROOT"
 

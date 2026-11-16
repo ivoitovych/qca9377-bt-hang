@@ -286,10 +286,11 @@ printf '  %s of the %s carry a declared **Evidence window.** (BL-09); the rest w
     echo "  NOT JUDGEABLE IS NOT A BUG IN THE EXHIBIT. It carries no timestamp with a"
     echo "  UTC offset outside its provenance block, so it cannot be placed on the"
     echo "  same absolute axis as journald's boot ranges. The capture time in the"
-    echo "  provenance is deliberately not used for this: it is when the command ran,"
+    echo "  provenance is not used to place the evidence: it is when the command ran,"
     echo "  not when the evidence happened, and for a retrospective exhibit the two"
     echo "  can be weeks apart. Reading one as the other reports a rotated-away"
-    echo "  window as retained."
+    echo "  window as retained. It is used in one direction only, as an upper bound:"
+    echo "  captured before the oldest retained boot means the source is gone."
 }
 if (( risk > 0 )); then
     echo
