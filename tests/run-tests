@@ -2821,6 +2821,48 @@ done
 rm -f "$LC/bin/journalctl" "$LC/bin/systemctl"
 rm -rf "$LC"
 
+
+# hci_alive's 2 ("cannot tell": no hciconfig on this machine) IS NOT "DEAD".
+# A manual `ok` on a machine without hciconfig used to record trial_result=failed
+# and `start` refused with "Controller is not responding". Now: `start` goes on,
+# `ok` records ended_unprobed and resp_after=unprobed; a definite answer from
+# hciconfig (exit 1, or any non-zero) is still a failure, so the check can fail.
+lc_machine
+rm -f "$LC/bin/hciconfig"
+farm_dir "$LC/farm" hciconfig
+_trcol() {   # <column> -> that column of the last results row
+    awk -F"\t" -v c="$1" 'NR==1{for(i=1;i<=NF;i++)k[$i]=i;next} END{print $k[c]}' "$LC/evidence/trials/results.tsv" 2>/dev/null
+}
+trial_in "$LC" "$LC/state" PATH="$LC/bin:$LC/farm" -- start stock >"$LC/start.out" 2>&1; _src=$?
+[[ "$_src" == 0 && -e "$LC/state/current" && "$(<"$LC/start.out")" == *"not checked"* ]] \
+    && ok "bt-trial start without hciconfig goes on and says the answer was not checked (rc=$_src)" \
+    || bad "bt-trial start without hciconfig: rc=$_src: $(head -2 "$LC/start.out" | tr '\n' '|')"
+trial_in "$LC" "$LC/state" PATH="$LC/bin:$LC/farm" -- ok >"$LC/ok.out" 2>&1
+[[ "$(_trcol trial_result)" == ended_unprobed && "$(_trcol responds_after)" == unprobed ]] \
+    && ok "bt-trial ok without hciconfig records ended_unprobed / unprobed, not failed" \
+    || bad "bt-trial ok without hciconfig: trial_result=$(_trcol trial_result) resp_after=$(_trcol responds_after)"
+# The control: a definite answer still counts. A hciconfig that exits 2 itself
+# (not "absent") is a refusal by the controller, folded into 1 = dead.
+rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
+printf '#!/bin/sh\nexit 2\n' > "$LC/bin/hciconfig"; chmod +x "$LC/bin/hciconfig"
+trial_in "$LC" "$LC/state" -- start stock >/dev/null 2>&1; _src2=$?
+(( _src2 != 0 )) \
+    && ok "bt-trial start with a hciconfig that fails (exit 2) is still refused as not responding" \
+    || bad "bt-trial start accepted a hciconfig that failed with exit 2"
+printf '#!/bin/sh\nexit 0\n' > "$LC/bin/hciconfig"
+trial_in "$LC" "$LC/state" -- start stock >/dev/null 2>&1
+printf '#!/bin/sh\nexit 1\n' > "$LC/bin/hciconfig"
+trial_in "$LC" "$LC/state" -- ok >/dev/null 2>&1
+[[ "$(_trcol trial_result)" == failed && "$(_trcol responds_after)" == no ]] \
+    && ok "bt-trial ok with a hciconfig that answers 'no' still records failed / no" \
+    || bad "bt-trial ok with a dead controller: trial_result=$(_trcol trial_result) resp_after=$(_trcol responds_after)"
+# The header says what the manual verbs do.
+_trh=$(trial_in "$LC" "$LC/state" -- nosuchverb 2>&1)
+[[ "$_trh" == *"SEND HCI"* && "$_trh" == *"abort [--discard]"* && "$_trh" == *"autostart"* ]] \
+    && ok "bt-trial usage names the manual HCI probes, abort --discard and the boot verbs" \
+    || bad "bt-trial usage text is stale: $(head -3 <<<"$_trh" | tr '\n' '|')"
+rm -rf "$LC"
+
 echo
 echo "the producer under a slow journal — budgets that keep the row and the verdict"
 echo "──────────────────────────────────────────────────────────────────────"
@@ -3336,6 +3378,38 @@ else
     bad "unwatched implementation paths:$missing"
 fi
 
+
+# EVERY TRACKED EXECUTABLE UNDER tools/, bin/, scripts/ AND devtools/ IS NAMED IN
+# docs/tooling-index.md, by its path, its file name or its directory (review T-05:
+# fifteen were not, and the index said "every routine question already has a
+# tool"). Derived from git, so a script added tomorrow fails here until it has a row.
+TIX=docs/tooling-index.md
+tix_named() {   # <path> -> 0 when the index names it
+    local f="$1" d b
+    d=$(dirname "$f"); b=$(basename "$f")
+    grep -qF -- "$f" "$TIX" && return 0
+    grep -qF -- "$b" "$TIX" && return 0
+    [[ "$d" == */* ]] && grep -qF -- "$d/" "$TIX" && return 0
+    return 1
+}
+tix_missing=""; tix_n=0
+while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    case "$f" in tools/*|bin/*|scripts/*|devtools/*) ;; *) continue ;; esac
+    tix_n=$((tix_n + 1))
+    tix_named "$f" || tix_missing="$tix_missing $f"
+done < <(git ls-files -s | awk '$1 == "100755" { print $4 }')
+(( tix_n >= 100 )) && [[ -z "$tix_missing" ]] \
+    && ok "every one of $tix_n tracked executables is named in docs/tooling-index.md (by path, name or directory)" \
+    || bad "executables with no mention in docs/tooling-index.md (of $tix_n):$tix_missing"
+# And a path the index presents as a tool must not be a git-ignored one without
+# saying so: tmp/raw-archive-timer/install-timer.sh is the case that was.
+if [[ "$(grep -c 'install-timer.sh.*git-ignored' "$TIX")" -ge 1 ]]; then
+    ok "docs/tooling-index.md marks tmp/raw-archive-timer/install-timer.sh as git-ignored"
+else
+    bad "docs/tooling-index.md names tmp/raw-archive-timer/install-timer.sh without saying it is git-ignored"
+fi
+
 echo
 echo "pipefail inverts grep -q"
 echo "──────────────────────────────────────────────────────────────"
@@ -3831,6 +3905,39 @@ done < <(git ls-files 2>/dev/null | grep -vE '\.(md|awk|conf|service|timer|rules
 [[ -z "$NOTEXEC" ]] && (( NEXEC >= 20 )) \
     && ok "all $NEXEC tracked scripts with a shebang are executable" \
     || bad "checked $NEXEC script(s); not executable:$NOTEXEC"
+
+
+# The restore and change-protocol documents must not tell a reader to reload btusb
+# (review I-01): a reload kills even a healthy controller on this machine (EX-046),
+# and uninstall.sh no longer does one. The one reload command that stays in
+# changes-applied.md is the 2026-08-10 record, marked FORBIDDEN where it stands.
+RST=docs/restore-original-state.md; CHA=docs/changes-applied.md
+[[ -r "$RST" && -r "$CHA" ]] || bad "restore/change documents not readable"
+if [[ -z "$(grep -n 'only flips back if' "$RST")" && -n "$(grep -n 'never reloaded' "$RST")" ]] \
+   && [[ -z "$(grep -n -E '^modprobe -r btusb && modprobe btusb|reload `btusb`' "$CHA")" ]] \
+   && [[ "$(grep -c 'EX-046' "$RST")" -ge 2 && "$(grep -c 'EX-046' "$CHA")" -ge 3 ]]; then
+    ok "restore-original-state.md and changes-applied.md no longer describe or run a btusb reload as a step"
+else
+    bad "a document still describes a btusb reload as a rollback step: $(grep -n -E 'only flips back if|^modprobe -r btusb && modprobe btusb|reload `btusb`' "$RST" "$CHA" | head -3 | tr '\n' '|')"
+fi
+# uninstall.sh itself never calls modprobe or rmmod on btusb (its step 5 reports only).
+[[ -z "$(grep -n -E '^[[:space:]]*(run )?(modprobe|rmmod|insmod)[[:space:]]' uninstall.sh)" ]] \
+    && ok "uninstall.sh has no modprobe, rmmod or insmod command" \
+    || bad "uninstall.sh runs a module command: $(grep -n -E '^[[:space:]]*(run )?(modprobe|rmmod|insmod)[[:space:]]' uninstall.sh | head -2)"
+
+# The modprobe file's comment about bt-dyndbg.service is checked against the unit
+# (review I-03): the old text said the service "covers the case where btusb is
+# reloaded by hand", and the unit is a boot-time oneshot that nothing re-runs on a
+# reload. The comment may only say that while the unit is such a oneshot.
+if grep -q '^Type=oneshot' systemd/bt-dyndbg.service && grep -q '^WantedBy=sysinit.target' systemd/bt-dyndbg.service \
+   && ! grep -q 'Restart=\|BindsTo=\|PartOf=' systemd/bt-dyndbg.service; then
+    [[ "$(grep -c -e 'it does NOT run again when' etc/modprobe.d/btusb-qca9377.conf)" == 1 \
+       && "$(grep -c 'it still covers the case where btusb is reloaded by hand' etc/modprobe.d/btusb-qca9377.conf)" == 0 ]] \
+        && ok "btusb-qca9377.conf says bt-dyndbg.service does not re-run on a reload, as its unit is a boot-time oneshot" \
+        || bad "btusb-qca9377.conf's comment on bt-dyndbg.service does not match the unit (a boot-time oneshot)"
+else
+    bad "bt-dyndbg.service is no longer a plain boot-time oneshot: re-read the dyndbg comment in btusb-qca9377.conf"
+fi
 
 echo
 echo "exhibit extraction commands are re-runnable, not session-local"
@@ -5986,6 +6093,22 @@ exhibit frobnicate >/dev/null 2>&1
     || bad "a test exhibit landed in evidence/exhibits/"
 rm -rf "$EXR"
 
+
+# bt-incident --help prints the whole header (it stopped one line short), and the
+# timeline is made by the bt-timeline.sh beside the tool, not only by a
+# bt-timeline that happens to be on PATH (review T-06). Uses INCENV.
+BIH=$(tools/bt-incident --help 2>&1)
+[[ "$BIH" == *"Binary btsnoop captures are referenced, never copied"* ]] \
+    && ok "bt-incident --help prints its whole header" \
+    || bad "bt-incident --help is cut short: $(tail -1 <<<"$BIH")"
+BIT=$(mktemp -d); mkdir -p "$BIT/repo"
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$BIT/repo" tools/bt-incident timeline-sibling-check >/dev/null 2>&1
+mapfile -t _bit < <(find "$BIT/repo" -name timeline.txt 2>/dev/null)
+(( ${#_bit[@]} == 1 )) \
+    && ok "bt-incident writes timeline.txt through the bt-timeline.sh beside it, with none on PATH" \
+    || bad "bt-incident wrote ${#_bit[@]} timeline.txt file(s) with no bt-timeline on PATH"
+rm -rf "$BIT"
+
 echo
 echo "the install's verifiers, bt-diagnose and bt-mode"
 echo "──────────────────────────────────────────────────────────────────────"
@@ -6113,6 +6236,60 @@ tools/bt-verify-install "$VI/no-such-checkout" >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-verify-install rejects a checkout that is not there" \
               || bad "bt-verify-install accepted a nonexistent checkout"
 rm -rf "$VI"
+
+# bt-verify-install AND THE CONDITIONALLY INSTALLED UNIT (review N-09), plus an
+# artifact install.sh names that the checkout lacks (T-I03). install.sh installs
+# and enables bt-raw-archive only from the checkout its unit's ExecStart names;
+# from any other checkout the verifier used to report it NOT INSTALLED and
+# drifted, advice that no install could satisfy. And "missing in repo" was
+# printed without being counted, so a checkout lacking an installed file could
+# still verify clean.
+VR=$(mktemp -d)
+mkdir -p "$VR/repo/tools" "$VR/repo/systemd" "$VR/dest" "$VR/udev" "$VR/stopped" "$VR/stub"
+printf '#!/bin/sh\necho alpha\n' > "$VR/repo/tools/alpha"; cp "$VR/repo/tools/alpha" "$VR/dest/alpha"
+printf '[Service]\nExecStart=/somewhere/else/scripts/raw-capture-archive-all.sh\n' > "$VR/repo/systemd/bt-raw-archive.service"
+printf '[Timer]\nOnBootSec=10min\n' > "$VR/repo/systemd/bt-raw-archive.timer"
+cat > "$VR/repo/install.sh" <<VREOF
+install_file "\$SRC/tools/alpha" $VR/dest/alpha
+install_file "\$SRC/systemd/bt-raw-archive.service" $VR/dest/bt-raw-archive.service
+install_file "\$SRC/systemd/bt-raw-archive.timer"   $VR/dest/bt-raw-archive.timer
+systemctl enable --now bt-hang-watchdog
+(( RAWARCHIVE )) && run systemctl enable --now bt-raw-archive.timer
+VREOF
+for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
+    printf 'ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503"\n' > "$VR/udev/$r.rules"
+done
+cat > "$VR/stub/systemctl" <<VRSTUB
+#!/bin/sh
+case "\$1" in
+  is-active)  if [ -e "$VR/stopped/\$2" ]; then echo inactive; exit 3; fi; echo active ;;
+  is-enabled) if [ -e "$VR/stopped/\$2" ]; then echo disabled; exit 1; fi; echo enabled ;;
+esac
+exit 0
+VRSTUB
+chmod +x "$VR/stub/systemctl"
+touch "$VR/stopped/bt-raw-archive.timer"      # not enabled: it was never installed here
+vr_run() { env PATH="$VR/stub:$PATH" BT_UDEV_DIR="$VR/udev" BT_MODE_STAMP=/nonexistent tools/bt-verify-install "$VR/repo" 2>&1; }
+
+VRA=$(vr_run); vrarc=$?
+(( vrarc == 0 )) && [[ "$VRA" == *"not expected from this checkout"* && "$VRA" != *"NOT INSTALLED"* && "$VRA" != *"bt-raw-archive.timer"*"inactive"* ]] \
+    && ok "bt-verify-install does not demand the raw-archive unit from a checkout its unit does not name" \
+    || bad "bt-verify-install reported the raw-archive unit missing or drifted where it is not installable (rc=$vrarc): $(grep -E 'raw-archive|✗' <<<"$VRA" | head -3 | tr '\n' '|')"
+# The control: from the checkout the unit names, the same absence IS reported.
+printf '[Service]\nExecStart=%s/scripts/raw-capture-archive-all.sh\n' "$VR/repo" > "$VR/repo/systemd/bt-raw-archive.service"
+VRB=$(vr_run); vrbrc=$?
+(( vrbrc != 0 )) && [[ "$VRB" == *"NOT INSTALLED: $VR/dest/bt-raw-archive.service"* ]] \
+    && ok "bt-verify-install still reports the raw-archive unit missing from the checkout it belongs to" \
+    || bad "bt-verify-install missed the raw-archive unit in its own checkout (rc=$vrbrc)"
+# An artifact install.sh installs that the checkout itself lacks counts.
+printf 'install_file "$SRC/tools/delta" %s/dest/delta\n' "$VR" >> "$VR/repo/install.sh"
+printf '[Service]\nExecStart=/somewhere/else/scripts/raw-capture-archive-all.sh\n' > "$VR/repo/systemd/bt-raw-archive.service"
+VRC=$(vr_run); vrcrc=$?
+(( vrcrc != 0 )) && [[ "$VRC" == *"MISSING IN CHECKOUT: tools/delta"* ]] \
+    && ok "bt-verify-install counts an artifact missing in the checkout itself and does not exit 0" \
+    || bad "a checkout lacking an installed file verified clean (rc=$vrcrc)"
+rm -rf "$VR"
+
 
 # ── verify-restored.sh: the claim nobody re-checks by hand ────────────────
 #
@@ -7200,6 +7377,45 @@ ev frobnicate >/dev/null 2>&1
 (( $? == 1 )) && ok "bt-evidence prints usage and exits 1 for an unknown verb" \
               || bad "bt-evidence accepted an unknown verb"
 rm -rf "$EV"
+
+
+# bt-evidence's state snapshot is PASSIVE BY DEFAULT (review I-03): `start` and
+# `stop` sent hciconfig <hci> name each, with no way to turn it off. Now they
+# send nothing and record responds=unprobed; BT_EVIDENCE_PROBE=1 asks for the
+# probe and records the answer. Same fixture shape as the bt-evidence tests above.
+EVP=$(mktemp -d)
+mkdir -p "$EVP/repo/evidence/sessions" "$EVP/repo/tools" "$EVP/state" "$EVP/usb/3-3/power" \
+         "$EVP/usb/3-3/3-3:1.0/bluetooth/hci0" "$EVP/mod" "$EVP/stub" "$EVP/jrn" "$EVP/trace"
+cp tools/sanitize-logs.sh "$EVP/repo/tools/sanitize-logs.sh"
+echo 13d3 > "$EVP/usb/3-3/idVendor"; echo 3503 > "$EVP/usb/3-3/idProduct"
+echo on > "$EVP/usb/3-3/power/control"; echo N > "$EVP/mod/enable_autosuspend"
+printf 'Aug 10 09:10:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout\n' > "$EVP/jrn/kernel.log"
+cp "$EVP/jrn/kernel.log" "$EVP/jrn/kernel.b0.log"
+printf '#!/bin/sh\necho "$*" >> %s/hci-calls\nexit 0\n' "$EVP" > "$EVP/stub/hciconfig"
+for t in bluetoothctl logger systemctl bt-mark; do printf '#!/bin/sh\nexit 0\n' > "$EVP/stub/$t"; done
+printf '#!/bin/sh\necho "up 1 hour"\n' > "$EVP/stub/uptime"
+printf '#!/bin/sh\ncase "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac\n' > "$EVP/stub/uname"
+chmod +x "$EVP/stub"/*
+evp() { env PATH="$EVP/stub:$PATH" BT_EVIDENCE_REPO="$EVP/repo" BT_EVIDENCE_STATE="$EVP/state" \
+            BT_SYSFS_USB="$EVP/usb" BT_SYSFS_MODULE="$EVP/mod" BT_JOURNAL_FIXTURE="$EVP/jrn" \
+            BT_TRACE_DIR="$EVP/trace" "$@" 2>&1; }
+evp bin/bt-evidence start passive-snapshot >/dev/null
+evpdir=$(sed -n 's/^dir=//p' "$EVP/state/current" 2>/dev/null)
+[[ ! -e "$EVP/hci-calls" ]] && grep -q 'responds=unprobed' "$evpdir/state-before.txt" 2>/dev/null \
+    && ok "bt-evidence start sends no HCI command by default and records responds=unprobed" \
+    || bad "bt-evidence start probed or did not say unprobed: $(grep -c . "$EVP/hci-calls" 2>/dev/null) call(s); $(grep responds "$evpdir/state-before.txt" 2>/dev/null)"
+evp bin/bt-evidence stop >/dev/null
+[[ ! -e "$EVP/hci-calls" ]] \
+    && ok "bt-evidence stop sends no HCI command by default" \
+    || bad "bt-evidence stop sent $(grep -c . "$EVP/hci-calls") HCI command(s)"
+# The control: asked for, it probes and records the answer.
+rm -rf "$EVP/state"/*; rm -f "$EVP/hci-calls"
+evp BT_EVIDENCE_PROBE=1 bin/bt-evidence start probed-snapshot >/dev/null
+evpdir=$(sed -n 's/^dir=//p' "$EVP/state/current" 2>/dev/null)
+[[ -s "$EVP/hci-calls" ]] && grep -q 'responds=yes' "$evpdir/state-before.txt" 2>/dev/null \
+    && ok "bt-evidence with BT_EVIDENCE_PROBE=1 probes and records responds=yes" \
+    || bad "BT_EVIDENCE_PROBE=1 did not probe: $(grep responds "$evpdir/state-before.txt" 2>/dev/null)"
+rm -rf "$EVP"
 
 # ── bt-dyndbg: which debug sites are on IS a measurement decision ─────────
 #
@@ -8639,6 +8855,29 @@ rm -f "$UM/tcpdump-dies"
 
 rm -rf "$UM"
 
+
+# bt-usbmon's capture directory is root-only by construction (review I-03): its
+# own comment says so, but it set no umask or mode. USB traffic to the controller
+# carries link keys. Created 0700 when new, and tightened to 0700 when it already
+# existed with the default mode. Run with --check, which captures nothing.
+UMD=$(mktemp -d); mkdir -p "$UMD/empty" "$UMD/dbg" "$UMD/bin" "$UMD/old"
+: > "$UMD/dbg/3u"
+chmod 0755 "$UMD/old"
+printf '#!/bin/sh\nexit 0\n' > "$UMD/bin/tcpdump"; chmod +x "$UMD/bin/tcpdump"
+umd_run() {   # <capture dir>
+    env PATH="$UMD/bin:$PATH" BT_SYSFS_USB="$UMD/empty" BT_USBMON_BUS=3 BT_USBMON_DEBUGFS="$UMD/dbg" \
+        BT_USBMON_DIR="$1" BT_USBMON_GAPLOG="$1/gaps.log" bin/bt-usbmon --check 2>&1
+}
+umd_run "$UMD/new" >/dev/null
+[[ "$(stat -c %a "$UMD/new" 2>/dev/null)" == 700 ]] \
+    && ok "bt-usbmon creates its capture directory 0700" \
+    || bad "bt-usbmon's new capture directory is mode $(stat -c %a "$UMD/new" 2>/dev/null)"
+umd_run "$UMD/old" >/dev/null
+[[ "$(stat -c %a "$UMD/old" 2>/dev/null)" == 700 ]] \
+    && ok "bt-usbmon tightens an existing 0755 capture directory to 0700" \
+    || bad "bt-usbmon left an existing capture directory at mode $(stat -c %a "$UMD/old" 2>/dev/null)"
+rm -rf "$UMD"
+
 echo
 echo "bt-trace — the other supervision loop, and the floor that stops it"
 echo "──────────────────────────────────────────────────────────────────"
@@ -9583,6 +9822,78 @@ TAUO=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAU" tools/bt-trial-audit 2>
     || bad "an unauditable row was reported as clean (rc=$tarc3)"
 rm -rf "$TAU"
 
+# A JOURNAL READ THAT FAILED IS NOT A WINDOW WITH NOTHING IN IT (review T-10).
+# Two places counted it as clean: bt-trial-audit turned an unreadable window into
+# expect=none, so the row "agreed", and the per-file fast path of
+# tools/lib/journal.sh dropped each file's exit status, so a partial journal came
+# back with exit 0. Uses TAF and ta_repo from the audit tests above.
+#
+# (1) the audit, with a journalctl whose window read fails ("Failed to ..." on
+# stderr, exit 1). The boot list and the boot ranges still read.
+TAF1=$(ta_repo none); mkdir -p "$TAF1/bin"
+cat > "$TAF1/bin/journalctl" <<'TAFJ'
+#!/bin/sh
+case " $* " in
+    *" --help "*)        echo "  --grep=PATTERN  Show entries matching"; exit 0 ;;
+    *" --list-boots "*)  cat "$TAFFIX/list-boots.log" 2>/dev/null; exit 0 ;;
+esac
+case " $* " in
+    *" --since "*) [ -e "$TAFDIR/window-ok" ] && exit 1; echo "Failed to open journal file: Input/output error" >&2; exit 1 ;;
+esac
+b=""; prev=""
+for a in "$@"; do [ "$prev" = "-b" ] && b="$a"; prev="$a"; done
+cat "$TAFFIX/kernel.b$b.log" 2>/dev/null
+exit 0
+TAFJ
+chmod +x "$TAF1/bin/journalctl"
+TAF1O=$(PATH="$TAF1/bin:$PATH" TAFDIR="$TAF1" TAFFIX="$PWD/$TAF" BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_DIR="$TAF1/no-journal-dir" \
+        BT_EVIDENCE_REPO="$TAF1" tools/bt-trial-audit 2>&1); taf1rc=$?
+(( taf1rc == 2 )) && [[ "$TAF1O" == *"UNRESOLVED"*"could not be read"* && "$TAF1O" == *"not a pass"* ]] \
+    && ok "bt-trial-audit: a window the journal could not be read for is UNRESOLVED (exit 2), not a row that agrees" \
+    || bad "bt-trial-audit read a failed window as a clean one (rc=$taf1rc): $(tail -4 <<<"$TAF1O" | tr '\n' '|')"
+# The control, so that the refusal can fail: the same stub answering "no match"
+# the way journalctl --grep does (exit 1, nothing on stderr) is an ordinary read.
+: > "$TAF1/window-ok"
+TAF1C=$(PATH="$TAF1/bin:$PATH" TAFDIR="$TAF1" TAFFIX="$PWD/$TAF" BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_DIR="$TAF1/no-journal-dir" \
+        BT_EVIDENCE_REPO="$TAF1" tools/bt-trial-audit 2>&1); taf1crc=$?
+[[ "$TAF1C" != *"could not be read"* && "$TAF1C" == *"audited     1 row(s)"* ]] \
+    && ok "bt-trial-audit: a --grep with no match (exit 1, silent) is still an ordinary empty window (rc=$taf1crc)" \
+    || bad "bt-trial-audit treated a silent no-match as a failed read (rc=$taf1crc): $(tail -4 <<<"$TAF1C" | tr '\n' '|')"
+rm -rf "$TAF1"
+
+# (2) the fast path itself, one journalctl per file: one file's reader fails.
+FJ=$(mktemp -d); mkdir -p "$FJ/bin" "$FJ/jd"
+FJAT='@'   # the file name is built here: written out, a closed-journal name reads as an address to the publish scan
+: > "$FJ/jd/system.journal"; : > "$FJ/jd/system${FJAT}bad.journal"
+cat > "$FJ/bin/journalctl" <<'FJSTUB'
+#!/bin/sh
+case " $* " in
+    *" --list-boots "*) echo "-1 0123456789abcdef0123456789abcdef Mon 2026-08-10 09:00:00 CEST—Mon 2026-08-10 10:00:00 CEST"; exit 0 ;;
+    *" --header "*)     echo "Head realtime timestamp: x (5)"; exit 0 ;;
+    *"bad.journal"*) exit 1 ;;
+esac
+echo "Aug 10 09:10:00 host kernel: fixture line"
+exit 0
+FJSTUB
+chmod +x "$FJ/bin/journalctl"
+FJO=$(PATH="$FJ/bin:$PATH" FJDIR="$FJ" BT_JOURNAL_DIR="$FJ/jd" bash -c 'source tools/lib/journal.sh; bt_journal -k -b -1 --no-pager' 2>"$FJ/err"); fjrc=$?
+(( fjrc == 2 )) && [[ "$FJO" == *"fixture line"* && "$(<"$FJ/err")" == *"partial"* ]] \
+    && ok "journal.sh fast path: a failing per-file reader ends in status 2 with the rest of the output, not exit 0" \
+    || bad "journal.sh fast path lost a per-file failure (rc=$fjrc): $FJO / $(<"$FJ/err")"
+# With --grep given, journalctl's status 1 is "no match in this file": no failure.
+FJG=$(PATH="$FJ/bin:$PATH" FJDIR="$FJ" BT_JOURNAL_DIR="$FJ/jd" bash -c 'source tools/lib/journal.sh; bt_journal -k -b -1 --grep=fixture --no-pager' 2>/dev/null); fjgrc=$?
+(( fjgrc == 0 )) && [[ "$FJG" == *"fixture line"* ]] \
+    && ok "journal.sh fast path: status 1 from a reader given --grep is a miss, not a failure" \
+    || bad "journal.sh fast path treated a --grep miss as a failure (rc=$fjgrc)"
+# And all readers fine: status 0, as before.
+rm -f "$FJ/jd/system${FJAT}bad.journal"
+FJK=$(PATH="$FJ/bin:$PATH" FJDIR="$FJ" BT_JOURNAL_DIR="$FJ/jd" bash -c 'source tools/lib/journal.sh; bt_journal -k -b -1 --no-pager' 2>/dev/null); fjkrc=$?
+(( fjkrc == 0 )) && [[ "$FJK" == *"fixture line"* ]] \
+    && ok "journal.sh fast path: every reader fine gives status 0 and the lines" \
+    || bad "journal.sh fast path with good readers: rc=$fjkrc"
+rm -rf "$FJ"
+
+
 # THE ENTRY POINTS, WHICH NOTHING HAD REACHED. `devtools/test-comprehension`
 # scored this unit at 33% — 1 of 3 modes, 3 of 5 refusals — the worst in the
 # tree and below the CI floor of 75. It was invisible because the floor step
@@ -10256,6 +10567,17 @@ rm -rf "$ARPFX"
 
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
+
+# bt-retention's closing note on "not judgeable" no longer says the capture time
+# is not used at all; the header says it is, as an upper bound (review T-11).
+RTQ=$(mktemp -d); mkdir -p "$RTQ/evidence/exhibits"
+printf '# EX-090\n\n2026-08-14T21:02:15 no offset here\n' > "$RTQ/evidence/exhibits/090-naive.md"
+RTQO=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTQ" tools/bt-retention 2>&1)
+[[ "$RTQO" == *"NOT JUDGEABLE IS NOT A BUG"* && "$RTQO" == *"used in one direction only, as an upper bound"* && "$RTQO" != *"deliberately not used"* ]] \
+    && ok "bt-retention's note on unjudgeable exhibits agrees with its header about the capture time" \
+    || bad "bt-retention's closing note contradicts its header: $(grep -c 'upper bound' <<<"$RTQO") mention(s) of the upper bound"
+rm -rf "$RTQ"
+
 echo
 echo "bt-backup-journal, bt-snapshot, and the crash counts read off a snapshot"
 echo "──────────────────────────────────────────────────────────────────────"
@@ -10491,6 +10813,27 @@ tools/bt-backup-journal --archive-everything >/dev/null 2>&1
     && ok "bt-backup-journal rejects an unknown option instead of archiving" \
     || bad "an unknown option was ignored and the run proceeded"
 
+
+# --status and --dry-run must not say "re-archiving in full" for a prefix: they
+# archive nothing (review T-11). Uses bkj_setup/bkj_run from the tests above.
+BKJ_FAILIDX=none
+BKJ=$(bkj_setup)
+echo prefix > "$BKJ/dest/boot-e5f60718.export.zst"
+: >         "$BKJ/dest/boot-e5f60718.export.zst.prefix"
+BKJSP=$(bkj_run "$BKJ" --status)
+BKJDP=$(bkj_run "$BKJ" --dry-run)
+[[ "$BKJSP" == *"PREFIX on disk — would be re-archived in full"* && "$BKJSP" != *"re-archiving in full"* \
+   && "$BKJDP" == *"PREFIX on disk — would be re-archived in full"* && "$BKJDP" != *"re-archiving in full"* \
+   && "$(bkj_calls "$BKJ")" == 0 ]] \
+    && ok "bt-backup-journal --status and --dry-run say a prefix WOULD be re-archived, and call nothing" \
+    || bad "bt-backup-journal --status/--dry-run on a prefix: $(grep PREFIX <<<"$BKJSP$BKJDP" | tr '\n' '|') ($(bkj_calls "$BKJ") call(s))"
+# The control: a real run still says it is re-archiving, and does.
+BKJRP=$(bkj_run "$BKJ")
+[[ "$BKJRP" == *"PREFIX on disk — re-archiving in full"* ]] \
+    && ok "a real run still reports the prefix as being re-archived" \
+    || bad "a real run lost its re-archiving line"
+rm -rf "$BKJ"
+
 # ── bt-journal-files: the copy of every closed journal file ──────────────
 #
 # Shipped on 2026-10-23 with no test at all; devtools/test-comprehension scored
@@ -10638,6 +10981,22 @@ JFOUT=$(tools/bt-journal-files --help 2>&1); jfrc=$?
     && ok "bt-journal-files --help describes --rotate and --status" \
     || bad "--help returned $jfrc or did not name its modes"
 rm -rf "$JF"
+
+
+# bt-journal-files REFUSES AN ARCHIVE INSIDE THE REPOSITORY, as bt-archive does:
+# the copies carry MAC addresses and BSSIDs and must not be committable (review
+# T-11). Refused before anything is created or rotated; a destination outside
+# the repository is not refused by the guard (the control).
+JFG=$(mktemp -d); mkdir -p "$JFG/repo" "$JFG/src/4f1c0de0aa55" "$JFG/out"
+JFGO=$(BT_REPO="$JFG/repo" BT_JOURNAL_SRC="$JFG/src" BT_JOURNAL_FILES_DIR="$JFG/repo/archive" tools/bt-journal-files --status 2>&1); jfgrc=$?
+(( jfgrc == 2 )) && [[ "$JFGO" == *"REFUSING"*"inside the repository"* && ! -e "$JFG/repo/archive" ]] \
+    && ok "bt-journal-files refuses a destination inside the repository and creates nothing there" \
+    || bad "bt-journal-files accepted a destination inside the repository (rc=$jfgrc): $JFGO"
+JFGC=$(BT_REPO="$JFG/repo" BT_JOURNAL_SRC="$JFG/src" BT_JOURNAL_FILES_DIR="$JFG/out/archive" tools/bt-journal-files --status 2>&1)
+[[ "$JFGC" != *"inside the repository"* ]] \
+    && ok "bt-journal-files does not refuse a destination outside the repository" \
+    || bad "bt-journal-files refused a destination outside the repository: $JFGC"
+rm -rf "$JFG"
 
 # ── bt-snapshot: one coarse cut, and it runs DURING a live fault ─────────
 #
@@ -11175,6 +11534,27 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
     && ok "bt-archive refuses an unknown option instead of reading it as a boot" \
     || bad "bt-archive accepted an option it does not implement"
 rm -rf "$ARL"
+
+
+# bt-snapshot FINDS THE CONTROLLER BY VID/PID, NOT AT THE PATH 3-3. After a
+# re-enumeration the device sits at another bus path and "controller on bus"
+# read "no" for a controller that was there. A device of the same vendor and
+# another product at 3-3 must not count (the camera case of the trial fixtures).
+SNU=$(mktemp -d); mkdir -p "$SNU/repo" "$SNU/usb/1-2" "$SNU/usb/3-3"
+echo 13d3 > "$SNU/usb/1-2/idVendor"; echo 3503 > "$SNU/usb/1-2/idProduct"
+echo 13d3 > "$SNU/usb/3-3/idVendor"; echo 56c9 > "$SNU/usb/3-3/idProduct"
+SNUO=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot BT_SNAPSHOT_DIR="$SNU/snap" BT_REPO="$SNU/repo" BT_SYSFS_USB="$SNU/usb" \
+       tools/bt-snapshot 2>&1)
+[[ "$SNUO" == *"controller on bus  yes"* ]] \
+    && ok "bt-snapshot finds the controller by VID/PID at a path other than 3-3" \
+    || bad "bt-snapshot missed a controller at 1-2: $(grep 'controller on bus' <<<"$SNUO")"
+rm -rf "$SNU/snap" "$SNU/usb/1-2"
+SNUO=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot BT_SNAPSHOT_DIR="$SNU/snap" BT_REPO="$SNU/repo" BT_SYSFS_USB="$SNU/usb" \
+       tools/bt-snapshot 2>&1)
+[[ "$SNUO" == *"controller on bus  no"* ]] \
+    && ok "bt-snapshot does not count another product of the same vendor at 3-3 as the controller" \
+    || bad "bt-snapshot took the camera at 3-3 for the controller: $(grep 'controller on bus' <<<"$SNUO")"
+rm -rf "$SNU"
 
 echo
 echo "bt-crash, and the coredump fixture it reads"
@@ -12223,6 +12603,16 @@ uil -- _monitor light-sysbus "$UILD" >/dev/null 2>&1
 uiok "the light system-bus monitor asks for calls to BlueZ and the adapter's own signals only" \
     uieq "$(uic "^dbus-monitor --system type='method_call',destination='org.bluez' type='signal',sender='org.bluez',path='/org/bluez/" "$UICALLS")/$(grep -c . "$UILD/system-bus.log" 2>/dev/null)" "1/3"
 rm -rf "$UIT"
+
+
+# bt-ui-capture -h prints the whole header and not a line of code, and the header
+# does not call light mode passive without saying what it registers (review N-10).
+UIH=$(tools/bt-ui-capture --help 2>&1); uihrc=$?
+(( uihrc == 0 )) && [[ "$UIH" == *"are taken from PATH, so a stub directory stands in for all of them."* \
+        && "$UIH" != *"set -uo pipefail"* && "$UIH" != *"HERE=\$("* \
+        && "$UIH" == *"NOT PASSIVE, ONE STEP"*"--register-shell-events"* ]] \
+    && ok "bt-ui-capture --help prints the whole header, stops before the code, and names the one non-passive step" \
+    || bad "bt-ui-capture --help: rc=$uihrc, last line '$(tail -1 <<<"$UIH")'"
 
 echo
 echo "the checkout world — devtools/held: status, the origin check, edit, commit"
@@ -13579,6 +13969,23 @@ tools/sanitize-logs.sh -i >/dev/null 2>&1
 rm -f "$SANOUT"
 
 echo
+
+
+# sanitize-logs.sh states what it does NOT cover (review T-06). The list is tested
+# against the tool, so it cannot go stale in either direction: when the tool
+# learns one of these forms the header line has to go, and while it does not, a
+# reader is told.
+SLD=$(mktemp -d)
+printf '%s\n' 'v6 fe80::1ff:fe23:4567:890a' 'dotted 0011.2233.4455' 'bare 001122334455' > "$SLD/in.log"
+tools/sanitize-logs.sh "$SLD/in.log" "$SLD/out.log" >/dev/null 2>&1
+if [[ "$(grep -c -e 'fe80::1ff' -e '0011.2233.4455' -e '001122334455' "$SLD/out.log")" == 3 ]]; then
+    [[ "$(grep -c -e 'IPv6 addresses, link-local' -e 'the dotted form, three groups' -e 'a bare run of 12 hex digits' tools/sanitize-logs.sh)" == 3 ]] \
+        && ok "sanitize-logs.sh's header names the three address forms it leaves in place" \
+        || bad "sanitize-logs.sh leaves IPv6, dotted and bare-hex addresses and its header does not say so"
+else
+    bad "sanitize-logs.sh now handles a form its header lists as uncovered; update the header (and this test)"
+fi
+rm -rf "$SLD"
 
 echo
 echo "the publish gates, driven over scratch repositories"
@@ -15424,6 +15831,47 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFA/dest" tools/bt-arc
     && ok "bt-archive --replace with an export of equal length still replaces" \
     || bad "bt-archive --replace refused an export that is not shorter (rc=$rfarc2)"
 rm -rf "$RFA"
+
+# THE SAME GUARD WHEN THE OLD ARCHIVE HAS ANOTHER EXTENSION. The count used to
+# run only when the new file's own name already existed; an old .gz beside a new
+# .xz skipped it, and the sweep that removes every other boot-<id>.export.* then
+# deleted the longer archive. Old: three records as .gz. New: one record as .xz.
+RFB=$(mktemp -d)
+mkdir -p "$RFB/short" "$RFB/dest"
+cp tests/journal/archive/list-boots.log tests/journal/archive/default.log "$RFB/short/"
+head -4 tests/journal/archive/default.b-1.log > "$RFB/short/default.b-1.log"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_COMP=gzip BT_ARCHIVE_EXT=gz BT_ARCHIVE_DECOMP="gzip -dc" \
+    tools/bt-archive -1 >/dev/null 2>&1
+_sumb_before=$(cksum < "$RFB/dest/boot-c1315c25.export.gz" 2>/dev/null)
+RFBO=$(BT_JOURNAL_FIXTURE="$RFB/short" BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_COMP="xz -T0" BT_ARCHIVE_EXT=xz BT_ARCHIVE_DECOMP="xz -dc" \
+       tools/bt-archive -1 --replace 2>&1); rfbrc=$?
+_sumb_after=$(cksum < "$RFB/dest/boot-c1315c25.export.gz" 2>/dev/null)
+(( rfbrc != 0 )) && [[ -n "$_sumb_before" && "$_sumb_before" == "$_sumb_after" \
+        && ! -e "$RFB/dest/boot-c1315c25.export.xz" && -e "$RFB/dest/shorter-boot-c1315c25.export.xz" \
+        && "$RFBO" == *"NOT replaced"* ]] \
+    && ok "bt-archive --replace with a shorter export in ANOTHER compressor leaves the longer old archive in place (rc=$rfbrc)" \
+    || bad "bt-archive --replace, .gz on disk and a shorter .xz: rc=$rfbrc, old unchanged=$([[ -n $_sumb_before && $_sumb_before == "$_sumb_after" ]] && echo yes || echo no): $(tail -1 <<<"$RFBO")"
+# An archive no decompressor here can read cannot be counted, so it is never swept.
+rm -f "$RFB/dest"/shorter-boot-*
+printf 'x' > "$RFB/dest/boot-c1315c25.export.lz4"
+RFBU=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_COMP="xz -T0" BT_ARCHIVE_EXT=xz BT_ARCHIVE_DECOMP="xz -dc" \
+       tools/bt-archive -1 --replace 2>&1); rfburc=$?
+(( rfburc != 0 )) && [[ -e "$RFB/dest/boot-c1315c25.export.lz4" && -e "$RFB/dest/boot-c1315c25.export.gz" ]] \
+    && ok "bt-archive --replace never sweeps an archive it cannot count (.lz4)" \
+    || bad "bt-archive --replace removed or ignored an uncountable archive (rc=$rfburc): $(tail -1 <<<"$RFBU")"
+# The control: an export with as many records replaces the old one, whatever its extension.
+rm -f "$RFB/dest"/shorter-boot-* "$RFB/dest/boot-c1315c25.export.lz4"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$RFB/dest" BT_ARCHIVE_COMP="xz -T0" BT_ARCHIVE_EXT=xz BT_ARCHIVE_DECOMP="xz -dc" \
+    tools/bt-archive -1 --replace >/dev/null 2>&1; rfbrc2=$?
+(( rfbrc2 == 0 )) && [[ -e "$RFB/dest/boot-c1315c25.export.xz" && ! -e "$RFB/dest/boot-c1315c25.export.gz" ]] \
+    && ok "bt-archive --replace with an equally long export in another compressor still supersedes the old one" \
+    || bad "bt-archive --replace of equal length across compressors: rc=$rfbrc2"
+RFBH=$(tools/bt-archive --help 2>&1)
+[[ "$RFBH" == *"--replace"* ]] \
+    && ok "bt-archive --help documents --replace" \
+    || bad "bt-archive --help does not mention --replace"
+rm -rf "$RFB"
+
 
 # repo-save's IDENTITY IS THE PROJECT AUTHOR, NOT WHATEVER THE CHECKOUT SAYS.
 # A checkout reset to an environment's default agrees with itself; the check
