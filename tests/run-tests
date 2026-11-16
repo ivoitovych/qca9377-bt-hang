@@ -16678,8 +16678,8 @@ rm -rf "$MB"
 # keeps and removes (exit 0); a stand-in that keeps nothing is exit 1.
 PA=$(mktemp -d)
 printf 'def apply(st, objs):\n    pass\n\n\ndef summarize(st):\n    return {}\n' > "$PA/bap.py"
-python3 -I scripts/prove-audio-policy-metadata.py >/dev/null 2>&1; pa_real=$?
-python3 -I scripts/prove-audio-policy-metadata.py "$PA/bap.py" >/dev/null 2>&1; pa_fake=$?
+python3 -I -B scripts/prove-audio-policy-metadata.py >/dev/null 2>&1; pa_real=$?
+python3 -I -B scripts/prove-audio-policy-metadata.py "$PA/bap.py" >/dev/null 2>&1; pa_fake=$?
 (( pa_real == 0 && pa_fake == 1 )) \
     && ok "prove-audio-policy-metadata.py exits 0 on the real recorder and 1 on one that loses the metadata" \
     || bad "prove-audio-policy-metadata.py: real rc=$pa_real, broken rc=$pa_fake"
