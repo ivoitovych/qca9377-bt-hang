@@ -9,7 +9,7 @@ journalctl performs excessive per-file stat calls when reading multi-file journa
 
 [ Impact ]
 
-On noble's systemd 255.4, reading the journal costs one fstat() on every open journal file for each
+On noble's systemd 255.4, reading the journal costs fstat() calls on every open journal file for each
 entry printed. `journal_file_read_tail_timestamp()` re-checks each file's tail through fstat() and the
 file's mtime on every step of the merge across files. With 100 journal files open, a measured
 `journalctl` made 540 to 560 fstat-family system calls per printed line. Every other reader that uses
@@ -87,9 +87,10 @@ and never touches /var/log/journal or journald. Each run takes a few minutes.
    on that directory only, and exits non-zero if a query failed or printed nothing; `diff before.tsv
    after.tsv` must print nothing, and `sha256sum -c files.sha256` must still pass.
 5. Files being written. Run `journalctl -f -o cat` in one terminal. In another run
-   `for i in $(seq 1 2000); do logger -t sru-test "n=$i"; done; sudo journalctl --rotate`.
-   Every line must appear at once, and afterwards `journalctl -o cat -t sru-test | sort | uniq -c | awk '$1 != 1'` must print
-   nothing and the count of lines must be 2 000. Also check that `journalctl -b` and `journalctl -b -1`
+   `tag=sru-test-$(date +%s); for i in $(seq 1 2000); do logger -t "$tag" "n=$i"; done; sudo journalctl --rotate`
+   (a new tag for each run, so the run before the upgrade does not count).
+   Every line must appear at once, and afterwards `journalctl -o cat -t "$tag" | sort | uniq -c | awk '$1 != 1'` must print
+   nothing and `journalctl -o cat -t "$tag" | wc -l` must print 2000. Also check that `journalctl -b` and `journalctl -b -1`
    show the same entries as before the upgrade.
 6. The systemd autopkgtests: pending. No result exists yet; the results will be added to this bug.
 
