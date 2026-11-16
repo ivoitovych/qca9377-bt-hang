@@ -23,15 +23,24 @@ end = start
 while end < len(lines) and lines[end].startswith("|"):
     end += 1
 
+rows = end - start - 2
+if rows <= 0:
+    # a header with nothing under it is not a table that passed
+    print("send-table-check: the 'What to send' table has no rows — nothing was checked")
+    sys.exit(2)
 bad = 0
 for i in range(start + 2, end):
+    named = 0
     for tok in re.findall(r"`([^`]+)`", lines[i]):
         path = tok.split(" ")[0]
         if "/" not in path:
             continue            # a file name inside the named package, e.g. HELD.md
-        if "…" in path:
+        named += 1
+        if "…" in path or "..." in path:
             print(f"README.md:{i+1}: elided path {path}"); bad += 1
         elif not (root / path).exists():
             print(f"README.md:{i+1}: no such path {path}"); bad += 1
-print(f"send-table-check: {end - start - 2} rows, {bad} problem(s)")
+    if named == 0:
+        print(f"README.md:{i+1}: a row that names no path: {lines[i][:60]}"); bad += 1
+print(f"send-table-check: {rows} rows, {bad} problem(s)")
 sys.exit(1 if bad else 0)

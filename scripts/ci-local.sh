@@ -583,7 +583,7 @@ two_sided() {
 	if (( ! AM_OK )); then verdict "$check" "NOT RUN" "patched side skipped: the series does not apply"; SKIPPED+=("$check"); return; fi
 	log "== $check: patched side"
 	git -C "$SRC" reset --quiet --hard "$TARGET_SHA"
-	git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { git -C "$SRC" am --abort; verdict "$check" "NOT RUN" "git am failed unexpectedly"; return; }
+	git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { git -C "$SRC" am --abort; verdict "$check" "NOT RUN" "git am failed unexpectedly"; SKIPPED+=("$check"); return; }
 	bluez_build "$check" patched "$@"
 	local prc=$?
 	local brc; brc="$(cat "$OUT/$check.base.rc" 2>/dev/null || echo 0)"
@@ -654,7 +654,7 @@ if [[ "$SPACE" == user ]]; then
 			for side in base patched; do
 				log "== functional: $side side"
 				git -C "$SRC" reset --quiet --hard "$TARGET_SHA"
-				[[ $side == patched ]] && { git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { verdict functional "NOT RUN" "git am failed"; break; }; }
+				[[ $side == patched ]] && { git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { verdict functional "NOT RUN" "git am failed"; SKIPPED+=(functional); break; }; }
 				o="$OUT/functional.$side"
 				run_to "$o.configure.out" "$o.configure.err" "$SRC" ./bootstrap-configure --disable-lsan --enable-asan --enable-ubsan || { echo "configure failed" >"$o.findings"; continue; }
 				run_to "$o.make.out" "$o.make.err" "$SRC" make -j"$JOBS" || { echo "build failed" >"$o.findings"; continue; }
@@ -740,7 +740,7 @@ if [[ "$SPACE" == kernel ]]; then
 				kernel_build "$check" base $extra; brc=$?
 				if (( ! AM_OK )); then verdict "$check" "NOT RUN" "the series does not apply"; SKIPPED+=("$check"); continue; fi
 				log "== $check: patched side"
-				git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { verdict "$check" "NOT RUN" "git am failed"; continue; }
+				git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1 || { verdict "$check" "NOT RUN" "git am failed"; SKIPPED+=("$check"); continue; }
 				kernel_build "$check" patched $extra; prc=$?
 				if (( prc )) && (( ! brc )); then verdict "$check" NEW "the build fails with the patches and succeeds on the base"; NEWS=$((NEWS + 1)); detail <"$OUT/$check.patched.findings"
 				elif (( prc )) && (( brc )); then verdict "$check" PRE-EXISTING "the build fails on both sides"; detail <"$OUT/$check.patched.findings"

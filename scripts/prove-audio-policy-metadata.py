@@ -33,7 +33,10 @@ bap.apply(st, [md([e("default.audio.sink", {"name": "sinkA"}),
                    e("default.audio.source", {"name": "srcA"})])])
 bap.apply(st, [md([e("default.audio.sink", {"name": "sinkB"})])])
 s = bap.summarize(st)
-print("kept" if s.get("default audio.source") == "srcA" and s.get("default audio.sink") == "sinkB"
-      else f"lost {s}")
+kept = s.get("default audio.source") == "srcA" and s.get("default audio.sink") == "sinkB"
+print("kept" if kept else f"lost {s}")
 bap.apply(st, [md([e("default.audio.source", None)])])
-print("removed" if "default audio.source" not in bap.summarize(st) else "not-removed")
+removed = "default audio.source" not in bap.summarize(st)
+print("removed" if removed else "not-removed")
+# the exit status is the proof's: 0 only when both held
+sys.exit(0 if kept and removed else 1)

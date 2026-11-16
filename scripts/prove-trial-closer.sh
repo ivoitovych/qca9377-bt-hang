@@ -8,8 +8,9 @@
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 LC=$(mktemp -d)
+FAILED=0
 ok()  { echo "  ✓ $*"; }
-bad() { echo "  ✗ $*"; }
+bad() { echo "  ✗ $*"; FAILED=$((FAILED + 1)); }
 mkdir -p "$LC/bin" "$LC/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$LC/sysfs/3-3/power"
 for s in hciconfig bt-incident bt-state; do printf '#!/bin/sh\nexit 0\n' > "$LC/bin/$s"; chmod +x "$LC/bin/$s"; done
 echo 13d3 > "$LC/sysfs/3-3/idVendor"; echo 3503 > "$LC/sysfs/3-3/idProduct"; echo on > "$LC/sysfs/3-3/power/control"
@@ -60,3 +61,5 @@ else
     echo "$SLOWOUT"
 fi
 rm -rf "$LC"
+# the exit status is the proof's: 0 only when both checks held
+(( FAILED == 0 ))

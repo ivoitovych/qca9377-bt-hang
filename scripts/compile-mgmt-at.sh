@@ -26,7 +26,13 @@ for v in unpatched patched; do
 	rm -rf "$OUT"; mkdir -p "$OUT/net"
 	cp -r "$TREE/net/bluetooth" "$OUT/net/bluetooth"
 	if [[ $v == patched ]]; then
-		patch -p1 -d "$OUT" < "$PATCH" | grep -E "Hunk|FAILED" || { echo "patch did not apply" >&2; exit 1; }
+		# A clean apply prints only "patching file ..." (no "Hunk" line unless a
+		# hunk needed an offset), so the exit status of patch decides, not a grep
+		# of its output. The hunks that moved are shown; a failed one stops here.
+		if ! pout=$(patch -p1 -d "$OUT" < "$PATCH" 2>&1); then
+			echo "patch did not apply" >&2; printf '%s\n' "$pout" | grep -E "Hunk|FAILED|can't find" | head -5 >&2; exit 1
+		fi
+		printf '%s\n' "$pout" | grep -E "Hunk" || true
 	fi
 	log="$OUT/make-$v.log"
 	make -C "$KBUILD" M="$OUT/net/bluetooth" \

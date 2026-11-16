@@ -43,7 +43,12 @@ rc=0
 for v in unpatched patched; do
 	git checkout -q -- net/bluetooth
 	if [[ $v == patched ]]; then
-		patch -p1 < "$PATCH" | grep -E "Hunk|FAILED"
+		# patch's own exit status decides: a failed hunk must not be built over
+		if ! pout=$(patch -p1 < "$PATCH" 2>&1); then
+			echo "patched    patch did not apply — NOT BUILT" >&2; printf '%s\n' "$pout" | grep -E "FAILED|can't find" | head -5 >&2
+			git checkout -q -- net/bluetooth; exit 1
+		fi
+		printf '%s\n' "$pout" | grep -E "Hunk" || true
 	fi
 	make -s -j"$J" M=net/bluetooth clean >/dev/null 2>&1
 	# KBUILD_MODPOST_WARN=1: without a vmlinux build there is no Module.symvers

@@ -27,21 +27,30 @@ def git(tree, *args, text=True):
     return p.stdout if p.returncode == 0 else None
 
 
+def git_must(tree, *args):
+    """git's output, or SystemExit: a failed read is not 'nothing local'."""
+    out = git(tree, *args)
+    if out is None:
+        raise SystemExit(f"{tree}: `git {' '.join(args)}` failed; NOTHING WAS SAVED for this tree "
+                         f"(an empty result here would read as 'nothing local')")
+    return out
+
+
 def export(out_root, tree):
     name = os.path.basename(tree.rstrip("/"))
     out = os.path.join(out_root, name)
     if os.path.exists(out):
         raise SystemExit(f"{out} exists; refusing to overwrite")
-    local = (git(tree, "rev-list", "--reverse", "HEAD", "--not", "--remotes") or "").split()
-    diff = git(tree, "diff", "HEAD") or ""
-    untracked = (git(tree, "ls-files", "--others", "--exclude-standard") or "").splitlines()
+    local = git_must(tree, "rev-list", "--reverse", "HEAD", "--not", "--remotes").split()
+    diff = git_must(tree, "diff", "HEAD")
+    untracked = git_must(tree, "ls-files", "--others", "--exclude-standard").splitlines()
     if not local and not diff and not untracked:
         print(f"{name}: nothing local")
         return
     os.makedirs(out)
-    base = git(tree, "rev-parse", f"{local[0]}^").strip() if local else git(tree, "rev-parse", "HEAD").strip()
+    base = (git_must(tree, "rev-parse", f"{local[0]}^") if local else git_must(tree, "rev-parse", "HEAD")).strip()
     if local:
-        git(tree, "format-patch", "-q", "-o", out, f"{base}..HEAD")
+        git_must(tree, "format-patch", "-q", "-o", out, f"{base}..HEAD")
     if diff:
         with open(os.path.join(out, "uncommitted.diff"), "w", encoding="utf-8") as f:
             f.write(diff)

@@ -14,7 +14,7 @@
 # entry is in the picked source, unpatched and picked make results. Each worktree
 # (cache/stable-<ver>/) is reset to the fresh tip every run, so a rerun never
 # rebuilds yesterday's tip. Logs under tmp/btusb-matrix/. Exit 0 when every
-# cherry-pick and every picked build succeeds.
+# cherry-pick, every picked build and every unpatched control build succeeds.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMMIT="${1:?usage: build-btusb-stable-matrix.sh <commit> [<stable-branch>…]}"; shift
@@ -51,29 +51,35 @@ for b in "${BRANCHES[@]}"; do
 		make -s -j"$J" modules_prepare >>"$log" 2>&1 || exit 3
 	) || { printf '%-22s %-14s prepare FAILED (see %s)\n' "$b" "$tip" "$log"; rc=1; continue; }
 	werror=KCFLAGS=-Werror
-	build() {   # build <label> → "rc=0 <size>" or "FAILED"; drops -Werror if the control cannot take it
+	# build <label> → sets BUILD to "rc=0 <size>" or "FAILED"; drops -Werror if the
+	# control cannot take it. It sets a variable and is not called in $(...): a
+	# command substitution is a subshell, and the dropped -Werror (which the
+	# result line reports) would be lost with it.
+	build() {
 		local label="$1"
 		make -s -C "$TREE" -j"$J" M=drivers/bluetooth clean >/dev/null 2>&1
 		if make -C "$TREE" -j"$J" M=drivers/bluetooth $werror KBUILD_MODPOST_WARN=1 modules >>"$log" 2>&1; then
-			echo "rc=0 $(stat -c %s "$TREE/drivers/bluetooth/btusb.ko" 2>/dev/null)B"
+			BUILD="rc=0 $(stat -c %s "$TREE/drivers/bluetooth/btusb.ko" 2>/dev/null)B"
 		elif [[ $label == unpatched && -n $werror ]]; then
 			werror=""
 			echo "(control fails -Werror; retrying without)" >>"$log"
 			build "$label"
 		else
-			echo "FAILED"
+			BUILD="FAILED"
 		fi
 	}
-	un=$(build unpatched)
+	build unpatched; un=$BUILD
 	if git -C "$TREE" cherry-pick --no-commit "$COMMIT" >>"$log" 2>&1; then
 		pick="OK"
 	else
 		pick="CONFLICT"
 		git -C "$TREE" diff --name-only --diff-filter=U >>"$log" 2>&1
 	fi
-	entry=$(grep -c "0x13d3, 0x3503" "$TREE/drivers/bluetooth/btusb.c")
-	if [[ $pick == OK ]]; then pa=$(build picked); else pa="(not built)"; fi
+	entry=$(grep -c "0x13d3, 0x3503" "$TREE/drivers/bluetooth/btusb.c" 2>/dev/null); entry=${entry:-0}
+	if [[ $pick == OK ]]; then build picked; pa=$BUILD; else pa="(not built)"; fi
 	[[ "$pick" == OK && "$pa" == rc=0* && "$entry" == 1 ]] || rc=1
+	# a control that does not build leaves the picked column unjudged: say so, and fail
+	[[ "$un" == rc=0* ]] || { un="$un (CONTROL FAILED — picked result not attributable)"; rc=1; }
 	printf '%-22s %-14s %-12s %-7s %-14s %s%s\n' "$b" "$tip" "$pick" "x$entry" "$un" "$pa" "${werror:+  (-Werror)}"
 	git -C "$TREE" cherry-pick --abort >/dev/null 2>&1 || true
 	git -C "$TREE" reset -q --hard "$b" >>"$log" 2>&1

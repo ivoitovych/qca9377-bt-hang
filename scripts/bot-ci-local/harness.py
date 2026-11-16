@@ -171,6 +171,11 @@ def main():
         tests = [t for t in tests if t.name in only or t.name == 'TestRunnerSetup'
                  and any(o.startswith('TestRunner_') for o in only)]
     lg.info('test list (%s): %s', args.side, [t.name for t in tests])
+    if not tests:
+        # an empty list is not a pass: nothing ran
+        lg.error('NOT RUN: no test was selected (side=%s only=%r)', args.side, args.only)
+        print('NOT RUN: no test was selected', file=sys.stderr)
+        return 2
 
     for t in tests:
         fh = logging.FileHandler(os.path.join(args.out, f'{t.name}.log'), mode='w')

@@ -7,8 +7,9 @@
 # Runs scripts/bt-trace-archive.py on /var/log/bt-health/capture with BT_TRACE_PREFIX=hci-
 # into <project>/archive/hci-capture/ (git-ignored, its own MANIFEST.tsv with SHA-256 per
 # file). Compresses, verifies by decompressing, never deletes a capture or an archive.
-# Budget: 3 GB by default, --budget-gb N for one run (BT_ARCHIVE_BUDGET_GB in the environment
-# also works). How much this store may take is the operator's call: 10 GB for a one-time run
+# Budget: --budget-gb N (BT_ARCHIVE_BUDGET_GB in the environment also works); without
+# either, the budget the store already holds (archive/hci-capture/BUDGET_GB), and
+# without that the script stops: it has no default of its own. How much this store may take is the operator's call: 10 GB for a one-time run
 # over the whole directory, 2026-10-29 (no timer), raised to 20 GB the same night when 10 GB
 # filled at 254 of 385 files.
 #
@@ -17,11 +18,21 @@
 # 10-10 evening captures were the next to go.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUDGET="${BT_ARCHIVE_BUDGET_GB:-3}"
+BUDGET="${BT_ARCHIVE_BUDGET_GB:-}"
 if [[ "${1:-}" == --budget-gb ]]; then
 	[[ "${2:-}" =~ ^[0-9]+$ ]] || { echo "usage: desktop-capture-archive.sh [--budget-gb N] [--once-limit N]" >&2; exit 2; }
 	BUDGET=$2
 	shift 2
+fi
+# No budget given: the store's own, as the archiver last wrote it (BUDGET_GB in
+# the archive directory). A default of this script's own would overwrite that
+# file on every run, and the archive the operator raised to 25 GB would read FULL
+# in scripts/archive-budget-check.py against a 3 GB it never had. With neither
+# a given nor a stored budget there is no number to use: how much the store may
+# take is the operator's call.
+if [[ -z "$BUDGET" ]]; then
+	BUDGET=$(tr -d '[:space:]' < "$REPO/archive/hci-capture/BUDGET_GB" 2>/dev/null || true)
+	[[ "$BUDGET" =~ ^[0-9]+(\.[0-9]+)?$ ]] || { echo "desktop-capture-archive: no budget given and none stored in archive/hci-capture/BUDGET_GB; pass --budget-gb N" >&2; exit 2; }
 fi
 EMPTY="$REPO/tmp/desktop-capture-archive/no-keep-dir"
 mkdir -p "$EMPTY"

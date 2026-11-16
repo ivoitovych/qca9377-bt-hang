@@ -122,6 +122,7 @@ def main():
     end = time.monotonic() + hours * 3600
     n = 0
     lat = []
+    failed = False
     while time.monotonic() < end:
         t = time.monotonic()
         while rd(os.path.join(dev, "power", "runtime_status")) != "suspended" and time.monotonic() - t < 10:
@@ -140,6 +141,7 @@ def main():
             log("power now %s" % {k: rd(os.path.join(dev, "power", k)) for k in
                                  ("control", "runtime_status")} if os.path.exists(dev) else "device gone")
             log("leave the machine as it is until the evidence is collected, then power it off")
+            failed = True
             break
         lat.append(d)
         if n % 50 == 0:
@@ -147,6 +149,14 @@ def main():
             log("%d cycles, latency median %.3f s max %.3f s" % (n, ls[len(ls) // 2], ls[-1]))
         time.sleep(max(0.0, interval - (time.monotonic() - t)))
     log("done: %d cycles, %d answered" % (n, len(lat)))
+    # Exit status: 1 on a FAILURE (a command that got no answer), 3 when no cycle
+    # was measured at all (the device never suspended), 0 only for cycles that
+    # were all answered.
+    if failed:
+        sys.exit(1)
+    if n == 0:
+        log("NOT RUN: no cycle was measured, so nothing here is a result")
+        sys.exit(3)
 
 
 if __name__ == "__main__":

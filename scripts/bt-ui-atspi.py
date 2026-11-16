@@ -301,14 +301,30 @@ def register_shell_events(conn):
     event type, with this connection's unique name. The registry drops them when
     the connection closes (it watches NameOwnerChanged)."""
     me = conn.get_unique_name()
+    done = failed = 0
     for ev in shell_event_names():
         try:
             conn.call_sync(REGISTRY, REGISTRY_PATH, REGISTRY, "RegisterEvent",
                            GLib.Variant("(sass)", (ev, [], me)), None,
                            Gio.DBusCallFlags.NONE, 2000, None)
             out(f"{now()} # registered event {ev}")
+            done += 1
         except GLib.Error as e:
             out(f"{now()} # register FAILED {ev}: {e.message}")
+            failed += 1
+    return done, failed
+
+
+def registration_mode(done, failed):
+    """What the start line says about the registry, from what actually registered."""
+    total = done + failed
+    if done == 0:
+        return (f"passive in effect: opted in, but ALL {total} registrations FAILED, so "
+                f"nothing was registered with the registry")
+    if failed:
+        return (f"NOT passive: registered {done} of {total} of the shell's event types with "
+                f"the registry ({failed} FAILED)")
+    return "NOT passive: registered the shell's event types with the registry"
 
 
 def main():
@@ -342,8 +358,7 @@ def main():
 
     mode = "passive: match rules only, no registry listener"
     if a.register_shell_events:
-        register_shell_events(conn)
-        mode = "NOT passive: registered the shell's event types with the registry"
+        mode = registration_mode(*register_shell_events(conn))
         conn.signal_subscribe(
             "org.freedesktop.DBus", "org.freedesktop.DBus", "NameOwnerChanged",
             "/org/freedesktop/DBus", REGISTRY, Gio.DBusSignalFlags.NONE,

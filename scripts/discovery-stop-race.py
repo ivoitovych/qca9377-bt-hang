@@ -56,7 +56,11 @@ def packets(path):
             body.append(s.strip())
     if hdr is not None:
         yield hdr, " ".join(body)
-    p.wait()
+    # btmon's own exit status: a decode that died half way leaves a truncated
+    # trace, which would read as "the discovery never stopped" below.
+    rc = p.wait()
+    if rc != 0:
+        raise RuntimeError(f"btmon exited {rc} while decoding {path}: the trace is truncated or unreadable")
 
 
 def classify(hdr, text):
@@ -217,4 +221,8 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: scripts/discovery-stop-race.py <file.btsnoop>...", file=sys.stderr)
         sys.exit(2)
-    main(sys.argv[1:])
+    try:
+        main(sys.argv[1:])
+    except (RuntimeError, OSError) as e:
+        print(f"discovery-stop-race: NOT RUN — {e}; no counts printed", file=sys.stderr)
+        sys.exit(2)

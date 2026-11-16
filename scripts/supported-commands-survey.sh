@@ -23,10 +23,13 @@ DIR="${1:-/var/log/bt-health/capture}"
 OUT="$REPO/tmp/supported-commands-survey.tsv"
 command -v btmon >/dev/null || { echo "btmon not found" >&2; exit 2; }
 [[ -d "$DIR" ]] || { echo "no capture directory: $DIR" >&2; exit 2; }
+mkdir -p "$REPO/tmp"
 printf 'file\treply_time\tentries\tenhanced_setup\tenhanced_accept\n' > "$OUT"
-n=0
+n=0; unread=0
 for f in "$DIR"/*.btsnoop; do
 	[[ -e "$f" ]] || continue
+	# btmon's own exit status is kept (PIPESTATUS below): a decode that failed
+	# leaves no row for that file, which would read as "no reply advertised".
 	btmon --columns=160 -T -r "$f" 2>/dev/null | awk -v file="$(basename "$f")" '
 		# btmon puts the opcode of a Command Complete on the indented line
 		# below the "> HCI Event:" header, which carries the timestamp.
@@ -38,8 +41,15 @@ for f in "$DIR"/*.btsnoop; do
 		inreply && /Enhanced Accept Synchronous Connection/ { ea = "yes" }
 		END { if (inreply) printf "%s\t%s\t%s\t%s\t%s\n", file, ts, entries, es, ea }
 	' >> "$OUT"
+	brc=${PIPESTATUS[0]}
+	if (( brc != 0 )); then
+		echo "NOT READ: btmon failed on $(basename "$f") (exit $brc); its replies, if any, are missing from the table" >&2
+		unread=$((unread + 1))
+	fi
 	n=$((n + 1))
 done
 echo "scanned $n capture file(s); replies found: $(( $(wc -l < "$OUT") - 1 ))"
 echo "-> $OUT"
 column -t -s $'\t' "$OUT"
+if (( n == 0 )); then echo "ERROR: no *.btsnoop file in $DIR: nothing was scanned" >&2; exit 2; fi
+if (( unread )); then echo "ERROR: $unread of $n capture file(s) could not be decoded: the table is NOT complete" >&2; exit 2; fi
