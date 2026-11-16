@@ -67,10 +67,12 @@ BT_EW_PREFIX='**Evidence window.**'
 bt_ew_read() {   # <exhibit-file>
     local f="$1"
     [[ -r "$f" ]] || return 0
-    awk '
+    # The prefix is BT_EW_PREFIX, passed in, so there is one copy of the literal.
+    awk -v p="$BT_EW_PREFIX" '
         /^#{1,6}[[:space:]]+Provenance[[:space:]]*$/ { exit }
-        index($0, "**Evidence window.**") == 1 {
-            sub(/^\*\*Evidence window\.\*\*[[:space:]]*/, "")
+        index($0, p) == 1 {
+            $0 = substr($0, length(p) + 1)
+            sub(/^[[:space:]]+/, "")
             print; exit
         }' "$f"
 }
