@@ -26,9 +26,11 @@
 # Exit 2, with a line on stderr and NO table, when the boot's kernel journal
 # cannot be read (an unknown boot, rotated away, no permission): "links 0
 # hang-ups answered 0 timeouts 0" would otherwise be printed for it and read as
-# a measured zero.
+# a measured zero. A boot that reads fine but holds no SCO line IS a measured
+# zero: the table header and "links 0 ..." are printed and the exit status is 0.
 set -uo pipefail
 BOOT="${1:-0}"
+STORE="${BT_BLUEZ_STORE:-/var/lib/bluetooth}"   # a seam, so a test never reads the real store
 # Readable at all? One line, any line: a boot with no kernel journal prints
 # nothing or fails, and neither is a count of zero.
 if ! PROBE=$(journalctl -k -b "$BOOT" --no-pager -q -n 1 -o cat 2>&1) || [[ -z "$PROBE" ]]; then
@@ -38,7 +40,7 @@ fi
 # Names: bluetoothd's persistent store first (every device the adapter has known,
 # including ones not currently listed), then its live list. Root reads the store.
 NAMES=$( {
-	for f in /var/lib/bluetooth/*/cache/* /var/lib/bluetooth/*/*/info; do
+	for f in "$STORE"/*/cache/* "$STORE"/*/*/info; do
 		[[ -r "$f" ]] || continue
 		mac=$(basename "$f"); [[ "$mac" == info ]] && mac=$(basename "$(dirname "$f")")
 		n=$(grep -m1 '^Name=' "$f" 2>/dev/null) && printf '%s\t%s\n' "${mac^^}" "${n#Name=}"
@@ -46,8 +48,18 @@ NAMES=$( {
 	bluetoothctl devices 2>/dev/null | awk '{ m = toupper($2); $1 = $2 = ""; sub(/^ +/, ""); print m "\t" $0 }'
 } )
 
-journalctl -k -b "$BOOT" --no-pager -o short-iso-precise \
-	--grep 'hci0: dst [0-9a-f:]+ handle|opcode 0x0428|opcode 0x043d|hci0 evt [45]$|len [0-9]+ mtu 9|reason 0x13|opcode 0x0406 status|command( 0x[0-9a-f]+)? tx timeout' |
+# journalctl --grep exits 1 when NOTHING matched, which under pipefail made a
+# readable boot with no SCO call look like a failure. The probe above already
+# proved the boot is readable, so: exit 0 is lines, exit 1 with an empty
+# standard error is "no match" (a measured zero), anything else is an error.
+ERRF=$(mktemp) || exit 1
+trap 'rm -f "$ERRF"' EXIT
+RAW=$(journalctl -k -b "$BOOT" --no-pager -q -o short-iso-precise \
+	--grep 'hci0: dst [0-9a-f:]+ handle|opcode 0x0428|opcode 0x043d|hci0 evt [45]$|len [0-9]+ mtu 9|reason 0x13|opcode 0x0406 status|command( 0x[0-9a-f]+)? tx timeout' 2>"$ERRF"); jrc=$?
+if (( jrc > 1 )) || { (( jrc == 1 )) && [[ -s "$ERRF" ]]; }; then
+	echo "sco-ledger: reading the kernel journal of boot $BOOT failed (exit $jrc: $(head -c 200 "$ERRF" | tr '\n' ' ')) — no counts, not a zero" >&2
+	exit 2
+fi
 awk -v names="$NAMES" '
 # seconds since the start of the month: enough for a boot, and correct across midnight
 function secs(ts,   t) { t = substr(ts, 12, 15); split(t, h, ":"); return substr(ts, 9, 2) * 86400 + h[1] * 3600 + h[2] * 60 + h[3] }
@@ -91,4 +103,4 @@ BEGIN {
 END {
 	close_link("open")
 	printf "\nlinks %d   hang-ups answered %d   timeouts %d\n", links, ok, to
-}'
+}' <<<"$RAW"
