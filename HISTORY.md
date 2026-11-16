@@ -4689,6 +4689,28 @@ suite does not run on the laptop while a trial is open.
 - **The lesson:** while a trial is open, run the full suite in a container before pushing, not
   after.
 
+**The three journalctl measurements, and reviewer 7 on the backport request.**
+- **The combined build** puts the PR's winner/runner-up check as a fast path in front of the
+  priority queue. It keeps both gains: 407 000 lines/s on rotated files at 800 files, 526 000
+  interleaved with three machines. Its output is identical to main in 336 comparisons.
+- **On the laptop's real journal** (492 files, read in place), main reads 58 000 lines/s, the PR
+  353 000 and the combined build 347 000.
+- **Default-cap journals in a container:** the stock whole-journal read stops finishing; sos's
+  journal collection hits its own 300 s limit at about 100 files; apport's takes up to 87 s, with
+  no limit. But the container exaggerates stock, and at pure defaults 4 GB is about 8 files, not
+  100.
+- **Reviewer 7:** worth pursuing, but not upload-ready. The reviewer keeps the two-commit scope,
+  and asks for:
+  - a frozen, copied test set;
+  - the vacuum and deallocation behaviour under an open reader;
+  - a booted system with journald writing and rotating;
+  - the older journal format, and imported journals;
+  - host-only headline numbers;
+  - corrected wording on the file-count limit, `-EBADMSG`, the container cause and the exponents.
+
+  The two source points the reviewer cites were confirmed in v255.4. The experiments went to
+  lane 11.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
