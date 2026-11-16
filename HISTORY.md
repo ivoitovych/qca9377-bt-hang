@@ -4667,6 +4667,28 @@ A third of the laptop's journal files are per-user journals covering the same ho
 system files. So overlapping files, the layout the PR does not help, are the normal case on a
 desktop, not an exotic one.
 
+**The recheck of the project review, answered.** The reviewer rechecked all 83 findings on
+`a8d0eb45`: 27 fixed, 26 partly, 26 not addressed, 4 waiting for the operator, and 11 new items.
+- **The fixes:** four fix lanes, one per area, checked each item before fixing it. Their 39
+  commits were combined on one branch and put on `main`.
+- **Where the reviewer was wrong:**
+  - `bt-status` does not hard-code the device; the false part was "every tool".
+  - The CO-03 build and the bundle are two builds, and each document was right about its own.
+  - The CO-25 log does record the password revocation, though only on port 465.
+  - U13 has two owners.
+- **The record:** `reviews/2026-11-16T0000Z-project-review-recheck-checks.md`.
+
+**CI went red, three times.** The new tests had only been run piece by piece, because the full
+suite does not run on the laptop while a trial is open.
+- **The first run:** 12 suite invariants failed. Among them were a vacuous metrics test, a test
+  that the new repository guard of `bt-journal-files` refused, and three unstubbed machine tools,
+  one of them `modprobe`. One lane fixed them, running the full suite in a container, which a trial
+  does not block.
+- **The next two runs:** the isolation job caught Python bytecode written into `scripts/` by two
+  module-loading checks and then by a third. `-B` fixed each, and CI was green on `d5695d8`.
+- **The lesson:** while a trial is open, run the full suite in a container before pushing, not
+  after.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
