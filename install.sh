@@ -364,7 +364,11 @@ if (( ! found )); then
     echo "           If the controller is already hung, a full POWER-OFF (not a"
     echo "           reboot) is needed. A warm reboot is BELIEVED not to recover"
     echo "           it, but that has never been tested — see EX-017 and EX-019."
-    echo "           Installing anyway; the watchdog arms itself at boot."
+    if (( TOOLS_ONLY )); then
+        echo "           Deploying the files only (--tools-only arms nothing)."
+    else
+        echo "           Installing anyway; the watchdog arms itself at boot."
+    fi
 fi
 for c in python3 journalctl; do
     command -v "$c" >/dev/null || { echo "  ERROR: '$c' is required but not found" >&2; FAILED=1; }
@@ -667,6 +671,10 @@ STAMP=$DESTDIR/usr/local/share/qca9377-bt-hang/installed-at
 if (( APPLY )); then
     if [[ -s "$STAMP" ]]; then
         echo "  first-install stamp preserved: $(cat "$STAMP")"
+    elif (( TOOLS_ONLY )); then
+        # The stamp says when the MITIGATION first went in. --tools-only arms nothing, so
+        # it is not that moment: writing it would relabel every earlier boot "before".
+        echo "  first-install stamp: not written under --tools-only (nothing is armed by it)"
     else
         mkdir -p "$(dirname "$STAMP")" && date +%s > "$STAMP" \
             && echo "  + wrote first-install stamp $STAMP ($(cat "$STAMP"))" \
@@ -814,10 +822,16 @@ fi
 
 echo "=== INSTALLED ==="
 echo
-echo "Verify:"
-echo "  systemctl status bt-hang-watchdog"
-echo "  cat /sys/module/btusb/parameters/enable_autosuspend    # expect N"
-echo "  cat /sys/bus/usb/devices/*/power/control               # expect on for the radio"
+if (( TOOLS_ONLY )); then
+    echo "Files deployed; nothing was armed, enabled or reloaded (--tools-only)."
+    echo "Verify the files:  tools/bt-verify-install   (the watchdog, the autosuspend setting and"
+    echo "                   the radio's power/control are NOT changed by this deploy)"
+else
+    echo "Verify:"
+    echo "  systemctl status bt-hang-watchdog"
+    echo "  cat /sys/module/btusb/parameters/enable_autosuspend    # expect N"
+    echo "  cat /sys/bus/usb/devices/*/power/control               # expect on for the radio"
+fi
 echo
 echo "Watch it work:   journalctl -u bt-hang-watchdog -f"
 echo "Timeline:        bt-timeline"
@@ -826,5 +840,7 @@ echo "Record a session: bt-evidence start <slug> ... bt-evidence stop"
 (( TRACE )) && echo "HCI captures:    /var/log/bt-health/trace/ (btmon -r <file>)"
 (( METRICS )) && echo "Effectiveness:   bt-health-report"
 echo
-echo "NOTE: the udev rule fires on device 'add', so power/control only flips"
-echo "      to 'on' after the next enumeration (i.e. after a reboot)."
+if (( ! TOOLS_ONLY )); then
+    echo "NOTE: the udev rule fires on device 'add', so power/control only flips"
+    echo "      to 'on' after the next enumeration (i.e. after a reboot)."
+fi

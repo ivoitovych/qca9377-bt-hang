@@ -779,7 +779,7 @@ hang|ok)
     # its verdict is the one carried here.
     WJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
     if (( journal_files )) \
-       && journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat > "$WJ" 2>/dev/null; then
+       && timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat > "$WJ" 2>/dev/null; then
         wd_journal_ok=1
         early_int=$(grep -c "EARLY intervention" "$WJ" || true)
         any_int=$(grep -cE "EARLY intervention|Detected .* controller timeouts within" "$WJ" || true)
@@ -946,15 +946,22 @@ hang|ok)
     # oneshots — so verify against the live journal after a systemd upgrade.
     # Both unit descriptions begin "Snapshot Bluetooth health metrics", so
     # one anchored pattern covers the timer- and event-driven units.
-    probes=$(journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
-             --since "$since" --no-pager -o cat 2>/dev/null \
-             | grep -c "^Finished Snapshot Bluetooth health metrics" || true)
+    # A read that FAILED (or ran out of its budget) records "?", not 0: a zero here would read
+    # as "no probe ran". Same budget as the other reads before the row.
+    probes="?"; aborts="?"
+    PJ=$(mktemp) || PJ=""
+    if [[ -n "$PJ" ]] && timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
+             --since "$since" --no-pager -o cat > "$PJ" 2>/dev/null; then
+        probes=$(grep -c "^Finished Snapshot Bluetooth health metrics" "$PJ" || true)
+    fi
     # bt-trace's restart message is "btmon exited (#N) — ...". Bare "exited"
     # also matched any other unit output containing the word (including
     # messages about bt-trace itself exiting), inflating a column that is
     # already only "consistent with 1:1", never an established count.
-    aborts=$(journalctl -u bt-trace --since "$since" --no-pager -o cat 2>/dev/null \
-             | grep -c "btmon exited" || true)
+    if [[ -n "$PJ" ]] && timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -u bt-trace --since "$since" --no-pager -o cat > "$PJ" 2>/dev/null; then
+        aborts=$(grep -c "btmon exited" "$PJ" || true)
+    fi
+    [[ -z "$PJ" ]] || rm -f "$PJ"
 
     # Distance from the last probe preceding the first timeout. Empty when there
     # was no timeout; "?" when a timeout occurred with no probe before it.
@@ -1029,7 +1036,7 @@ hang|ok)
     # Read from the tail of the previous boot: the shutdown targets are among
     # the last messages, so a bounded read is both correct and fast.
     prev_shutdown=unknown
-    case "$(journalctl -b -1 -n 400 --no-pager 2>/dev/null \
+    case "$(timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -b -1 -n 400 --no-pager 2>/dev/null \
             | grep -oE 'Reached target (reboot|poweroff|halt)' | tail -1)" in
         *reboot)   prev_shutdown=reboot   ;;
         *poweroff) prev_shutdown=poweroff ;;
@@ -1053,7 +1060,7 @@ hang|ok)
     # minutes answers the question a whole-boot scan was answering slowly.
     # --list-boots already carries boot 0's first timestamp, so this costs one
     # index read rather than a journal scan.
-    boot_start=$(journalctl --list-boots --no-pager 2>/dev/null | awk '$1=="0"{print $4" "$5}')
+    boot_start=$(timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl --list-boots --no-pager 2>/dev/null | awk '$1=="0"{print $4" "$5}')
     enum_until=""
     if [[ -n "$boot_start" ]]; then
         bs=$(date -d "$boot_start" +%s 2>/dev/null) \

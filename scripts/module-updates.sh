@@ -109,9 +109,11 @@ install)
 	echo "takes effect at the next cold boot"
 	;;
 remove)
+	# No open-trial check, deliberately: this removes one file and rebuilds the module index,
+	# and nothing loaded changes until the next boot, so it cannot disturb a trial that is open.
 	[[ $EUID -eq 0 ]] || { echo "root required" >&2; exit 2; }
 	[[ -f "$DST" ]] && rm -f "$DST"
-	depmod -a "$KREL"
+	depmod -a "$KREL" || { echo "depmod -a $KREL failed: the module index is NOT rebuilt" >&2; exit 1; }
 	status
 	echo "the stock module loads at the next boot"
 	;;
