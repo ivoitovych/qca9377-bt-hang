@@ -14,6 +14,15 @@
 #   UUIDs                   -> <UUID-NN>
 #   IPv4 addresses          -> <IPV4-NN>           (0.0.0.0 / 127.0.0.1 kept)
 #
+# WHAT IT DOES NOT COVER (checked 2026-11-16 with a fixture; "verified" below
+# means "none of the forms above remain", not "no address of any spelling"):
+#   * IPv6 addresses, link-local EUI-64 ones included
+#   * the dotted form, three groups of four hex digits
+#   * a bare run of 12 hex digits
+# The verifier also treats any AA:BB:CC:00:00:NN as already sanitised, so a real
+# address that happens to have that shape would pass. Read a file for these
+# forms before publishing it if its source can contain them.
+#
 # WHY THIS MATTERS: a Wi-Fi access point BSSID is indexed by public geolocation
 # databases (WiGLE, Google, Apple). Publishing one can reveal the physical
 # location of the machine. Kernel logs contain them by default — see the
