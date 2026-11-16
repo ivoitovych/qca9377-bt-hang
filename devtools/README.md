@@ -245,9 +245,16 @@ Deliberate allowlists, so the gate stays usable rather than being routinely bypa
 
 `repo-save` also scans the **commit message** for addresses, which `repo-scan` cannot
 see, and checks the **identity**: every commit of this repository is authored and
-committed by the project author, the identity configured in the checkout. Both fields
-are checked before the commit exists, on the recorded commit, and on every commit about
-to be pushed; CI checks the same on every push.
+committed by the project author, the `WANT` value of the identity job in
+`.github/workflows/checks.yml`, which `repo-save` reads from the project's own copy of the
+workflow and **not** from the checkout's git configuration (a configuration reset to an
+environment's default would agree with itself). Both fields are checked before the commit
+exists, on the recorded commit, and on every commit about to be pushed; CI checks the same
+on every push. `held` takes the same identity from the same place. The one exception is
+the test switch `BT_REPO_SAVE_CONFIG_IDENTITY=1` (the identity from the target's own
+configuration), honoured only for a scratch repository: not in this checkout or any clone
+of the project, only with local-path remotes (fetch and push URLs) and no `url.*.insteadOf`
+rewrite; see `tests/system-resources.md`.
 
 `repo-save` refuses to commit if validation or the scan fails, then confirms the remote
 hash equals the local one. That last step is the one most often skipped by hand, and it

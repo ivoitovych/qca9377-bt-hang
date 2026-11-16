@@ -3,9 +3,11 @@ backup-*/
 *.orig
 *.bak
 
-# Raw (unsanitised) logs — only *.sanitized.log may be committed
-# (guards evidence/ too: tools sanitise before writing there, and repo-scan is
-# the backstop; the old data/ paths no longer exist)
+# Raw (unsanitised) logs: a file named *.raw.log under evidence/ is never
+# committed. This is a name rule and nothing more: logs under other names are
+# tracked too (the sanitised ones are mostly not called *.sanitized.log), and
+# what keeps an unsanitised log out is that the tools sanitise before they write
+# into evidence/, with devtools/repo-scan as the backstop at commit and push.
 evidence/**/*.raw.log
 
 # Collected metrics are host-specific runtime data

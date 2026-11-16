@@ -127,9 +127,17 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
 
 if (( RECENT )); then
     printf 'CI — last %s run(s) on main, in %s\n\n' "$N" "$ASKED"
-    gh run list "${GHR[@]}" --workflow checks.yml --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
-        --jq '.[] | "\(if .conclusion == null or .conclusion == "" then .status else .conclusion end)\t\(.headSha[0:7])\t\(.displayTitle[0:64])"' 2>/dev/null \
-        | awk -F'\t' '{ printf "  %-10s %s  %s\n", $1, $2, $3 }'
+    # gh's own status decides: a failing gh used to print the header and nothing
+    # under it, exit 0, which reads as "no runs".
+    recent_err=$(mktemp) || exit 2
+    recent=$(gh run list "${GHR[@]}" --workflow checks.yml --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
+        --jq '.[] | "\(if .conclusion == null or .conclusion == "" then .status else .conclusion end)\t\(.headSha[0:7])\t\(.displayTitle[0:64])"' 2>"$recent_err"); rrc=$?
+    if (( rrc != 0 )); then
+        echo "ci: gh run list failed (rc=$rrc) — NO RUNS WERE READ:" >&2; sed 's/^/     /' "$recent_err" >&2; rm -f "$recent_err"; exit 2
+    fi
+    rm -f "$recent_err"
+    [[ -n "$recent" ]] || { echo "ci: gh answered with no run on main" >&2; exit 2; }
+    awk -F'\t' '{ printf "  %-10s %s  %s\n", $1, $2, $3 }' <<<"$recent"
     exit 0
 fi
 

@@ -3,16 +3,23 @@
 # what plain journalctl prints, with the same exit status. Runs both on the REAL journal
 # (read-only) for each query, compares byte for byte, and times both.
 #
-#   devtools/test-journal-fast.sh [<boot -1 day, e.g. 2026-10-22>]
+#   devtools/test-journal-fast.sh [<a day of boot -1, e.g. 2026-10-22>]
+#
+# Needs a host with a real journal and at least two boots: it is NOT run by the suite or CI
+# (it reads the machine's journal), and says NOT RUN with exit 2 where there is no boot -1.
+# The day defaults to the day boot -1 ended (the windows are fixed hours of that day).
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=tools/lib/journal.sh
 source "$ROOT/tools/lib/journal.sh"
-D=${1:-2026-10-22}
 W="$ROOT/tmp/test-journal-fast"; mkdir -p "$W"
 B1=$(journalctl --list-boots --no-pager | awk '$1 == "-1" { print $2 }')
 B0START=$(journalctl --list-boots --no-pager | awk '$1 == "0" { print $4" "$5 }')
 B1END=$(journalctl --list-boots --no-pager | awk '$1 == "-1" { print $(NF-2)" "$(NF-1) }')
+if [[ -z "$B1" || -z "$B0START" || -z "$B1END" ]]; then
+	echo "test-journal-fast: NOT RUN — this host's journal has no boot -1 to compare on" >&2; exit 2
+fi
+D=${1:-$(date -d "$B1END" +%F)}
 EPOCH0=$(date -d "$B0START" +%s)
 pass=0 fail=0
 run() { # <name> <args...>

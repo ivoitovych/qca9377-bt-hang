@@ -45,6 +45,37 @@ git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; ex
 [[ -x "$HERE/repo-validate" && -x "$HERE/repo-scan" ]] \
     || { echo "cannot find repo-validate/repo-scan next to $0" >&2; exit 2; }
 
+# --- the identity switch's refusals, BEFORE anything is staged or validated ---
+# (see "TEST SEAM" below). Early on purpose: a refused switch used to be found
+# only at the identity step, after repo-validate had run the target's whole test
+# suite, which for a clone of this project is minutes of work for a refusal.
+if [[ "${BT_REPO_SAVE_CONFIG_IDENTITY:-}" == 1 ]]; then
+    seam_why=""
+    seam_top="$(git rev-parse --show-toplevel 2>/dev/null)"
+    seam_proj="$(git -C "$HERE/.." rev-parse --show-toplevel 2>/dev/null)"
+    seam_head="$(git rev-parse -q --verify 'HEAD^{commit}' 2>/dev/null)"
+    if [[ "$seam_top" == "$seam_proj" ]]; then
+        seam_why="the target is this project's own checkout"
+    elif [[ -n "$seam_head" ]] && git -C "$seam_proj" cat-file -e "$seam_head^{commit}" 2>/dev/null; then
+        seam_why="the target is a clone of this project (its HEAD commit is one of the project's)"
+    elif [[ -n "$seam_head" ]] && [[ -n "$(comm -12 <(git rev-list --max-parents=0 HEAD 2>/dev/null | sort) \
+                                                   <(git -C "$seam_proj" rev-list --max-parents=0 HEAD 2>/dev/null | sort))" ]]; then
+        seam_why="the target is a clone of this project (it shares the project's root commit)"
+    elif [[ -e "$seam_top/devtools/repo-save" ]]; then
+        seam_why="the target is a clone of this project (it holds devtools/repo-save)"
+    fi
+    while read -r _key seam_url; do
+        [[ "$seam_url" == /* || "$seam_url" == file:///* ]] || seam_why="${_key} is not a local path: $seam_url"
+    done < <(git config --get-regexp '^remote\..*\.(push)?url$' 2>/dev/null)
+    seam_rw="$(git config --get-regexp '^url\..*\.(push)?insteadof$' 2>/dev/null | head -1)"
+    [[ -z "$seam_rw" ]] || seam_why="a URL rewrite is configured (${seam_rw%% *}), which could turn a local path into a network address"
+    if [[ -n "$seam_why" ]]; then
+        echo "  ✗ BT_REPO_SAVE_CONFIG_IDENTITY is for scratch repositories only; refused: $seam_why" >&2
+        echo "ABORT: nothing committed" >&2
+        exit 1
+    fi
+fi
+
 # --- stage FIRST -----------------------------------------------------------
 # Validation and scanning both enumerate through git, so anything not yet in
 # the index is invisible to them. Staging afterwards meant a commit's brand-new
@@ -149,22 +180,16 @@ echo "  ✓ message clean"
 # checkout's own git configuration instead. Only the test suite sets it, for
 # scratch repositories that carry a throwaway identity. Set anywhere else it
 # would bypass this gate, so it is honoured only where nothing could leave the
-# machine: a target that is not this project's own checkout and whose every
-# remote is a local path. Anywhere else it is refused (outside review
-# reaction, 2026-11-15).
+# machine: a target that is not a checkout or a clone of this project and whose
+# every remote, fetch URL and push URL alike, is a local path with no
+# url.*.insteadOf / pushInsteadOf rewrite that could turn one into a network
+# address. Anywhere else it is refused (outside review reaction, 2026-11-15 and
+# 2026-11-16). A clone of the project is recognised by: the same top-level
+# directory; a HEAD commit the project's own repository holds; a root commit it
+# shares; or a tracked devtools/repo-save.
 want=""
 if [[ "${BT_REPO_SAVE_CONFIG_IDENTITY:-}" == 1 ]]; then
-    seam_why=""
-    [[ "$(git rev-parse --show-toplevel 2>/dev/null)" == "$(git -C "$HERE/.." rev-parse --show-toplevel 2>/dev/null)" ]] \
-        && seam_why="the target is this project's own checkout"
-    while read -r _key seam_url; do
-        [[ "$seam_url" == /* || "$seam_url" == file:///* ]] || seam_why="remote ${_key#remote.} is not a local path: $seam_url"
-    done < <(git config --get-regexp '^remote\..*\.url$' 2>/dev/null)
-    if [[ -n "$seam_why" ]]; then
-        echo "  ✗ BT_REPO_SAVE_CONFIG_IDENTITY is for scratch repositories only; refused: $seam_why" >&2
-        echo "ABORT: nothing committed" >&2
-        exit 1
-    fi
+    # (the refusals above, at the top of this script, ran before anything was staged)
     want_name="$(git config user.name 2>/dev/null)"; want_mail="$(git config user.email 2>/dev/null)"
     if [[ -z "$want_name" || -z "$want_mail" ]]; then
         echo "  ✗ no identity configured in this checkout (git config user.name / user.email)" >&2
@@ -245,7 +270,19 @@ esac
 # the history's author, such as a test world, pushes that history untouched). A
 # commit made by hand, with hooks bypassed, or before the hooks existed is
 # caught here, by name.
+#
+# "No remote has yet" is judged against the remote this push goes to when that
+# is `origin` (the public one): a commit that exists only on `private` has not
+# been published, and used to count as published because ANY remote held it
+# (--remotes). For a push to `private` every remote still counts, so the first
+# push of a held branch does not re-judge the whole of main's history. A failed
+# rev-list is an abort, not an empty list: nothing would have been checked.
 id_push_bad=0
+if [[ "$remote" == origin ]]; then excl=(--remotes=origin); else excl=(--remotes); fi
+if ! push_commits="$(git rev-list "$br" --not "${excl[@]}" 2>&1)"; then
+    echo "  ✗ could not list the commits about to be pushed (git rev-list: ${push_commits:0:120}) — not pushed" >&2
+    exit 1
+fi
 while read -r c; do
     [[ -n "$c" ]] || continue
     a="$(git log -1 --format='%an <%ae>' "$c")"; m="$(git log -1 --format='%cn <%ce>' "$c")"
@@ -253,7 +290,7 @@ while read -r c; do
         echo "  ✗ ${c:0:12} $(git log -1 --format=%s "$c" | cut -c1-60): author $a, committer $m" >&2
         id_push_bad=1
     fi
-done < <(git rev-list "$br" --not --remotes 2>/dev/null)
+done <<<"$push_commits"
 if (( id_push_bad )); then
     echo "  ✗ a commit about to be pushed is not authored and committed by the expected identity ($want) — not pushed" >&2
     exit 1

@@ -16,7 +16,15 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO" || exit 2
 HELD="${BT_HELD_BRANCH:-kernel/mgmt-flush-status}"
-IDENT=(-c user.name="Iaroslav Voitovych" -c user.email="yaroslav.voytovych@gmail.com")
+# The project author, from the one place the identity is kept: the WANT of the
+# identity job in .github/workflows/checks.yml (which devtools/repo-save and CI
+# read as well), not a third copy of it here.
+_want="$(sed -n 's/^[[:space:]]*WANT:[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$REPO/.github/workflows/checks.yml" 2>/dev/null | head -1)"
+if [[ "$_want" != *" <"*">" ]]; then
+	echo "held: the project author could not be read from .github/workflows/checks.yml (WANT) — refusing to guess" >&2; exit 2
+fi
+_mail="${_want##*<}"
+IDENT=(-c user.name="${_want% <*}" -c user.email="${_mail%>}")
 
 back_to_main() { git checkout -q main || { echo "could not return to main" >&2; exit 1; }; }
 

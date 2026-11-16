@@ -72,8 +72,9 @@ done
 # reporting a number computed from nothing — the empty-trace failure mode that
 # once made devtools/coverage report every file at 0% and look like a finding.
 if ! command -v gawk >/dev/null 2>&1; then
-    echo "awk-coverage: gawk is required (mawk has no profiler) — skipping" >&2
-    exit 0
+    # NOT RUN is exit 2, not 0: a gate that was not asked must not read as one that passed
+    echo "awk-coverage: NOT RUN — gawk is required (mawk has no profiler)" >&2
+    exit 2
 fi
 [[ -x "$SUITE" ]] || { echo "awk-coverage: $SUITE not executable" >&2; exit 2; }
 
@@ -375,4 +376,10 @@ if [[ -n "$MIN" ]]; then
         exit 1
     fi
     echo "awk statement coverage ${TOTAL_PCT}% meets the --min ${MIN}% floor"
+    # A floor is a gate. A percentage measured over a RED run is a number, not a
+    # pass: the checks that failed may be the ones that run the programs.
+    if [[ "$SUITE_TAIL" == FAILED* ]]; then
+        echo "awk-coverage: the suite run it measured FAILED — the floor is not met by a red run" >&2
+        exit 1
+    fi
 fi

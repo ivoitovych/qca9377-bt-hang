@@ -15,8 +15,10 @@
 #
 # So the claims are checked against the real tool, on a machine that has a
 # real journal. Each check below names the fixture that depends on it. On a
-# host with no usable journal (CI containers), every check SKIPS LOUDLY and
-# the exit is 0 — an absent journal is not a broken contract.
+# # host with no usable journal (CI containers), phase 1 SKIPS LOUDLY — an absent
+# journal is not a broken contract — and phase 2 still verifies. When NOTHING
+# was verified (no journalctl, or every check skipped) the exit is 2, NOT RUN:
+# neither "holds" nor "broken".
 #
 # TWO PHASES. Phase 1 checks shapes against the HOST's journal and skips
 # where there is none. Phase 2 needs no host journal at all: it builds a real
@@ -40,8 +42,9 @@ echo "journal contract — real journalctl vs the shapes the fixtures claim"
 echo "──────────────────────────────────────────────────────────────────"
 
 if ! command -v journalctl >/dev/null 2>&1; then
-    note "journalctl not installed — nothing to check against (exit 0)"
-    exit 0
+    # NOT RUN, exit 2: with no journalctl no claim is checked, which is not "the contract holds"
+    note "journalctl not installed — nothing to check against: NOT RUN (exit 2)"
+    exit 2
 fi
 
 # A usable journal has at least one boot. Counted, never `grep -q`.
@@ -204,5 +207,10 @@ echo
 if (( fail )); then
     echo "CONTRACT BROKEN: a fixture claims a shape the real journalctl no longer emits"
     exit 1
+fi
+if (( pass == 0 )); then
+    # every check skipped: nothing was verified, and "holds" would be a claim about nothing
+    echo "NOT RUN: no claim was verified ($skip skipped) — the contract is neither shown to hold nor to be broken"
+    exit 2
 fi
 echo "contract holds: $pass claim(s) verified, $skip skipped"
