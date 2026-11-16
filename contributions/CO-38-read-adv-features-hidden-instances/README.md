@@ -1,5 +1,13 @@
 # CO-38 — MGMT Read Advertising Features hides advertising instances
 
+> **Note of 2026-11-16 (newer than the state below):** the packages to send are in
+> `send-20261114/` (2026-11-14, rebased on `da3cc02587c6`): the kernel patch in
+> `send-20261114/patch/`, and the BlueZ tests as the split in `bluez-split-20261114/series-a/`
+> (the sendable test) with `series-b-held/` (held); the older three-patch BlueZ series in
+> `send-20261114/patch/bluez/` is superseded by that split. The BlueZ TestFunctional failures
+> on the patched side are a flake that also fails on base (`send-20261114/CHECKS.md`: patched 2 of
+> 8 runs, base 1 of 7, the same BAP/BASS case). `send-20261102/` is superseded.
+
 **What:** `read_adv_features()` (net/bluetooth/mgmt.c) means to hide only the mesh instance,
 numbered one past the controller's advertising sets, but compares each instance number with the
 *number of instances* (`adv_instance_cnt`) instead of the *number of sets*

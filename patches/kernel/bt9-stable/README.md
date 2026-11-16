@@ -101,8 +101,10 @@ Privacy" cases listed in the log), plus two that time out intermittently: "Pairi
 SMP over BR/EDR 2" in 3 of 6 runs and "LL Privacy - Remove Device 4 (Disable Adv)" in 1 of 6.
 With the series (v1 and v2, 7 runs): the same 8, the same two intermittently (5 of 7 and 2 of
 7), and both new cases pass in every run. Every other existing case has the same verdict in all
-13 runs. So the totals vary between 497 and 498 of 506 without the series and between 498 and
-500 of 508 with it; the earlier "499/508 against 498/506" was one run each. Too few runs to
+13 runs. So the totals vary between 496 and 498 of 506 without the series and between 498 and
+500 of 508 with it (corrected 2026-11-16: this said "497 and 498"; the first master run in
+`results/compare-full-recheck.txt` passed 496 of 506, with the two intermittent timeouts both
+failing); the earlier "499/508 against 498/506" was one run each. Too few runs to
 compare the two timeout rates. Run alone, the SMP case passed 10 of 10 with master and 10 of 10
 with v2.
 
@@ -138,6 +140,9 @@ kept on the development host with `SHA256SUMS`; the extracts here are taken from
 `order-extracts.sh`.
 
 ## Before sending (operator's word)
+
+*(Note of 2026-11-16: this section is the pre-send checklist, kept as written. The three stable
+backports were sent on 2026-10-10, as the head of this page says; nothing here is pending.)*
 
 Re-check on the day: the three stable tips and the stable queue (in case `96d006ae6445` was
 picked up meanwhile), `patch --dry-run` on each tip, and the stable list for a "FAILED: patch"

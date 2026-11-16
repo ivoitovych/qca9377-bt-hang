@@ -29,6 +29,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # BT_PATCH_DIR: check another directory of patches (e.g. patches/bluez/v2)
 # with the same rules; default is the directory this script lives in.
 HERE="${BT_PATCH_DIR:-$HERE}"
+# Absolute, because the patch paths are handed to `git -C <worktree> am` below,
+# where a relative BT_PATCH_DIR (the form the README documents) would not resolve.
+HERE="$(cd "$HERE" 2>/dev/null && pwd)" || { echo "no such patch directory: ${BT_PATCH_DIR:-$HERE}" >&2; exit 2; }
 TREE="${1:?usage: git-am-check.sh <path-to-bluez-checkout> [<commit>]}"
 BASE="${2:-HEAD}"
 

@@ -115,7 +115,7 @@ form** (A1, retitled "a2dp: Remove duplicate check in transport_cb"):
 | path | what it is |
 |---|---|
 | `0001-*.patch`, `0002-*.patch` | **v1**, the tracked patches — what was applied upstream |
-| `v2/0001-*.patch`, `v2/0002-*.patch` | **v2**, derived by `scripts/build-v2.sh`; on the list, unhandled |
+| `v2/0001-*.patch`, `v2/0002-*.patch` | **v2**, derived by `scripts/build-v2.sh`; on the list, unhandled when this row was written (2026-11-16: the a2dp v2, 14836500, was later applied on 2026-10-07 as `d84171e6cd68`; the adapter v2 is moot, v1 being applied: see the status table above) |
 | `sent/v1/*.patch` | the v1 **mails as sent** on 09-19 (patch + note under `---`); byte-identical to the builder of commit `682d15c` run on the unchanged patches and notes (checked 09-22) |
 | `sent/v2/*.patch` | the v2 **mails as sent** on 09-21, copied from the build that was fed to `git send-email` |
 | `mail-notes/` | the text below `---` in every mail |
@@ -147,6 +147,10 @@ notes at `5cdf0dc`; the built copies were verified to `git apply --check` agains
 *(noted 2026-11-15: against the 18:44 UTC send in the table above, 22:05 UTC is 3 h 21 min later,
 which contradicts "within 90 minutes" in BRIEF. One of the two times is probably in another time
 zone; the bot mails' headers are not in the repository, so which one is not settled.)*
+*(noted 2026-11-16: the most likely reading is that 22:05 / 22:10 are the mailbox's own clock,
+CEST like the operator's other times in this project, which gives 20:05 / 20:10 UTC, 81 and 86
+minutes after the send, consistent with "within 90 minutes". The heading's "UTC" is then wrong.
+Still not settled: it needs the mails' headers, which are not in the repository.)*
 
 Patchwork: `0001` is patch `14831546` in series 1169362, `0002` is `14831547` in
 series 1169363. The bot's verdicts, with the full quotation and the check in

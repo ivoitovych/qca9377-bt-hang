@@ -1,5 +1,12 @@
 # CO-37: bluetoothd use-after-frees at exit with a streaming sound server (U23, U24)
 
+> **Note of 2026-11-16 (newer than the banner below):** the package to send is
+> [`send-20261114/`](send-20261114/README.md) (2026-11-14: the six mails rebased on BlueZ master
+> `20ffd285b58f`, exit tests 10/10 fail to 0/10, the bot's checks PASS on both sides, and a
+> series B without CO-23 for the route question D13). It is in the table "What to send" of
+> `../README.md`. The earlier `work/patches/master-final-6-20261102/` and
+> `work/patches/5.72-3-20261102/` are superseded. U24's fix `7e3212fa233e` is in BlueZ 5.88.
+
 > **Current state, 2026-11-12** (the index `../README.md` is the current record): **fix series
 > ready, nothing sent.** Six mails exist since 2026-11-02 (the sixth fixes the duplicate
 > `MediaEndpoint1.Release` the series exposed): `work/patches/master-final-6-20261102/`, and the

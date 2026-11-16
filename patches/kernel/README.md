@@ -1,5 +1,13 @@
 # Kernel patch — wrong status for pending commands flushed on power-off
 
+> **Note of 2026-11-16 (newer than everything below; `docs/STATUS.md` is the current record):**
+> this patch is **done on every line it was queued for.** It reached mainline in v7.3-rc7
+> (2026-10-13), v7.3 was released on 2026-10-18 with it, and the stable releases carry it:
+> 7.2.11, 6.18.57 and 6.12.113 (2026-10-15), 6.6.160 (2026-10-21) and 6.1.191 (2026-10-30);
+> 5.15 and 5.10 never queued it (STATUS, the rows for this patch). The 2026-10-01 state below,
+> "reaches mainline with the next bluetooth-next pull", and the section "How to send" at the end
+> are the pre-send and pre-merge text, kept as written: nothing is pending here.
+
 ## State at a glance — 2026-10-01
 
 | | |

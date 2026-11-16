@@ -1,5 +1,14 @@
 # CO-39 — BlueZ: non-discoverable advertisements keep a temporary device alive (U29)
 
+> **Note of 2026-11-16 (newer than the state below):** the package to send is
+> [`send-20261114/`](send-20261114/) (2026-11-14: rebased on BlueZ master `20ffd285b58f`, `Fixes:`
+> added, one comment rewrapped for the bot's 80 columns; the decisive test fails 7/7 on master and
+> passes 7/7 patched; the bot's patched side passes, and its base side passes except a
+> `unit/test-hog` CheckValgrind failure on master, not ours). It is in the table "What to send" of
+> `../README.md`. Notes that cite a "v3 cover letter file" (`send-20261114/NOTES-FOR-OPERATOR.md`)
+> refer to a file that is not in the repository: the package has no cover letter, which its notes
+> call optional for a two-patch series.
+
 **What:** `btd_adapter_device_found()` (src/adapter.c) calls `device_update_last_seen()` for an
 existing device *before* it drops a report that is not discoverable. For a temporary device that
 call restarts the 30 s `TemporaryTimeout` timer. So a peer advertising with flags 0x18 (no

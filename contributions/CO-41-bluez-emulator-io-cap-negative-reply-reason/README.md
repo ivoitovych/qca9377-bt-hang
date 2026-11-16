@@ -1,5 +1,11 @@
 # CO-41 — BlueZ emulator: IO Capability Negative Reply ignores the reason (U29)
 
+> **Note of 2026-11-16 (newer than the state below, "idea, no patch yet"):** a send package is
+> ready, nothing sent: [`send-20261114/`](send-20261114/) (2026-11-14: the one-line emulator fix
+> and a check in mgmt-tester's "Pairing Acceptor - SSP 4", which fails 3/3 without the fix and
+> passes 3/3 with it; the bot's checks all PASS on both sides). It is in the table "What to send"
+> of `../README.md`.
+
 **What:** in `emulator/btdev.c`, `cmd_io_cap_negative_reply()` (master l.3395-3407) completes
 Secure Simple Pairing with `BT_HCI_ERR_AUTH_FAILURE` whatever reason the host gave. So an
 emulated peer cannot refuse with "Pairing Not Allowed" (0x18), and BlueZ's own tests can reach

@@ -14,7 +14,7 @@ Everything here is local. Nothing was filed, uploaded or sent; the operator file
 | `<LP-U24>` `04-u24-bluetoothd-exit-discovery-uaf.md` | 3 | upstream `7e3212fa233e`, BlueZ 5.88 | use-after-free in discovery_cleanup() at exit or adapter removal |
 | `<LP-REFUSED>` `05-refused-vs-unknown-a2dp-connect-error.md` | 10 | upstream `a6ac17f0e393`, BlueZ 5.78 | a refused A2DP connect is reported as br-connection-unknown instead of br-connection-refused |
 
-The changelog entry (`changelog-entry.txt`) closes the five placeholders; the changelog trailer address is a placeholder to replace before upload.
+The changelog entry (`changelog-entry.txt`) closes the five placeholders; the changelog trailer carries the operator's own address (corrected 2026-11-16: this said it was a placeholder; the file and the debdiff have the real address, and the uploader's identity is still the operator's to confirm).
 
 Series order (patches 1 to 10 after `regression-a2dp-sep-cache.patch`): btmon (1, 2), U24 (3), U23 (4, 5, 6), U12 (7, 8, 9), refused/unknown (10). Dependencies inside the series: 5 and 6 need 4, 8 needs 7; no change depends on another bug's patch.
 
@@ -52,5 +52,5 @@ Each bug text has its own [Test Plan]; the short version for the bundle, one ses
 3. **btmon CVE.** tenacious `5.88-1` lists "Out-of-bounds read vulnerability in the btmon tool, CVE-2026-105460". Whether it affects 5.72 and which commit fixes it was not looked up here; a security update for noble would touch `monitor/` and could conflict with patches 1 and 2.
 4. **Two patches without an upstream commit** (5 and 6, `Forwarded: no`); the master version of the series is written and tested but not sent (CO-37: the route is the operator's decision). If upstream takes it first, the Origin lines should change.
 5. **Launchpad numbers.** Every `Bug-Ubuntu`, changelog `LP:` and bug text carries a placeholder (`<LP-U12>`, `<LP-BTMON>`, `<LP-U23>`, `<LP-U24>`, `<LP-REFUSED>`); the bug texts reference each other by these. The five bugs need the SRU template's fields as written; the debdiff is one attachment for all five.
-6. **Upload email / maintainer field.** The changelog trailer uses a placeholder address so that the package builds; replace it with the uploader's identity.
+6. **Upload email / maintainer field.** The changelog trailer carries the operator's own address (corrected 2026-11-16: it was a placeholder in the work area, so that the package builds, and was replaced on copy); change it if the uploader is someone else.
 7. **Limits of the evidence:** emulated controllers and a modelled headset, ASan builds for U23, U24 and refused/unknown, no real headset and nothing installed on the laptop; the laptop test of CO-03/CO-19-style plans stays the operator's.
