@@ -50,7 +50,13 @@ case "${1:-}" in
     *) log "bt-usbmon: unknown argument: $1"; exit 1 ;;
 esac
 
+# The capture directory is root-only, and this is where that is made so rather
+# than assumed: USB traffic to a Bluetooth controller carries link keys. Files
+# are created 0600 and the directory is tightened to 0700 on every start, also
+# when it already existed with the default mode (review I-03, 2026-11-15).
+umask 077
 mkdir -p "$DIR"
+chmod 0700 "$DIR" 2>/dev/null || true
 
 # --- which USB bus is the controller on? -----------------------------------
 # usbmon instances are per-bus. Capturing every bus would multiply the volume
