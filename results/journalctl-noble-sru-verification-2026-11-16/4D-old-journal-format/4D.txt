@@ -1,0 +1,105 @@
+wrote 12 files from index 0 into /work/verify/data/4D/new-255
+wrote 6 files from index 6 into /work/verify/data/4D/mixed
+# header check (header_size >= 272 means tail_entry_offset is present)
+## old-249
+     12  signature LPKSHHRH state 2 header_size 256 incompat_flags 0xc tail_entry_offset ABSENT (header_size < 272)
+## mixed
+      6  signature LPKSHHRH state 2 header_size 256 incompat_flags 0xc tail_entry_offset ABSENT (header_size < 272)
+      6  signature LPKSHHRH state 2 header_size 272 incompat_flags 0x1c tail_entry_offset PRESENT = 3957240
+## new-255
+     12  signature LPKSHHRH state 2 header_size 272 incompat_flags 0x1c tail_entry_offset PRESENT = 3957240
+# old-249: 12 files
+old-249	-o export (forward)	s819	0	156000	5159143	ad369f6b2f4e887d132f67f76e52abf73e6cd2a9a1f68b1c3eca4a432218352d
+old-249	-o export (forward)	p820	0	156000	5159143	ad369f6b2f4e887d132f67f76e52abf73e6cd2a9a1f68b1c3eca4a432218352d
+VERDICT	old-249	-o export (forward)	SAME
+old-249	-o export -r	s819	0	156000	5159143	ca6341e1fe03b68458bfce4c6da920f64c69803956aefb2d847c15c1c73fece5
+old-249	-o export -r	p820	0	156000	5159143	ca6341e1fe03b68458bfce4c6da920f64c69803956aefb2d847c15c1c73fece5
+VERDICT	old-249	-o export -r	SAME
+old-249	--list-boots	s819	0	4	355	9344e8393a839a4279306efe10ebb1ce77af249bf47b0d3717ffc6cbf1e46648
+old-249	--list-boots	p820	0	4	355	9344e8393a839a4279306efe10ebb1ce77af249bf47b0d3717ffc6cbf1e46648
+VERDICT	old-249	--list-boots	SAME
+old-249	-b <newest boot id>	s819	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+old-249	-b <newest boot id>	p820	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+VERDICT	old-249	-b <newest boot id>	SAME
+old-249	-k	s819	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+old-249	-k	p820	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+VERDICT	old-249	-k	SAME
+old-249	-n 100	s819	0	100	3900	b29d4cd059897ed107d2c555870e2c68fc826dbb97992d42f455c1ea5434d149
+old-249	-n 100	p820	0	100	3900	b29d4cd059897ed107d2c555870e2c68fc826dbb97992d42f455c1ea5434d149
+VERDICT	old-249	-n 100	SAME
+old-249	-n 100 -r	s819	0	100	3900	b44a191806d12de8adf24e028902927410df26aa2edd72923f050f3a88216e42
+old-249	-n 100 -r	p820	0	100	3900	b44a191806d12de8adf24e028902927410df26aa2edd72923f050f3a88216e42
+VERDICT	old-249	-n 100 -r	SAME
+# mixed: 12 files
+mixed	-o export (forward)	s819	0	156000	5159143	dea01aa35f8dcdc19c90623779d7b98d51520b826c85092e79b929fd21817a48
+mixed	-o export (forward)	p820	0	156000	5159143	dea01aa35f8dcdc19c90623779d7b98d51520b826c85092e79b929fd21817a48
+VERDICT	mixed	-o export (forward)	SAME
+mixed	-o export -r	s819	0	156000	5159143	3b68b77d8657c666b49f0285c05dc30f2e7d5269b4c3a280467854e7ae7766b8
+mixed	-o export -r	p820	0	156000	5159143	3b68b77d8657c666b49f0285c05dc30f2e7d5269b4c3a280467854e7ae7766b8
+VERDICT	mixed	-o export -r	SAME
+mixed	--list-boots	s819	0	4	355	34774fe15da577307b5c83927f37f99c57027d6484771ca6dccd3e3cf6c6905b
+mixed	--list-boots	p820	0	4	355	34774fe15da577307b5c83927f37f99c57027d6484771ca6dccd3e3cf6c6905b
+VERDICT	mixed	--list-boots	SAME
+mixed	-b <newest boot id>	s819	0	4000	156000	c8a0a54e66e6f4b0b1eca1c1297e5906e4a8fe732c7d4c81fb2baafb7ab9b55f
+mixed	-b <newest boot id>	p820	0	4000	156000	c8a0a54e66e6f4b0b1eca1c1297e5906e4a8fe732c7d4c81fb2baafb7ab9b55f
+VERDICT	mixed	-b <newest boot id>	SAME
+mixed	-k	s819	0	4000	156000	c8a0a54e66e6f4b0b1eca1c1297e5906e4a8fe732c7d4c81fb2baafb7ab9b55f
+mixed	-k	p820	0	4000	156000	c8a0a54e66e6f4b0b1eca1c1297e5906e4a8fe732c7d4c81fb2baafb7ab9b55f
+VERDICT	mixed	-k	SAME
+mixed	-n 100	s819	0	100	3900	0fd38b103585fda7c24cc490166fd24bef68655c614d671cea53ad00778cfe62
+mixed	-n 100	p820	0	100	3900	0fd38b103585fda7c24cc490166fd24bef68655c614d671cea53ad00778cfe62
+VERDICT	mixed	-n 100	SAME
+mixed	-n 100 -r	s819	0	100	3900	a7399b4d34ffcb60bf0cc5fa211d800411fee3d43cb60ccccabb27255fcb45a5
+mixed	-n 100 -r	p820	0	100	3900	a7399b4d34ffcb60bf0cc5fa211d800411fee3d43cb60ccccabb27255fcb45a5
+VERDICT	mixed	-n 100 -r	SAME
+# new-255: 12 files
+new-255	-o export (forward)	s819	0	156000	5159143	ab2555b4234142d4c93d6564c23a999be6e7b0b2e0247bf90512fca4a90f3103
+new-255	-o export (forward)	p820	0	156000	5159143	ab2555b4234142d4c93d6564c23a999be6e7b0b2e0247bf90512fca4a90f3103
+VERDICT	new-255	-o export (forward)	SAME
+new-255	-o export -r	s819	0	156000	5159143	c28f6602f2664e18c322d77788f8f1616bd6f85104e0ca0ed75ae3d5cfa5bd1a
+new-255	-o export -r	p820	0	156000	5159143	c28f6602f2664e18c322d77788f8f1616bd6f85104e0ca0ed75ae3d5cfa5bd1a
+VERDICT	new-255	-o export -r	SAME
+new-255	--list-boots	s819	0	4	355	9344e8393a839a4279306efe10ebb1ce77af249bf47b0d3717ffc6cbf1e46648
+new-255	--list-boots	p820	0	4	355	9344e8393a839a4279306efe10ebb1ce77af249bf47b0d3717ffc6cbf1e46648
+VERDICT	new-255	--list-boots	SAME
+new-255	-b <newest boot id>	s819	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+new-255	-b <newest boot id>	p820	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+VERDICT	new-255	-b <newest boot id>	SAME
+new-255	-k	s819	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+new-255	-k	p820	0	4000	156000	f1f30d1a5004bd5869730a31a053463481340409c741abb1856943e289a670d7
+VERDICT	new-255	-k	SAME
+new-255	-n 100	s819	0	100	3900	b29d4cd059897ed107d2c555870e2c68fc826dbb97992d42f455c1ea5434d149
+new-255	-n 100	p820	0	100	3900	b29d4cd059897ed107d2c555870e2c68fc826dbb97992d42f455c1ea5434d149
+VERDICT	new-255	-n 100	SAME
+new-255	-n 100 -r	s819	0	100	3900	b44a191806d12de8adf24e028902927410df26aa2edd72923f050f3a88216e42
+new-255	-n 100 -r	p820	0	100	3900	b44a191806d12de8adf24e028902927410df26aa2edd72923f050f3a88216e42
+VERDICT	new-255	-n 100 -r	SAME
+# which branch of journal_file_read_tail_timestamp() runs: gdb on the 8.20 build with its separate debug symbols (script: tail.gdb)
+## gdb, old-249: header_size seen at each call of journal_file_read_tail_timestamp()
+    264 hs=256 has_tail_entry_offset=0
+(gdb output: 275 lines; lines that are not hits:)
+Function "journal_file_read_tail_timestamp" not defined.
+Breakpoint 1 (journal_file_read_tail_timestamp) pending.
+warning: Error disabling address space randomization: Operation not permitted
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Nov 14 22:13:43 fx kernel: D f11 e0995
+## gdb, mixed: header_size seen at each call of journal_file_read_tail_timestamp()
+     96 hs=256 has_tail_entry_offset=0
+    168 hs=272 has_tail_entry_offset=1
+(gdb output: 275 lines; lines that are not hits:)
+Function "journal_file_read_tail_timestamp" not defined.
+Breakpoint 1 (journal_file_read_tail_timestamp) pending.
+warning: Error disabling address space randomization: Operation not permitted
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Nov 14 22:15:31 fx kernel: D f11 e0995
+## gdb, new-255: header_size seen at each call of journal_file_read_tail_timestamp()
+    264 hs=272 has_tail_entry_offset=1
+(gdb output: 275 lines; lines that are not hits:)
+Function "journal_file_read_tail_timestamp" not defined.
+Breakpoint 1 (journal_file_read_tail_timestamp) pending.
+warning: Error disabling address space randomization: Operation not permitted
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Nov 14 22:13:43 fx kernel: D f11 e0995
