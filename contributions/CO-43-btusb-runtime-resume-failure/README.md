@@ -25,6 +25,18 @@ operator adds his own). checkpatch `--strict --no-tree` reports only the missing
 plus on patch 5 an unknown commit id (no tree) and two CamelCase notes for the USB core's own
 `idVendor`/`idProduct`.
 
+**Note of 2026-11-16 (the state is no longer "five patches"):** the 11-13 list below is kept as
+written. Since then: **E and A** go alone; **B2** (replacing B) and **D v2** (replacing D) are
+**held**, because D v2 registers `.reset_resume`, which suppresses `needs_binding`, so a system
+reset-resume would no longer rebind the interface (item 0 below; `send-series-20261114/HELD.md`);
+two more patches, for **BT-24 and BT-25**, are packaged on E alone
+(`send-bt24-bt25-20261114/`); **C** stays an RFC. Patch 3's message (it says the system
+resume path is meant to stay as it is) and the cover letter's paragraph on the system path in
+`send-series-20261114/` rest on a premise that is refuted; those texts are not to be reused. kmemleak counts for BT-25 on E alone: the first run
+(`results/co43-d2-series-bt24-bt25-2026-11-14/RESULTS.md`) found leaked objects in 11 of 12
+fault runs, the re-run kept in `send-bt24-bt25-20261114/logs/kml-e.txt` in 12 of 12; with the
+fix, none in 12 of 12 in both. The send package's cover quotes the re-run.
+
 **E and A are packaged to send alone** (2026-11-13/14): [`send-20261113/E/`](send-20261113/E/)
 and [`send-20261113/A/`](send-20261113/A/), each with `CHECKS.md`, `NOTES-FOR-OPERATOR.md` and the
 exact commands; `git send-email` dry runs OK on 11-14 (`send-20261113/dry-run-20261114/`). The

@@ -3,6 +3,10 @@
 **State:** investigating. Confirmed in the HCI capture, the log and the source on 2026-10-21;
 no reproducer or patch yet.
 
+*(Note of 2026-11-16: the GNOME half of this item, the silent failure of a failed setup, is now
+held by [CO-42](../CO-42-gnome-bluetooth-silent-pairing-failure/README.md); the BlueZ half
+(`src/adapter.c`, `src/eir.c`) stays here.)*
+
 **Target:** BlueZ (`src/adapter.c`, `src/eir.c`); GNOME Settings / gnome-bluetooth (the silent
 failure); possibly a note to Shure.
 

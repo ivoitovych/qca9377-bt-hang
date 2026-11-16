@@ -1,5 +1,14 @@
 # CO-35 — BT-10: the L2CAP ECRED deferred-accept hang on the stable lines
 
+> **Note of 2026-11-16 (newer than the banner below):** the package to send is
+> `review-fixes-20261114/` (notes, the reduced prerequisite), with the request, the SCI request,
+> the covers and the full backports copied into `review-fixes-20261114/mail-from-send-20261114/`;
+> `send-20261114/`, `send-20261102/`, `send/` and `send-20261101-draft/` are superseded (the
+> "final package `send-20261102/`" below is out of date). The mails cover 7.3.y, 6.18.y, 6.12.y
+> and 6.6.y; 6.1.y, 5.15.y and 5.10.y hang only with the non-default `enable_ecred` parameter and
+> are not covered. The six backports carry the author's Signed-off-by (see the table "What to
+> send" in `../README.md`).
+
 > **Current state, 2026-11-12** (the index `../README.md` is the current record; the text below
 > is at its 2026-10-28 state): **nothing sent.** 7.2.y has ended (7.2.15), so the request is for
 > 7.3.y only; the final package is `send-20261102/`; the patch-id identity claim is dropped

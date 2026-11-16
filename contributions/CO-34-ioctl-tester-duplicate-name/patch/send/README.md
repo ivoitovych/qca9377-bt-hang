@@ -1,5 +1,8 @@
 # CO-34 — the send package (for review before sending)
 
+**Note of 2026-11-16: this package was sent and applied** (sent 2026-10-28 06:16 +0100, applied as
+`3e5b0da969c2`, released in BlueZ 5.88; see `../../README.md`). The text below is the pre-send state, kept as written.
+
 **One mail, BlueZ, not sent.** The file to send is
 [`0001-ioctl-tester-Fix-name-of-the-3-DH-packet-type-test.patch`](0001-ioctl-tester-Fix-name-of-the-3-DH-packet-type-test.patch),
 exactly as it stands (BlueZ commit `1012a6df2` on master `b0bf49270d44`).

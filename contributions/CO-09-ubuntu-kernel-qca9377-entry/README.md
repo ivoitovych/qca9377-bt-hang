@@ -14,7 +14,11 @@
 > The laptop runs `-42` with E3. When `-43` is installed: `scripts/btusb-has-device.py` on its stock
 > btusb, then E3 retires. The post-install hook is ready, not installed.
 
-**State:** waiting. It will probably arrive with Ubuntu's stable updates; a request would only
+*(Note of 2026-11-16: the "State" paragraph below is the state of 2026-11-05 to 11-11 and is
+superseded by the banner above: done. The banner gives 22:57 for the `-43` boot; `docs/STATUS.md`
+gives 22:55 in two places. Which is right is not settled here: it needs the boot's journal.)*
+
+**State (2026-11-11, superseded):** waiting. It will probably arrive with Ubuntu's stable updates; a request would only
 make it sooner. **2026-11-11:** `7.0.0-43.43~24.04.1`, in noble-proposed since 11-05, carries it
 (its stock btusb: `FOUND 13d3:3503`); not yet in updates or security. A kernel post-install hook
 is ready, not installed: `../../results/laptop-only-work-2026-11-11/e3-kernel-hook/`.

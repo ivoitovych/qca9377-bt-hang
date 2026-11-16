@@ -9,6 +9,22 @@ work is in [`backport/`](backport/README.md):
 - a test plan run on base first: 0/70 → 70/70 on the trigger, and no other
   test changed.
 
+**Note of 2026-11-16 (which build is staged):** the package staged in the headset kit
+(`artifacts/bluez-5.72-0ubuntu5.9~co03.1/bluez_5.72-0ubuntu5.9~co03.1_amd64.deb`, SHA-256
+`ffbedfd78fcdc124a343070663bb45739e554aa750c52bd514cb527d23b40c4a`, the value in
+`results/laptop-only-work-2026-11-11/headset-session/SESSION-CHECKLIST.md`) was read without
+installing it: `dpkg-deb -I` gives `bluez 5.72-0ubuntu5.9~co03.1`, and its changelog
+(`dpkg-deb -x`, `changelog.Debian.gz`) lists five patches: `co03-01` (adapter: short start
+discovery reply, `a734b06059cb`) and `co03-02` (a2dp: NULL stream in `transport_cb`,
+`0bed9886cff3`), which are the BT-7 fixes, and `co03-03` to `co03-05` (U12: `3d9900eb754d`'s
+helper part, `a14d59725ef3`, `664a5d3785a1`). Its `bluetoothd` has SHA-256 `59d2ea79...` (the
+value `docs/STATUS.md` gives). So the staged `~co03.1` build **does carry the BT-7 fixes**, as
+this page, BRIEF and STATUS say. The Ubuntu bundle's `5.72-0ubuntu5.9`
+(`../ubuntu-bluez-5.72-0ubuntu5.9-bundle/`) is a different build and **does not**: its notes
+say "the final CO-03 candidate left them out" (it carries only the three U12 patches). Both
+statements are true; they are about two builds. The version `~co03.1` sorts below the bundle's
+`5.72-0ubuntu5.9`.
+
 The facts and steps below are the state before that work.
 
 **Target:** Ubuntu 24.04's `bluez` (5.72), through a Launchpad bug with a tested backport.

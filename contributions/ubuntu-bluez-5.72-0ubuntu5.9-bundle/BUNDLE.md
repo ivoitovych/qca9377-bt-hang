@@ -20,7 +20,7 @@ Series order (patches 1 to 10 after `regression-a2dp-sep-cache.patch`): btmon (1
 
 ## Left out on purpose
 
-- The two BT-7 crash fixes of CO-03's five-patch build (`a734b06059cb` adapter, `0bed9886cff3` a2dp, both upstream in 5.88): the final CO-03 candidate left them out, they were never exercised by a test, and no Ubuntu series carries them. They apply on top of the bundle (`patch --dry-run`, one offset of one line); adding them is the operator's call (they would need their own bug and test).
+- The two BT-7 crash fixes of CO-03's five-patch build (`a734b06059cb` adapter, `0bed9886cff3` a2dp, both upstream in 5.88): the final CO-03 candidate left them out, they were never exercised by a test, and no Ubuntu series carries them. They apply on top of the bundle (`patch --dry-run`, one offset of one line); adding them is the operator's call (they would need their own bug and test). **Note of 2026-11-16:** this is about the bundle's `5.72-0ubuntu5.9`. The package staged for the headset session, `5.72-0ubuntu5.9~co03.1` (CO-03, 2026-10-31), is the five-patch build and does carry the two BT-7 fixes (its changelog lists `co03-01` and `co03-02`); the two builds differ on this point, see `../CO-03-bluez-u12-backport/README.md`.
 - Newer series: see "SRU order" below.
 
 ## What was shown (details and commands: CHECKS.md)

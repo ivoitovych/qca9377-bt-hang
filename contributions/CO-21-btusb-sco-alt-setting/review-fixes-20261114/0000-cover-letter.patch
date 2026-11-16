@@ -20,12 +20,11 @@ ignored.
 
 Patch 2 needs patch 1.
 
-Changes since the first draft: the air mode is stored before the
-connection is marked connected; one helper takes both counts in one
-pass under hdev->lock (lockdep_assert_held()) instead of two separate
-walks under RCU, which could see no CVSD link, then a CVSD link come up
-and the transparent one go down, and so select alternate setting 0
-with a link up.
+The air mode is stored before the connection is marked connected. One
+helper takes both counts in one pass under hdev->lock
+(lockdep_assert_held()) instead of two separate walks under RCU, which
+could see no CVSD link, then a CVSD link come up and the transparent
+one go down, and so select alternate setting 0 with a link up.
 
 Tested with a userspace controller attached over usbip to a QEMU guest
 (the real btusb and core; KASAN, lockdep, four CPUs): five scenarios

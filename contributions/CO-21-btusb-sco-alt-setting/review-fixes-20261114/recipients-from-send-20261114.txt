@@ -1,0 +1,20 @@
+Recipients for the CO-21 pair ("Bluetooth: Keep the air mode of SCO links that came up" and
+"Bluetooth: btusb: Pick the SCO alt setting from links that are up")
+
+From scripts/get_maintainer.pl (default options) on each patch, at the top of bluetooth-next
+da3cc02587c6, 2026-11-14 (CHECKS.md has the command and the output). Send the two as one series.
+
+To:  Marcel Holtmann <marcel@holtmann.org>            maintainer: BLUETOOTH SUBSYSTEM / DRIVERS
+To:  Luiz Augusto von Dentz <luiz.dentz@gmail.com>    maintainer: BLUETOOTH SUBSYSTEM / DRIVERS
+To:  linux-bluetooth@vger.kernel.org                  list
+Cc:  Johan Hedberg <johan.hedberg@intel.com>          blamed_fixes of patch 2 (1/1)
+Cc:  Hsin-Yu Chao <hychao@chromium.org>               blamed_fixes of patch 2 (1/1)
+Cc:  Chethan T N <chethan.tumkur.narayan@intel.com>   blamed_fixes of patch 2 (1/1)
+Cc:  Amit K Bag <amit.k.bag@intel.com>                blamed_fixes of patch 2 (1/1)
+Cc:  linux-kernel@vger.kernel.org                     open list
+
+The four blamed_fixes addresses are what the script prints for patch 2 (they touched the code that
+the Fixes: commit baac6276c0a9 and its neighbours changed); the operator may drop any of them, the
+script's output stays in CHECKS.md. Only if the operator adds "Cc: stable@vger.kernel.org" (see
+NOTES-FOR-OPERATOR.md, decision 1) does git send-email add the stable list from the body. Never send
+to the stable list on its own.
