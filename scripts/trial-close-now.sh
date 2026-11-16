@@ -32,6 +32,13 @@
 # controller.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# one optional argument, and only --reopen: anything else used to be ignored, and a typo
+# (--reopn) closed the trial without opening the next one
+case "${1:-}" in
+    ""|--reopen) ;;
+    *) echo "usage: trial-close-now.sh [--reopen]   (not '$1')" >&2; exit 2 ;;
+esac
+(( $# <= 1 )) || { echo "usage: trial-close-now.sh [--reopen]" >&2; exit 2; }
 CUR=/run/bt-trial/current
 [[ -r "$CUR" ]] || { echo "no open trial ($CUR)" >&2; exit 1; }
 start=$(grep '^start=' "$CUR" | cut -d= -f2)
@@ -41,6 +48,7 @@ n=$(grep '^n=' "$CUR" | cut -d= -f2)
 [[ "$start" =~ ^[0-9]+$ && -d "$dir" && -n "$build" ]] || { echo "$CUR is incomplete" >&2; exit 1; }
 cp "$CUR" "$dir/current-at-close.txt" || exit 1
 empty=$(mktemp -d "$HERE/tmp/trial-close-nocapture.XXXXXX") || exit 1
+trap 'rm -rf "$empty"' EXIT
 P="$HERE/tools:$HERE/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 echo "closing $build #$n (opened $(date -d "@$start" '+%Y-%m-%d %H:%M:%S'))"
@@ -59,7 +67,9 @@ tail -n 1 "$HERE/evidence/trials/results.tsv"
 
 t0=$(date +%s)
 python3 -I "$HERE/scripts/trial-sco-decode.py" "$start" "$end" > "$dir/sco-params.txt" 2>&1
-echo "sco decode: rc=$?, $(( $(date +%s) - t0 )) s"
+decode_rc=$?
+echo "sco decode: rc=$decode_rc, $(( $(date +%s) - t0 )) s"
+(( decode_rc == 0 )) || echo "sco decode FAILED (rc=$decode_rc): $dir/sco-params.txt is not a complete decode" >&2
 
 if [[ "${1:-}" == --reopen ]]; then
     env -i PATH="$P" HOME="${HOME:-/root}" LANG=C.UTF-8 \
@@ -69,3 +79,4 @@ if [[ "${1:-}" == --reopen ]]; then
         "$HERE/tools/bt-trial" step "opened by hand mid-boot (scripts/trial-close-now.sh --reopen) after $build #$n was closed by hand; not aligned with the boot"
     cat "$CUR"
 fi
+exit $(( decode_rc != 0 ))

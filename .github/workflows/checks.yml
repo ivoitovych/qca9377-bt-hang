@@ -63,10 +63,12 @@ jobs:
           mapfile -t commits < <(git rev-list "$range")
           # A forced update of main measures from its own merge base with
           # origin/main, which is the pushed tip: an empty range. Zero commits
-          # examined must never read as "all fine", so the tip is examined alone.
+          # examined must never read as "all fine", so the newest 50 commits of the
+          # pushed tip are examined (the rewritten ones are among them: the old tip
+          # of a forced update is not in the checkout to measure from).
           if (( ${#commits[@]} == 0 )); then
-            echo "::warning::$range holds no commit (a forced update, or a ref created at an existing commit): examining the pushed tip $AFTER alone"
-            commits=("$AFTER")
+            echo "::warning::$range holds no commit (a forced update, or a ref created at an existing commit): examining the newest 50 commits of $AFTER"
+            mapfile -t commits < <(git rev-list -n 50 "$AFTER")
           fi
           for c in "${commits[@]}"; do
             [[ -n "$c" ]] || continue

@@ -64,7 +64,12 @@ elif [[ -n "$RANGE_HEAD" ]]; then
     # new branch (all-zero base) that is every commit no remote has yet.
     adds() { grep '^+' | grep -v '^+++ ' | sed 's/^+//'; }
     if [[ "$RANGE_BASE" =~ ^0+$ ]]; then
-        steps=$(git log -p --format= --no-color "$RANGE_HEAD" --not --remotes -- 2>/dev/null | adds)
+        # "no remote has it yet": judged against the remote the push goes to when the
+        # caller says which (BT_PUSH_REMOTE, set by the pre-push hook to its remote
+        # name), as repo-save does, because a commit that only a PRIVATE remote holds
+        # is not published; without it, every remote counts (the old behaviour).
+        if [[ -n "${BT_PUSH_REMOTE:-}" ]]; then notrem=(--remotes="$BT_PUSH_REMOTE"); else notrem=(--remotes); fi
+        steps=$(git log -p --format= --no-color "$RANGE_HEAD" --not "${notrem[@]}" -- 2>/dev/null | adds)
     else
         steps=$(git log -p --format= --no-color "$base..$RANGE_HEAD" -- 2>/dev/null | adds)
     fi
@@ -237,9 +242,9 @@ ALLOW_RE=$(sed 's/[][\.*^$()+?{}|]/\\&/g' <<<"$ALLOW_MAIL")
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|example\.(com|org))$' \
         | grep -viFx 'giometti@linux.it' \
-        | grep -viE '^(noreply|no-reply)@' \
+        | grep -viE '^(noreply|no-reply)@(users\.noreply\.)?github\.com$' \
         | { [[ -n "$ALLOW_MAIL" ]] && grep -viE "^([0-9]{14}\.[0-9]+-[0-9]+-)?${ALLOW_RE}\$" || cat; } \
-        | grep -viE '^modprobe@|^systemd-' \
+        | grep -viE '^(modprobe|systemd-[a-z0-9-]+)@[a-z0-9._-]+\.(service|socket|timer|target|mount|path|slice)$' \
         | { [[ -n "$PUB_EXACT" ]] && grep -viFx -f <(printf '%s\n' "$PUB_EXACT") || cat; } \
         | { [[ -n "$PUB_DOMS" ]] && grep -viE "($PUB_DOMS)\$" || cat; } \
         | sort -u)

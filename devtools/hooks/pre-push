@@ -27,7 +27,7 @@ while read -r lref lsha rref rsha; do
 	if [[ "$base" != "$ZERO" ]] && ! git cat-file -e "$base^{commit}" 2>/dev/null; then base="$ZERO"; fi
 	refs=$((refs + 1))
 	echo "pre-push: scanning $lref → $REMOTE_NAME $rref"
-	"$ROOT/devtools/repo-scan" "$ROOT" --range "$base" "$lsha" || rc=1
+	BT_PUSH_REMOTE="$REMOTE_NAME" "$ROOT/devtools/repo-scan" "$ROOT" --range "$base" "$lsha" || rc=1
 done
 if (( rc != 0 )); then
 	echo "pre-push: publish scan FAILED: nothing was pushed to $REMOTE_NAME" >&2
