@@ -8,6 +8,9 @@ consists of:
 - a reproducer and its reference output;
 - the two quilt patches, the debdiff against 8.19, and the same change as a packaging-branch commit.
 
+This is the second revision: the title is neutral, the Test Plan uses a frozen dataset, and the safety
+section rests on measurements of the exact packages.
+
 Please review it as the Ubuntu SRU team and the systemd package maintainers would. Hard objections
 first, then weaker ones. For each point, say what to change.
 
@@ -29,24 +32,30 @@ first, then weaker ones. For each point, say what to change.
    - `--merge`, `--file=` on another machine's files, and journal namespaces;
    - libsystemd0 consumers other than journalctl;
    - the new `-EBADMSG` path of the second commit;
-   - an archived file that is vacuumed (unlinked) while a reader has it open. Before, the per-entry
-     fstat() saw that and returned -EIDRM, which the callers ignore or treat as "no answer"; after,
-     the mapped header is read. Upstream later changed this area (101b8633c2, "recover iteration over
-     vacuumed files", 2026) without naming these commits.
+   - an archived file that is vacuumed (unlinked, then hole-punched or truncated) while a reader has it
+     open. Before, the per-entry fstat() saw that and returned -EIDRM, which the callers ignore or treat
+     as "no answer"; after, the mapped header is read. This was measured on disposable fixtures in about
+     1 400 runs (bug text, Where problems could occur): both builds behave alike. Upstream later changed
+     this area (101b8633c2, "recover iteration over vacuumed files", 2026) without naming these commits;
+     it is not included;
+   - imported journals whose header machine ID differs from the entries' (upstream ae940730c6 fixes an
+     ordering defect there that exists without these commits; not included).
 3. **The two patches on 255.4.** Do you see a correctness problem? Are there upstream commits that
    these two need on 255.4 but that are not included? PR #30209 had four more:
    - bd1af1d5fb SD_JOURNAL_ASSUME_IMMUTABLE;
    - f7f062bf9f, its use;
    - cb2b0326ee, Hashmap to array;
    - 63d2c7554e, logs-show reads the timestamp only when needed.
-4. **The Test Plan.** Can a verifier who did not write it follow it on an ordinary noble machine? Is
-   the "same output" step (a hash of `-o export` over the archived files with `--until`) sound, or can
-   archived files change between the two runs?
-5. **The numbers.** Is any figure or comparison misleading? Is the statement about default installs
-   right: `SystemMaxFiles=100`, so up to about 100 archived files plus the active ones? Should the
-   container figures be dropped entirely?
-6. **The route.** Is a merge proposal against `ubuntu-noble` or a debdiff for `ubuntu-sponsors` the
-   better first step for an outside contributor? Should it wait until 8.19 is released?
+4. **The Test Plan.** Can a verifier who did not write it follow it on an ordinary noble machine? The
+   "same output" step now runs on a directory of copies made once (`compare-frozen.sh`), checks exit
+   statuses and non-empty output, and compares hashes; is that sound?
+5. **The numbers.** The headline is now completed host runs on frozen copies, with a system-call count.
+   Is any figure or comparison still misleading? The file-count statement now reads: `SystemMaxFiles=100`
+   counts active and archived files together, and the size limits alone keep about 8 to 32 full files;
+   is that right? The container figures are kept in the evidence only, as reproducibility information.
+6. **The route.** One route is now proposed: a debdiff for `ubuntu-sponsors`, not waiting for 8.19's
+   release, with the PPA build and the autopkgtests marked pending. Is that the better first step for an
+   outside contributor?
 
    The test build ran in a container, where two unrelated tests fail with and without the patches.
    Is a build in a Launchpad PPA, on all architectures, expected before the request?

@@ -4,7 +4,9 @@
 
 **State (2026-11-16):**
 - cause found in the source;
-- upstream's fix identified and measured on the laptop and in containers;
+- upstream's fix identified and measured on the laptop, in containers, and (second revision, after
+  reviewer 7) on frozen copies on the host, in a booted noble guest, on older-format and imported
+  journals, and with files removed under an open reader;
 - an Ubuntu 24.04 stable-update request drafted in [`sru-noble/`](sru-noble/README.md), with its
   review request in [`sru-noble-review-request.md`](sru-noble-review-request.md);
 - packaging done: two quilt patches, a debdiff against 8.19, the packaging-branch commit, an amd64
@@ -42,7 +44,11 @@ in `sru-noble/evidence.md`).
 - A and B are in every release since v256 and in Ubuntu since 24.10. They are not in noble (8.18,
   or 8.19 in -proposed), and not in upstream v255-stable.
 - PR #30209 was opened during the v255 freeze ("not a v255 material").
-- Neither commit has a later fix upstream.
+- No follow-up that A and B require was identified in the inspected history (commit messages and
+  `Fixes:` trailers searched; that cannot prove none exists). Two later changes touch related
+  behaviour and are documented, not proposed: `101b8633c2` (recover iteration over vacuumed files) and
+  `ae940730c6` (prefer the machine ID from the tail entry, v262; the ordering defect it fixes exists
+  without A and B and the patched build reproduces stock's order).
 - With A and B, the per-entry cost still grows with the number of files:
   - upstream issue #31486 (open, 2024);
   - PR #44579 (open, 2026-11-01): a cached winner and runner-up, rework requested.
@@ -65,13 +71,17 @@ Host, the laptop's journal:
 | 100 | 11 361 | 133 097 | 12x |
 | 479 | 2 292 | 56 894 | 25x |
 
-- **Everyday queries:** `journalctl -b` is 35 times faster, 48 s against about 28 min.
-- **Containers:** they make every system call dearer, so the gain there looks larger (15–77 times).
-  The host's figures are the ones to quote.
-- **Growth with the number of files:**
-  - with A and B, the exponent is still 2.15 on synthetic data (1.50 on the real journal);
-  - our priority-queue prototype on main is flat: exponent 1.13, about 205 000 to 305 000 lines/s
-    at every file count;
+- **Everyday queries:** `journalctl -b` is 35 times faster by rate: 48 s
+  patched against an estimated 28 min (extrapolated from a run capped at 120 s).
+- **Containers:** the baseline was slower in the container setup, so the gain there looks larger
+  (15–77 times); the cause was not isolated. The host's figures are the ones to quote.
+- **Completed host runs (2026-11-16, frozen copies):** `-b all` at 100 files 907.8 s against 83.8 s
+  (mixed), 1098.3 s against 93.1 s (system only); no cap hit. Records on the research branch,
+  `results/journalctl-noble-sru-verification-2026-11-16/4F-host-headline-numbers/`.
+- **Growth with the number of files** (estimates from capped or prefix runs, not used in the SRU text):
+  - with A and B, the fitted exponent is still 2.15 on synthetic data (1.50 on the real journal);
+  - our priority-queue prototype on main is flat: fitted exponent 1.13, about 205 000 to 305 000
+    lines/s at every file count;
   - the prototype is not for sending.
 - **The reproducer:** `sru-noble/reproducer/`, no root, temporary directory only. Tested as an
   unprivileged user in a fresh ubuntu:24.04 container, with a before-and-after check of the system's
@@ -100,12 +110,14 @@ at different priorities, on an older journal. It is not directly comparable with
 ## Plan
 1. **The noble stable update:**
    - one Launchpad bug with a noble task;
-   - a merge proposal into `ubuntu-noble`, or a debdiff for `ubuntu-sponsors`, carrying A and B;
-   - after 8.19.
+   - one route, a debdiff for `ubuntu-sponsors`, carrying A and B (a merge proposal into
+     `ubuntu-noble` is the alternative, not an addition);
+   - the bug and the review request do not wait for 8.19's release; the upload is coordinated with it
+     and the base version rechecked.
    - Packaging tests: done, in a container. All journal tests pass. test-fd-util and test-capability
      fail on unpatched 8.19 as well.
-   - Not done: other architectures, a PPA build (it needs the operator's Launchpad account), and the
-     autopkgtests.
+   - Pending: other architectures, a PPA build (it needs the operator's Launchpad account; useful
+     evidence, not a prerequisite to filing), and the autopkgtests (marked pending in the bug).
    - Packaging results: branch `research/journalctl-file-scaling`, path
      `results/journalctl-sru-packaging-2026-11-16/`
      ([link](https://github.com/ivoitovych/qca9377-bt-hang/tree/research/journalctl-file-scaling/results/journalctl-sru-packaging-2026-11-16)).

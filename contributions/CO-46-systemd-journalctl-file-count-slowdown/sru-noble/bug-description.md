@@ -3,7 +3,7 @@
 Package: systemd (Ubuntu). Series task: Noble. Tag: `noble`.
 
 **Title:**
-journalctl is 7-25 times slower than needed on journals with many files (fixed upstream in v256)
+journalctl performs excessive per-file stat calls when reading multi-file journals
 
 ---
 
@@ -11,9 +11,24 @@ journalctl is 7-25 times slower than needed on journals with many files (fixed u
 
 On noble's systemd 255.4, reading the journal costs one fstat() on every open journal file for each
 entry printed. `journal_file_read_tail_timestamp()` re-checks each file's tail through fstat() and the
-file's mtime on every step of the merge across files. With 100 journal files open, journalctl makes
-about 478 system calls per printed line. This also affects every other reader that uses the same
-sd-journal code.
+file's mtime on every step of the merge across files. With 100 journal files open, a measured
+`journalctl` made 540 to 560 fstat-family system calls per printed line. Every other reader that uses
+the same sd-journal code is affected too.
+
+The effect is that retrieving a journal for diagnosis becomes slow. A completed example on a host (not
+a container), 100 archived files of a synthetic journal modelled on a default install (system and user
+files; 4.2 million lines), `journalctl -b all`: 907.8 s with 255.4-1ubuntu8.19 and 83.8 s with the same
+package plus the two commits below. The same query on system files only (4.8 million lines) took
+1098.3 s and 93.1 s. Nothing was cut short and no figure is projected:
+
+  files   mixed 8.19 -> patched          system only 8.19 -> patched
+     25    42.9 s ->  8.3 s ( 5.1x)       54.6 s -> 10.5 s ( 5.2x)
+     50   195.4 s -> 24.2 s ( 8.1x)      249.6 s -> 30.2 s ( 8.3x)
+    100   907.8 s -> 83.8 s (10.8x)     1098.3 s -> 93.1 s (11.8x)
+
+At 100 files, apport's `journalctl --quiet -b -a --system` took 23.6 s against 2.9 s, and sos's
+`journalctl --no-pager --reverse`, cut at its 100 MB limit, 220 s against 19.6 s (233.8 s on system
+files only, against sos's own 300 s command limit). One run per figure.
 
 Upstream fixed the system calls in v256 with two commits from https://github.com/systemd/systemd/pull/30209:
 
@@ -22,41 +37,31 @@ Upstream fixed the system calls in v256 with two commits from https://github.com
    the caller that some new journal entries added"
 
 The file's state and tail-entry offset are read from the header, which is always mapped, instead of
-calling fstat(). An archived file whose tail has been read is not checked again. With the two commits
-the system calls per printed line fall from about 478 to 0.1 (100 files).
+calling fstat(). An archived file whose tail has been read is not checked again. Under `strace -c -f`
+with 100 files, printing 3 000 or 30 000 lines, 8.19 made 540 to 560 fstat-family calls per printed
+line (16.2 to 16.8 million in 30 000 lines); the patched package made 355 in total, whatever the number of
+lines printed.
 
 Both commits are in every upstream release since v256, and in Ubuntu since 24.10. They are not in
-noble, in noble-proposed (8.19) or in upstream's v255-stable. They apply to 255.4-1ubuntu8.18
-unchanged.
+noble, in noble-proposed (8.19) or in upstream's v255-stable. They apply to 255.4-1ubuntu8.18 and to
+8.19 unchanged.
 
-Measured on a 24.04.5 machine (Ryzen 7 5825U, NVMe, ext4), with the binaries run on the host, not in a
-container. "lines/s" is journalctl's output rate. "Synthetic" means archived files of 2 000 entries
-each. "Real" means the newest K files of that machine's own journal, read with --file=. Median of 3
-runs.
+Additional evidence, a machine whose own settings keep 479 files (`SystemMaxUse=16G`,
+`SystemMaxFiles=1000`): `journalctl -b` printed 4.5 million lines in 48 s patched; the 8.18 binary was
+capped at 120 s at 2 678 lines/s, and the time it would need, about 28 minutes, is an estimate from that
+rate. Measured rates for 25 to 800 files are in the evidence attachment.
 
-  files   synthetic, 8.18 -> patched   real journal, 8.18 -> patched
-     25      19 218 ->  178 586 ( 9x)       29 194 -> 201 342 ( 7x)
-     50       8 269 ->  123 012 (15x)       19 438 -> 190 355 (10x)
-    100       4 563 ->   84 104 (18x)       11 361 -> 133 097 (12x)
-    200       1 395 ->   34 043 (24x)        5 847 -> 119 474 (20x)
-    400         633 ->   13 787 (22x)        2 885 ->  71 685 (25x)
+File counts. `SystemMaxFiles=100` limits the total number of journal files in a directory, active
+files included; only archived files can be deleted to meet it. The default size limits would on their
+own keep about 8 to 32 full-size files; a directory approaches 100 files through many small files
+(unclean shutdowns, monthly rotation, hash-table rotation, many users). The 25, 50 and 100 file rows are
+a relevant range under the default limit, not what every installation reaches (derivation and public
+reports in the evidence attachment).
 
-Everyday queries on the same machine (479 files):
-
- - `journalctl -b` printed 4.5 million lines in 48 s patched. The 8.18 binary managed 2 678 lines/s,
-   about 28 minutes for the same output. `journalctl -k -b` was 54 s against about 33 minutes.
- - `journalctl -g <word>` over the newest 25 files took 42.8 s with 8.18 and 2.3 s patched.
- - The cheaper queries gained less, because they read few entries: `-n 100` 0.32 -> 0.10 s,
-   `-u <unit>` 0.29 -> 0.07 s, `--list-boots` 0.18 -> 0.15 s.
-
-That machine's journal is larger than the default (SystemMaxUse=16G, SystemMaxFiles=1000). A default
-install keeps up to 100 archived files (SystemMaxFiles=100), plus the active system and user files. The
-25 to 100 rows are the range a default install reaches.
-
-An independent report against upstream in 2023 measured about 10 times from caching the same tail
-timestamps: https://github.com/systemd/systemd/pull/29366. The remaining cost per entry still grows
-with the number of files; that is a separate upstream topic, not part of this request:
-https://github.com/systemd/systemd/issues/31486.
+Upstream issue https://github.com/systemd/systemd/issues/31486 describes a broader scaling problem with
+the number of files; these two commits do not fix it, they remove the system calls only. An independent
+2023 report measured about 10 times from caching the same tail timestamps:
+https://github.com/systemd/systemd/pull/29366.
 
 [ Test Plan ]
 
@@ -65,20 +70,28 @@ It writes synthetic journal files into one `mktemp -d` directory, using systemd-
 without a daemon. It reads them only with `journalctl --directory=`, removes the directory at the end,
 and never touches /var/log/journal or journald. Each run takes a few minutes.
 
-1. Install `systemd-journal-remote`, if it is not installed. Run
+1. Install `systemd-journal-remote` and `strace`, if they are not installed. Run
    `./journalctl-file-scaling-repro.sh /usr/bin/journalctl` and keep the output.
 2. Upgrade systemd and its binary packages from noble-proposed. Run the same command again.
-3. Expected: from K = 50 upward, the patched lines/s is at least 5 times the 8.18 figure. In the
-   attached reference run (a fresh ubuntu:24.04 container, unprivileged user), K = 100 went from 1 411
-   to 89 837 lines/s.
-4. Same output: before the upgrade, run
-   `journalctl --file='/var/log/journal/*/system@*.journal' -o export --until '<a time before the test>' | sha256sum`.
-   After the upgrade, run it again; the hash must be the same. Archived files do not change.
-   Also run `journalctl --list-boots`, before and after; it must give the same list.
-5. Files being written: `journalctl -f` in one terminal and `logger sru-test-$RANDOM` in another.
-   The line must appear at once. Also check that `journalctl -b`, `journalctl -b -1` and
-   `journalctl -u systemd-journald` show the same entries as before the upgrade.
-6. The systemd autopkgtests pass.
+3. Expected: the patched lines/s is several times the 8.19 figure from K = 50 upward (in the attached
+   reference run, K = 100 went from 1 411 to 89 837 lines/s; absolute figures differ between machines).
+   The structural check does not depend on the machine: copy 100 journal files as in step 4, run
+   `strace -c -f -o /tmp/s.txt journalctl --directory=<copies> --no-pager -o cat -n 3000 > /dev/null`
+   before and after the upgrade, and compare the fstat, newfstatat and statx counts in /tmp/s.txt. They
+   fall from about 1.6 million to a few hundred.
+4. Same output, on a frozen dataset. Make independent copies of a fixed set of archived files, once:
+   `mkdir ~/frozen && cp -- $(ls /var/log/journal/*/system@*.journal | head -n 25) ~/frozen/`
+   (copies, not hard links; vacuuming can deallocate an original), then `cd ~/frozen && sha256sum *.journal > files.sha256`.
+   Before the upgrade run `./compare-frozen.sh ~/frozen before.tsv`, after it `./compare-frozen.sh ~/frozen after.tsv`
+   (attached). The script runs `-o export` forward and reversed, `--list-boots`, `-b`, `-k -b` and `-n 100`
+   on that directory only, and exits non-zero if a query failed or printed nothing; `diff before.tsv
+   after.tsv` must print nothing, and `sha256sum -c files.sha256` must still pass.
+5. Files being written. Run `journalctl -f -o cat` in one terminal. In another run
+   `for i in $(seq 1 2000); do logger -t sru-test "n=$i"; done; sudo journalctl --rotate`.
+   Every line must appear at once, and afterwards `journalctl -o cat -t sru-test | sort | uniq -c | awk '$1 != 1'` must print
+   nothing and the count of lines must be 2 000. Also check that `journalctl -b` and `journalctl -b -1`
+   show the same entries as before the upgrade.
+6. The systemd autopkgtests: pending. No result exists yet; the results will be added to this bug.
 
 [ Where problems could occur ]
 
@@ -91,25 +104,55 @@ read again.
 If that decision were wrong for a file still being written, the newest timestamp kept for a boot
 would be stale. compare_boot_ids() uses those timestamps to order entries from different boots, so the
 visible effect would be entries from different boots in the wrong order when files are merged. It
-could also make `-b` or `--list-boots` pick the wrong boot, or `-f` show new entries late. Archived
-files cannot change, so the risk is limited to the active system and user journal files. Test plan
-steps 4 and 5 cover these cases.
+could also make `-b` or `--list-boots` pick the wrong boot, or `-f` show new entries late. This was
+tested on the exact packages (8.19 against 8.19 plus the two commits; evidence sections 1 and 2): a
+booted noble guest with journald writing two numbered streams of 24 000 lines through size rotations and
+`journalctl --rotate`, read by a concurrent `journalctl -f` and a later full read, showed no omission,
+duplicate or reordering in either build; files in the older format (no `tail_entry_offset`, written by
+systemd 249) read identically and the fallback branch was seen to run; imported and merged journals (five
+fixtures varying the header machine ID and the entry `_MACHINE_ID`) read identically; frozen copies of 4
+fixtures gave identical output in 36 comparisons.
 
-The second commit adds one new error: -EBADMSG, when a file's tail entry sits at the same offset as
-before but its data differs (a file rewritten in place). compare_boot_ids() treats any error as "no
-answer" and falls back to comparing realtime timestamps; the other callers ignore the result. So
-such a file would at worst be ordered by realtime, as entries from different machines already are.
+Archived files can disappear or change while a reader has them open: v255.4's vacuum calls
+unlinkat_deallocate(), which unlinks a file and then hole-punches or truncates it. The per-entry
+fstat() of 8.19 was not a complete barrier against that either, but the patched code detects a change
+at a different moment, so this was measured rather than argued. On disposable fixtures, 16 archived
+files, with a reader (journalctl forward, reverse and following, and a small sd-journal program,
+forward and reverse) consuming slowly while files were removed by plain unlink, by hole punching and by
+truncation, in about 1 400 runs:
+ - plain unlink: no error and no lost entry in either build;
+ - a file ahead of the reader hole-punched or truncated: `journalctl` exits 1 with "Failed to iterate
+   through journal: Bad message" in both 8.19 and the patched build (for example, forward with a
+   truncated next file: 20 of 26 runs stock, 18 of 26 patched);
+ - a truncated file that a reader has mapped: a program using sd-journal without a SIGBUS handler is
+   killed by SIGBUS, in both builds at similar rates (17 of 56 runs stock, 21 of 56 patched; not
+   significantly different, p = 0.55). The library does not install the handler; `journalctl` and
+   journald do, and `journalctl` was not killed in any run.
+No cell differed between 8.19 and the patched build at p < 0.05. Upstream commit 101b8633c2 ("journal:
+recover iteration over vacuumed files", 2026) handles failures after an entry was already selected; it
+is not part of these two commits, it is not included in this request, and neither build tested here has
+it. These tests are on synthetic fixtures of 16 files; they show no difference, not the absence of the
+failures that both builds share.
+
+The second commit adds one new error, -EBADMSG. It is returned in one place, after the tail entry has
+been read by a fallback path (the header offset could not be used, or the header's own tail timestamp was
+used) and the offset found equals the cached one but the cached boot ID, timestamps or machine ID differ.
+In the ordinary path, where the header's tail-entry offset equals the cached one, the function returns
+earlier and never reads the entry, so a tail entry rewritten at the same offset is not detected there.
+compare_boot_ids() treats any error as "no answer" and falls back to comparing realtime timestamps; the
+other callers ignore the result.
 
 The library code is shared: libsystemd0 gets the same change as journalctl. Other programs that read
 the journal through sd-journal take the same path.
 
-Both commits have been in upstream releases since v256 (June 2024), and in Ubuntu since 24.10. There
-is no later upstream commit that fixes or reverts them: no Fixes: line refers to them, and
-`git log --grep` on either hash finds only the commits themselves.
+Both commits have been in upstream releases since v256 (June 2024), and in Ubuntu since 24.10. No
+follow-up that these commits require was identified in the inspected upstream history (commit
+messages searched for the hashes and for Fixes: trailers, and the later changes to the file read). That
+search cannot prove none exists. Later changes that touch the area are listed separately under Other Info.
 
 The only journal patch in 8.19 (lp2088163-sd-journal-use-stat_verify_linked.patch) changes how
-journal_file_fstat() tests for a deleted file. It still returns -EIDRM for such a file, so it does
-not depend on the fstat() calls these commits remove.
+journal_file_fstat() tests for a deleted file and still returns -EIDRM for it. That does not show that
+a deletion is noticed at the same time as before; the measurements above are what covers that.
 
 [ Other Info ]
 
@@ -118,16 +161,27 @@ not depend on the fstat() calls these commits remove.
     - bd1af1d5fb and f7f062bf9f, a new SD_JOURNAL_ASSUME_IMMUTABLE flag and its use;
     - cb2b0326ee, internal data structure changes;
     - 63d2c7554e, an output path change.
-   The two proposed commits do not depend on them.
+   No dependency of the two proposed commits on them was found. The two commits are consecutive in the PR.
     - They apply to 255.4-1ubuntu8.19 without fuzz.
     - The package builds.
     - All journal unit tests of the package build pass (test-journal, -interleaving, -enum, -verify,
       -flush, -file, test-mmap-cache).
     - In a container build, test-fd-util and test-capability failed, and they fail the same way on
       unpatched 8.19 in that container.
- - Two later upstream changes in this area are not proposed either: 8f8ab4bf98 (rate-limited tail
-   refresh, v262) and 79e32e7c73 (not yet released). They are not in the development release, and on
-   255.4 they gave no measurable gain on top of the two commits.
+    - A build in a Launchpad PPA on all architectures has not been made yet; the autopkgtests have not
+      been run. Both are pending.
+ - Later upstream changes in this area that are not proposed:
+    - 8f8ab4bf98 (rate-limited tail refresh, v262) and 79e32e7c73 (not yet released): they gave no
+      measurable gain on top of the two commits on 255.4.
+    - 101b8633c2 (recover iteration over vacuumed files): see Where problems could occur.
+    - ae940730c6, "sd-journal: prefer machine ID from the tail entry" (v262). Journals imported with
+      systemd-journal-remote carry the receiving machine's ID in the file header and the originating
+      machine's ID in the entries; compare_boot_ids() then treats them as one machine and groups entries
+      by boot instead of interleaving them by time. The defect exists in 255.4 without these commits
+      and the patched build gives the same order as 8.19 (checked on fixtures that vary the header ID and
+      the entry ID), so these commits neither cause nor fix it. It is not included: it changes the
+      ordering of existing output, which is a separate decision from this fix.
  - The development release already has the fix (261.3), as do 25.04, 25.10 and 26.04.
- - Measured on that machine, in a container as well, the gains looked larger (15-77 times), because a
-   container makes each system call dearer. The figures above are the host's.
+ - Measured in a container, the 8.19 baseline was slower than on the host and the gains looked larger; the
+   cause was not isolated. Those figures are in the evidence attachment as reproducibility information
+   only; the figures in Impact are the host's.
