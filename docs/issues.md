@@ -16,7 +16,8 @@ audio) and `X-n` (off-topic) so exhibits and commits can cite them.
 ## Current state — 2026-11-15 (a pointer only; `docs/STATUS.md` has the state)
 
 - **New since the 11-12 block below:** `BT-17` to `BT-25` (11-12 to 11-14) and `M-4`, `M-5`
-  (11-14). Their sections stop at 11-13 or 11-14; the later state (B2, D v2 held, the BT-24 and
+  (11-14). Their sections stop at 11-13 or 11-14 (since 2026-11-16 each of `BT-18` to `BT-23`
+  opens with a 11-14 status line copied from its STATUS row); the later state (B2, D v2 held, the BT-24 and
   BT-25 package, the send directories) is in their rows in `docs/STATUS.md`. Where a section here
   says "five patches" for CO-43, that is the 11-13 candidate set (A, B, C, D, E); the series now
   is in `contributions/README.md`, "What to send".
@@ -156,6 +157,12 @@ What this update changes below, entry by entry:
   its fix works.
 
 ## Evidence model
+
+*Dated note, 2026-11-16: the two rules below stand. The causal graph and the `EX-016`/`EX-021`
+paragraphs are the model of 2026-09: since then the cause of BT-1 is known (the missing
+`13d3:3503` entry, fixed by `dc16388d45ec`), and BT-1's own section says the two-stage model is
+no longer established, only stage 1 is (below, "The two-stage model is no longer established").
+Read the graph as history; `docs/STATUS.md` has the current state.*
 
 Two rules govern how anything here is read. Both were bought with mistakes.
 
@@ -717,6 +724,8 @@ Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power
 
 ## M-3 — `mgmt_unregister()` from a notification callback leaks, or frees the next node
 
+**Status 2026-11-05 (added 2026-11-16 from the `docs/STATUS.md` row `M-3`): released in BlueZ 5.88** (tagged 2026-11-05; both commits in it; nothing left to do).
+
 **Status 2026-10-08: accepted.** Sent 05:41 +0200 (`patches/bluez/shared-mgmt/`, patchwork
 14873331 / 14873330). Applied to BlueZ master the same day by Luiz Augusto von Dentz as
 `ae23df052290` and `6f5eeb402d3b`. `git range-diff` against the sent commits shows both
@@ -915,7 +924,7 @@ second running the 3-DH test; found when `scripts/compare-tester-verdicts.py` re
 **Status 2026-10-28: confirmed in source, not reproduced; a cold path.** A new connection starts at
 `refcnt` 0, so a failed link allocation leaves it at −1, with no `disc_work` queued and still in
 the connection hash (bluetooth-next `hci_conn.c` around l.1914; since `06149746e720`). Found in the
-Sashiko-rule review of CO-02 (`contributions/CO-02-…/log.md`, 2026-10-27).
+Sashiko-rule review of CO-02 (`contributions/CO-02-sco-connect-reuses-closing-link/log.md`, 2026-10-27).
 **Reportable:** after CO-02 lands: a fault-injection reproducer, then a separate patch.
 
 ---
@@ -932,7 +941,7 @@ v6.12.114, `git grep getsockopt_iter -- net include` finds only `include/linux/n
 `net/bluetooth/l2cap_sock.c:2070`: nothing calls it, and L2CAP no longer sets `.getsockopt`.
 Found by the CO-35 backport runs: on plain v6.12.114 every L2CAP `getsockopt` in l2cap-tester
 returns `Operation not supported (95)`, 78 of 111 cases fail
-(`contributions/CO-35-…/experiments/results-backports-2026-10-28.md`). bluetoothd reads L2CAP
+(`contributions/CO-35-l2cap-ecred-defer-hang-stable/experiments/results-backports-2026-10-28.md`). bluetoothd reads L2CAP
 options with `getsockopt()` (security level, MTUs), so a 6.12.114 system is likely affected
 beyond the tester. 6.18.59 and 6.6.160 have no `getsockopt_iter` at all (unaffected); 6.1 and
 older not checked. `5bd0dec150f56` applies to v6.12.114 (`git apply --check`: hunks 2 and 3 at
@@ -954,7 +963,7 @@ v7.3 has the SCI feature `2f8784cfe8a9` ("Bluetooth: Add support for Shorter Con
 (SCI) feature", from v7.3-rc1) but not its fix `5874f8d03268` ("Bluetooth: Fix the LE Read
 Connection Interval response layout"; mainline, `Fixes:` tag, no `Cc: stable`, not in queue-7.3
 at 20:47 UTC). With it applied the SCI cases pass and the whole suite passes 111/111
-(`contributions/CO-35-…/experiments/results-7.3-and-older-2026-10-28.md`). The same stall is what
+(`contributions/CO-35-l2cap-ecred-defer-hang-stable/experiments/results-7.3-and-older-2026-10-28.md`). The same stall is what
 ended CO-35's first bisect, whose runs ran the whole suite. Ubuntu `7.0.0-42` is not affected (its
 `hci.h` has no `0x20a3`).
 **Reportable:** probably nothing: the `Fixes:` tag should bring it into 7.3.y through the stable
@@ -1065,7 +1074,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - So every idle period suspends it, and the first command after one resumes it. That fits candidate 1 and is not proof: the same was presumably true on every earlier E3 boot (same Kconfig, no override). Next: whether a recurrence again follows a suspend, which needs btusb debug or a runtime-PM trace.
 - **2026-11-13, read from the archived full kernel log (btusb debug was on, from `bt-dyndbg`; the earlier "debug off" line above is wrong):**
   - **The controller was runtime-suspended when the command was sent, and it never resumed.** btusb's `intf %p` prints (`btusb_suspend()`/`btusb_resume()`) show a device suspend at 18:00:28.857, 2.011 s after the last answer, and no `btusb_resume()` before the disconnect at 18:03:16. Monotonic times: suspended 160.83 s; command sent at 178.731; first USB reset at 184.023, 5.291 s later.
-  - Excerpts: `results/incident-2026-11-12-1803/excerpt-boot-1-btusb-suspend-cycles.txt` and `excerpt-boot-2-btusb-suspend-cycles.txt`, written by `tools/suspend-cycles.py`. The boot before (`7e87eae0`, same setup) resumed 8 times, including after suspends of 2,950 s and 4,250 s.
+  - Excerpts: `results/incident-2026-11-12-1803/excerpt-boot-1-btusb-suspend-cycles.txt` and `excerpt-boot-2-btusb-suspend-cycles.txt`, written by `results/incident-2026-11-12-1803/tools/suspend-cycles.py` (not under `tools/`; corrected 2026-11-16). The boot before (`7e87eae0`, same setup) resumed 8 times, including after suspends of 2,950 s and 4,250 s.
   - **Source reading (hypotheses, not findings):**
     - H1: the first reset is the USB core's reset-resume. `finish_port_resume()` retries a failed post-resume GET_STATUS (5,000 ms timeout) as a reset-resume, since `persist` is 1. That would explain why btusb's `Resetting usb device.` (`bt_dev_err`) never appears.
     - H2: `hci_cmd_timeout()` → `btusb_reset()` waited 5.3 s in `usb_autopm_get_interface()` behind that resume, then got `-EBUSY` (`rpm_resume()`'s parent check), so the command credit came back only at 186.083.
@@ -1096,6 +1105,8 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-18 — After a successful runtime reset-resume, btusb is never resumed and Bluetooth stays dead
 
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-18`): CO-43 D v2 (the reset queued only inside a runtime resume, PM reference held) ran 18 of 18 in the runtime matrix, but it is HELD: it breaks the system-resume rebind (`needs_binding`); the linux-usb question is drafted. The system path was judged by reading only.**
+
 **Status 2026-11-13: reproduced in emulation; fix candidate CO-43 D; not seen on the laptop (there the reset-resume failed).**
 - **What:** when a runtime resume fails and USB persist is on, the USB core resets the device. btusb has no `reset_resume` callback, so `usb_resume_interface()` only marks its interfaces for rebinding (`no reset_resume for driver btusb?`). The core rebinds marked interfaces only after a system resume (`usb_resume_complete()`) or a `usb_reset_device()`, not after a runtime resume (`drivers/usb/core/driver.c`, bluetooth-next `da3cc0258`).
 - **Effect:** btusb stays bound and is never resumed. `BTUSB_SUSPENDING` stays set and the suspend count is off by one, so every URB is parked on the deferred anchor. The controller answers USB requests, yet Bluetooth is dead until unplug or reboot.
@@ -1112,6 +1123,8 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
   - **Next:** the question goes to linux-usb as a USB core one first, with D as the btusb fallback (`reviews/2026-11-13T1600Z-bt17-patches-reviews-checks-and-plan.md`).
 
 ## BT-19 — `btusb_reset()` blocks the HCI workqueue behind a failing resume, and resets a reset-resumed device again
+
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-19`): B left a wedged controller dead (6 of 6); B2 removes the block (5.380 s to 0.002 s) and keeps that reset (3 of 3), but needs D, so it is HELD with D v2 (`results/co43-b2-and-runtime-d-2026-11-14/`).**
 
 **Status 2026-11-13: in the laptop's log (H2) and reproduced in emulation; fix candidate CO-43 B.**
 - **What:**
@@ -1133,26 +1146,32 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-20 — `btusb_waker()` swallows a failed resume
 
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-20`): CO-43 A has a send package, ready, nothing sent: `A-review-fixes-20261114/` under `send-20261113/` in the CO-43 dossier (it replaces `A/`).**
+
 **Status 2026-11-13: in source; shown in emulation; fix candidate CO-43 A.**
 - **What:** the waker returns on a failed `usb_autopm_get_interface()` without a message (bluetooth-next `btusb_main.c:2656`, from `7bee549e197c`, 2009). At the default log level the only trace of a failed resume is the HCI timeout two seconds later, which points at the controller.
 - **Fix candidate:** CO-43 A, log the error (except `-EACCES`, a system sleep transition).
 
 ## BT-21 — MGMT reports a command timeout as "Authentication Failed"
 
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-21`): CO-44 has a send package, ready; the dry runs were OK on 11-14; nothing sent.**
+
 **Status 2026-11-13: in the laptop's log (bluetoothd: "Failed to remove UUID: Authentication Failed (0x05)") and reproduced; fix candidate CO-44.**
 - **What:** `mgmt_errno_status()` maps `-ETIMEDOUT` to `MGMT_STATUS_AUTH_FAILED`, since `161510ccf91c` (2021-10-27), with no stated reason. `MGMT_STATUS_TIMEOUT` (0x08) exists.
-- **Reproduced:** a new mgmt-tester case, whose emulated controller never answers Write Class of Device, fails on bluetooth-next with 0x05 and passes with the one-line fix. The other 526 mgmt-tester cases, l2cap-tester (144) and smp-tester (8) are unchanged (`agent-work/bt17-mgmt-timeout/`, logs with SHA256SUMS).
+- **Reproduced:** a new mgmt-tester case, whose emulated controller never answers Write Class of Device, fails on bluetooth-next with 0x05 and passes with the one-line fix. The other 526 mgmt-tester cases, l2cap-tester (144) and smp-tester (8) are unchanged (the logs with their SHA256SUMS were in a work area directory `bt17-mgmt-timeout/` deleted on 2026-11-14; CO-44's package carries the results).
 - **Audit:** pairing paths use the HCI status table, not this function, so they are unaffected. bluetoothd only logs the text for the sync-queued commands; nothing in BlueZ depends on 0x05 for a timeout.
 
 ## BT-22 — xHCI: ep0 maxpacket update on a slot left Enabled (another author's fix, queued)
 
-**Status 2026-11-13: in the laptop's log (the BT-17 tail); fixed by another author, queued by the xHCI maintainer on 2026-11-09; not ours.**
+**Status 2026-11-13 (the `docs/STATUS.md` row `BT-22` gives the same state; not re-read upstream since): in the laptop's log (the BT-17 tail); fixed by another author, queued by the xHCI maintainer on 2026-11-09; not ours.**
 - **What:** after an Address Device transaction error the slot is left Enabled. `xhci_check_ep0_maxpacket()` then issues Evaluate Context on it (`WARN: invalid context state for evaluate context command`, harmless) and corrupts the input context, so the next Address Device is refused with Parameter Error (`completion code 0x11`).
 - **The fix:** "[PATCH] usb: xhci: Fix ep0 maxpacket update on enabled slots", Michal Pecio, 2026-11-09, `<20261109112846.04bfeb0f.michal.pecio@gmail.com>`; "Added to queue" by Mathias Nyman the same day.
 - **On the laptop:** the code it fixes is in v7.0 and in Ubuntu's `-42` (no hunk there). Our log has the sequence for the full-speed device at 18:03:15.65–15.97. It made the reset retries fail in a messier way; it did not cause the loss: the device had already failed a descriptor read, and the next boot's fresh xHCI could not read it either.
 - **Next:** watch for it in mainline and stable; an Ubuntu backport candidate.
 
 ## BT-23 — btusb: a URB can be parked on the deferred anchor after the resume that would send it
+
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-23`): CO-43 E has a send package, ready; the dry run was OK on 11-14; nothing sent. It goes first: the rest of the series applies on top of it.**
 
 **Status 2026-11-13: race from source (seventh review), reproduced in emulation with the window widened by a debug-only delay; fix candidate CO-43 E; not BT-17.**
 - **Reproduced:** `bt23` scenario, with a 400 ms delay after the decision (debug-only module parameter) and a resume forced meanwhile (`power/control=on`):
@@ -1169,7 +1188,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - first reproduced on the B2 tree;
 - on E it is reached with test-only fault injection standing in for B2's timing window: the
   deferred anchor is left non-empty 3 of 3 without the fix and empty 3 of 3 with it;
-- the fix is patch 1 of `contributions/CO-43-…/send-bt24-bt25-20261114/`, which drains the anchor
+- the fix is patch 1 of `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/`, which drains the anchor
   under `txlock`; evidence in `results/co43-d2-series-bt24-bt25-2026-11-14/` and the package's
   `CHECKS.md`;
 - the text below is the 11-13 state.
@@ -1186,7 +1205,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-25 — btusb: discarding deferred URBs appears to leak their skb and setup packet
 
-**Status 2026-11-14: fixed** by patch 2 of `contributions/CO-43-…/send-bt24-bt25-20261114/`
+**Status 2026-11-14: fixed** by patch 2 of `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/`
 (STATUS `BT-25`):
 - kmemleak, 3 runs per case, E alone against E with the two patches: 3/3/1, 2/1/2, 5/3/4 and
   2/2/2 leaked objects against 0 in every run;
@@ -1209,7 +1228,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - **Prior fix, merged:** `19cfe912c37b` "Bluetooth: btusb: Fix memory leak in play_deferred" (Jeffy Chen, 2017, Reviewed-by Oliver Neukum; checked in `cache/linux`). It fixed the URB reference leak and added today's submit-failure branch and cleanup loop. Both free the URB and the setup packet but not the skb, so the skb half of BT-25 dates from that commit at those two sites, and from `7bee549e197c` at the two scuttles. (Corrected 2026-11-13: our prior-art search had called the 2017 work unmerged; outside reviewer 7 cited the merged commit.) An earlier RFC of that series drew the objection *"We cannot silently drop one part of a transmission."* (prior art §4). Whether the fix should report the dropped commands to the HCI layer is open: reviewer 7 advises against an unconditional `hci_cmd_sync_cancel()`, because it acts on the current request, not on the dropped one.
 - **Confirmed from the source by two outside reviewers** (reviewers 1 and 2 of the open-work document).
 - **When it would happen:** hci0 closed while commands are deferred on a suspended device, or a failed resume with deferred data. Both are rare; each costs at most a few small allocations.
-- **Next:** a kmemleak run in emulation that closes hci0 with a command deferred; then a fix together with BT-24 (drain under `txlock`, free with `dev_kfree_skb_any()`).
+- **Next (the 11-13 plan; done 2026-11-14, see the status block above):** a kmemleak run in emulation that closes hci0 with a command deferred; then a fix together with BT-24 (drain under `txlock`, free with `dev_kfree_skb_any()`).
 
 ---
 
@@ -1239,10 +1258,10 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 | U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture. **2026-11-11, measured in the recording:** the gain steps 15 to 1 do not change the signal, and `+VGM: 0` makes it exactly zero until `+VGM: 4` (10-24 08:04:28 to 08:04:43) (`results/laptop-only-work-2026-11-11/recordings-mining/`) |
 | U21 | after forgetting and re-pairing the Shure AONIC 50 it comes up in Handsfree, and GNOME Settings' Sound panel shows **no codec/profile row at all** (not only an unusable first line, as in U1); a disconnect and reconnect gives the same (2026-10-29 ~04:38–04:48) | observed by the operator (screenshot: Output and Input "Handsfree - Shure AONIC 50", no row below); why Handsfree: explained by the logs (below, STATUS); why no row: not known. **Second occurrence 2026-11-16 00:15** (STATUS): no application was recording, and WirePlumber restored its stored `default-profile` entry for the Shure ("Found default profile headset-head-unit-msbc"). So a forgotten device's saved profile surviving the forget is now **observed**: defect (a), WirePlumber state. The row was missing although the card offered five A2DP and three hands-free profiles: defect (b), the same symptom as U4 |
 | U22 | bluetoothd crashed with a bad `free()` on 2026-09-08 10:23:43, when a codec switch arrived while an AVDTP Close was pending: `a2dp_reconfig()` writes to the setup after `avdtp_close()`/`avdtp_abort()` freed it (registered 2026-10-31; investigated as CO-23 event 1, 2026-10-28) | confirmed in the daemon's debug log and the binary; reproduced under ASan on BlueZ master `82667d713949`; not fixed upstream; our fix ready (CO-23) |
-| U23 | at bluetoothd exit with an A2DP media endpoint registered, `clear_endpoint()` (`profiles/audio/media.c:300`) reads an `a2dp_sep` that `a2dp_unregister_sep()` already freed (2026-10-31) | ASan report in QEMU guests, 3 of 10 runs on 5.72 and 2 of 10 on 5.72 with the CO-03 backport; **present on master, fix series ready (CO-37, 2026-11-01)**; 2026-11-02: the duplicate `MediaEndpoint1.Release` the series exposed is fixed by a sixth mail (a `released` flag; CO-37 `log.md`); not seen on the laptop, whose build has no ASan |
+| U23 | at bluetoothd exit with an A2DP media endpoint registered, `clear_endpoint()` (`profiles/audio/media.c:300`) reads an `a2dp_sep` that `a2dp_unregister_sep()` already freed (2026-10-31) | ASan report in QEMU guests, 3 of 10 runs of T311 on 5.72 and 2 of 10 runs of T310 on 5.72 with the CO-03 backport (the **reproduction** counts, `contributions/CO-03-bluez-u12-backport/backport/runs/asan-exit-reports.txt`; the Ubuntu-built ASan binaries reported nothing; the later **fix-test** counts, 10 of 10 failing to 0 of 10, are a different experiment, CO-37, and are not comparable to these two; corrected 2026-11-16); **present on master, fix series ready (CO-37, 2026-11-01)**; 2026-11-02: the duplicate `MediaEndpoint1.Release` the series exposed is fixed by a sixth mail (a `released` flag; CO-37 `log.md`); not seen on the laptop, whose build has no ASan |
 | U24 | at bluetoothd exit, `discovery_cleanup()` → `invalidate_rssi_and_tx_power()` calls `device_set_rssi_with_delta()` (`src/device.c:6167`) on a device already freed by its D-Bus interface removal (2026-10-31) | ASan report in QEMU guests, twice on 5.72 at the teardown of PipeWire's `test_pipewire_a2dp`; **fixed upstream by `7e3212fa233e`** (in BlueZ 5.88; corrected 2026-11-15, this said "not released"), 5.72 backport ready (CO-37, patch 3 of the Ubuntu bundle); not seen on the laptop |
 | U25 | while running: an A2DP endpoint removed while another D-Bus client holds its transport; that client's `Release` then makes `a2dp_sep_unlock()` unregister the removed SEP, which frees the transport under the caller, and the suspend path calls `a2dp_sep_unlock(NULL)` (2026-11-01) | ASan SEGV `a2dp.c:3566` in QEMU guests on master `14bd6ab65`: every run of all four `Release` variants with CO-37's fixes applied (6 or 7 runs each), and of three of the four without them (the fourth hits U23's read first); `a2dp.c:3254` on 5.72, 5/5 in both variants run; **not fixed upstream**; not in CO-37's series; a local a2dp proposal clears it (CO-37 `work/review-20261101/`); not seen on the laptop. **2026-11-01 evening:** that timer proposal is rejected (it leaks the removed SEP and keeps U26); see CO-37 `log.md` |
-| U26 | while running: an A2DP endpoint removed while another D-Bus client holds its transport, then the adapter removed, then the endpoint's own client leaves the bus about 1 s later: bluetoothd reads the A2DP server that the adapter removal freed (2026-11-01) | ASan `heap-use-after-free` in `a2dp_remove_sep` (`a2dp.c:3042` on master `14bd6ab65`; the freed object allocated by `a2dp_server_register`, freed by `unload_drivers` from `adapter_remove`), reached from the bus-exit watch; QEMU guests, 10/10 test calls on master, on master with CO-37's fixes, and with the timer proposal; not with either alternative being measured; `agent-work/u25-settle-20261101/runs/q1-*`; **not fixed upstream**; not seen on the laptop |
+| U26 | while running: an A2DP endpoint removed while another D-Bus client holds its transport, then the adapter removed, then the endpoint's own client leaves the bus about 1 s later: bluetoothd reads the A2DP server that the adapter removal freed (2026-11-01) | ASan `heap-use-after-free` in `a2dp_remove_sep` (`a2dp.c:3042` on master `14bd6ab65`; the freed object allocated by `a2dp_server_register`, freed by `unload_drivers` from `adapter_remove`), reached from the bus-exit watch; QEMU guests, 10/10 test calls on master, on master with CO-37's fixes, and with the timer proposal; not with either alternative being measured; the counts are in `contributions/CO-37-bluez-media-endpoint-exit-uaf/log.md` (the run directories `u25-settle-20261101/runs/q1-*` were in a work area deleted on 2026-11-14; corrected 2026-11-16); **not fixed upstream**; not seen on the laptop |
 | U27 | **5.72 only:** an A2DP endpoint removed while another D-Bus client holds its transport, then the stream goes idle (the peer disconnects, or the power-off at SIGTERM): bluetoothd reads freed memory in `clear_endpoint()` (`media.c:300`, the signature of CO-03's original report) (2026-11-02) | ASan `heap-use-after-free` in QEMU guests: 2 of 2 and 3 of 3 runs on 5.72, on 5.72 with the CO-37 backport, and with the Release flag added; master leaks in this case instead of crashing (the settling runs); **the CO-37 5.72 backport does not cover it**; not fixed; not seen on the laptop (CO-37 `log.md`, 2026-11-02) |
 | U28 | btmon with **both** upstream `print_packet()` fixes (`fdbfe0018f6f`, `dca0f10fd560`) can still write past `line[]`: the clamp lets the text fill the buffer to its last byte, then the colour reset (`COLOR_OFF`, with colour on) and the `" %s"` extra text are written with unbounded `sprintf()` (2026-11-02) | **from source** (BlueZ master `monitor/packet.c:885-919`); an outside reviewer reproduced it under AddressSanitizer in an extracted copy of the 5.72 function, not in the package; reachable only when the text fills `line[]`, i.e. widths of 2048 columns or more (`LINE_MAX`); our replay at 3000/5000 columns did not reach it (no colour off a terminal, shorter records); not reproduced with the real binary yet; present on master (CO-11 follow-up F-82) |
 | U29 | a headset that no longer accepts the laptop's key: Connect fails as "br-connection-unknown"; after a Forget, the headset is "Not set up" and every click is refused "Pairing Not Allowed" outside pairing mode; GNOME shows nothing either time (MOMENTUM 4, 2026-11-07) | confirmed in the capture, the logs and the source (gnome-bluetooth 46.0 `bluetooth-settings-widget.c:944`, `//FIXME show an error?`; the same on master); the headset's refusals are correct; why it dropped the key (between 11-04 13:06 and 11-06 15:52) is not known; the row was kept alive for three minutes by the headset's own *non-discoverable* advertisements (BlueZ 5.72 `device_update_last_seen()` before the discoverable check); a row staying ≤ 30 s after a switch-off is BlueZ's `TemporaryTimeout` (doubtful as a defect); "br-connection-unknown" traced 11-07: the kernel refuses the A2DP channel with `ECONNREFUSED`, which 5.72's A2DP turns into `-EAGAIN`; **fixed upstream by `a6ac17f0e393`** (5.78), a backport candidate |
@@ -1250,6 +1269,12 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 | U31 | `gsd-media-keys` assertion failures in `gvc_mixer_ui_device_get_id` after "Failed to match stream id" (10-22 to 10-23, the MOMENTUM 4) | journal, 2026-11-11; `gvc-mixer-control.c:1389-1400`; no user-visible effect recorded |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
+
+*Note, 2026-11-16: `U21` to `U28`, `U30` and `U31` (and the mesh issues `M-1` and `M-2`) have a row in
+the table above and in `docs/STATUS.md` but no section of their own in this file. Their evidence
+is in the dossiers the rows name (`CO-23` for U22; `CO-37` for U23 to U27; `CO-11` for U28;
+`CO-12` for M-2; the `results/laptop-only-work-2026-11-11/recordings-mining/` files for U30 and
+U31) and, for U21, in `evidence/sessions/20261116-002107-shure-paired-in-handsfree-no-codec-row/`.*
 
 **Status:** leads, not findings. Each item mixes what was **measured** with what the operator
 **reported** from the UI or by ear; every statement below carries its source:
@@ -1523,6 +1548,11 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
   earbud-specific unless the earbuds also go silent on E3 — that test is next.
+  **State 2026-11-16 (from `docs/STATUS.md` and the CO-18 row of `contributions/README.md`):**
+  the recordings mined on 11-11 show the earbuds receiving 100 % CRC-valid mSBC with signal, so the
+  silence is on their side; CO-18 was dropped as a kernel item (research 2026-11-01); the
+  `corrupted SCO packet` lines are CO-20's teardown effect. U8 stays open on the earbuds' side: a
+  10 s test sound in handsfree mSBC, written when E3 still ran (E3 is retired).
 - **U10 — Tronsmart T8 silent on SBC-XQ, audible on plain SBC** *(observed, 2026-10-11)*.
 
   **What was seen and sent:**
@@ -1554,6 +1584,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   3. Read PipeWire's decision path: when it offers SBC-XQ, who added it and why, and how the quirk entries came in.
 
   **Evidence:** HCI captures `bt-20261011-001745` to `bt-20261011-004946`, kept in `archive/bt-trace/` (git-ignored; real addresses inside).
+
+  **State 2026-11-16:** unchanged; the `docs/STATUS.md` row `U10` still waits for the operator's test sound per mode; the Next list above is still the plan. Its dossier is `contributions/CO-08-pipewire-u10-sbc-xq/` (the decisive test is the operator's 10-minute marked A-B-A-B test).
 
 - **U11 — a headset that has just connected does not get the sound** *(confirmed in the log and the source, 2026-10-13; by design)*.
 
@@ -1678,12 +1710,12 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - Ubuntu's changelog through 5.72-0ubuntu5.8 (`/usr/share/doc/bluez/changelog.Debian.gz`) has no entry for it.
   - **[source] WirePlumber's part is by design:** 0.4.17 moves a Bluetooth headset to its headset profile while an application records, and restores the earlier profile afterwards. The switch only produces the Release at the moment a Start is pending.
 
-  **Next** (the contribution is a backport request):
-  1. Build our bluetoothd from 5.72-0ubuntu5.8's source, which also brings the October security fixes the running build lacks (STATUS, the machine's warnings), with the BT-7 fixes and `a14d59725`.
-  2. The operator installs it and repeats the trigger: an application opening the microphone just as A2DP starts.
-  3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word.
+  **Next** (the contribution is a backport request; the 10-19 plan, with its state as of 2026-11-16 from the `docs/STATUS.md` row `U12` and `BRIEF.md` §0):
+  1. Build our bluetoothd from 5.72-0ubuntu5.8's source, which also brings the October security fixes the running build lacks (STATUS, the machine's warnings), with the BT-7 fixes and `a14d59725`. **Done 2026-10-31:** `5.72-0ubuntu5.9~co03.1`, tested in VMs (the trigger lost A2DP 70 of 70 before and 0 of 70 after; `contributions/CO-03-bluez-u12-backport/backport/`). It has been staged on disk since 2026-11-13 and runs after the next bluetoothd start.
+  2. The operator installs it and repeats the trigger: an application opening the microphone just as A2DP starts. **Still open:** the test with the MOMENTUM 4 is the operator's.
+  3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word. **Not filed;** the one Ubuntu `5.72-0ubuntu5.9` bundle is in `contributions/ubuntu-bluez-5.72-0ubuntu5.9-bundle/`.
 
-  **Evidence:** `EX-063`, `EX-064`; second occurrence `EX-084`, `EX-085`, `EX-087`, `EX-088` (`EX-086` is a failed extraction, kept). Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
+  **Evidence:** `EX-063`, `EX-064`; second occurrence `EX-084`, `EX-085`, `EX-087`, `EX-088` (`EX-086` is a failed extraction, kept); third occurrence `EX-089` to `EX-095` (`EX-093` superseded by `EX-094`), the recovery `EX-096`, `EX-097`. Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
 
 - **U13 — a headset that bluetoothd knows only from its LE advertising cannot be set up from GNOME Settings: every click pairs over LE, the headset refuses, and nothing is shown** *(confirmed in the HCI capture, the log and the source, 2026-10-21; not fixed upstream)*.
 
@@ -2070,6 +2102,14 @@ That second point is a genuine diagnostic clue rather than a complaint. If the p
 that avoid this failure are also the platforms that avoid SCO-over-HCI/USB, and our own
 evidence points at the SCO and isochronous path, those converge. It is worth stating in a
 report; "Linux Bluetooth is unstable" is not.
+
+*Dated note, 2026-11-16: this section was written before the cause was known. The cause is the
+missing `13d3:3503` device-table entry: without it btusb skipped the QCA setup that loads the
+firmware patch, and the ROM firmware hangs on the alternate-setting-1 SCO path (BT-1; fixed by
+`dc16388d45ec`, in every live stable line, `docs/STATUS.md`). Windows loads that firmware
+(`README.md`, Environment). So "a controller or firmware defect that only Linux's command
+sequence reaches" is superseded for the unpatched case, and the Android comparison above is a
+clue that was not tested, not a finding.*
 
 ---
 
