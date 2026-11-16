@@ -4627,6 +4627,23 @@ cannot harm a maintainer's logs.
   agent opening PRs, and the tree's agent-guidance file adds a review marker. How to engage is the
   operator's call.
 
+**"Not a performance issue, a blocker."** The operator's view: a query that runs 7 h 44 min is a
+showstopper. Agreed for the laptop. But the SRU team weighs impact on default installs. The
+7-hour case needed a raised file limit (479 files), and at the default caps we had only measured
+7 to 12 times. So the backport's case is to be argued from what stops working on a default noble
+system. Three measurements were started, one after another, at the lowest priority because of
+the open trial:
+1. the PR and our prototype combined, as two designs;
+2. the PR and the prototype on the laptop's real journal, read in place;
+3. a default-cap journal (100 files, about 4 GB, with user files overlapping the system files) in
+   a container. It times stock 8.18 against the patched debs for full reads, `-b`, `-u` and
+   `--list-boots`, and for the journal collection of apport and sosreport, against their own
+   timeouts.
+
+A third of the laptop's journal files are per-user journals covering the same hours as the
+system files. So overlapping files, the layout the PR does not help, are the normal case on a
+desktop, not an exotic one.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
