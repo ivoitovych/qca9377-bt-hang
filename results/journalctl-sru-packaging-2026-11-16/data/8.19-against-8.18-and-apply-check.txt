@@ -1,0 +1,107 @@
+== series diff 8.18 -> 8.19
+--- /work/pkg/x818/s/debian/patches/series	2026-10-12 07:36:16.000000000 +0000
++++ /work/pkg/x819/s/debian/patches/series	2026-10-15 15:55:02.000000000 +0000
+@@ -83,3 +83,15 @@
+ GHSA-3jgj-3phh-hx5j/resolve-enforce-the-search-domain-limit-earlier.patch
+ GHSA-3jgj-3phh-hx5j/resolve-limit-the-number-NTAs-to-something-sensible.patch
+ lp2170538-resolved-pick-up-new-DNSSEC-KSK-from-2024.patch
++lp2145709-resolved-dont-treat-conn-reset-as-packet-loss.patch
++lp2167098-preserve-ipv4-route-mtu.patch
++lp2085314-fix-stack-overflow-when-dropping-tclass-qdisc.patch
++lp2085314-avoid-concurrent-set-modification-tclass-qdisc.patch
++lp2088163-fs-util-rename-xopenat-xopanat_full.patch
++lp2088163-copy-use-xopenat-to-make-from-argument-optional.patch
++lp2088163-stat-util-introduce-stat-fd-_verify_linked.patch
++lp2088163-sd-journal-use-stat_verify_linked.patch
++lp2088163-copy-introduce-COPY_VERIFY_LINKED-flag.patch
++lp2088163-journal-file-util-use-the-file-descriptor-of-journal-file.patch
++lp2088163-journal-file-util-use-COPY_VERIFY_LINKED.patch
++lp2088163-test-add-test-cases-for-journal-corruption-on-btrfs.patch
+== files in debian/patches: added / removed / changed
+Only in /work/pkg/x819/s/debian/patches: lp2085314-avoid-concurrent-set-modification-tclass-qdisc.patch
+Only in /work/pkg/x819/s/debian/patches: lp2085314-fix-stack-overflow-when-dropping-tclass-qdisc.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-copy-introduce-COPY_VERIFY_LINKED-flag.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-copy-use-xopenat-to-make-from-argument-optional.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-fs-util-rename-xopenat-xopanat_full.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-journal-file-util-use-COPY_VERIFY_LINKED.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-journal-file-util-use-the-file-descriptor-of-journal-file.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-sd-journal-use-stat_verify_linked.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-stat-util-introduce-stat-fd-_verify_linked.patch
+Only in /work/pkg/x819/s/debian/patches: lp2088163-test-add-test-cases-for-journal-corruption-on-btrfs.patch
+Only in /work/pkg/x819/s/debian/patches: lp2145709-resolved-dont-treat-conn-reset-as-packet-loss.patch
+Only in /work/pkg/x819/s/debian/patches: lp2167098-preserve-ipv4-route-mtu.patch
+Files /work/pkg/x818/s/debian/patches/series and /work/pkg/x819/s/debian/patches/series differ
+== changelog: entries above 8.18
+systemd (255.4-1ubuntu8.19) noble; urgency=medium
+
+  [ Seyeong Kim ]
+  * Avoid resolved TCP reset busy loops (LP: #2145709)
+    - d/p/lp2145709-resolved-dont-treat-conn-reset-as-packet-loss.patch:
+      Consume socket errors reported through EPOLLERR and do not retry
+      ECONNRESET failures.
+
+  [ Dean Marx ]
+  * network/route: preserve IPv4 route MTU (LP: #2167098)
+    - d/p/lp2167098-preserve-ipv4-route-mtu.patch:
+      preserve IPv4 route MTU by making MTU part of v255's route identity
+      and reading RTAX_MTU from rtnetlink messages.
+  * Avoid systemd-networkd segfault (LP: #2085314)
+    - d/p/lp2085314-fix-stack-overflow-when-dropping-tclass-qdisc.patch,
+      d/p/lp2085314-avoid-concurrent-set-modification-tclass-qdisc.patch:
+      Avoid a stack overflow and concurrent set modification when dropping
+      traffic-class qdiscs in systemd-networkd.
+
+  [ Willow Carlson-Huber ]
+  * Fix user journal corruption on rotate when using btrfs (LP: #2088163)
+
+ -- Nick Rosbrook <enr0n@ubuntu.com>  Thu, 15 Oct 2026 11:58:12 -0400
+
+== patches (8.18 and 8.19) that touch the journal sources
+-- /work/pkg/x818/s
+-- /work/pkg/x819/s
+/work/pkg/x819/s/debian/patches/lp2088163-sd-journal-use-stat_verify_linked.patch
+== LP: #2088163 in either changelog
+/work/pkg/x819/s/debian/changelog:21:  * Fix user journal corruption on rotate when using btrfs (LP: #2088163)
+== difference of the non-debian part of the two unpacked trees
+Files /work/pkg/x818/s/.pc/applied-patches and /work/pkg/x819/s/.pc/applied-patches differ
+Only in /work/pkg/x819/s/.pc: lp2085314-avoid-concurrent-set-modification-tclass-qdisc.patch
+Only in /work/pkg/x819/s/.pc: lp2085314-fix-stack-overflow-when-dropping-tclass-qdisc.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-copy-introduce-COPY_VERIFY_LINKED-flag.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-copy-use-xopenat-to-make-from-argument-optional.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-fs-util-rename-xopenat-xopanat_full.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-journal-file-util-use-COPY_VERIFY_LINKED.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-journal-file-util-use-the-file-descriptor-of-journal-file.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-sd-journal-use-stat_verify_linked.patch
+Only in /work/pkg/x819/s/.pc: lp2088163-stat-util-introduce-stat-fd-_verify_linked.patch
+== x818: 0001 then 0002, GNU patch, applied for real in a copy (look for fuzz / offset / FAILED)
+patching file src/libsystemd/sd-journal/journal-file.c
+Hunk #1 succeeded at 2248 (offset 4 lines).
+patching file src/libsystemd/sd-journal/journal-file.h
+patching file src/libsystemd/sd-journal/sd-journal.c
+Hunk #1 succeeded at 2405 (offset -23 lines).
+Hunk #2 succeeded at 2419 (offset -23 lines).
+Hunk #3 succeeded at 2430 (offset -23 lines).
+Hunk #4 succeeded at 2448 (offset -23 lines).
+Hunk #5 succeeded at 2474 (offset -23 lines).
+patching file src/libsystemd/sd-journal/sd-journal.c
+Hunk #2 succeeded at 2472 (offset -23 lines).
+Hunk #3 succeeded at 2497 (offset -23 lines).
+== x818: git apply --check, 0001 applied then 0002
+x818 0001 applies (git apply, strict)
+x818 0002 applies after 0001 (git apply, strict)
+== x819: 0001 then 0002, GNU patch, applied for real in a copy (look for fuzz / offset / FAILED)
+patching file src/libsystemd/sd-journal/journal-file.c
+Hunk #1 succeeded at 2249 (offset 5 lines).
+patching file src/libsystemd/sd-journal/journal-file.h
+patching file src/libsystemd/sd-journal/sd-journal.c
+Hunk #1 succeeded at 2405 (offset -23 lines).
+Hunk #2 succeeded at 2419 (offset -23 lines).
+Hunk #3 succeeded at 2430 (offset -23 lines).
+Hunk #4 succeeded at 2448 (offset -23 lines).
+Hunk #5 succeeded at 2474 (offset -23 lines).
+patching file src/libsystemd/sd-journal/sd-journal.c
+Hunk #2 succeeded at 2472 (offset -23 lines).
+Hunk #3 succeeded at 2497 (offset -23 lines).
+== x819: git apply --check, 0001 applied then 0002
+x819 0001 applies (git apply, strict)
+x819 0002 applies after 0001 (git apply, strict)

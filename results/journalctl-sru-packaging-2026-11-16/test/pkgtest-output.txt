@@ -1,0 +1,230 @@
+== 1. the archive's systemd, as a user has it before the update
+libsystemd-shared:amd64 255.4-1ubuntu8.18
+libsystemd0:amd64 255.4-1ubuntu8.18
+libudev1:amd64 255.4-1ubuntu8.18
+systemd 255.4-1ubuntu8.18
+systemd-dev 255.4-1ubuntu8.18
+systemd-journal-remote 255.4-1ubuntu8.18
+systemd-resolved 255.4-1ubuntu8.18
+systemd-timesyncd 255.4-1ubuntu8.18
+== 2. stock debs, downloaded and unpacked (not installed)
+downloaded: libsystemd-shared_255.4-1ubuntu8.18_amd64.deb systemd-journal-remote_255.4-1ubuntu8.18_amd64.deb systemd_255.4-1ubuntu8.18_amd64.deb 
+stock 8.18: systemd 255 (255.4-1ubuntu8.18)
+downloaded: libsystemd-shared_255.4-1ubuntu8.19_amd64.deb systemd-journal-remote_255.4-1ubuntu8.19_amd64.deb systemd_255.4-1ubuntu8.19_amd64.deb 
+stock 8.19: systemd 255 (255.4-1ubuntu8.19)
+== 3. upgrading every installed package of this source to the built debs, with apt
+built debs used:
+  libsystemd-shared_255.4-1ubuntu8.20_amd64.deb
+  libsystemd0_255.4-1ubuntu8.20_amd64.deb
+  libudev1_255.4-1ubuntu8.20_amd64.deb
+  systemd_255.4-1ubuntu8.20_amd64.deb
+  systemd-dev_255.4-1ubuntu8.20_all.deb
+  systemd-journal-remote_255.4-1ubuntu8.20_amd64.deb
+  systemd-resolved_255.4-1ubuntu8.20_amd64.deb
+  systemd-timesyncd_255.4-1ubuntu8.20_amd64.deb
+Preparing to unpack .../1-systemd-timesyncd_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking systemd-timesyncd (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Preparing to unpack .../2-systemd-resolved_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking systemd-resolved (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Preparing to unpack .../3-systemd-dev_255.4-1ubuntu8.20_all.deb ...
+Unpacking systemd-dev (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Preparing to unpack .../4-systemd_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking systemd (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Preparing to unpack .../5-libsystemd-shared_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking libsystemd-shared:amd64 (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Preparing to unpack .../6-libsystemd0_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking libsystemd0:amd64 (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Setting up libsystemd0:amd64 (255.4-1ubuntu8.20) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 7827 files and directories currently installed.)
+Preparing to unpack .../libudev1_255.4-1ubuntu8.20_amd64.deb ...
+Unpacking libudev1:amd64 (255.4-1ubuntu8.20) over (255.4-1ubuntu8.18) ...
+Setting up libudev1:amd64 (255.4-1ubuntu8.20) ...
+Setting up systemd-dev (255.4-1ubuntu8.20) ...
+Setting up libsystemd-shared:amd64 (255.4-1ubuntu8.20) ...
+Setting up systemd (255.4-1ubuntu8.20) ...
+Setting up systemd-journal-remote (255.4-1ubuntu8.20) ...
+Setting up systemd-timesyncd (255.4-1ubuntu8.20) ...
+Setting up systemd-resolved (255.4-1ubuntu8.20) ...
+Processing triggers for dbus (1.14.10-4ubuntu4.1) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+apt-get install exit status: 0
+libsystemd-shared:amd64 255.4-1ubuntu8.20
+libsystemd0:amd64 255.4-1ubuntu8.20
+libudev1:amd64 255.4-1ubuntu8.20
+systemd 255.4-1ubuntu8.20
+systemd-dev 255.4-1ubuntu8.20
+systemd-journal-remote 255.4-1ubuntu8.20
+systemd-resolved 255.4-1ubuntu8.20
+systemd-timesyncd 255.4-1ubuntu8.20
+installed journalctl: systemd 255 (255.4-1ubuntu8.20)
+dpkg --audit: 0 lines
+== system journal state before the unprivileged part
+ls: cannot access '/run/log/journal': No such file or directory
+/var/log/journal:
+total 12
+drwxr-sr-x+ 2 root systemd-journal 4096 Nov 16 02:45 .
+drwxr-xr-x  1 root root            4096 Nov 16 02:45 ..
+################ A. the reproducer, as tester, against the installed (patched) /usr/bin/journalctl
+KEEP is set: the files stay in /tmp/journalctl-scaling.vTkSbv (delete it yourself when done, for example with rm -rf)
+journalctl under test: /usr/bin/journalctl (systemd 255 (255.4-1ubuntu8.20))
+journal files are written under: /tmp/journalctl-scaling.vTkSbv (removed at the end); the system journal is not read or written
+writing 400 files of 1000 entries each, archived, 5 files per boot ...
+
+     K      lines    seconds      lines/s       us/entry
+    25      25004       0.13       189958            5.3
+    50      50009       0.39       128788            7.8
+   100     100000       1.34        74597           13.4
+   200     100000       3.59        27878           35.9
+   400     100000       8.65        11567           86.5
+
+exponent b of (time to read everything) ~ K^b, K >= 50: 2.19   (2 = quadratic, 1 = linear)
+files kept in /tmp/journalctl-scaling.vTkSbv: 400
+
+################ B. journalctl --verify on the reproducer's files (patched binary)
+verified 400 files, 0 failed
+--directory form on 10 files:
+PASS: /tmp/ten/system@00003.journal
+PASS: /tmp/ten/system@00008.journal
+PASS: /tmp/ten/system@00000.journal
+exit status 0
+same files, the stock 8.18 binary:
+PASS: /tmp/ten/system@00003.journal
+PASS: /tmp/ten/system@00008.journal
+PASS: /tmp/ten/system@00000.journal
+exit status 0
+
+################ C. equivalence sets (written with the installed systemd-journal-remote)
+sets written under /tmp/sets
+sets: interleaved
+plain
+twomachines
+-- also the reproducer's own files, 25 of them
+---- plain: 8.18 stock is the reference; 8.19 stock and the patched build against it
+plain          same        24000 entries  -o export  [stock-8.19]
+plain          same        24000 entries  -o export  [patched]
+plain          same        24000 entries  -o export -r  [stock-8.19]
+plain          same        24000 entries  -o export -r  [patched]
+plain          same          500 entries  -o export -n 500  [stock-8.19]
+plain          same          500 entries  -o export -n 500  [patched]
+plain          same         2000 entries  -o export -k  [stock-8.19]
+plain          same         2000 entries  -o export -k  [patched]
+plain          same         2000 entries  -o export _BOOT_ID=00000001b007b007b007b007b007b007  [stock-8.19]
+plain          same         2000 entries  -o export _BOOT_ID=00000001b007b007b007b007b007b007  [patched]
+plain          same         2000 entries  -o export -b -3  [stock-8.19]
+plain          same         2000 entries  -o export -b -3  [patched]
+plain          same            1 entries  -o export --since=@1700000064 --until=@1700000124  [stock-8.19]
+plain          same            1 entries  -o export --since=@1700000064 --until=@1700000124  [patched]
+plain          same        22001 entries  -o export -r --since=@1700000064  [stock-8.19]
+plain          same        22001 entries  -o export -r --since=@1700000064  [patched]
+plain          same         3000 entries  -o export --reverse -n 3000  [stock-8.19]
+plain          same         3000 entries  -o export --reverse -n 3000  [patched]
+plain          same         3000 entries  -o export --lines=+3000  [stock-8.19]
+plain          same         3000 entries  -o export --lines=+3000  [patched]
+plain          same        21000 entries  -o export --after-cursor=s=7be33ab49bb6443eb7adb278572d85cc;  [stock-8.19]
+plain          same        21000 entries  -o export --after-cursor=s=7be33ab49bb6443eb7adb278572d85cc;  [patched]
+plain          same        21001 entries  -o export --cursor=s=7be33ab49bb6443eb7adb278572d85cc;i=c8;b  [stock-8.19]
+plain          same        21001 entries  -o export --cursor=s=7be33ab49bb6443eb7adb278572d85cc;i=c8;b  [patched]
+plain          same         3000 entries  -o export -r --cursor=s=7be33ab49bb6443eb7adb278572d85cc;i=c  [stock-8.19]
+plain          same         3000 entries  -o export -r --cursor=s=7be33ab49bb6443eb7adb278572d85cc;i=c  [patched]
+plain          same         2999 entries  -o export -r --after-cursor=s=7be33ab49bb6443eb7adb278572d85  [stock-8.19]
+plain          same         2999 entries  -o export -r --after-cursor=s=7be33ab49bb6443eb7adb278572d85  [patched]
+---- interleaved: 8.18 stock is the reference; 8.19 stock and the patched build against it
+interleaved    same        24000 entries  -o export  [stock-8.19]
+interleaved    same        24000 entries  -o export  [patched]
+interleaved    same        24000 entries  -o export -r  [stock-8.19]
+interleaved    same        24000 entries  -o export -r  [patched]
+interleaved    same          500 entries  -o export -n 500  [stock-8.19]
+interleaved    same          500 entries  -o export -n 500  [patched]
+interleaved    same         2000 entries  -o export -k  [stock-8.19]
+interleaved    same         2000 entries  -o export -k  [patched]
+interleaved    same         2000 entries  -o export _BOOT_ID=000000011e571e571e571e571e571e57  [stock-8.19]
+interleaved    same         2000 entries  -o export _BOOT_ID=000000011e571e571e571e571e571e57  [patched]
+interleaved    same         2000 entries  -o export -b -3  [stock-8.19]
+interleaved    same         2000 entries  -o export -b -3  [patched]
+interleaved    same        21800 entries  -o export --since=@1700000003 --until=@1700000063  [stock-8.19]
+interleaved    same        21800 entries  -o export --since=@1700000003 --until=@1700000063  [patched]
+interleaved    same        21300 entries  -o export -r --since=@1700000003  [stock-8.19]
+interleaved    same        21300 entries  -o export -r --since=@1700000003  [patched]
+interleaved    same         3000 entries  -o export --reverse -n 3000  [stock-8.19]
+interleaved    same         3000 entries  -o export --reverse -n 3000  [patched]
+interleaved    same         3000 entries  -o export --lines=+3000  [stock-8.19]
+interleaved    same         3000 entries  -o export --lines=+3000  [patched]
+interleaved    same        21003 entries  -o export --after-cursor=s=6528d4c6caad42088e346bca5a2b58f7;  [stock-8.19]
+interleaved    same        21003 entries  -o export --after-cursor=s=6528d4c6caad42088e346bca5a2b58f7;  [patched]
+interleaved    same        21003 entries  -o export --cursor=s=6528d4c6caad42088e346bca5a2b58f7;i=c8;b  [stock-8.19]
+interleaved    same        21003 entries  -o export --cursor=s=6528d4c6caad42088e346bca5a2b58f7;i=c8;b  [patched]
+interleaved    same         3000 entries  -o export -r --cursor=s=6528d4c6caad42088e346bca5a2b58f7;i=c  [stock-8.19]
+interleaved    same         3000 entries  -o export -r --cursor=s=6528d4c6caad42088e346bca5a2b58f7;i=c  [patched]
+interleaved    same         3000 entries  -o export -r --after-cursor=s=6528d4c6caad42088e346bca5a2b58  [stock-8.19]
+interleaved    same         3000 entries  -o export -r --after-cursor=s=6528d4c6caad42088e346bca5a2b58  [patched]
+---- twomachines: 8.18 stock is the reference; 8.19 stock and the patched build against it
+twomachines    same        16000 entries  -o export  [stock-8.19]
+twomachines    same        16000 entries  -o export  [patched]
+twomachines    same        16000 entries  -o export -r  [stock-8.19]
+twomachines    same        16000 entries  -o export -r  [patched]
+twomachines    same          500 entries  -o export -n 500  [stock-8.19]
+twomachines    same          500 entries  -o export -n 500  [patched]
+twomachines    same         2000 entries  -o export -k  [stock-8.19]
+twomachines    same         2000 entries  -o export -k  [patched]
+twomachines    same         2000 entries  -o export _BOOT_ID=00000000cd0dcd0dcd0dcd0dcd0dcd0d  [stock-8.19]
+twomachines    same         2000 entries  -o export _BOOT_ID=00000000cd0dcd0dcd0dcd0dcd0dcd0d  [patched]
+twomachines    same         2000 entries  -o export -b -3  [stock-8.19]
+twomachines    same         2000 entries  -o export -b -3  [patched]
+twomachines    same         8001 entries  -o export --since=@1700000003 --until=@1700000063  [stock-8.19]
+twomachines    same         8001 entries  -o export --since=@1700000003 --until=@1700000063  [patched]
+twomachines    same        14500 entries  -o export -r --since=@1700000003  [stock-8.19]
+twomachines    same        14500 entries  -o export -r --since=@1700000003  [patched]
+twomachines    same         3000 entries  -o export --reverse -n 3000  [stock-8.19]
+twomachines    same         3000 entries  -o export --reverse -n 3000  [patched]
+twomachines    same         3000 entries  -o export --lines=+3000  [stock-8.19]
+twomachines    same         3000 entries  -o export --lines=+3000  [patched]
+twomachines    same        13000 entries  -o export --after-cursor=s=e5d3f5a611a7466f8295285fb969cfed;  [stock-8.19]
+twomachines    same        13000 entries  -o export --after-cursor=s=e5d3f5a611a7466f8295285fb969cfed;  [patched]
+twomachines    same        13001 entries  -o export --cursor=s=e5d3f5a611a7466f8295285fb969cfed;i=c8;b  [stock-8.19]
+twomachines    same        13001 entries  -o export --cursor=s=e5d3f5a611a7466f8295285fb969cfed;i=c8;b  [patched]
+twomachines    same         3000 entries  -o export -r --cursor=s=e5d3f5a611a7466f8295285fb969cfed;i=c  [stock-8.19]
+twomachines    same         3000 entries  -o export -r --cursor=s=e5d3f5a611a7466f8295285fb969cfed;i=c  [patched]
+twomachines    same         2999 entries  -o export -r --after-cursor=s=e5d3f5a611a7466f8295285fb969cf  [stock-8.19]
+twomachines    same         2999 entries  -o export -r --after-cursor=s=e5d3f5a611a7466f8295285fb969cf  [patched]
+---- repro25: 8.18 stock is the reference; 8.19 stock and the patched build against it
+repro25        same        25000 entries  -o export  [stock-8.19]
+repro25        same        25000 entries  -o export  [patched]
+repro25        same        25000 entries  -o export -r  [stock-8.19]
+repro25        same        25000 entries  -o export -r  [patched]
+repro25        same          500 entries  -o export -n 500  [stock-8.19]
+repro25        same          500 entries  -o export -n 500  [patched]
+repro25        same         5000 entries  -o export -k  [stock-8.19]
+repro25        same         5000 entries  -o export -k  [patched]
+repro25        same         5000 entries  -o export _BOOT_ID=00000001b007b007b007b007b007b007  [stock-8.19]
+repro25        same         5000 entries  -o export _BOOT_ID=00000001b007b007b007b007b007b007  [patched]
+repro25        same         5000 entries  -o export -b -3  [stock-8.19]
+repro25        same         5000 entries  -o export -b -3  [patched]
+repro25        same         3001 entries  -o export --since=@1700000064 --until=@1700000124  [stock-8.19]
+repro25        same         3001 entries  -o export --since=@1700000064 --until=@1700000124  [patched]
+repro25        same        23001 entries  -o export -r --since=@1700000064  [stock-8.19]
+repro25        same        23001 entries  -o export -r --since=@1700000064  [patched]
+repro25        same         3000 entries  -o export --reverse -n 3000  [stock-8.19]
+repro25        same         3000 entries  -o export --reverse -n 3000  [patched]
+repro25        same         3000 entries  -o export --lines=+3000  [stock-8.19]
+repro25        same         3000 entries  -o export --lines=+3000  [patched]
+repro25        same        22000 entries  -o export --after-cursor=s=4fe3c523352940b59b6976283cf399e9;  [stock-8.19]
+repro25        same        22000 entries  -o export --after-cursor=s=4fe3c523352940b59b6976283cf399e9;  [patched]
+repro25        same        22001 entries  -o export --cursor=s=4fe3c523352940b59b6976283cf399e9;i=3e8;  [stock-8.19]
+repro25        same        22001 entries  -o export --cursor=s=4fe3c523352940b59b6976283cf399e9;i=3e8;  [patched]
+repro25        same         3000 entries  -o export -r --cursor=s=4fe3c523352940b59b6976283cf399e9;i=3  [stock-8.19]
+repro25        same         3000 entries  -o export -r --cursor=s=4fe3c523352940b59b6976283cf399e9;i=3  [patched]
+repro25        same         2999 entries  -o export -r --after-cursor=s=4fe3c523352940b59b6976283cf399  [stock-8.19]
+repro25        same         2999 entries  -o export -r --after-cursor=s=4fe3c523352940b59b6976283cf399  [patched]
+
+################ D. one file still being written
+follow read #0 /opt/jc/stock-8.18/journalctl: 21643 entries, sha256 1a5a03f173cc0e03
+follow read #1 /opt/jc/stock-8.19/journalctl: 21643 entries, sha256 1a5a03f173cc0e03
+follow read #2 /opt/jc/patched/journalctl: 21643 entries, sha256 1a5a03f173cc0e03
+follow reads identical: True
+final read #0 /opt/jc/stock-8.18/journalctl: 24500 entries, sha256 61e3e0e5eaa8b22b
+final read #1 /opt/jc/stock-8.19/journalctl: 24500 entries, sha256 61e3e0e5eaa8b22b
+final read #2 /opt/jc/patched/journalctl: 24500 entries, sha256 61e3e0e5eaa8b22b
+final reads identical: True
+
+################ E. safety: /var/log, /run/log, /etc/systemd before and after the unprivileged part
+identical (52 entries)

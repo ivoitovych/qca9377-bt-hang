@@ -20,7 +20,8 @@
 #   A binary from a build tree finds its libsystemd-shared-*.so in its own directory or in
 #   <its directory>/src/shared; this script puts those on LD_LIBRARY_PATH for that one process only.
 #
-# K defaults to "25 50 100 200 400". Environment: ENTRIES (entries per file, default 1000),
+# K defaults to "25 50 100 200 400". Environment: KEEP (set it to keep the files for further checks, such as
+# `journalctl --verify --directory=<dir>/all`), ENTRIES (entries per file, default 1000),
 # LINES (stop after this many lines, default 100000), SECS (per run, default 40), RUNS (default 3,
 # the median is used), REMOTE (path of systemd-journal-remote), REMOTE_LIBDIR (where its
 # libsystemd-shared is, if it is not installed).
@@ -44,7 +45,11 @@ fi
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/journalctl-scaling.XXXXXX") || exit 1
 case $tmp in /*/journalctl-scaling.*) ;; *) echo "unexpected temp dir $tmp" >&2; exit 1 ;; esac
-trap 'rm -rf -- "$tmp"' EXIT
+if [ -n "${KEEP:-}" ]; then
+    echo "KEEP is set: the files stay in $tmp (delete it yourself when done, for example with rm -rf)"
+else
+    trap 'rm -rf -- "$tmp"' EXIT
+fi
 mkdir "$tmp/all"
 
 maxk=0; for k in $KS; do [ "$k" -gt "$maxk" ] && maxk=$k; done
