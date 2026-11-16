@@ -191,11 +191,26 @@ bt_journal_count() {   # <ere> <journalctl selector args...>
 # One read, filtered inside journalctl by the UNION of the patterns, then
 # counted locally per pattern. The union is what makes this safe: the local
 # match still decides, and it can only ever select a subset of what came back.
+#
+# Status: 0 lines matched; 1 none matched (the journal was read); 2 THE READ
+# FAILED — journalctl exited 2 or more, or exited 1 and said something on stderr
+# (a --grep with no match exits 1 and says nothing), or a journal file was
+# unreadable. A caller that needs to tell "no lines" from "could not read" must
+# look at 2; one that does not, `|| true`s it as before.
 bt_journal_lines() {   # <ere> <journalctl selector args...> — the matching lines
     local re="$1"; shift
-    local g=()
+    local g=() errf jr gr
     bt_journal_supports_grep && g=(--grep="$re")
-    bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -E "$re"
+    errf=$(mktemp "${TMPDIR:-/tmp}/bt-journal-err.XXXXXX") || errf=/dev/null
+    bt_journal "$@" "${g[@]}" --no-pager 2>"$errf" | grep -E "$re"
+    local -a ps=("${PIPESTATUS[@]}")
+    jr=${ps[0]}; gr=${ps[1]}
+    if (( jr >= 2 )) || { (( jr == 1 )) && [[ -s "$errf" ]]; }; then
+        [[ "$errf" == /dev/null ]] || rm -f "$errf"
+        return 2
+    fi
+    [[ "$errf" == /dev/null ]] || rm -f "$errf"
+    return "$gr"
 }
 
 bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or empty
@@ -262,6 +277,9 @@ bt_journal_kernel_fast() {
     # timestamp" line ends with it in hex microseconds, e.g. "(65e67f894cb04)". A file
     # with no entries has no such line and sorts first, harmlessly.
     for f in "$dir"/system.journal "$dir"/system@*.journal "$dir"/system@*.journal~; do
+        # A file that is there and cannot be read is a hole in the answer, not an
+        # absent file: it is recorded and the whole read ends in status 2.
+        [[ -e "$f" && ! -r "$f" ]] && echo "$f" >> "$tmp/unreadable"
         [[ -r "$f" ]] || continue
         hex=$(journalctl --file="$f" --header 2>/dev/null \
               | awk '/^Head realtime timestamp:/ { s = $NF; gsub(/[()]/, "", s); print s; exit }')
@@ -269,6 +287,8 @@ bt_journal_kernel_fast() {
         printf '%d\t%s\n' "$((16#$hex))" "$f"
     done | sort -n -k1,1 | cut -f2- > "$tmp/files"
     [[ -s "$tmp/files" ]] || { rm -rf "$tmp"; return 3; }
+    # A reader that fails must not leave a partial journal with exit 0 (review
+    # T-10, 2026-11-15): each file's exit status is kept beside its output.
 
     # One journalctl per file, at most one per core; outputs numbered in file order.
     local -a args=(-q --no-pager "${rest[@]}" _TRANSPORT=kernel "_BOOT_ID=$bid")
@@ -279,13 +299,32 @@ bt_journal_kernel_fast() {
         while IFS= read -r f; do
             i=$((i + 1))
             while (( $(jobs -rp | wc -l) >= par )); do wait -n; done
-            journalctl --file="$f" "${args[@]}" > "$tmp/$(printf '%06d' "$i").out" 2>/dev/null &
+            (
+                journalctl --file="$f" "${args[@]}" > "$tmp/$(printf '%06d' "$i").out" 2>/dev/null
+                echo $? > "$tmp/$(printf '%06d' "$i").rc"
+            ) &
         done < "$tmp/files"
         wait
     )
 
     for f in "$tmp"/*.out; do [[ -e "$f" ]] || continue; [[ -s "$f" ]] && n=1; cat "$f"; done
+    # With a --grep given, journalctl's own status 1 means "no match in this
+    # file"; anything else non-zero, and any status at all without --grep, is a
+    # failed read.
+    local rcf r failed=0
+    for rcf in "$tmp"/*.rc; do
+        [[ -e "$rcf" ]] || continue
+        r=$(<"$rcf")
+        [[ "$r" == 0 ]] && continue
+        (( grep_given )) && [[ "$r" == 1 ]] && continue
+        failed=1
+    done
+    [[ -s "$tmp/unreadable" ]] && failed=1
     rm -rf "$tmp"
+    if (( failed )); then
+        echo "bt_journal: a journal file could not be read completely — the output above is partial" >&2
+        return 2
+    fi
     if (( ! n )); then
         (( quiet )) || echo "-- No entries --"
         (( grep_given )) && return 1
