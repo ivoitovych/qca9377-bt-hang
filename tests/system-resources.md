@@ -84,6 +84,7 @@ one and points the seam at it. A test that forgets meets an empty machine.
 | `BT_JOURNAL_FILES_DIR` | `/root/bt-journal-archive/files` (copies written) | bt-journal-files |
 | `BT_JOURNAL_DIR` | `/var/log/journal/<machine-id>` (read by the fast kernel path) | lib/journal.sh |
 | `BT_EVIDENCE_REPO` | this checkout's `evidence/` (incidents written) | bt-evidence, bt-incident, bt-retention, bt-trial-audit |
+| `BT_BLUEZ_STORE` | `/var/lib/bluetooth` (device names, read) | scripts/sco-ledger.sh |
 
 Until 2026-10-09 the trace, capture and usbmon directories had their own
 defaults, and `bt-incident` had the trace directory written into it. They now
@@ -129,6 +130,7 @@ reaching the real one.
 | user identity | `bt-ui-capture` takes the desktop user's uid, gid and home from `BT_UI_UID`, `BT_UI_GID` and `BT_UI_HOME`; a host whose user database includes systemd's otherwise answers `id -g` from `/run/userdb` and `/run/systemd/userdb` | 2026-10-09, found by CI's trace |
 | what the AT-SPI test's private bus asks | **allowed**, for `dbus-daemon` only and only where that test runs: whether the connecting user is at a seat, its record and its groups | — |
 | other processes | a `/proc/<pid>` read of a process the run started is the run's own; the AT-SPI test stops its recorder by the pid the recorder logs, not with `pkill -f`, which reads every process on the machine | 2026-10-09, found by CI's trace |
+| the commit identity gate | `BT_REPO_SAVE_CONFIG_IDENTITY=1` makes `devtools/repo-save` take the identity from the target's own git configuration instead of the project author in `checks.yml`. It is **not** exported for the run: only the group of tests that commits into a scratch repository with a throwaway identity sets it, and unsets it after. `devtools/repo-save` itself refuses it in this checkout or any clone of the project (same top level, a HEAD or root commit the project holds, a tracked `devtools/repo-save`), for any remote whose fetch URL or `pushurl` is not a local path, and when a `url.*.insteadOf` or `pushInsteadOf` rewrite exists | 2026-11-15 / 2026-11-16 |
 | a crash reporter | `devtools/repo-validate` reports a Python syntax error itself: uncaught, Ubuntu's excepthook (apport) reads the package database and `/etc/apt` | 2026-10-09, found by CI's trace |
 
 ## 4. Data read through fixtures

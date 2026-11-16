@@ -61,8 +61,13 @@ died, every run of this suite deposited a fabricated incident directory into
 - every `bt-trial` call goes through one of six wrappers (`trial`, `trial_in`,
   `tl`, `tlt`, `tlnh`, `tlru`), and a check requires each to set both `BT_REPO` (where
   `results.tsv` is written) and `BT_EVIDENCE_REPO` (where `bt-incident` writes);
-- a second check fails on a spelled-out `tools/bt-trial <verb>` call outside
-  them (the read-only `report` calls set `BT_REPO` on their own line);
+- a second check fails on a spelled-out `tools/bt-trial <verb>` call of a verb
+  that ACTS (`autostart`, `autostop`, `start`, `ok`, `hang`, `abort`, `step`)
+  outside them. The read-only verbs (`report`, `status`, `audit`) are not in
+  that guard: the `report` calls set `BT_REPO` on their own line, and an
+  `audit --help` or a `status` reads nothing that matters. A third check
+  derives the verbs from `tools/bt-trial` itself and fails on one that is in
+  neither list, so a new verb cannot be called unguarded by being unknown;
 - `BT_EVIDENCE_REPO` points at the declared machine for the whole run, so a
   forgotten seam writes there, not here;
 - and at the end, `final_resource_report` compares `evidence/sessions/`, the
@@ -373,7 +378,7 @@ The upgrade rehearsal is what the investigation machine's next deploy does.
 - **The shutdown.** `systemctl stop bt-trial-auto`, as a shutdown runs it,
   closes the old trial with the new `bt-trial`.
 - **The way back.** `uninstall.sh --apply`.
-- **What it asserts** (20 checks, one `ok` line each in `tests/system-upgrade`):
+- **What it asserts** (20 checks, the `ok` lines of `tests/system-upgrade`; its last line, "all N upgrade checks pass", gives the count of a run):
   - the deploy ran nothing but file operations;
   - every destination holds the new file, and nothing else changed (a hash
     snapshot of every place an install writes, redirect-written files included);

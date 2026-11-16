@@ -73,18 +73,22 @@ if [[ "${BT_SYSTEM_TEST:-0}" != "1" ]]; then
     echo "  · refusing: set BT_SYSTEM_TEST=1 to run (this test INSTALLS, for real)"
     exit 0
 fi
-if [[ -e /usr/local/share/qca9377-bt-hang ]]; then
-    echo "  ✗ refusing: this machine already has an installation." >&2
-    echo "    A round trip here would reinstall the workarounds over a live" >&2
-    echo "    deployment and could end a measurement in progress." >&2
-    exit 1
-fi
+# The order matters: the mode stamp lives INSIDE the installation directory, so
+# the "already has an installation" gate, first, made the experiment-mode gate
+# unreachable (it could never fire, and the message named the wrong reason).
+# The specific refusals come first, the general one last.
 if [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
     echo "  ✗ refusing: a trial is open — installing reloads btusb." >&2
     exit 1
 fi
 if [[ -r /usr/local/share/qca9377-bt-hang/mode ]]; then
     echo "  ✗ refusing: this machine is in experiment mode." >&2
+    exit 1
+fi
+if [[ -e /usr/local/share/qca9377-bt-hang ]]; then
+    echo "  ✗ refusing: this machine already has an installation." >&2
+    echo "    A round trip here would reinstall the workarounds over a live" >&2
+    echo "    deployment and could end a measurement in progress." >&2
     exit 1
 fi
 if [[ $EUID -ne 0 ]]; then
@@ -189,13 +193,19 @@ fi
 # never be skipped. It needs no bluez, no systemd and no btmon: it asks only
 # whether the files this checkout installs are still on disk. When the two
 # checks above skip, this is the whole assertion.
-LEFT=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
+DEST=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
            install.sh 2>/dev/null \
        | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
-       | awk '{print $3}' | sort -u \
-       | while read -r p; do [[ -e "$p" ]] && echo "$p"; done)
-if [[ -z "$LEFT" ]]; then
-    ok "no install_file destination survives the uninstall (checked directly)"
+       | awk '{print $3}' | sort -u)
+# An EMPTY derived list is not "nothing is left": it would pass for any
+# uninstall. The list must have been derived (install.sh installs dozens), and
+# is counted in the verdict.
+NDEST=$(grep -c . <<<"$DEST" || true)
+LEFT=$(while read -r p; do [[ -n "$p" && -e "$p" ]] && echo "$p"; done <<<"$DEST")
+if (( ${NDEST:-0} < 10 )); then
+    bad "only ${NDEST:-0} install_file destination(s) derived from install.sh — the direct check has nothing to check"
+elif [[ -z "$LEFT" ]]; then
+    ok "none of the $NDEST install_file destinations survives the uninstall (checked directly)"
 else
     bad "files left behind:"
     sed 's/^/      /' <<<"$LEFT"

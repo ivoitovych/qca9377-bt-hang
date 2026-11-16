@@ -34,6 +34,12 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# python3 IS A REQUIREMENT, not an option. Four blocks below are written
+# `if command -v python3 ...; then <assertions>; fi` with no else, so on a host
+# without it they skipped silently (review of 2026-11-15, T-13) — while dozens of
+# other tests call `python3 -I` unguarded and would fail anyway. Said once, here.
+command -v python3 >/dev/null 2>&1 || { echo "run-tests: python3 is required (several tests drive it; none may skip silently without it)" >&2; exit 2; }
+
 # ── THE SUITE'S OWN SOURCE, AS A SET RATHER THAN AS "$0" ─────────────────
 #
 # Eight invariants in this file scan THE SUITE ITSELF, and they are the ones
@@ -158,7 +164,10 @@ if [[ "${1:-}" == --section ]]; then
     # declared or exported, so the run it starts begins from the caller's own
     # environment: the real trial state for its refusal, the host's
     # safe.directory for its git, and no run marker of this one.
-    out=$("$0"); rc=$?
+    # With the worker count this call was given (--jobs N, --serial, or the
+    # default): the run used to start from the defaults, so `--serial --section X`
+    # ran in parallel and measured something else.
+    out=$("$0" --jobs "$SUITE_JOBS"); rc=$?
     awk -v want="$2" '
         index($0, want) && !started { started = 1 }
         started && printed && /^$/  { started = 0 }
@@ -472,7 +481,7 @@ journalctl --suite-tripwire-canary >/dev/null 2>&1
 # So cleanups REGISTER here instead of installing their own trap, and there is a
 # source-level invariant near the end of this file that no second EXIT trap is
 # added. A list of paths cannot be replaced by forgetting.
-CLEANUP_PATHS=("$SUITE_TMP")   # $GUARD and all 79 other mktemps live inside it
+CLEANUP_PATHS=("$SUITE_TMP")   # $GUARD and every other mktemp of the run live inside it (TMPDIR is $SUITE_TMP)
 
 # ── THE SUITE'S GIT READS NONE OF THE HOST'S GIT CONFIGURATION ───────────
 #
@@ -543,10 +552,10 @@ export BT_EVIDENCE_STATE="$SUITE_MACHINE/evidence-state" BT_MODE_STAMP="$SUITE_M
 mkdir -p "$SUITE_MACHINE/evidence-repo"
 export BT_EVIDENCE_REPO="$SUITE_MACHINE/evidence-repo"
 # repo-save checks the commit identity against the project author named in
-# .github/workflows/checks.yml; the scratch repositories here carry a throwaway
-# identity, so the suite asks for the old comparison with the repository's own
-# configuration. The one test of the fixed identity unsets this.
-export BT_REPO_SAVE_CONFIG_IDENTITY=1
+# .github/workflows/checks.yml. The scratch repositories of one group of tests
+# carry a throwaway identity and set BT_REPO_SAVE_CONFIG_IDENTITY=1 for that
+# group only (never here, never suite-wide: a variable exported for every test
+# is one the tests that need the fixed identity must remember to unset).
 
 # THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
 #
@@ -2193,7 +2202,7 @@ echo "────────────────────────�
 # -f, and that the interval helper actually returns a number.
 offenders=$(grep -rnE "awk[^|]*-f [^ ]+\.awk[^|]*'" tools/ bin/ 2>/dev/null \
             | grep -vE "^tools/lib/|-f \"\\\$LIBDIR/[a-z-]+\.awk\" -f " || true)
-if [[ -z "$offenders" ]]; then
+if [[ -z "$offenders" ]] && (( ${#SHFILES[@]} > 0 )) && [[ -d tools && -d bin ]]; then
     ok "no tool passes an inline program alongside awk -f (${#SHFILES[@]} files)"
 else
     bad "inline program alongside -f (it will be read as a filename):"
@@ -3410,7 +3419,8 @@ echo "────────────────────────�
 # The live file is checked, not a fixture: the migration is the thing at risk.
 WIDTH=$(awk -F'\t' 'NR==1{n=NF; next} NF && NF!=n {print NR": "NF" vs "n}' \
         evidence/trials/results.tsv 2>/dev/null)
-if [[ -z "$WIDTH" ]]; then
+if [[ -z "$WIDTH" ]] && (( $(wc -l < evidence/trials/results.tsv 2>/dev/null || echo 0) >= 2 )); then
+    # (a missing or header-only file would give an empty WIDTH too: that is not a match)
     ok "every row in results.tsv matches the header width"
 else
     bad "results.tsv row/header width mismatch:"
@@ -5437,7 +5447,7 @@ SOK=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_US
 # Anchored to the LABEL: the first version of this asserted that "2" appeared
 # anywhere in the output, which any timestamp, count or version string
 # satisfies. It could not have failed if the count had come from the host.
-[[ "$SOK" == *"HCI command timeouts"*"2"* || "$SOK" == *"timeouts"*": 2"* ]] \
+grep -qE '^  HCI command timeouts:[[:space:]]+2$' <<<"$SOK" \
     && ok "bt-status counts this boot's timeouts from the fixture" \
     || bad "bt-status lost the fixture-derived timeout count"
 
@@ -5494,7 +5504,7 @@ STTR=$(mktemp -d); : > "$STTR/a.btsnoop"; : > "$STTR/b.btsnoop"
 printf 'gap 1\ngap 2\ngap 3\n' > "$STTR/gaps.log"
 SVTR=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
        BT_TRACE_DIR="$STTR" tools/bt-status 2>&1)
-[[ "$SVTR" == *"btsnoop files:"*"2"* && "$SVTR" == *"capture gaps logged:"*"3"* ]] \
+grep -qE '^  btsnoop files:[[:space:]]+2$' <<<"$SVTR" && grep -qE '^  capture gaps logged:[[:space:]]+3$' <<<"$SVTR" \
     && ok "bt-status counts the captures and the logged capture gaps" \
     || bad "capture health did not report 2 files and 3 gaps"
 rm -rf "$STTR"
@@ -7826,7 +7836,10 @@ EHR=$(BT_JOURNAL_FIXTURE="$EHF" BT_METRICS="$EHF/metrics.tsv" tools/bt-env-histo
 [[ "$EHR" != *"early+late/?"* && "$EHR" != *"late/?"* ]] \
     && ok "the threshold is extracted, not dropped to ?" \
     || bad "a threshold present in the log was reported as unknown"
-[[ "$EHR" == *"N"*"on"* ]] \
+# By COLUMN, not by two letters anywhere in the output: the autosuspend column
+# (4th) is N and the power column (5th) is on on one row. `*"N"*"on"*` was met
+# by any N followed by any "on" ("Nov", "on/?").
+awk '$4 == "N" && $5 == "on" { f = 1 } END { exit !f }' <<<"$EHR" \
     && ok "autosuspend and power policy are joined from the metrics of that boot" \
     || bad "the metrics join produced no values"
 # The probes column counts COMPLETED snapshot runs. The fixture's boot 0 has
@@ -8532,8 +8545,8 @@ UMC=$(BT_USBMON_DEBUGFS="$UM/nodbg" um --check); umcrc=$?
     || bad "the debugfs check did not refuse (rc=$umcrc)"
 
 um --bogus >/dev/null 2>&1
-(( $? != 0 )) && ok "bt-usbmon rejects an unknown argument" \
-              || bad "bt-usbmon accepted an unknown argument"
+(( $? != 0 )) && ok "bt-usbmon rejects an unknown argument also with every seam declared (the um harness)" \
+              || bad "bt-usbmon accepted an unknown argument under the um harness"
 
 # ── retention by count ───────────────────────────────────────────────────
 for i in 1 2 3 4 5; do
@@ -9518,13 +9531,18 @@ rm -rf "$TLRU"
 # for what it reports when it can. A silent skip is the failure it exists to
 # catch.
 TAF=tests/journal/trial-audit
-ta_repo() {   # <perturbed-for-row-1> -> a repo whose row 1 sits in fixture boot -1
+# The results.tsv header, as the producer writes it (tools/bt-trial) — NOT read
+# from the live evidence/trials/results.tsv, which grows with the investigation:
+# a fixture built from the real file changes when the real file does (review of
+# 2026-11-15, T-07). The columns are addressed by name below.
+TA_HDR=$'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\tprev_shutdown\tenum_at_boot\tperturbed'
+ta_repo() {   # <perturbed-for-row-1> [<timestamp>] -> a repo whose row 1 sits in fixture boot -1 (or at the timestamp)
     local d; d=$(mktemp -d); mkdir -p "$d/evidence/trials"
-    { head -1 evidence/trials/results.tsv
-      awk -v h="$(head -1 evidence/trials/results.tsv)" -v p="$1" 'BEGIN {
+    { printf '%s\n' "$TA_HDR"
+      awk -v h="$TA_HDR" -v p="$1" -v ts="${2:-2026-08-14T21:16:56+02:00}" 'BEGIN {
         n = split(h, c, "\t"); for (i = 1; i <= n; i++) f[i] = "-"
         for (i = 1; i <= n; i++) {
-            if      (c[i] == "timestamp")   f[i] = "2026-08-14T21:16:56+02:00"
+            if      (c[i] == "timestamp")   f[i] = ts
             else if (c[i] == "duration_s")  f[i] = 10000
             else if (c[i] == "perturbed")   f[i] = p
             else if (c[i] == "bt1_status")  f[i] = "confirmed"
@@ -9558,9 +9576,7 @@ rm -rf "$TAA"
 # A ROW WHOSE BOOT CANNOT BE RESOLVED IS A REFUSAL, NOT A SKIP. The journal for
 # an old trial rotates away, and an audit that quietly passed over those rows
 # would report "0 disagreements" about a file it had barely read.
-TAU=$(mktemp -d); mkdir -p "$TAU/evidence/trials"
-{ head -1 evidence/trials/results.tsv
-  head -2 evidence/trials/results.tsv | tail -1; } > "$TAU/evidence/trials/results.tsv"
+TAU=$(ta_repo none 2026-07-01T00:00:00+02:00)   # a day no fixture boot covers
 TAUO=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAU" tools/bt-trial-audit 2>&1); tarc3=$?
 (( tarc3 == 2 )) && [[ "$TAUO" == *"UNRESOLVED"* && "$TAUO" == *"not a pass"* ]] \
     && ok "a row whose boot has rotated away is refused, not silently skipped" \
@@ -10692,7 +10708,7 @@ rm -rf "$SNH"
 # Restoring the broken counter left the suite green, which is how the anchor
 # came to be `^[[:space:]]*`.
 STRAY=$(grep -nE '^[[:space:]]*[0-9]+[[:space:]]*$' "$SNDIR/summary.txt" || true)
-[[ -z "$STRAY" ]] \
+[[ -z "$STRAY" && -s "$SNDIR/summary.txt" ]] \
     && ok "no summary count is printed twice — every number is on its labelled line" \
     || bad "the summary carries an unlabelled bare number: $(tr '\n' ' ' <<<"$STRAY")"
 
@@ -11115,7 +11131,7 @@ rm -rf "$SN"
 # `busctl` added later for convenience fails here rather than in a window.
 SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill|busctl|dbus-send|dbus-monitor|gdbus)' tools/bt-snapshot \
           | grep -vE '^[0-9]+:[[:space:]]*#' || true)
-[[ -z "$SNTOUCH" ]] \
+[[ -z "$SNTOUCH" && -s tools/bt-snapshot ]] \
     && ok "bt-snapshot issues no controller command and no D-Bus call — safe inside an untreated window" \
     || bad "a controller-touching command reached the capture tool: $(tr '\n' ' ' <<<"$SNTOUCH")"
 
@@ -11343,7 +11359,7 @@ rm -rf "$CRF"
 # source, because no fixture can prove the absence of a call that is not made.
 CRTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-crash \
           | grep -vE '^[0-9]+:[[:space:]]*#' || true)
-[[ -z "$CRTOUCH" ]] \
+[[ -z "$CRTOUCH" && -s tools/bt-crash ]] \
     && ok "bt-crash issues no controller command — safe inside an untreated window" \
     || bad "a controller-touching command reached the crash tool: $(tr '\n' ' ' <<<"$CRTOUCH")"
 
@@ -14217,7 +14233,7 @@ done
 # here. A validator that cannot fail is the same as no validator.
 kbad=0; kran=0
 kcheck() {   # <name> <content> <tool>
-    command -v "$3" >/dev/null 2>&1 || return 0
+    command -v "$3" >/dev/null 2>&1 || { echo "  · $3 is not installed: the broken-$1 case did NOT run on this host"; return 0; }
     kran=$((kran + 1))
     local d="$SCRATCH/bad-$1"; mkdir -p "$d"; scratch_repo "$d"
     printf '%s' "$2" > "$d/broken.$1"
@@ -14869,6 +14885,12 @@ rm -rf "$CIS"
 # shown by a plain `git log`.
 mkdir -p "$SCRATCH/save"; scratch_repo "$SCRATCH/save"
 printf 'placeholder 11:11:11:22:33:44\n' > "$SCRATCH/save/notes.log"
+# The scratch repositories carry a throwaway identity, so THIS group asks for
+# repo-save's configuration-identity seam; it is set here and unset where the
+# group ends (below), not for the whole suite (review of 2026-11-15, N-04). The
+# seam is itself refused for a clone of the project or a repository with a
+# network address (see "review fixes of 2026-11-16").
+export BT_REPO_SAVE_CONFIG_IDENTITY=1
 
 save() { devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
 
@@ -15093,6 +15115,7 @@ SVNT=$(svt "committed with no trial open"); svntrc=$?
 (( svntrc == 0 )) && [[ "$SVNT" != *"SUITE NOT RUN"* && "$SVNT" != *"TRIAL IS OPEN"* ]] \
     && ok "with no trial open repo-save runs the full validation, unchanged" \
     || bad "the no-suite path was taken without an open trial (rc=$svntrc)"
+unset BT_REPO_SAVE_CONFIG_IDENTITY     # the last repo-save call of the group
 
 # repo-validate's own two entry points for this.
 devtools/repo-validate "$SCRATCH/save" --no-suite >/dev/null 2>&1
@@ -15363,14 +15386,9 @@ RFUNG=$(grep -rnE 'shift 2( ;;|;|$)' tools bin 2>/dev/null \
     && ok "no unguarded 'shift 2' in tools/ or bin/" \
     || bad "unguarded 'shift 2' in an option loop: $(head -3 <<<"$RFUNG" | tr '\n' '|')"
 
-# runtime-mgmt-test.sh load/restore swapped bluetooth.ko live and wedged the
-# controller (EX-046). The script must refuse both, before it reads anything.
-for _v in load restore; do
-    _o=$(scripts/runtime-mgmt-test.sh "$_v" patched 2>&1); _rc=$?
-    [[ "$_rc" == 2 && "$_o" == *"REFUSED"* && "$_o" == *"EX-046"* ]] \
-        && ok "runtime-mgmt-test.sh $_v is refused with exit 2 and names EX-046" \
-        || bad "runtime-mgmt-test.sh $_v: rc=$_rc: $(head -2 <<<"$_o" | tr '\n' '|')"
-done
+# (The runtime-mgmt-test.sh load/restore refusal moved to "review fixes of
+# 2026-11-16", below: it ran the script for real, which would have performed the
+# module swap had the refusal regressed.)
 
 # bt-archive --replace MUST NEVER SHORTEN AN ARCHIVE. A live boot loses its
 # oldest journal files, so a prefix that is re-archived "in full" can come back
@@ -15409,9 +15427,10 @@ rm -rf "$RFA"
 
 # repo-save's IDENTITY IS THE PROJECT AUTHOR, NOT WHATEVER THE CHECKOUT SAYS.
 # A checkout reset to an environment's default agrees with itself; the check
-# must compare with the fixed author CI uses (WANT in checks.yml). The suite
-# exports BT_REPO_SAVE_CONFIG_IDENTITY=1 for its throwaway scratch identities;
-# these checks drop it.
+# must compare with the fixed author CI uses (WANT in checks.yml). Only the
+# tests that commit into a scratch repository with a throwaway identity set
+# BT_REPO_SAVE_CONFIG_IDENTITY=1 (the suite no longer exports it); these checks
+# run without it.
 RFI=$(mktemp -d); git -C "$RFI" init -q; git -C "$RFI" config user.email test@example.com; git -C "$RFI" config user.name test
 printf 'one line\n' > "$RFI/a.txt"
 _hb=$(git -C "$RFI" rev-parse HEAD 2>/dev/null || echo none)
@@ -15430,7 +15449,7 @@ _ha2=$(git -C "$RFI" rev-parse HEAD 2>/dev/null || echo none)
     || bad "repo-save refused the project author (rc=$rfirc2): $(grep -m1 '✗' <<<"$RFIO2")"
 # An empty identity is still refused (the configuration seam, no identity at all).
 RFE=$(mktemp -d); git -C "$RFE" init -q; printf 'x\n' > "$RFE/b.txt"
-RFEO=$(devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
+RFEO=$(BT_REPO_SAVE_CONFIG_IDENTITY=1 devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
 (( rferc != 0 )) && [[ "$RFEO" == *"no identity"* ]] \
     && ok "repo-save still refuses a checkout with no identity" \
     || bad "repo-save did not refuse an empty identity (rc=$rferc)"
@@ -15441,7 +15460,7 @@ RFEO=$(devtools/repo-save "$RFE" "empty identity" --no-push 2>&1); rferc=$?
 RFN=$(mktemp -d); git -C "$RFN" init -q; git -C "$RFN" config user.email test@example.com; git -C "$RFN" config user.name test
 git -C "$RFN" remote add origin https://github.com/example-owner/public-repo.git
 printf 'x\n' > "$RFN/c.txt"
-RFNO=$(devtools/repo-save "$RFN" "seam with a network remote" --no-push 2>&1); rfnrc=$?
+RFNO=$(BT_REPO_SAVE_CONFIG_IDENTITY=1 devtools/repo-save "$RFN" "seam with a network remote" --no-push 2>&1); rfnrc=$?
 (( rfnrc != 0 )) && [[ "$RFNO" == *"scratch repositories only"* ]] \
         && ! git -C "$RFN" rev-parse -q --verify HEAD >/dev/null \
     && ok "repo-save refuses its identity seam for a repository with a network remote" \
@@ -15634,8 +15653,595 @@ RFTE=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-sco-table.awk "$RFT
     && ok "trial-sco-table: a bottom row emptied by exclusion is not reported as every trial provoking SCO setup" \
     || bad "trial-sco-table misread an empty-by-exclusion bottom row: rc=$_rc: $(tail -4 <<<"$RFTE" | tr '\n' '|')"
 rm -rf "$RFT"
-# MARKER-NEW-TESTS-END
 rm -rf "$RF"
+
+echo
+echo "review fixes of 2026-11-16 — scripts, devtools and the test assertions"
+echo "──────────────────────────────────────────────────────────────────────"
+#
+# Each block below is built so the OLD behaviour fails it. Nothing here runs a
+# module, rfkill, bluetoothctl or btmgmt command: where a script could reach one
+# it is a stub on PATH that records the call, and the test asserts the record
+# is empty.
+
+# N-05: runtime-mgmt-test.sh load/restore are refused. The refusal is tested with
+# modprobe, rmmod, insmod and the rest stubbed first on PATH, so a regression of
+# the refusal would call a stub and fail this check instead of swapping
+# bluetooth.ko on the machine the suite runs on.
+RM=$(mktemp -d); mkdir -p "$RM/stubs" "$RM/repo/scripts" "$RM/repo/tools"
+for _t in modprobe rmmod insmod systemctl bluetoothctl btmgmt btmon rfkill loginctl hciconfig; do
+    printf '#!/bin/sh\necho "%s $*" >> "%s/calls.log"\nexit 0\n' "$_t" "$RM" > "$RM/stubs/$_t"
+    chmod +x "$RM/stubs/$_t"
+done
+RMBAD=''
+for _v in load restore; do
+    _o=$(PATH="$RM/stubs:$PATH" scripts/runtime-mgmt-test.sh "$_v" patched 2>&1); _rc=$?
+    [[ "$_rc" == 2 && "$_o" == *"REFUSED"* && "$_o" == *"EX-046"* ]] || RMBAD+=" [$_v rc=$_rc: $(head -2 <<<"$_o" | tr '\n' '|')]"
+done
+[[ -z "$RMBAD" && ! -e "$RM/calls.log" ]] \
+    && ok "runtime-mgmt-test.sh load and restore are refused with exit 2, naming EX-046, and no module command was started" \
+    || bad "runtime-mgmt-test.sh load/restore:$RMBAD calls: $(cat "$RM/calls.log" 2>/dev/null | tr '\n' '|')"
+# The usage and the file itself no longer offer a swap: no verb in the usage, no
+# disabled code left behind to be re-enabled by renaming a label.
+_u=$(scripts/runtime-mgmt-test.sh nonsense-verb 2>&1)
+[[ "$_u" != *"load unpatched"* && "$_u" != *"swap bluetooth.ko (tmp"* ]] \
+    && ! grep -qE 'load_disabled|restore_disabled|modprobe -r|insmod "' scripts/runtime-mgmt-test.sh \
+    && ok "runtime-mgmt-test.sh does not list load/restore as verbs and keeps no module-swap code" \
+    || bad "runtime-mgmt-test.sh still lists or keeps the module swap"
+# The wording: the verbs that remain disturb the controller and must say so.
+[[ "$_u" == *"POWER-CYCLE THE ADAPTER"* && "$_u" == *"RESTART bluetoothd"* && "$_u" != *"remain usable"* ]] \
+    && ok "runtime-mgmt-test.sh says trigger power-cycles the adapter and the daemon verbs restart bluetoothd" \
+    || bad "runtime-mgmt-test.sh usage does not warn about trigger and the daemon verbs: $(head -3 <<<"$_u" | tr '\n' '|')"
+# guard() fails CLOSED: a missing, failing or unintelligible bt-window or
+# bt-trial is "cannot rule out an open window or trial", never "none open". Run
+# from a copy whose tools/ the test controls; the verb is `trigger`, so a guard
+# that let it through would call the btmon and bluetoothctl stubs.
+cp scripts/runtime-mgmt-test.sh "$RM/repo/scripts/"
+rm -f "$RM/calls.log"
+rm_guard() {   # <bt-window body> <bt-trial body> — exit status of `trigger x` from the fixture repo
+    printf '#!/bin/sh\n%s\n' "$1" > "$RM/repo/tools/bt-window"
+    printf '#!/bin/sh\n%s\n' "$2" > "$RM/repo/tools/bt-trial"
+    chmod +x "$RM/repo/tools/bt-window" "$RM/repo/tools/bt-trial"
+    PATH="$RM/stubs:$PATH" "$RM/repo/scripts/runtime-mgmt-test.sh" trigger x >/dev/null 2>"$RM/err"; echo $?
+}
+RMG=''
+rm -f "$RM/repo/tools/bt-window" "$RM/repo/tools/bt-trial"
+_rc=$(PATH="$RM/stubs:$PATH" "$RM/repo/scripts/runtime-mgmt-test.sh" trigger x 2>&1 >/dev/null; echo $?)
+[[ "$_rc" == *3 ]] || RMG+=" [both tools missing: $_rc]"
+_rc=$(rm_guard 'echo "No HCI command timeout this boot."; exit 1' 'echo "no trial open"');  [[ "$_rc" == 3 ]] || RMG+=" [bt-window exit 1: $_rc]"
+_rc=$(rm_guard 'exit 0' 'echo "no trial open"');                                              [[ "$_rc" == 3 ]] || RMG+=" [bt-window silent: $_rc]"
+_rc=$(rm_guard 'echo "Untreated and running."' 'echo "no trial open"');                        [[ "$_rc" == 3 ]] || RMG+=" [window open: $_rc]"
+_rc=$(rm_guard 'echo fine' 'echo "trial OPEN"');                                              [[ "$_rc" == 3 ]] || RMG+=" [trial open: $_rc]"
+_rc=$(rm_guard 'echo fine' 'exit 1');                                                         [[ "$_rc" == 3 ]] || RMG+=" [bt-trial failing: $_rc]"
+_rc=$(rm_guard 'echo fine' 'echo "something else"');                                          [[ "$_rc" == 3 ]] || RMG+=" [bt-trial unintelligible: $_rc]"
+rm -f "$RM/repo/tools/bt-trial"      # bt-window is still there from the last case
+_rc=$(PATH="$RM/stubs:$PATH" "$RM/repo/scripts/runtime-mgmt-test.sh" trigger x 2>&1 >/dev/null; echo $?)
+[[ "$_rc" == *3 ]] || RMG+=" [bt-trial missing: $_rc]"
+[[ -z "$RMG" && ! -e "$RM/calls.log" ]] \
+    && ok "runtime-mgmt-test.sh guard() refuses (exit 3) when bt-window or bt-trial is missing, failing, silent, unintelligible or reports an open window or trial; no stub was called" \
+    || bad "runtime-mgmt-test.sh guard() failed open:$RMG calls: $(cat "$RM/calls.log" 2>/dev/null | tr '\n' '|')"
+rm -rf "$RM"
+
+# N-02: sco-ledger.sh on a boot that reads fine and holds no SCO call. journalctl
+# --grep exits 1 when nothing matched; under pipefail that made the script
+# exit non-zero and sco-ledger-boots.sh print UNREADABLE for a measured zero. The
+# journalctl here is a stub on PATH; the device store is a seam pointed at an
+# empty directory and bluetoothctl is a stub, so nothing of the machine is read.
+SL=$(mktemp -d); mkdir -p "$SL/nomatch" "$SL/match" "$SL/grepfail" "$SL/grepsig" "$SL/store"
+printf '#!/bin/sh\necho "bluetoothctl $*" >> "%s/calls.log"\nexit 0\n' "$SL" > "$SL/bluetoothctl"; chmod +x "$SL/bluetoothctl"
+for _k in nomatch match grepfail grepsig; do cp "$SL/bluetoothctl" "$SL/$_k/bluetoothctl"; done
+# nomatch: the probe (-n 1) answers, the --grep read finds nothing and says so as journalctl does: exit 1, no error text
+cat > "$SL/nomatch/journalctl" <<'SLSTUB'
+#!/bin/sh
+case "$*" in
+    *--grep*) exit 1 ;;
+    *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
+esac
+SLSTUB
+# match: one complete link, answered
+cat > "$SL/match/journalctl" <<'SLSTUB'
+#!/bin/sh
+case "$*" in
+    *--grep*)
+        echo "2026-11-15T10:00:00.000000+00:00 h kernel: Bluetooth: hci0: dst aa:bb:cc:00:00:01 handle 0x0001"
+        echo "2026-11-15T10:00:01.000000+00:00 h kernel: Bluetooth: hci0: opcode 0x0428"
+        echo "2026-11-15T10:00:02.000000+00:00 h kernel: Bluetooth: hci0 evt 5"
+        echo "2026-11-15T10:00:07.000000+00:00 h kernel: Bluetooth: hci0: reason 0x13"
+        echo "2026-11-15T10:00:07.100000+00:00 h kernel: Bluetooth: hci0: opcode 0x0406 status 0x00"
+        exit 0 ;;
+    *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
+esac
+SLSTUB
+# grepfail: the read itself fails, with a message, and exits 1 as well
+cat > "$SL/grepfail/journalctl" <<'SLSTUB'
+#!/bin/sh
+case "$*" in
+    *--grep*) echo "Failed to read journal file: Input/output error" >&2; exit 1 ;;
+    *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
+esac
+SLSTUB
+# grepsig: the read dies with a status above 1
+cat > "$SL/grepsig/journalctl" <<'SLSTUB'
+#!/bin/sh
+case "$*" in
+    *--grep*) exit 141 ;;
+    *) echo "kernel: Bluetooth: hci0: some line"; exit 0 ;;
+esac
+SLSTUB
+chmod +x "$SL"/*/journalctl
+SLBAD=''
+sl_run() {   # <kind> — runs the ledger with the stub; stdout to $SL/out, stderr to $SL/err, prints the status
+    PATH="$SL/$1:$PATH" BT_BLUEZ_STORE="$SL/store" scripts/sco-ledger.sh 3 >"$SL/out" 2>"$SL/err"; echo $?
+}
+_rc=$(sl_run nomatch)
+[[ "$_rc" == 0 ]] && grep -q '^links 0   hang-ups answered 0   timeouts 0$' "$SL/out" && grep -q '^setup' "$SL/out" \
+    || SLBAD+=" [no match: rc=$_rc out='$(tail -1 "$SL/out")' err='$(head -c 80 "$SL/err")']"
+_rc=$(sl_run match)
+[[ "$_rc" == 0 ]] && grep -q '^links 1   hang-ups answered 1   timeouts 0$' "$SL/out" && grep -q 'hangup-ok 100 ms' "$SL/out" \
+    || SLBAD+=" [match: rc=$_rc out='$(tail -1 "$SL/out")']"
+_rc=$(sl_run grepfail)
+[[ "$_rc" == 2 && ! -s "$SL/out" && "$(cat "$SL/err")" == *"failed"* ]] || SLBAD+=" [read failure with exit 1: rc=$_rc out='$(head -c 60 "$SL/out")']"
+_rc=$(sl_run grepsig)
+[[ "$_rc" == 2 && ! -s "$SL/out" ]] || SLBAD+=" [read failure with exit 141: rc=$_rc]"
+[[ -z "$SLBAD" ]] \
+    && ok "sco-ledger.sh: a readable boot with no SCO line is a measured zero (exit 0); a read failure, with exit 1 or above, is still exit 2 with no table" \
+    || bad "sco-ledger.sh no-match / failure handling:$SLBAD"
+# And through sco-ledger-boots.sh: the boot with no calls is in the totals, not UNREADABLE.
+cp scripts/sco-ledger-boots.sh "$SL/"
+cp scripts/sco-ledger.sh "$SL/"
+_o=$(PATH="$SL/nomatch:$PATH" BT_BLUEZ_STORE="$SL/store" "$SL/sco-ledger-boots.sh" 3 2>&1); _rc=$?
+[[ "$_rc" == 0 && "$_o" == *"TOTAL over 1 boot(s): links 0   hang-ups answered 0   timeouts 0"* && "$_o" != *UNREADABLE* ]] \
+    && ok "sco-ledger-boots.sh counts a boot with no SCO line as one boot with zero links, not as UNREADABLE" \
+    || bad "sco-ledger-boots.sh on a boot with no calls: rc=$_rc: $(grep -E 'TOTAL|UNREADABLE' <<<"$_o" | tr '\n' '|')"
+grep -q '^bluetoothctl devices' "$SL/calls.log" 2>/dev/null \
+    && ok "sco-ledger.sh asked the stubbed bluetoothctl for names, never the machine's" \
+    || bad "sco-ledger.sh did not reach the stubbed bluetoothctl: the fixture is not isolating it"
+rm -rf "$SL"
+
+# N-04: repo-save's identity switch (BT_REPO_SAVE_CONFIG_IDENTITY=1) also looks at
+# pushurl and url.*.insteadOf / pushInsteadOf, and is refused in ANY clone of this
+# project, not only the checkout the script lives in. Each refusal must leave no
+# commit; the control is a scratch repository whose remotes are all local paths,
+# which the switch still serves. The switch is set per call here, never exported.
+RS=$(mktemp -d)
+rs_repo() {   # <name> — a scratch repository with a throwaway identity and one new file
+    git init -q "$RS/$1"; git -C "$RS/$1" config user.name test; git -C "$RS/$1" config user.email test@example.com
+    printf 'x\n' > "$RS/$1/f.txt"
+}
+rs_try() {   # <name> — repo-save under the switch; sets RSO and RSRC; the repository must not gain a commit
+    RSO=$(BT_REPO_SAVE_CONFIG_IDENTITY=1 BT_TRIAL_STATE_DIR="$RS/trial" devtools/repo-save "$RS/$1" "scratch commit" --no-push 2>&1); RSRC=$?
+}
+mkdir -p "$RS/trial"
+RSBAD=''
+rs_repo localok; git -C "$RS/localok" remote add origin "$RS/bare-a.git"; git -C "$RS/localok" config remote.origin.pushurl "$RS/bare-b.git"
+rs_try localok
+(( RSRC == 0 )) && git -C "$RS/localok" rev-parse -q --verify HEAD >/dev/null || RSBAD+=" [control, local remote and local pushurl: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+rs_repo pushurl; git -C "$RS/pushurl" remote add origin "$RS/bare-a.git"; git -C "$RS/pushurl" config remote.origin.pushurl https://example.org/x.git
+rs_try pushurl
+(( RSRC != 0 )) && [[ "$RSO" == *"scratch repositories only"*"pushurl"* ]] && ! git -C "$RS/pushurl" rev-parse -q --verify HEAD >/dev/null \
+    || RSBAD+=" [network pushurl: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+rs_repo rewrite; git -C "$RS/rewrite" remote add origin "$RS/bare-a.git"; git -C "$RS/rewrite" config "url.https://example.org/.insteadOf" "$RS/"
+rs_try rewrite
+(( RSRC != 0 )) && [[ "$RSO" == *"scratch repositories only"*"rewrite"* ]] && ! git -C "$RS/rewrite" rev-parse -q --verify HEAD >/dev/null \
+    || RSBAD+=" [url.*.insteadOf: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+rs_repo pushrewrite; git -C "$RS/pushrewrite" config "url.https://example.org/.pushInsteadOf" "$RS/"
+rs_try pushrewrite
+(( RSRC != 0 )) && [[ "$RSO" == *"rewrite"* ]] && ! git -C "$RS/pushrewrite" rev-parse -q --verify HEAD >/dev/null \
+    || RSBAD+=" [url.*.pushInsteadOf: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+# a clone of this project: its HEAD is one of the project's commits
+git clone -q --depth 1 "file://$PWD" "$RS/clone" 2>/dev/null
+git -C "$RS/clone" config user.name test; git -C "$RS/clone" config user.email test@example.com
+printf 'x\n' > "$RS/clone/f.txt"; _ch=$(git -C "$RS/clone" rev-parse HEAD 2>/dev/null)
+rs_try clone
+(( RSRC != 0 )) && [[ "$RSO" == *"clone of this project"* && "$(git -C "$RS/clone" rev-parse HEAD)" == "$_ch" ]] \
+    || RSBAD+=" [a clone of the project: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+# the same clone after a commit of its own on top: HEAD is no longer the project's, the root still is
+git -C "$RS/clone" add f.txt; git -C "$RS/clone" commit -q -m "own commit"; printf 'y\n' > "$RS/clone/g.txt"; _ch=$(git -C "$RS/clone" rev-parse HEAD)
+rs_try clone
+(( RSRC != 0 )) && [[ "$RSO" == *"clone of this project"* && "$(git -C "$RS/clone" rev-parse HEAD)" == "$_ch" ]] \
+    || RSBAD+=" [a clone with a commit of its own: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+# a repository that shares no history but tracks the gate itself
+rs_repo tracked; mkdir -p "$RS/tracked/devtools"; printf '#!/bin/sh\n' > "$RS/tracked/devtools/repo-save"; git -C "$RS/tracked" add devtools/repo-save
+rs_try tracked
+(( RSRC != 0 )) && [[ "$RSO" == *"clone of this project"* ]] && ! git -C "$RS/tracked" rev-parse -q --verify HEAD >/dev/null \
+    || RSBAD+=" [a repository tracking devtools/repo-save: rc=$RSRC: $(grep -m1 '✗' <<<"$RSO")]"
+[[ -z "$RSBAD" ]] \
+    && ok "repo-save's identity switch serves a scratch repository with local remotes and is refused for a network pushurl, a url rewrite, a clone of the project (with or without a commit of its own) and a repository tracking the gate" \
+    || bad "repo-save's identity switch:$RSBAD"
+# the suite does not export it, and the document that lists the suite's resources says what it is
+[[ -z "${BT_REPO_SAVE_CONFIG_IDENTITY:-}" ]] && grep -q 'BT_REPO_SAVE_CONFIG_IDENTITY' tests/system-resources.md \
+    && ok "BT_REPO_SAVE_CONFIG_IDENTITY is not set in this section's environment and is listed in tests/system-resources.md" \
+    || bad "BT_REPO_SAVE_CONFIG_IDENTITY leaked into this section's environment or is missing from tests/system-resources.md"
+rm -rf "$RS"
+
+# G-02: the push-range identity check judges "not yet published" against the
+# remote the push goes to. A commit that exists only on `private` (a held
+# branch's history, say) used to count as published because ANY remote held it,
+# and went to `origin` unchecked.
+RP=$(mktemp -d); mkdir -p "$RP/trial"
+rp_world() {   # <name> — a scratch repo with a local origin and private; the switch's identity is "t"
+    git init -q --bare "$RP/$1-origin.git"; git init -q --bare "$RP/$1-private.git"
+    git init -q -b main "$RP/$1"; git -C "$RP/$1" config user.name t; git -C "$RP/$1" config user.email t@example.com
+    git -C "$RP/$1" remote add origin "$RP/$1-origin.git"; git -C "$RP/$1" remote add private "$RP/$1-private.git"
+}
+rp_save() {   # <name> — repo-save, pushing, under the switch
+    BT_REPO_SAVE_CONFIG_IDENTITY=1 BT_TRIAL_STATE_DIR="$RP/trial" devtools/repo-save "$RP/$1" "scratch change" 2>&1
+}
+RPBAD=''
+rp_world foreign
+printf 'one\n' > "$RP/foreign/a.txt"; git -C "$RP/foreign" add -A
+GIT_AUTHOR_NAME=Other GIT_AUTHOR_EMAIL=other@example.com GIT_COMMITTER_NAME=Other GIT_COMMITTER_EMAIL=other@example.com \
+    git -C "$RP/foreign" commit -q -m "a commit by someone else"
+git -C "$RP/foreign" push -q private main 2>/dev/null; git -C "$RP/foreign" fetch -q private 2>/dev/null
+printf 'two\n' > "$RP/foreign/b.txt"
+RPO=$(rp_save foreign); rprc=$?
+(( rprc != 0 )) && [[ "$RPO" == *"not authored and committed by the expected identity"* ]] \
+    && ! git --git-dir="$RP/foreign-origin.git" rev-parse -q --verify refs/heads/main >/dev/null \
+    || RPBAD+=" [a commit only on private went to origin: rc=$rprc: $(grep -m1 '✗' <<<"$RPO")]"
+rp_world own
+printf 'one\n' > "$RP/own/a.txt"; git -C "$RP/own" add -A; git -C "$RP/own" commit -q -m "own commit"
+printf 'two\n' > "$RP/own/b.txt"
+RPO=$(rp_save own); rprc=$?
+(( rprc == 0 )) && git --git-dir="$RP/own-origin.git" rev-parse -q --verify refs/heads/main >/dev/null \
+    || RPBAD+=" [control, commits by the configured identity: rc=$rprc: $(grep -m1 '✗' <<<"$RPO")]"
+[[ -z "$RPBAD" ]] \
+    && ok "repo-save's push check judges the commits origin does not have (not 'some remote has'): a foreign commit held only by private is refused; the control pushes" \
+    || bad "repo-save's push range:$RPBAD"
+rm -rf "$RP"
+
+# G-02: CI's identity job on a forced update. The job's script is read out of
+# checks.yml itself and run on a scratch repository whose origin/main IS the
+# pushed tip (what a forced update of main measures): zero commits in the range
+# must not read as "all fine", so the tip is examined alone.
+CI=$(mktemp -d)
+awk '/name: Every pushed commit/ { s = 1 } s && /^        run: \|$/ { r = 1; next }
+     r { if ($0 ~ /^          /) { sub(/^          /, ""); print } else if ($0 ~ /^$/) print; else exit }' .github/workflows/checks.yml > "$CI/job.sh"
+git init -q --bare "$CI/o.git"; git init -q -b main "$CI/w"
+git -C "$CI/w" config user.name t; git -C "$CI/w" config user.email t@example.com; git -C "$CI/w" remote add origin "$CI/o.git"
+GIT_AUTHOR_NAME=Other GIT_AUTHOR_EMAIL=other@example.com GIT_COMMITTER_NAME=Other GIT_COMMITTER_EMAIL=other@example.com \
+    git -C "$CI/w" commit -q --allow-empty -m "forced update tip by someone else"
+git -C "$CI/w" push -q origin main 2>/dev/null
+ci_job() {   # <want> -> rc of the job's script on the scratch repo, BEFORE all zeros
+    ( cd "$CI/w" && env BEFORE=0000000000000000000000000000000000000000 AFTER="$(git rev-parse HEAD)" WANT="$1" bash "$CI/job.sh" >"$CI/out" 2>&1 ); echo $?
+}
+[[ -s "$CI/job.sh" ]] && [[ "$(ci_job 'Wanted <wanted@example.com>')" == 1 ]] && grep -q '::error::' "$CI/out" \
+    && [[ "$(ci_job 'Other <other@example.com>')" == 0 ]] && grep -q '^1 commit(s) examined' "$CI/out" \
+    && ok "CI's identity job examines the pushed tip when the range is empty (a forced update of main): a foreign tip fails, the right author passes with 1 commit examined" \
+    || bad "CI's identity job on an empty range: job.sh $(wc -l < "$CI/job.sh") lines; last output: $(tail -2 "$CI/out" | tr '\n' '|')"
+CINJOBS=$(awk '/^jobs:/ { j = 1; next } j && /^  [a-z-]+:$/ { n++ } END { print n + 0 }' .github/workflows/checks.yml)
+grep -q 'NINE JOBS' .github/workflows/checks.yml && [[ "$CINJOBS" == 9 ]] \
+    && ok "checks.yml's header says nine jobs and it defines $CINJOBS" \
+    || bad "checks.yml's header ('NINE JOBS') is out of step with the $CINJOBS jobs it defines"
+rm -rf "$CI"
+
+# G-02: repo-scan --range sees a leak that one commit of the push adds and the
+# next removes; the net diff of the push is empty of it, but both commits are
+# published. The address is assembled at run time (written out, it would trip
+# the scan of this file).
+RR=$(mktemp -d); git init -q -b main "$RR"; git -C "$RR" config user.name t; git -C "$RR" config user.email t@example.com
+printf 'base\n' > "$RR/a.txt"; git -C "$RR" add -A; git -C "$RR" commit -q -m base; rr0=$(git -C "$RR" rev-parse HEAD)
+_a='12:34'; _b='56:78'; _c='9a:bc'
+printf 'seen %s:%s:%s\n' "$_a" "$_b" "$_c" >> "$RR/a.txt"; git -C "$RR" commit -q -am "adds a leak"
+printf 'base\n' > "$RR/a.txt"; git -C "$RR" commit -q -am "removes it again"; rr2=$(git -C "$RR" rev-parse HEAD)
+RRO=$(devtools/repo-scan "$RR" --range "$rr0" "$rr2" 2>&1); rrrc=$?
+RRZ=$(devtools/repo-scan "$RR" --range 0000000000000000000000000000000000000000 "$rr2" 2>&1); rrzrc=$?
+printf 'a clean line\n' >> "$RR/a.txt"; git -C "$RR" commit -q -am "a clean change"; rr3=$(git -C "$RR" rev-parse HEAD)
+RRC=$(devtools/repo-scan "$RR" --range "$rr2" "$rr3" 2>&1); rrcrc=$?
+(( rrrc == 1 )) && [[ "$RRO" == *"real MAC/BSSID found"* ]] && (( rrzrc == 1 )) && (( rrcrc == 0 )) \
+    && ok "repo-scan --range scans every commit's additions: a leak added and removed within the push is refused (also for a new branch); a clean push is clean" \
+    || bad "repo-scan --range over a leak added and removed: rc=$rrrc, new branch rc=$rrzrc, clean rc=$rrcrc: $(grep -m1 -E '✗|clean' <<<"$RRO")"
+rm -rf "$RR"
+
+# G-02: the one Message-ID FRAGMENT in the public-address list (the tail the scanner
+# cuts at "=") is matched whole: it passes, and another address at the same host
+# does not. It cannot be moved to repo-scan-quoted-examples (its tail is also the
+# tail of a listed entry, so that mechanism always finds a second file). The real
+# list, in a scratch repository; the tokens are assembled here.
+QF=$(mktemp -d); git init -q -b main "$QF"; git -C "$QF" config user.name t; git -C "$QF" config user.email t@example.com
+mkdir -p "$QF/devtools"; cp devtools/repo-scan-public-addresses "$QF/devtools/"
+_tok="Q""@mail.gmail.com"; _oth="Z""@mail.gmail.com"
+printf 'a quoted Message-ID tail: %s\n' "$_tok" > "$QF/quoted.md"
+git -C "$QF" add -A; git -C "$QF" commit -q -m quoted
+QFO=$(devtools/repo-scan "$QF" --all 2>&1); qfrc=$?
+printf 'another address at that host: %s\n' "$_oth" > "$QF/other.md"; git -C "$QF" add -A; git -C "$QF" commit -q -m other
+QFE=$(devtools/repo-scan "$QF" --all 2>&1); qfrc2=$?
+(( qfrc == 0 )) && (( qfrc2 == 1 )) && [[ "$QFE" == *"email address found"*"$_oth"* ]] \
+    && ok "the listed Message-ID fragment is matched whole: it passes, and another address at the same host is refused" \
+    || bad "the Message-ID fragment: listed token rc=$qfrc, another at the host rc=$qfrc2: $(grep -m3 -E '✗|^      ' <<<"$QFO$QFE" | tr '\n' '|')"
+rm -rf "$QF"
+
+# G-02 / N-11: repo-validate parses Python by its shebang as well as by its name,
+# and its executable-bit check treats a tracked symlink and a name with glob
+# characters as what they are. A scratch repository of the project's shape (it
+# has a checks.yml, which switches the check on).
+RV=$(mktemp -d)
+rv_repo() {   # <name>
+    git init -q -b main "$RV/$1"; git -C "$RV/$1" config user.name t; git -C "$RV/$1" config user.email t@example.com
+    mkdir -p "$RV/$1/.github/workflows" "$RV/$1/bin"; printf 'name: checks\n' > "$RV/$1/.github/workflows/checks.yml"
+}
+rv_repo py; printf '#!/usr/bin/env python3\ndef (\n' > "$RV/py/bin/pytool"; chmod +x "$RV/py/bin/pytool"; git -C "$RV/py" add -A
+RVP=$(devtools/repo-validate "$RV/py" --no-suite 2>&1); rvprc=$?
+rv_repo ok; printf '#!/bin/sh\nexit 0\n' > "$RV/ok/bin/real"; chmod +x "$RV/ok/bin/real"
+ln -s real "$RV/ok/bin/link"; cp "$RV/ok/bin/real" "$RV/ok/bin/a[1].sh"; git -C "$RV/ok" add -A
+RVO=$(devtools/repo-validate "$RV/ok" --no-suite 2>&1); rvorc=$?
+cp "$RV/ok/bin/real" "$RV/ok/bin/b.sh"; chmod -x "$RV/ok/bin/b.sh"; git -C "$RV/ok" add -A
+RVN=$(devtools/repo-validate "$RV/ok" --no-suite 2>&1); rvnrc=$?
+(( rvprc != 0 )) && [[ "$RVP" == *"py    bin/pytool"* ]] \
+    && ok "repo-validate parses a Python file with no .py suffix (a python shebang) and reports its syntax error" \
+    || bad "a Python file named without .py was not parsed (rc=$rvprc): $(grep -m2 -E 'pytool|✗' <<<"$RVP" | tr '\n' '|')"
+RVNL=$(grep -m1 'no executable bit' <<<"$RVN")
+(( rvorc == 0 )) && [[ "$RVO" == *"files with a #! line are executable in the index"* ]] \
+    && (( rvnrc != 0 )) && [[ "$RVNL" == *"bin/b.sh"* && "$RVNL" != *"bin/link"* && "$RVNL" != *'a[1].sh'* ]] \
+    && ok "repo-validate's executable-bit check passes a tracked symlink to a script and a name with glob characters, and still flags a script without the bit" \
+    || bad "repo-validate's executable-bit check: ok-repo rc=$rvorc ($(grep -m1 -E 'executable|no executable' <<<"$RVO")), with a plain script rc=$rvnrc ($(grep -m1 'no executable' <<<"$RVN"))"
+rm -rf "$RV"
+
+# G-02: gates that did not run say so. awk-coverage without gawk and
+# journal-contract without journalctl were "skipping" with exit 0; they are NOT
+# RUN with exit 2. A PATH holding nothing but dirname (one symlink, not a farm).
+GT=$(mktemp -d); mkdir -p "$GT/bin"; ln -s "$(command -v dirname)" "$GT/bin/dirname"
+GTA=$(PATH="$GT/bin" devtools/awk-coverage --min 95 2>&1); gtarc=$?
+GTJ=$(PATH="$GT/bin" devtools/journal-contract 2>&1); gtjrc=$?
+(( gtarc == 2 )) && [[ "$GTA" == *"NOT RUN"* ]] && (( gtjrc == 2 )) && [[ "$GTJ" == *"NOT RUN"* ]] \
+    && ok "awk-coverage without gawk and journal-contract without journalctl are NOT RUN (exit 2), not a quiet exit 0" \
+    || bad "a gate that could not run exited: awk-coverage rc=$gtarc, journal-contract rc=$gtjrc"
+rm -rf "$GT"
+# devtools/ci --recent: a failing gh is exit 2 with its message, not a header over nothing
+CR=$(mktemp -d); mkdir -p "$CR/bin"
+printf '#!/bin/sh\necho "error connecting to api.github.com" >&2\nexit 1\n' > "$CR/bin/gh"; chmod +x "$CR/bin/gh"
+CRO=$(PATH="$CR/bin:$PATH" devtools/ci --recent 3 2>&1); crrc=$?
+printf '#!/bin/sh\nexit 0\n' > "$CR/bin/gh"
+CRE=$(PATH="$CR/bin:$PATH" devtools/ci --recent 3 2>&1); crerc=$?
+printf '#!/bin/sh\nprintf "success\\tabc1234\\ta run\\n"\n' > "$CR/bin/gh"
+CRG=$(PATH="$CR/bin:$PATH" devtools/ci --recent 3 2>&1); crgrc=$?
+(( crrc == 2 )) && [[ "$CRO" == *"gh run list failed"* && "$CRO" == *"NO RUNS WERE READ"* ]] && (( crerc == 2 )) && (( crgrc == 0 )) && [[ "$CRG" == *"abc1234"* ]] \
+    && ok "devtools/ci --recent exits 2 when gh fails or answers nothing, 0 with runs (control)" \
+    || bad "devtools/ci --recent: failing gh rc=$crrc, empty answer rc=$crerc, runs rc=$crgrc"
+rm -rf "$CR"
+
+# G-02: the three test scripts nothing ran. The two that need no machine run here,
+# each in a scratch world of its own (they write into their own root); the third
+# reads the host's journal and says NOT RUN where there is no boot -1.
+TW=$(mktemp -d); git init -q -b main "$TW"; git -C "$TW" config user.name t; git -C "$TW" config user.email t@example.com
+mkdir -p "$TW/devtools/hooks" "$TW/tools"
+cp devtools/hooks/pre-push devtools/hooks/test-pre-push.sh "$TW/devtools/hooks/"
+cp devtools/repo-scan devtools/repo-scan-public-addresses devtools/repo-scan-quoted-examples "$TW/devtools/"
+cp devtools/test-bt-journal-files.sh "$TW/devtools/"; cp tools/bt-journal-files "$TW/tools/"
+printf 'x\n' > "$TW/a.txt"; git -C "$TW" add -A; git -C "$TW" commit -q -m one
+TWP=$("$TW/devtools/hooks/test-pre-push.sh" 2>&1); twprc=$?
+(( twprc == 0 )) && [[ "$TWP" == *"passed 8, failed 0"* ]] \
+    && ok "devtools/hooks/test-pre-push.sh passes in a scratch world (8 cases: the hook refuses a leaking push and passes a clean one)" \
+    || bad "devtools/hooks/test-pre-push.sh (rc=$twprc): $(grep -E 'FAIL|passed' <<<"$TWP" | head -3 | tr '\n' '|')"
+if command -v zstd >/dev/null 2>&1; then
+    TWJ=$(env -u BT_JOURNAL_SRC -u BT_JOURNAL_FILES_DIR "$TW/devtools/test-bt-journal-files.sh" 2>&1); twjrc=$?
+    (( twjrc == 0 )) && [[ "$TWJ" == *"failed 0"* ]] \
+        && ok "devtools/test-bt-journal-files.sh passes in a scratch world (tools/bt-journal-files on a fake journal directory)" \
+        || bad "devtools/test-bt-journal-files.sh (rc=$twjrc): $(grep -E 'FAIL|passed' <<<"$TWJ" | head -3 | tr '\n' '|')"
+else
+    echo "  · zstd is not installed: devtools/test-bt-journal-files.sh did NOT run on this host"
+fi
+TJF_DATES=$(grep -vE '^[[:space:]]*#' devtools/test-journal-fast.sh | grep -cE '20[0-9]{2}-[0-9]{2}-[0-9]{2}' || true)
+(( ${TJF_DATES:-1} == 0 )) \
+    && ok "devtools/test-journal-fast.sh hard-codes no date (it derives the day from boot -1)" \
+    || bad "devtools/test-journal-fast.sh still hard-codes a date"
+rm -rf "$TW"
+
+# ── K-02 / K-04 / K-05: scripts that gave a verdict they did not measure ────
+
+# compile-mgmt-at.sh: a patch that applies CLEANLY is not "did not apply" (a clean
+# apply prints no "Hunk" line, which the old grep demanded); a stale patch is.
+# `make` is a stub that makes the object; the rest is the real script.
+KC=$(mktemp -d); mkdir -p "$KC/scripts" "$KC/stubs" "$KC/tree/net/bluetooth" "$KC/tree/include"
+cp scripts/compile-mgmt-at.sh "$KC/scripts/"
+printf 'int a;\n' > "$KC/tree/net/bluetooth/mgmt.c"
+git -C "$KC/tree" init -q; git -C "$KC/tree" add -A; git -C "$KC/tree" -c user.name=t -c user.email=t@example.com commit -q -m base
+printf '%s\n' '--- a/net/bluetooth/mgmt.c' '+++ b/net/bluetooth/mgmt.c' '@@ -1 +1,2 @@' ' int a;' '+int b;' > "$KC/clean.patch"
+printf '%s\n' '--- a/net/bluetooth/mgmt.c' '+++ b/net/bluetooth/mgmt.c' '@@ -1 +1 @@' '-int zzz;' '+int b;' > "$KC/stale.patch"   # removes a line the file does not have: no fuzz can apply it
+printf '#!/bin/sh\nfor a in "$@"; do case "$a" in M=*) d="${a#M=}" ;; esac; done\necho obj > "$d/mgmt.o"\n' > "$KC/stubs/make"; chmod +x "$KC/stubs/make"
+KCO=$(PATH="$KC/stubs:$PATH" "$KC/scripts/compile-mgmt-at.sh" "$KC/tree" "$KC/clean.patch" 2>&1); kcrc=$?
+KCS=$(PATH="$KC/stubs:$PATH" "$KC/scripts/compile-mgmt-at.sh" "$KC/tree" "$KC/stale.patch" 2>&1); kcsrc=$?
+(( kcrc == 0 )) && [[ "$KCO" == *"patched"*"make rc=0"* ]] && (( kcsrc == 1 )) && [[ "$KCS" == *"patch did not apply"* ]] \
+    && ok "compile-mgmt-at.sh builds a patch that applies cleanly and refuses one that does not apply" \
+    || bad "compile-mgmt-at.sh: clean patch rc=$kcrc ($(tail -1 <<<"$KCO")), stale patch rc=$kcsrc ($(tail -1 <<<"$KCS"))"
+rm -rf "$KC"
+
+# ci-local.sh: every verdict that says NOT RUN also records it in SKIPPED, which
+# is what turns "no NEW finding" into exit 2. Three paths did not (a git am that
+# failed after the base side ran); derived, not listed.
+CLNR=$(grep -nE 'verdict .*"NOT RUN"' scripts/ci-local.sh | grep -vc 'SKIPPED+=' || true)
+CLALL=$(grep -cE 'verdict .*"NOT RUN"' scripts/ci-local.sh || true)
+(( ${CLNR:-1} == 0 && ${CLALL:-0} >= 20 )) \
+    && ok "every NOT RUN verdict of ci-local.sh ($CLALL) is recorded as skipped, so the run cannot end 'no NEW finding' with exit 0" \
+    || bad "$CLNR NOT RUN verdict(s) in ci-local.sh are not recorded in SKIPPED (of $CLALL)"
+
+# btusb-has-device.py: FOUND / ABSENT are 0 / 1; a module it cannot read or
+# decompress is "NOT CHECKED", exit 2, never ABSENT. The usb_device_id prefix
+# (match flags 0x0003, vendor, product) is written as bytes.
+BH=$(mktemp -d)
+printf 'pad\003\000\323\023\003\065pad' > "$BH/m.ko"
+gzip -k "$BH/m.ko"; command -v xz >/dev/null 2>&1 && xz -k "$BH/m.ko"
+printf 'not a gzip file' > "$BH/bad.ko.gz"
+BHBAD=''
+for _m in m.ko m.ko.gz m.ko.xz; do
+    [[ -e "$BH/$_m" ]] || continue
+    _o=$(python3 -I scripts/btusb-has-device.py "$BH/$_m" 2>&1); _rc=$?
+    [[ "$_rc" == 0 && "$_o" == "FOUND 13d3:3503 x1 "* ]] || BHBAD+=" [$_m FOUND: rc=$_rc $_o]"
+done
+_o=$(python3 -I scripts/btusb-has-device.py "$BH/m.ko" 0cf3 e300 2>&1); _rc=$?
+[[ "$_rc" == 1 && "$_o" == "ABSENT "* ]] || BHBAD+=" [ABSENT: rc=$_rc $_o]"
+for _m in missing.ko bad.ko.gz; do
+    _o=$(python3 -I scripts/btusb-has-device.py "$BH/$_m" 2>&1); _rc=$?
+    [[ "$_rc" == 2 && "$_o" == *"NOT CHECKED"* && "$_o" != *ABSENT* ]] || BHBAD+=" [$_m unreadable: rc=$_rc $_o]"
+done
+[[ -z "$BHBAD" ]] \
+    && ok "btusb-has-device.py reads .ko, .gz and .xz, and says NOT CHECKED (exit 2) for a file it cannot read, never ABSENT" \
+    || bad "btusb-has-device.py:$BHBAD"
+rm -rf "$BH"
+
+# discovery-stop-race.py: btmon's exit status matters. A decode that died leaves a
+# truncated trace, which reads as "the discovery never stopped"; no counts are printed.
+DS=$(mktemp -d); mkdir -p "$DS/bin"; : > "$DS/x.btsnoop"
+printf '#!/bin/sh\nexit 3\n' > "$DS/bin/btmon"; chmod +x "$DS/bin/btmon"
+DSO=$(PATH="$DS/bin:$PATH" python3 -I scripts/discovery-stop-race.py "$DS/x.btsnoop" 2>"$DS/err"); dsrc=$?
+(( dsrc == 2 )) && [[ -z "$DSO" && "$(cat "$DS/err")" == *"NOT RUN"* ]] \
+    && ok "discovery-stop-race.py exits 2 with no counts when btmon fails on a trace" \
+    || bad "discovery-stop-race.py with a failing btmon: rc=$dsrc, out='$(head -c 60 <<<"$DSO")', err='$(head -c 80 "$DS/err")'"
+rm -rf "$DS"
+
+# journal-archive-grep.py: a decompressor that fails, or an extension it does not
+# know, is NOT SEARCHED and exit 2 — not "0 match(es)".
+JG=$(mktemp -d)
+printf '__REALTIME_TIMESTAMP=1700000000000000\nMESSAGE=hello there\n\n' | gzip -c > "$JG/good.export.gz"
+printf 'not a gzip file' > "$JG/bad.export.gz"; printf 'x' > "$JG/odd.export.lz4"
+JGO=$(python3 -I scripts/journal-archive-grep.py hello "$JG/good.export.gz" 2>&1); jgrc=$?
+JGB=$(python3 -I scripts/journal-archive-grep.py hello "$JG/good.export.gz" "$JG/bad.export.gz" 2>&1); jgbrc=$?
+JGU=$(python3 -I scripts/journal-archive-grep.py hello "$JG/odd.export.lz4" 2>&1); jgurc=$?
+(( jgrc == 0 )) && [[ "$JGO" == *"good.export.gz: 1 match(es)"* ]] \
+    && (( jgbrc == 2 )) && [[ "$JGB" == *"bad.export.gz: NOT SEARCHED COMPLETELY"* && "$JGB" != *"bad.export.gz: 0 match"* ]] \
+    && (( jgurc == 2 )) && [[ "$JGU" == *"NOT SEARCHED"* ]] \
+    && ok "journal-archive-grep.py counts a readable archive and says NOT SEARCHED (exit 2) for one whose decompressor failed or whose extension it does not know" \
+    || bad "journal-archive-grep.py: good rc=$jgrc, bad archive rc=$jgbrc, unknown extension rc=$jgurc: $(grep -m2 -E 'NOT|match' <<<"$JGB" | tr '\n' '|')"
+rm -rf "$JG"
+
+# bt-device-record.sh: the store not being readable is not "no stored device". The
+# store is a seam (BT_BLUEZ_STORE); a record's keys are never printed.
+DR=$(mktemp -d); mkdir -p "$DR/empty" "$DR/store/adapter0/device0"
+printf 'Name=Test Headset\nAlias=Test Headset\nClass=0x240404\n[LinkKey]\nKey=00112233445566778899aabbccddeeff\n' > "$DR/store/adapter0/device0/info"
+DRO=$(BT_BLUEZ_STORE="$DR/store" scripts/bt-device-record.sh 'headset' 2>&1); drrc=$?
+DRN=$(BT_BLUEZ_STORE="$DR/store" scripts/bt-device-record.sh 'zzz-none' 2>&1); drnrc=$?
+DRE=$(BT_BLUEZ_STORE="$DR/empty" scripts/bt-device-record.sh 'headset' 2>&1); drerc=$?
+(( drrc == 0 )) && [[ "$DRO" == *"Name=Test Headset"* && "$DRO" != *"LinkKey"* && "$DRO" != *"0011223344"* ]] \
+    && (( drnrc == 1 )) && [[ "$DRN" == *"no stored device matches"* ]] \
+    && (( drerc == 2 )) && [[ "$DRE" == *"NOT LOOKED AT"* ]] \
+    && ok "bt-device-record.sh: a match prints no keys, no match is 1, a store it cannot read is 2 (NOT LOOKED AT)" \
+    || bad "bt-device-record.sh: match rc=$drrc, no match rc=$drnrc, empty store rc=$drerc ($(head -1 <<<"$DRE"))"
+rm -rf "$DR"
+
+# export-local-work.py: a git failure is not "nothing local". A directory that is
+# not a repository must stop with a message and save nothing for it; a repository
+# with one local commit above a remote-tracking ref exports it.
+EL=$(mktemp -d); mkdir -p "$EL/notrepo"
+ELO=$(python3 -I scripts/export-local-work.py "$EL/out" "$EL/notrepo" 2>&1); elrc=$?
+git init -q -b main "$EL/repo"; git -C "$EL/repo" config user.name t; git -C "$EL/repo" config user.email t@example.com
+printf 'a\n' > "$EL/repo/a.txt"; git -C "$EL/repo" add -A; git -C "$EL/repo" commit -q -m upstream
+git -C "$EL/repo" update-ref refs/remotes/origin/main HEAD
+printf 'b\n' > "$EL/repo/b.txt"; git -C "$EL/repo" add -A; git -C "$EL/repo" commit -q -m "local work"
+ELG=$(python3 -I scripts/export-local-work.py "$EL/out" "$EL/repo" 2>&1); elgrc=$?
+(( elrc != 0 )) && [[ "$ELO" == *"NOTHING WAS SAVED"* && ! -e "$EL/out/notrepo" ]] \
+    && (( elgrc == 0 )) && [[ "$ELG" == *"1 commit(s)"* ]] && ls "$EL/out/repo"/0001-*.patch >/dev/null 2>&1 \
+    && ok "export-local-work.py stops on a git failure ('nothing local' would be a lie) and exports a repository's local commit" \
+    || bad "export-local-work.py: not a repo rc=$elrc ($(head -1 <<<"$ELO")), repo rc=$elgrc ($(head -1 <<<"$ELG"))"
+rm -rf "$EL"
+
+# desktop-capture-archive.sh has no budget of its own: the one given (--budget-gb, or
+# the environment), else the one the store holds, else it stops. Its old 3 GB default
+# overwrote the BUDGET_GB file of an archive the operator had raised to 25 GB.
+DA=$(mktemp -d); mkdir -p "$DA/scripts" "$DA/archive/hci-capture"
+cp scripts/desktop-capture-archive.sh "$DA/scripts/"
+printf 'import os\nprint("budget", os.environ["BT_ARCHIVE_BUDGET_GB"])\n' > "$DA/scripts/bt-trace-archive.py"
+DAN=$(env -u BT_ARCHIVE_BUDGET_GB "$DA/scripts/desktop-capture-archive.sh" 2>&1); danrc=$?
+printf '25\n' > "$DA/archive/hci-capture/BUDGET_GB"
+DAS=$(env -u BT_ARCHIVE_BUDGET_GB "$DA/scripts/desktop-capture-archive.sh" 2>&1); dasrc=$?
+DAG=$(env -u BT_ARCHIVE_BUDGET_GB "$DA/scripts/desktop-capture-archive.sh" --budget-gb 7 2>&1); dagrc=$?
+(( danrc == 2 )) && [[ "$DAN" == *"no budget given"* ]] && (( dasrc == 0 )) && [[ "$DAS" == "budget 25" ]] \
+    && (( dagrc == 0 )) && [[ "$DAG" == "budget 7" ]] \
+    && ok "desktop-capture-archive.sh keeps the store's own budget (25 stored -> 25), takes --budget-gb when given, and stops when it has none" \
+    || bad "desktop-capture-archive.sh budget: none rc=$danrc, stored '$DAS', given '$DAG'"
+rm -rf "$DA"
+
+# sco-switch-windows.sh: capture-window.sh ends 141 (SIGPIPE) when the window is
+# past, which is normal; any other status is a read that failed, and is not an
+# empty window.
+SW=$(mktemp -d); mkdir -p "$SW/scripts"; cp scripts/sco-switch-windows.sh "$SW/scripts/"
+printf '#!/bin/sh\necho window\nexit ${CW_RC:-0}\n' > "$SW/scripts/capture-window.sh"; chmod +x "$SW/scripts/capture-window.sh"
+SW141=$(CW_RC=141 "$SW/scripts/sco-switch-windows.sh" a.btsnoop "2026-01-01 00:00:00" "2026-01-01 00:01:00" 2>&1); sw141=$?
+SW2=$(CW_RC=2 "$SW/scripts/sco-switch-windows.sh" a.btsnoop "2026-01-01 00:00:00" "2026-01-01 00:01:00" 2>&1); sw2=$?
+(( sw141 == 0 )) && [[ "$SW141" != *"NOT READ"* ]] && (( sw2 == 2 )) && [[ "$SW2" == *"NOT READ"* ]] \
+    && ok "sco-switch-windows.sh treats exit 141 as the normal end of a window and any other failure as NOT READ (exit 2)" \
+    || bad "sco-switch-windows.sh: 141 -> rc=$sw141, 2 -> rc=$sw2"
+rm -rf "$SW"
+
+# supported-commands-survey.sh: a btmon that fails on a capture leaves no row for
+# it, which reads as "no reply advertised"; the run says NOT READ and exits 2.
+SC=$(mktemp -d); mkdir -p "$SC/scripts" "$SC/bin" "$SC/cap"
+cp scripts/supported-commands-survey.sh "$SC/scripts/"; : > "$SC/cap/a.btsnoop"
+printf '#!/bin/sh\nexit 1\n' > "$SC/bin/btmon"; chmod +x "$SC/bin/btmon"
+SCO=$(PATH="$SC/bin:$PATH" "$SC/scripts/supported-commands-survey.sh" "$SC/cap" 2>&1); scrc=$?
+printf '#!/bin/sh\nexit 0\n' > "$SC/bin/btmon"
+SCG=$(PATH="$SC/bin:$PATH" "$SC/scripts/supported-commands-survey.sh" "$SC/cap" 2>&1); scgrc=$?
+(( scrc == 2 )) && [[ "$SCO" == *"NOT READ"* ]] && (( scgrc == 0 )) \
+    && ok "supported-commands-survey.sh: a btmon that fails on a capture is NOT READ (exit 2); a clean decode is exit 0" \
+    || bad "supported-commands-survey.sh: failing btmon rc=$scrc, clean btmon rc=$scgrc"
+rm -rf "$SC"
+
+# get-maintainers.sh: the patch path is made absolute BEFORE the cd into the tree.
+GM=$(mktemp -d); mkdir -p "$GM/tree/scripts" "$GM/elsewhere"
+printf 'print "args: @ARGV\\n";\n' > "$GM/tree/scripts/get_maintainer.pl"; : > "$GM/p.patch"
+GMO=$(cd "$GM/elsewhere" && "$OLDPWD/scripts/get-maintainers.sh" "$GM/tree" ../p.patch 2>&1); gmrc=$?
+(( gmrc == 0 )) && [[ "$GMO" == *"args: --no-git-fallback $GM/p.patch"* && "$GMO" != *"../p.patch"* ]] \
+    && ok "get-maintainers.sh resolves a relative patch path before it enters the kernel tree" \
+    || bad "get-maintainers.sh with a relative patch path (rc=$gmrc): $(head -2 <<<"$GMO" | tr '\n' '|')"
+rm -rf "$GM"
+
+# move-brief-block.py works in the checkout it lives in, and checks its range
+# BEFORE it writes: a range outside BRIEF.md used to append to HISTORY.md first.
+MB=$(mktemp -d); mkdir -p "$MB/scripts"; cp scripts/move-brief-block.py "$MB/scripts/"
+printf 'l1\nl2\nl3\nl4\nl5\n' > "$MB/BRIEF.md"; printf 'h1\n' > "$MB/HISTORY.md"; printf 'NEW\n' > "$MB/repl.txt"
+_hb=$(cksum < "$MB/HISTORY.md"); _bb=$(cksum < "$MB/BRIEF.md")
+MBO=$(python3 -I "$MB/scripts/move-brief-block.py" 3 99 "old block" "$MB/repl.txt" 2>&1); mbrc=$?
+_hafter=$(cksum < "$MB/HISTORY.md"); _bafter=$(cksum < "$MB/BRIEF.md")
+MBG=$(python3 -I "$MB/scripts/move-brief-block.py" 2 3 "old block" "$MB/repl.txt" 2>&1); mbgrc=$?
+[[ "$MBO" == *"nothing was written"* ]] && (( mbrc != 0 )) && [[ "$_hafter" == "$_hb" && "$_bafter" == "$_bb" ]] \
+    && (( mbgrc == 0 )) && [[ "$(cat "$MB/BRIEF.md")" == $'l1\nNEW\nl4\nl5' ]] \
+    && grep -qx 'l2' "$MB/HISTORY.md" && grep -qx 'l3' "$MB/HISTORY.md" \
+    && ok "move-brief-block.py refuses a range outside BRIEF.md before writing anything, and moves a valid one in its own checkout" \
+    || bad "move-brief-block.py: out-of-range rc=$mbrc ($(head -1 <<<"$MBO")), valid rc=$mbgrc"
+rm -rf "$MB"
+
+# prove-audio-policy-metadata.py: its exit status is the proof's. The real recorder
+# keeps and removes (exit 0); a stand-in that keeps nothing is exit 1.
+PA=$(mktemp -d)
+printf 'def apply(st, objs):\n    pass\n\n\ndef summarize(st):\n    return {}\n' > "$PA/bap.py"
+python3 -I scripts/prove-audio-policy-metadata.py >/dev/null 2>&1; pa_real=$?
+python3 -I scripts/prove-audio-policy-metadata.py "$PA/bap.py" >/dev/null 2>&1; pa_fake=$?
+(( pa_real == 0 && pa_fake == 1 )) \
+    && ok "prove-audio-policy-metadata.py exits 0 on the real recorder and 1 on one that loses the metadata" \
+    || bad "prove-audio-policy-metadata.py: real rc=$pa_real, broken rc=$pa_fake"
+rm -rf "$PA"
+
+# bt-ui-atspi.py: the start line says what the registry ended up with. Opted in
+# with every registration refused is not "NOT passive".
+UA=$(python3 -I - scripts/bt-ui-atspi.py <<'PYEOF'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("atspi", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+for d, f in ((0, 12), (5, 7), (12, 0)):
+    print(m.registration_mode(d, f))
+PYEOF
+)
+[[ "$(sed -n 1p <<<"$UA")" == "passive in effect: opted in, but ALL 12 registrations FAILED"* \
+   && "$(sed -n 2p <<<"$UA")" == "NOT passive: registered 5 of 12"*"7 FAILED"* \
+   && "$(sed -n 3p <<<"$UA")" == "NOT passive: registered the shell's event types with the registry" ]] \
+    && ok "bt-ui-atspi.py's start line reports all-failed, partly failed and fully registered differently" \
+    || bad "bt-ui-atspi.py registration_mode: $(tr '\n' '|' <<<"$UA")"
+
+# N-11: send-table-check.py refuses an empty table and an ASCII ellipsis.
+ST1=$(mktemp -d)
+printf '%s\n' '| CO | send this | it replaces |' '|---|---|---|' > "$ST1/README.md"
+STE=$(python3 -I scripts/send-table-check.py "$ST1" 2>&1); sterc=$?
+printf '%s\n' '| CO | send this | it replaces |' '|---|---|---|' '| CO-01 | `CO-01-x.../send/` | - |' > "$ST1/README.md"
+STD=$(python3 -I scripts/send-table-check.py "$ST1" 2>&1); stdrc=$?
+(( sterc == 2 )) && [[ "$STE" == *"no rows"* ]] && (( stdrc == 1 )) && [[ "$STD" == *"elided path"* ]] \
+    && ok "send-table-check.py exits 2 on a table with no rows and flags an ASCII '...' as an elided path" \
+    || bad "send-table-check.py: empty table rc=$sterc ($(head -1 <<<"$STE")), ellipsis rc=$stdrc ($(head -1 <<<"$STD"))"
+rm -rf "$ST1"
+
+# T-12: `--section` hands its worker count on to the run it filters. It ran the
+# whole suite from the defaults, so `--serial --section X` measured something else.
+SECJ=$(awk '/^if \[\[ "\$\{1:-\}" == --section \]\]; then$/ { s = 1 } s { print } s && /^    exit \$rc$/ { exit }' tests/run-tests | grep -cF 'out=$("$0" --jobs "$SUITE_JOBS")' || true)
+(( ${SECJ:-0} == 1 )) \
+    && ok "--section passes the call's own worker count to the run it filters (--serial is no longer dropped)" \
+    || bad "--section starts its run from the defaults again: --serial / --jobs are dropped ($SECJ match(es) in its block)"
 
 echo
 echo "the tests may not write to the real evidence tree"
@@ -15658,10 +16264,16 @@ echo "────────────────────────�
 # own grep line, and each exclusion is a hole someone can park a real call in.
 # `report` is genuinely safe — read-only, never reaches the failure branch — so
 # it is simply not in the list.
-LOOSE=$(grep -HnE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "${SUITE_FILES[@]}" \
+# The verbs that ACT (open, close, step, abort a trial) and the ones that only
+# read, as two lists, so that a test below can require every verb of the tool to
+# be in one of them: `autostop` closes a trial like `ok` and was in neither (it
+# was missing here, review of 2026-11-15, T-12).
+BT_TRIAL_ACTING_VERBS='autostart|autostop|start|ok|hang|abort|step'
+BT_TRIAL_READING_VERBS='report|status|audit'
+LOOSE=$(grep -HnE "tools/bt-trial +($BT_TRIAL_ACTING_VERBS)\\b" "${SUITE_FILES[@]}" \
         | grep -v ":[0-9]*:[[:space:]]*#")
 # Counted, so a pattern that stops matching reads as 0 rather than as a tick.
-TRIALCALLS=$(suite_cat | grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' || true)
+TRIALCALLS=$(suite_cat | grep -cE "tools/bt-trial +($BT_TRIAL_ACTING_VERBS|report)\\b" || true)
 # THE INVARIANT: no test builds a replacement PATH that still contains /usr/bin
 # or /bin.
 #
@@ -15921,18 +16533,27 @@ else
     bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
 fi
+# THE GUARD'S VERB LIST IS DERIVED FROM THE TOOL, not trusted to be whole: every
+# verb of tools/bt-trial's `case` is either one that acts (guarded above) or one
+# that only reads. A new verb in neither fails here instead of being callable
+# unguarded. `autostop` was such a verb until 2026-11-16.
+BTV=$(grep -E '^[a-z|-]+\)$' tools/bt-trial | tr -d ')' | tr '|' '\n' | sort -u)
+BTV_UNKNOWN=$(comm -23 <(printf '%s\n' "$BTV") <(printf '%s|%s\n' "$BT_TRIAL_ACTING_VERBS" "$BT_TRIAL_READING_VERBS" | tr '|' '\n' | sort -u))
+(( $(grep -c . <<<"$BTV") >= 9 )) && [[ -z "$BTV_UNKNOWN" ]] \
+    && ok "every verb of tools/bt-trial ($(grep -c . <<<"$BTV")) is in the guard's acting list or its reading list" \
+    || bad "tools/bt-trial has verb(s) the guard knows nothing about: ${BTV_UNKNOWN:-<none; fewer than 9 verbs derived>}"
 # AND THE WRAPPERS THEMSELVES. The count above sees spelled-out verbs only.
-# Five functions run `tools/bt-trial "$@"` — trial, trial_in, tl, tlt, tlnh —
-# and each must name BOTH places bt-trial writes: BT_REPO (results.tsv) and
-# BT_EVIDENCE_REPO (bt-incident's sessions), in the lines that build its call.
-# A sixth wrapper that forgot one passed every check here until 2026-10-17.
+# Six functions run `tools/bt-trial "$@"` — trial, trial_in, tl, tlt, tlnh,
+# tlru — and each must name BOTH places bt-trial writes: BT_REPO (results.tsv)
+# and BT_EVIDENCE_REPO (bt-incident's sessions), in the lines that build its
+# call. A wrapper that forgot one passed every check here until 2026-10-17.
 TWRAPS=$(suite_cat | grep -cE '^[^#]*tools/bt-trial "\$@"' || true)
 TWBAD=$(suite_cat | awk '{ l[NR] = $0 }
     /^[^#]*tools\/bt-trial "\$@"/ {
         ctx = l[NR-3] " " l[NR-2] " " l[NR-1] " " $0
         if (ctx !~ /BT_REPO=/ || ctx !~ /BT_EVIDENCE_REPO=/) print "line " NR ": " $0
     }')
-(( ${TWRAPS:-0} >= 5 )) && [[ -z "$TWBAD" ]] \
+(( ${TWRAPS:-0} >= 6 )) && [[ -z "$TWBAD" ]] \
     && ok "all $TWRAPS bt-trial wrappers set both BT_REPO and BT_EVIDENCE_REPO" \
     || bad "a bt-trial wrapper sets only one destination ($TWRAPS wrappers): $(tr '\n' '|' <<<"$TWBAD")"
 
