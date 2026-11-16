@@ -153,6 +153,29 @@ SCO_FUNCS=(sco_sock_connect sco_connect sco_conn_add __sco_chan_add sco_conn_del
 die()  { echo "bt-ui-capture: $*" >&2; exit 1; }
 need_root() { [[ "$EUID_EFF" -eq 0 ]] || die "${1:-this} must run as root (it acts on the desktop user's session through runuser)"; }
 
+# A root-run script must not be replaceable by anyone else. The keeper's timer runs
+# "$SELF" as root every two minutes, and `start-light`/`enable-light` act as root, so
+# this script, its directory and the checkout above it must be owned by root and not
+# writable by group or others; anything else is refused with the reason. The two
+# seams exist for the suite (it runs from a scratch tree owned by its own user):
+# BT_UI_TRUST_UID is the owner required, BT_UI_TRUST_MASK the mode bits that must be clear.
+TRUST_UID="${BT_UI_TRUST_UID:-0}"
+TRUST_MASK="${BT_UI_TRUST_MASK:-022}"
+trusted_self() {   # prints the reason and returns 1 when SELF, its directory or the checkout is not trusted
+    local p own mode
+    for p in "$SELF" "$HERE" "$(dirname "$HERE")"; do
+        own=$(stat -c %u "$p" 2>/dev/null) || { echo "cannot stat $p"; return 1; }
+        mode=$(stat -c %a "$p" 2>/dev/null) || { echo "cannot stat $p"; return 1; }
+        [[ "$own" == "$TRUST_UID" ]] || { echo "$p is owned by uid $own, not by uid $TRUST_UID"; return 1; }
+        (( (8#$mode & 8#$TRUST_MASK) == 0 )) || { echo "$p is writable by group or others (mode $mode)"; return 1; }
+    done
+    return 0
+}
+require_trusted_self() {   # <what> — die unless trusted_self
+    local why
+    why=$(trusted_self) || die "$1 refused: $why. A script that root runs must be owned by root and not writable by group or others (fix the ownership and mode, then retry)."
+}
+
 # ── one mutation path, so `plan` cannot drift from `start` (the bt-mode rule)
 DRY=0
 run() { if (( DRY )); then echo "  would run: $*"; return 0; fi; "$@"; }
@@ -591,6 +614,7 @@ light_ensure_user_unit() {   # <index>
 }
 start_light_main() {
     need_root "start-light"
+    require_trusted_self "start-light"
     local new=0 quiet=0 a have=1 i
     for a in "$@"; do
         case "$a" in
@@ -681,7 +705,12 @@ Description=bt-ui-capture light recording keeper (starts the light units when mi
 Type=oneshot
 # Exit 0 with one journal line when the tool is gone, so a removed checkout does
 # not turn into a failure loop.
-ExecStart=/bin/sh -c 'if [ -x "$SELF" ]; then exec "$SELF" start-light --quiet-if-no-session; fi; echo "bt-ui-capture light keeper: $SELF is gone; nothing done (run: bt-ui-capture disable-light)"; exit 0'
+# The script, its directory and the checkout must still be owned by uid $TRUST_UID and not writable
+# by group or others when the timer fires; otherwise nothing is run (the check is repeated here
+# because the script's own check cannot protect against the script having been replaced).
+# (No shell variables or percent signs in it: systemd expands both in ExecStart. find's own
+# exit status carries the verdict: -exec false {} + fails when any path matches.)
+ExecStart=/bin/sh -c 'if find "$SELF" "$HERE" "$(dirname "$HERE")" -maxdepth 0 -not -uid $TRUST_UID -exec false {} + -o -perm /0$TRUST_MASK -exec false {} +; then :; else echo "bt-ui-capture light keeper: the script, its directory or the checkout is not owned by uid $TRUST_UID or is writable by others; nothing run"; exit 0; fi; if [ -x "$SELF" ]; then exec "$SELF" start-light --quiet-if-no-session; fi; echo "bt-ui-capture light keeper: $SELF is gone; nothing done (run: bt-ui-capture disable-light)"; exit 0'
 EOF
 }
 keeper_timer() {
@@ -703,6 +732,7 @@ EOF
 }
 enable_light_main() {
     need_root "enable-light"
+    require_trusted_self "enable-light"
     # The path goes into a shell string inside a unit file: keep it plain.
     case "$SELF" in
         *[!A-Za-z0-9_./+:@-]*) die "enable-light: '$SELF' has characters that do not survive a unit file; run it from a plainer path" ;;
