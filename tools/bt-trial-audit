@@ -16,13 +16,18 @@
 # With Builds A/B/C/D producing rows, a gate that silently mislabels one arm
 # makes every comparison wrong while the output looks ordinary.
 #
-# IT DOES NOT SHARE bt-trial's DETECTORS, AND THAT IS THE POINT. An audit built
+# IT KEEPS ITS OWN COPY OF THE DETECTORS, AND THAT HAS A LIMIT. An audit built
 # on the same regex as the tool it audits can only ever agree with itself: the
 # bug above was a pattern that matched this project's own wording and not the
 # kernel's, and an audit importing that pattern would have confirmed all three
-# rows as correct. The patterns below are written independently, against the
-# kernel's messages, and proved to fire before any zero they produce is
-# believed — see the positive control.
+# rows as correct. The patterns below were written separately, against the
+# kernel's messages, and are proved to fire before any zero they produce is
+# believed — see the positive control. TODAY THE REGEXES ARE IDENTICAL to
+# bt-trial's own (RE_RESET, RE_RELOAD, RE_TIMEOUT), so what the audit adds is a
+# second read of the journal by another code path and the positive control, not
+# a second opinion on the patterns; a change to one copy must be made in both.
+#
+# A window that cannot be read is UNRESOLVED (exit 2), never "no resets".
 #
 # Exit 0 when every audited row agrees, 1 on any disagreement, 2 on a refusal.
 
@@ -243,6 +248,15 @@ while IFS=$'\t' read -r -a f; do
     # and never the semantics.
     W=$(bt_journal_lines "$RE_RESET|$RE_RELOAD|$RE_TIMEOUT" \
         -k -b "$b" --since "@$open" --until "@$close" -o short-iso-precise)
+    wrc=$?
+    # A READ THAT FAILED IS NOT A WINDOW WITH NOTHING IN IT. Status 2 is
+    # bt_journal_lines' word for "could not read (all of) it"; an empty W would
+    # then give expect=none and the row would "agree" (review T-10, 2026-11-15).
+    if (( wrc >= 2 )); then
+        echo "  row $((n - 1)): UNRESOLVED — the journal window of boot $b could not be read completely"
+        echo "                  nothing is claimed about this row; it is not a pass"
+        unresolved=$((unresolved + 1)); continue
+    fi
 
     n_reset=$(grep -cE "$RE_RESET" <<<"$W" || true)
     n_reload=$(grep -cE "$RE_RELOAD" <<<"$W" || true)
