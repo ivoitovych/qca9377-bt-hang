@@ -280,7 +280,9 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   not be reached from this machine (all 15: `[Errno 101] Network is unreachable`, no login
   attempted), as on 2026-10-18. On 465 every one of the 15 again answered a clean
   `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username and Password not accepted"): a refusal of the
-  password itself, not the mid-AUTH close the 587 rule guards against. **All 15 revoked.**
+  password itself, not the mid-AUTH close the 587 rule guards against. **All 15 revoked.** The
+  operator reported the same day that the account's app-password page shows them all removed
+  (the operator's account; it agrees with the server's refusals).
 - Arrival: lore answered `t.mbox.gz` with its bot check ("Making sure you're not a bot!") and a
   page fetch with 403. **Confirmed later the same night** in the operator's Chrome through the
   browser extension (the session restarted with Chrome support): the page
