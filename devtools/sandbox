@@ -541,9 +541,11 @@ LISTEN
     probe refused "connects to a TCP listener on the host's loopback" \
         "(exec 3<>/dev/tcp/127.0.0.1/$PORT) 2>/dev/null && echo PROBE-CONNECTED || echo PROBE-REFUSED" \
         "(exec 3<>/dev/tcp/127.0.0.1/$PORT) 2>/dev/null && echo PROBE-REACHABLE"
+    # The resolver itself, not getent: getent is a declared machine tool (tests/machine-tools,
+    # 2026-11-16), so the sandbox fakes it and a getent probe would only reach the fake.
     probe refused "resolves a host name" \
-        "getent hosts github.com >/dev/null 2>&1 && echo PROBE-RESOLVED || echo PROBE-REFUSED" \
-        "getent hosts github.com >/dev/null 2>&1 && echo PROBE-REACHABLE"
+        "python3 -I -c 'import socket; socket.getaddrinfo(\"github.com\", 443)' >/dev/null 2>&1 && echo PROBE-RESOLVED || echo PROBE-REFUSED" \
+        "python3 -I -c 'import socket; socket.getaddrinfo(\"github.com\", 443)' >/dev/null 2>&1 && echo PROBE-REACHABLE"
     probe isolated "unmounts a decoy to reach what is under it" \
         "umount /sys/bus 2>/dev/null && echo PROBE-UNMOUNTED || echo PROBE-ISOLATED"
     probe isolated "sees a host process" \
