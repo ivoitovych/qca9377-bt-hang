@@ -9,7 +9,7 @@ BlueZ patches made ready in Phase 36, sent (09-19) and applied (09-21) in Phase 
 mesh series through four phases — "The week the fixes left the machine" · the backport queued
 for seven stable lines, CI repaired, the front page rewritten, the mesh work split into separate
 contributions after a research review, the desktop instrumented — "The days the work learned to
-say 'not yet'" · the hand-off blocks BRIEF carried from 2026-10-03 to 2026-11-07, verbatim,
+say 'not yet'" · the hand-off blocks BRIEF carried from 2026-10-03 to 2026-11-12, verbatim,
 at the end · the eleven BlueZ commits released in BlueZ 5.88 (2026-11-05), and the first
 contribution outside Bluetooth, two gvfs merge requests for audio-CD playback (2026-11-07) — "A
 count is not a number, two merge requests, and a release nobody announced here" · the laptop's
@@ -911,8 +911,10 @@ the same desync recurred **107 ms after that**, and the controller hung complete
 later and left the bus.
 
 *[Note, 2026-11-16: "the first EARLY reset ever captured" conflicts with Phase 10 above, titled
-"The early reset works" (2026-08-10 18:56 to 08-11 00:21). Which capture was first has not been
-settled here; read the sentence as this incident's, not as a record.]*
+"The early reset works" (2026-08-10 18:56 to 08-11 00:21). The exhibit for this incident, `EX-004`,
+is a window of 2026-08-12 00:09:20 to 00:14:30, after Phase 10's, so "the first EARLY reset ever
+captured" is wrong for it; it is the first early reset followed by a recurrence and a hang, if
+Phase 10's did not recur (not checked here).]*
 
 **⚠️ This paragraph originally overreached and has been corrected.** What it first said was
 that "a reset callback alone would not have prevented this hang", and that firmware reload
@@ -3342,8 +3344,9 @@ recorded as open.
 
 *[Correction, 2026-11-16: "within ninety minutes" was not established. The replies' times are
 recorded as 22:05 and 22:10 on 09-19 with the time zone not settled; the repository holds no
-mailbox headers that settle it. Against the 18:44 UTC send, 22:05 and 22:10 read as UTC are
-3 h 21 min and 3 h 26 min. `BRIEF.md` §3 has the same correction.]*
+mailbox headers that settle it. Against the 18:44 UTC send there are two readings, both open:
+as UTC, 3 h 21 min and 3 h 26 min; as the mailbox's own clock (CEST), 20:05 and 20:10 UTC, 81
+and 86 minutes. `BRIEF.md` §6 and `patches/bluez/README.md` give the same two readings.]*
 
 The third failure was the one that needed the discipline. `TestFunctional` had produced
 AddressSanitizer coredumps for both patches, in the same BAP transport tests, and a first

@@ -142,7 +142,7 @@ notes at `5cdf0dc`; the built copies were verified to `git apply --check` agains
 `c73fa2f9a` before sending. Three independent reviews preceded the send (register §TP,
 §TP2, §TP3). What follows is the state the patches were in when they went.
 
-### The list's CI bot, 2026-09-19 22:05 / 22:10 UTC
+### The list's CI bot, 2026-09-19 22:05 / 22:10 (time zone not settled; see the notes below)
 
 *(noted 2026-11-15: against the 18:44 UTC send in the table above, 22:05 UTC is 3 h 21 min later,
 which contradicts "within 90 minutes" in BRIEF. One of the two times is probably in another time

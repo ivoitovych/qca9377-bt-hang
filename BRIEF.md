@@ -401,7 +401,7 @@ an error**; 50/72; subjects 49/46; checkpatch 0 errors under BlueZ's own config;
 **BlueZ takes patches by mail (`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is
 needed — the patch is the report.** `0002` has no `Fixes:` on purpose (pickaxe: a 2015 refactor).
 **v2 of both sent 2026-09-21** (message-only: quoted code re-indented, two lines wrapped).
-**The list's CI bot answered both v1 mails (09-19 22:05 and 22:10 as recorded, time zone not settled: no file in the repository holds the mailbox headers that would settle it; read as UTC they are 3 h 21 min and 3 h 26 min after the 18:44 UTC send; `patches/bluez/README.md`; register §CB; corrected 2026-11-16):** every
+**The list's CI bot answered both v1 mails (09-19 22:05 and 22:10 as recorded, time zone not settled: no file in the repository holds the mailbox headers that would settle it. Two readings, both open: as UTC, 3 h 21 min and 3 h 26 min after the 18:44 UTC send; as the mailbox's own clock (CEST, like the operator's other times), 20:05 and 20:10 UTC, 81 and 86 minutes after it; `patches/bluez/README.md`; register §CB; corrected 2026-11-16):** every
 build, smatch, scan-build, valgrind and distcheck PASS; CheckPatch the one known quoted-line
 warning; **GitLint B3 — hard tabs in the quoted C of both messages — the only actionable item
 (v2 with spaces: operator's call, CB-02)**; TestFunctional FAIL is the bot's own — the same two
