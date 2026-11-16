@@ -169,9 +169,11 @@ superseded by EX-094; EX-096 and EX-097 show that state undone without a reconne
 ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-11-14; read first; the 11-02/11-12 block is at the end of `HISTORY.md`).**
-> STATUS has every submission row (nothing was sent on 11-13 or 11-14). The page of record for
-> today's work is `contributions/rd-2026-11-14.md`: every possible contribution with its state,
-> the R&D left, and the results of the five work lanes.
+> STATUS has every submission row (nothing was sent on 11-13 or 11-14). What to send, and from
+> which directory, is the "What to send" table of `contributions/README.md` (the record;
+> `contributions/rd-2026-11-14.md` is the 11-14 working page: every possible contribution with its
+> state when it was written, the R&D left, and the results of the five work lanes; it is not
+> kept current).
 >
 > - **The machine (read 11-14, STATUS "The investigation machine"):** Ubuntu `7.0.0-43` with the
 >   **stock** btusb and `bluetooth.ko` since 11-12 22:55; the stock btusb has `13d3:3503` and the
@@ -197,7 +199,10 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   `scripts/kernel-review-pack/build.py` (rerun it after any package changes; it embeds the files
 >   by path with their SHA-256). The operator shares it with the reviewers.
 > - **Ubuntu:** one `bluez 5.72-0ubuntu5.9` for CO-03, CO-11a, CO-37's backports and CO-40
->   (`contributions/ubuntu-bluez-5.72-0ubuntu5.9-bundle/`), built and tested, not filed. Found with
+>   (`contributions/ubuntu-bluez-5.72-0ubuntu5.9-bundle/`), built and tested, not filed. **Not the
+>   build staged on this machine:** the staged `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes; the
+>   bundle's own `5.72-0ubuntu5.9` is a different build without them (read from the `.deb`,
+>   2026-11-16). Found with
 >   it: CO-11a's resolute/stonking debdiff versions are now taken by unrelated proposed uploads;
 >   its tenacious debdiff is obsolete (5.88-1); CVE-2026-105460 (btmon) not yet checked on 5.72.
 > - **New findings 11-14:** a lockdep cycle at controller unregister on the bluetooth-next tip
@@ -776,8 +781,10 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
    `20-patched-bluetoothd.conf`; the stock package binary is intact (`dpkg -V bluez` clean), so
    "stock daemon" = disable that drop-in. Runbook: `scripts/runtime-mgmt-test.sh` — refuses
    while `bt-window` is open or a trial is open; `trigger` captures the management channel
-   around a power cycle. *(Updated 11-15: `load`/`restore`, which swapped the module, are now
-   refused by the code, exit 2; see the warning below.)*
+   around a power cycle (it power-cycles the adapter; the two daemon verbs restart `bluetoothd`).
+   *(Updated 11-16: `load`/`restore`, which swapped the module, are refused by the code with
+   exit 2 and the swap code is removed from the script (it stays in git history); the guard
+   refuses when `bt-window` or `bt-trial` is missing or unintelligible; see the warning below.)*
    ⚠️ **Attempted 2026-09-23 01:08–01:20 and it wedged the controller (`EX-046`)**: the first
    `btusb` unload/re-probe, still on the STOCK module, ended with HCI Reset `0x0c03` timing out
    (`-110`) and hci0 registered with an all-zero address, DOWN; two further re-probes the same.
@@ -849,7 +856,7 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
     decoy world on every push (tests/README.md, rule 5). **Still open:** the gates that each
     re-run the suite (seven in CI's check job on 2026-10-17, an eighth in the audit job of
     the test-suite branch; since 2026-10-18 the workflow is split into jobs, nine on 2026-11-16,
-    though its own header says "EIGHT JOBS"), and the split.
+    and its header now says "NINE JOBS", corrected 2026-11-16), and the split.
 11. **Trial evidence must not depend on the shutdown (operator, 2026-10-21).**
     **Trial rows were lost at four stops:**
     - trial 15 (09-30): the close stopped inside the SCO decode;

@@ -64,7 +64,7 @@ with `systemctl show bt-trial-auto -p TimeoutStopUSec`.
 **On the investigation machine** (experiment mode, a trial open; the route as reviewed on
 2026-10-18 against `main`, read-only):
 
-1. Before: `bt-window` shows no open window; `journalctl -k -b 0 -p err --grep "tx timeout"`
+1. Before: `bt-window` shows no open window; `journalctl -k -b 0 -p err --grep 'command( 0x[0-9a-f]+)? tx timeout'`
    prints `-- No entries --`; no call is up; `printenv BT_VID BT_PID BT_DESTDIR BT_FORCE_INSTALL`
    prints nothing; note what `bt-mode status` says.
 2. `sudo ./install.sh --tools-only`, typed exactly, with plain `sudo` (not `sudo -E`). Expect the
