@@ -57,8 +57,10 @@ destroys this controller** — `EX-023` (11.2 s to disconnect) and the 2026-08-1
 (85.6 s) — and a third case, `EX-026` (85.6 s), after a reset this project did not issue. `hci_cmd_timeout()` calls
 `hdev->reset()` on the **first** timeout with no threshold.
 
-So Build A does not "install a recovery path". It **automates the operation we have three
-demonstrations of killing the device with, and fires it at +0 s instead of the 11 s or more
+So Build A does not "install a recovery path". It **automates the operation we have two
+controlled demonstrations of killing the device with (the paragraph above; `EX-026` is a third
+case, after a reset this project did not issue; changed from "three demonstrations" on
+2026-11-16), and fires it at +0 s instead of the 11 s or more
 every manual test was late by.** It may still be the right experiment — the +0 s point is
 genuinely unmeasured, and an immediate reset may behave unlike a late one — but it must be
 planned as *deliberately provoking a device-destroying event*, not as a recovery trial.

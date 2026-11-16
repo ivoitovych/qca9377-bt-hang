@@ -1,5 +1,7 @@
 # Review task — two BlueZ patches, before they are mailed
 
+*State as of 2026-10-28 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 *Written 2026-09-19 for an independent reviewer. Everything here is public; the
 repository is the record and the patches are the deliverable.*
 

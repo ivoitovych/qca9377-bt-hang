@@ -1,5 +1,7 @@
 # The kernel send package — what goes out, to whom, and what must be true on the day
 
+*State as of 2026-10-28 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 *Written 2026-09-24 by the test-suite maintainer at the operator's request, before the
 kernel patch was mailed (it was sent that evening and applied 2026-09-29 as `86ef0f58bdec`).
 Kept separately until 2026-10-09; the patch and its checks are now in

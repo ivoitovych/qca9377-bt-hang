@@ -1,5 +1,7 @@
 # External data cache — fetch once, verify, record what it is
 
+*State as of 2026-08-23 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 **The problem this solves.** Source investigation needs material that is not in this
 repository: kernel sources, `btusb.c` at old tags, package indices, debug symbols, ddebs.
 Fetching it repeatedly is slow, and worse, **it is not equally available to everyone working

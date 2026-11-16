@@ -1,5 +1,7 @@
 # The missing quirks entry — what it does and does not explain
 
+*State as of 2026-10-03 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 > ✅ **Tested here since 2026-09-26 — this banner supersedes the one below it.** The entry's
 > setup path is no longer "untested here": a diagnostic build that applied only the QCA
 > setup part (E1) ran 58 wideband/narrowband SCO links over three boots with every hang-up

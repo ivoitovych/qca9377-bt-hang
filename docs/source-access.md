@@ -1,5 +1,7 @@
 # Source access — what can be obtained, from where, and what cannot
 
+*State as of 2026-08-23 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 **Why this file exists.** Work on this record kept being deferred with "we would
 need the source" or "we would need debug symbols". It turns out almost all of it
 is obtainable, and the one time it was not, that was worth knowing precisely

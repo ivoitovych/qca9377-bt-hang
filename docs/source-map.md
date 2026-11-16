@@ -1,5 +1,7 @@
 # Source map — every component in the path, and whether we can see it
 
+*State as of 2026-08-22 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 **Why this file exists.** The source reading done so far has covered **two**
 components: `drivers/bluetooth/btusb.c` and `net/bluetooth/hci_core.c`. The
 operator has asked repeatedly for the *whole* stack to be read, on the

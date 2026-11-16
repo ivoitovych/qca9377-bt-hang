@@ -1,5 +1,7 @@
 # External review brief — the whole Bluetooth stack, against real observations
 
+*State as of 2026-08-22 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 **Hand this to a reviewer as-is.** It is self-contained: it assumes no access to
 our repository, and it is written so that several independent reviews can be
 **merged** rather than merely collected.

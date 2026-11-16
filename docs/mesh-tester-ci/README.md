@@ -1,5 +1,7 @@
 # The mesh-tester work — task briefs, results, reviews and gates
 
+*State as of 2026-10-28 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 Everything in this directory, and the patches in [`patches/mesh-tester/`](../../patches/mesh-tester/),
 was written on the branch `diag/mesh-tester-ci` between 2026-09-29 and 2026-10-08, while kernel
 findings were kept off `main` until their patch was sent. The branch was kept separately;

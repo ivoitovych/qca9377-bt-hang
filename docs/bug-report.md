@@ -1,5 +1,7 @@
 # Bug report — btusb: QCA9377 `13d3:3503` stops answering HCI after the first command issued into a transparent-SCO stream on USB alternate setting 1
 
+*State as of 2026-10-03 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 > **Historical record (2026-10-03).** This is the pre-fix draft of a kernel-side report,
 > kept as written; it was never sent. The fault's cause was found to be the missing
 > device-table entry, fixed upstream by `dc16388d45ec` (not authored by this project),

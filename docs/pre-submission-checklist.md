@@ -1,5 +1,7 @@
 # Pre-submission checklist
 
+*State as of 2026-10-03 (the file's last change before this label); it is not kept current. For the current state of every issue and submission see `docs/STATUS.md`. Label added 2026-11-16; the text below is unchanged.*
+
 > **Note (2026-10-03).** This checklist was written in August for a kernel-side bug report
 > that was never sent. Three submissions have since been accepted upstream through the
 > per-component workflows recorded in [`patches/bluez/README.md`](../patches/bluez/README.md)
