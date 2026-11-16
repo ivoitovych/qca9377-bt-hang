@@ -14,6 +14,7 @@ evidence/
   sessions/    one directory per reproduction session
   exhibits/    numbered exhibits; the index is exhibits/README.md
   trials/      numbered trials and results.tsv
+  off-topic/   evidence for the items outside Bluetooth (X1, the audio-CD playback underflow)
 ```
 
 ---
