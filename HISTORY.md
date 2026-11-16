@@ -3,7 +3,7 @@
 **Milestones** (added 2026-10-03; the current state is `docs/STATUS.md`): the first real hang,
 Phase 9 (2026-08-10) · the SCO path found, Phase 19 · the two `bluetoothd` crashes resolved
 from the stripped binary, Phase 30 · the alternate-setting-1 signature, Phases 32–34 · the
-BlueZ patches sent and applied, Phase 36 · the kernel MGMT fix sent (09-24) and applied
+BlueZ patches made ready in Phase 36, sent (09-19) and applied (09-21) in Phase 37 · the kernel MGMT fix sent (09-24) and applied
 (09-29), Phase 37 and the chapter after it · E1 (QCA setup only, 58 links, 0 timeouts) and E3
 (the exact upstream entry, 16 links, 0 timeouts), the stable backport request sent 10-02, the
 mesh series through four phases — "The week the fixes left the machine" · the backport queued
@@ -12,7 +12,13 @@ contributions after a research review, the desktop instrumented — "The days th
 say 'not yet'" · the hand-off blocks BRIEF carried from 2026-10-03 to 2026-11-07, verbatim,
 at the end · the eleven BlueZ commits released in BlueZ 5.88 (2026-11-05), and the first
 contribution outside Bluetooth, two gvfs merge requests for audio-CD playback (2026-11-07) — "A
-count is not a number, two merge requests, and a release nobody announced here".
+count is not a number, two merge requests, and a release nobody announced here" · the laptop's
+last full day on the self-built btusb, a headset that forgot the laptop, and a second dead boot
+(11-07 to 11-12) · an emulated controller, twelve kernel items made ready and five lanes at once
+(11-13 to 11-14) · a whole-project review, a deadlock in our own patch and journalctl measured
+(11-15 to 11-16) · a headset re-paired in the wrong mode and a backport request built to stand
+alone (11-16). *(The last four entries were added 2026-11-16; the current state is
+`docs/STATUS.md`.)*
 
 Chronological record of how this project came about, in the order things were actually
 learned — including the wrong turns, because several of them changed the conclusions.
@@ -903,6 +909,10 @@ ever captured — the watchdog fired 134 s *before* any HCI timeout. It worked, 
 narrow sense: the device re-enumerated and the HCI stack re-registered 315 ms later. Then
 the same desync recurred **107 ms after that**, and the controller hung completely 132 s
 later and left the bus.
+
+*[Note, 2026-11-16: "the first EARLY reset ever captured" conflicts with Phase 10 above, titled
+"The early reset works" (2026-08-10 18:56 to 08-11 00:21). Which capture was first has not been
+settled here; read the sentence as this incident's, not as a record.]*
 
 **⚠️ This paragraph originally overreached and has been corrected.** What it first said was
 that "a reset callback alone would not have prevented this hang", and that firmware reload
@@ -1848,7 +1858,9 @@ before the bus gave up. Any report must say **seconds to minutes**, never a cons
 **And a fourth untreated window, censored the cleanest way yet:** 8883.7 s (2 h 28 m) with
 zero USB-layer lines and zero interventions, ended by an ordinary shutdown rather than by
 anything touching the device. Four windows now — 12107 s, 8884 s, 4332 s, 1837 s — all
-showing no progression while untouched.
+showing no progression while untouched. *[Note, 2026-11-16: the 1837 s is `EX-021`'s window,
+which its own exhibit gives as 1836.465 s (1836.5 s, 30 m 36 s); the 1836 s above (Phase 26) and
+this 1837 s are the same number rounded two ways. `EX-025` and `EX-029` also say 1837 s.]*
 
 ### The instruments, wrong in the same direction four more times
 
@@ -2713,6 +2725,9 @@ named which alternate setting was in use — nobody had counted it.
 
 `EX-037` (09-01), `EX-038` (09-13), `EX-040` (09-13) — **680, 682, 1562** 27-byte mSBC
 frames pushed into a 9-byte endpoint, each followed by a bare `command tx timeout`.
+*[Note, 2026-11-16: "pushed into a 9-byte endpoint" is the wording the fourth review withdrew;
+27-byte buffers are sent as three 9-byte packets (`len 27 mtu 9` is that split, not an overflow;
+`DR-02`; see "The fourth review, two hours after the mails went" in Phase 37 and `BRIEF.md` §1).]*
 
 The signature is now `n = 5` across **three kernels** (`-29`, `-30`, `-31`):
 
@@ -3261,7 +3276,8 @@ no sanitiser is unpublishable; `abort` keeps the directory and `--discard` is th
 deletion. Eight residual sentences — "any HCI command", "no harm", "CVSD is safe", "this
 hardware falsifies", "finds no alternate setting 6 or 3", "not in a stable release yet",
 "every tested recovery failed" — are corrected where they stood, each to what the record
-supports and no further.
+supports and no further. *[Note, 2026-11-16: the count says eight and the list names seven; which
+eighth sentence was meant is not recorded here.]*
 
 Two things about how this went. The proofs the reviewer ran were this side's own, and they
 passed in the reviewer's environment — which is the point of tracking them. And three of the
@@ -4103,7 +4119,9 @@ login check got 535.
 - **CO-05 + CO-26 (mesh):** `hdev->lock` in `mesh_send_sync()` takes the mesh-path lock warnings
   from 3 to 0 and its KCSAN reports from 5 of 45 boots to 0; the failed-add early return is
   patch 2/2. **CO-04:** Igor Putko's pending patch adds a lock inversion (9 of 12 boots), so no
-  Tested-by.
+  Tested-by. *[Note, 2026-11-16: the CO-04 dossier README says 9 of 12 `-s power` boots, as here; the CO-04
+  row of `contributions/README.md` says 8 of 12, and so does the moved 10-29/30 hand-off block
+  below ("8/12 power boots"). The two counts are not reconciled in the repository.]*
 - Each worker's decisive result was re-run before entering a dossier.
 
 **A live headset.** On 2026-10-21 the operator could not set up the Shure AONIC 50: each click
@@ -4475,7 +4493,7 @@ was recorded:
   upload for four dossiers' fixes, every decisive test repeated on the bundle.
 - **Status:** every submitted or ready item read against its upstream source.
 All twelve ready kernel items went into one self-contained document for outside reviewers
-(`reviews/2026-11-14T0300Z-…`), built by a script so it follows the packages when they change.
+(`reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`), built by a script so it follows the packages when they change.
 
 **What the day taught, mostly about moving work into a public repository:**
 - **A work area's output is not a publishable artifact.** Five pushes were stopped by the publish
