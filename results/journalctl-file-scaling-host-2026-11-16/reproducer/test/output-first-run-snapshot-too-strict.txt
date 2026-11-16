@@ -1,0 +1,39 @@
+uid=1001(tester) gid=1001(tester) groups=1001(tester)
+journal directories present before: ls: cannot access '/run/log/journal': No such file or directory /var/log/journal 
+
+################ /usr/bin/journalctl
+journalctl under test: /usr/bin/journalctl (systemd 255 (255.4-1ubuntu8.18))
+journal files are written under: /tmp/journalctl-scaling.aAn9PK (removed at the end); the system journal is not read or written
+writing 400 files of 1000 entries each, archived, 5 files per boot ...
+
+     K      lines    seconds      lines/s       us/entry
+    25      25004       2.99         8373          119.4
+    50      50009      12.90         3877          257.9
+   100      49936      40.01         1248          801.1
+   200      21380      40.01          534         1871.2
+   400      10279      40.01          257         3892.2
+
+exponent b of (time to read everything) ~ K^b, K >= 50: 2.30   (2 = quadratic, 1 = linear)
+
+################ /bins/b/journalctl
+journalctl under test: /bins/b/journalctl (systemd 255 (255))
+journal files are written under: /tmp/journalctl-scaling.LNktCT (removed at the end); the system journal is not read or written
+writing 400 files of 1000 entries each, archived, 5 files per boot ...
+
+     K      lines    seconds      lines/s       us/entry
+    25      25004       0.13       197595            5.1
+    50      50009       0.35       143439            7.0
+   100     100000       1.13        88166           11.3
+   200     100000       2.88        34784           28.7
+   400     100000       6.48        15422           64.8
+
+exponent b of (time to read everything) ~ K^b, K >= 50: 2.10   (2 = quadratic, 1 = linear)
+
+################ safety check: /var/log, /run/log, /etc/systemd, /tmp, /var/tmp before and after
+DIFFERENT:
+38c38
+< /tmp d 4096 1794789526.3738283000
+---
+> /tmp d 4096 1794790014.8220551170
+journal directories present after: ls: cannot access '/run/log/journal': No such file or directory /var/log/journal 
+leftover scaling directories in /tmp: 0
