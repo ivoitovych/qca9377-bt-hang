@@ -142,5 +142,22 @@ ranges interleave. Each set was read with:
 
 **The machine's journal:** the newest 25 files, the first 600 000 export lines, forward and with `-r`.
 
-[OPEN: the comparisons on a set with two machine IDs and on a file still being written, from the
-package test build.]
+**The built package (255.4-1ubuntu8.20 test build of 8.19 plus the two commits),** installed over
+8.18 in a fresh ubuntu:24.04 container, was compared with stock 8.18 and stock 8.19 on four synthetic
+sets:
+ - plain archived files;
+ - 12 boots whose files overlap in time;
+ - two machine IDs;
+ - the reproducer's files.
+
+Each set was read with 14 kinds of query, 112 comparisons in all, and all were identical.
+
+**A file still being written,** fed through systemd-journal-remote while `journalctl -f` read it with
+8.18, 8.19 and the patched build. The followed output was identical (21 643 entries), and so was the
+final read (24 500).
+
+`journalctl --verify` on the reproducer's 400 files reported no failure. With the installed patched
+package, the reproducer gave 189 958 lines/s at 25 files and 11 567 at 400.
+
+Not tested: entries arriving through a running journald, because the container has no systemd as
+PID 1. Step 5 of the bug's Test Plan covers that on a real machine.

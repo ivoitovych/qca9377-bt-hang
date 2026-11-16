@@ -18,7 +18,23 @@ reading the journal 7 to 25 times faster.
 | `reproducer/journalctl-file-scaling-repro.sh` | the reproducer: no root, nothing installed, writes only into one temporary directory |
 | `reproducer/output.txt` | its reference output: stock 8.18 against the patched build, in a fresh ubuntu:24.04 container as an unprivileged user |
 | `reproducer/Dockerfile`, `reproducer/inside-repro-test.sh` | how that reference run was made, with its before-and-after check of /var/log, /run/log, /etc/systemd, /tmp and /var/tmp |
-| `patches/` | [OPEN: the two DEP-3 quilt patches, the changelog entry, the debdiff and the packaging-branch commit; in preparation] |
+| `patches/debian-patches/` | the two commits as quilt patches, headed like the other cherry-picks in noble's series; added at its end |
+| `patches/systemd_255.4-1ubuntu8.19_to_8.20.debdiff` | the debdiff against 8.19: the changelog entry, the two patches, `series` |
+| `patches/ubuntu-noble-branch-commit.patch` | the same change as one commit on the packaging branch `ubuntu-noble` (head `e9f476fd65`, "Release systemd 255.4-1ubuntu8.19"), for a merge proposal |
+
+`NNNNNNN` stands for the Launchpad bug number. `<AUTHOR-NAME> <AUTHOR-EMAIL>` stands for whoever
+submits. Both are filled in, and the patch files renamed, once the bug exists.
+
+**Test build.** The source package builds with `dpkg-source -b`, and `quilt push -a` applies all 99
+patches on 8.19 with no fuzz. The binary build was amd64 only, in an ubuntu:24.04 container:
+ - with the tests, every journal test passes;
+ - test-fd-util and test-capability fail, and they fail on unpatched 8.19 in the same container too;
+ - 1 229 tests pass and 25 are skipped, as they need a booted system.
+
+The packages were then built without tests, installed over 8.18 in a fresh container, and tested
+there; see `evidence.md` §5.
+
+No build was made on other architectures or in a PPA, and the autopkgtests were not run.
 
 ## Where it goes, and in what order
 

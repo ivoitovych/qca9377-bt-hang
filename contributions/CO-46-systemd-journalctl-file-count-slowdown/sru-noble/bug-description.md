@@ -107,6 +107,10 @@ Both commits have been in upstream releases since v256 (June 2024), and in Ubunt
 is no later upstream commit that fixes or reverts them: no Fixes: line refers to them, and
 `git log --grep` on either hash finds only the commits themselves.
 
+The only journal patch in 8.19 (lp2088163-sd-journal-use-stat_verify_linked.patch) changes how
+journal_file_fstat() tests for a deleted file. It still returns -EIDRM for such a file, so it does
+not depend on the fstat() calls these commits remove.
+
 [ Other Info ]
 
  - PR #30209 was opened during the v255 release freeze, and its description says "this is not a v255
@@ -114,8 +118,13 @@ is no later upstream commit that fixes or reverts them: no Fixes: line refers to
     - bd1af1d5fb and f7f062bf9f, a new SD_JOURNAL_ASSUME_IMMUTABLE flag and its use;
     - cb2b0326ee, internal data structure changes;
     - 63d2c7554e, an output path change.
-   The two proposed commits do not depend on them: they apply unchanged, and
-   [OPEN: the package build's own tests, result to be filled in from the test build].
+   The two proposed commits do not depend on them.
+    - They apply to 255.4-1ubuntu8.19 without fuzz.
+    - The package builds.
+    - All journal unit tests of the package build pass (test-journal, -interleaving, -enum, -verify,
+      -flush, -file, test-mmap-cache).
+    - In a container build, test-fd-util and test-capability failed, and they fail the same way on
+      unpatched 8.19 in that container.
  - Two later upstream changes in this area are not proposed either: 8f8ab4bf98 (rate-limited tail
    refresh, v262) and 79e32e7c73 (not yet released). They are not in the development release, and on
    255.4 they gave no measurable gain on top of the two commits.
