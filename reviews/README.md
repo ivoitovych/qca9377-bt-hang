@@ -537,6 +537,13 @@ track them. Read a file for its content; the date in its name is when it was wri
 | [test-suite-synchronization-plan-20261019-045758.md](test-suite-synchronization-plan-20261019-045758.md) | Test-suite synchronization plan — 2026-10-19 04:57 UTC |
 | [verification-of-review-full-project-code-review-20260813-111346.md](verification-of-review-full-project-code-review-20260813-111346.md) | Verification of review 20260813-111346 — what was implemented, what stands, what was skipped |
 | [2026-11-16T0000Z-project-review-recheck-checks.md](2026-11-16T0000Z-project-review-recheck-checks.md) | Checks of the reviewer's recheck of the 2026-11-15 whole-project review (added 2026-11-16) |
+| [20261115-005742-project-consistency-review-findings.md](20261115-005742-project-consistency-review-findings.md) | Findings-only copy of the whole-project consistency review of 2026-11-15 (the review, at `da23558`): ids, severities, file:line references, summary |
+| [20261115-005742-project-consistency-review-detailed-findings.md](20261115-005742-project-consistency-review-detailed-findings.md) | Findings-only copy of that review's companion file (the parts' findings, per part) |
+| [20261115-204454-first-recheck-findings.md](20261115-204454-first-recheck-findings.md) | Findings-only copy of the first recheck (`main` at `a8d0eb45`): verdicts per finding and what was left |
+| [20261115-204454-first-recheck-detailed-findings.md](20261115-204454-first-recheck-detailed-findings.md) | Findings-only copy of the first recheck's companion file |
+| [20261116-132247-second-recheck-findings.md](20261116-132247-second-recheck-findings.md) | Findings-only copy of the second recheck (`main` at `bbec102f`): what was confirmed, what is left |
+| [20261116-132247-second-recheck-detailed-findings.md](20261116-132247-second-recheck-detailed-findings.md) | Findings-only copy of the second recheck's companion file |
+| [20261116-135757-third-recheck-findings.md](20261116-135757-third-recheck-findings.md) | Findings-only copy of the third recheck (the save-time wording check and the second round's remains) |
 
 ## Adding a report
 
