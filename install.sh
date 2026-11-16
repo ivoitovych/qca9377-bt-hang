@@ -52,7 +52,7 @@ for a in "$@"; do
         --apply)       APPLY=1 ;;
         --tools-only)  APPLY=1; TOOLS_ONLY=1 ;;
         --no-metrics)  METRICS=0 ;;
-        -h|--help)     sed -n '2,16p' "$0"; exit 0 ;;
+        -h|--help)     sed -n '2,/^$/p' "$0"; exit 0 ;;   # the whole header, not a fixed range
         *) echo "unknown option: $a" >&2; exit 1 ;;
     esac
 done
@@ -386,6 +386,9 @@ echo
 echo "[3/7] device selection"
 DROPIN=$DESTDIR/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
 SNAP_DROPIN=$DESTDIR/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
+# The udev-triggered unit runs the same collector and must watch the same device:
+# without its own drop-in it kept describing the default controller.
+SNAPEV_DROPIN=$DESTDIR/etc/systemd/system/bt-health-snapshot-event.service.d/10-device.conf
 if [[ "$VID" != "$DEFAULT_VID" || "$PID" != "$DEFAULT_PID" ]]; then
     echo "  non-default device — writing $DROPIN"
     if (( APPLY )); then
@@ -400,10 +403,15 @@ if [[ "$VID" != "$DEFAULT_VID" || "$PID" != "$DEFAULT_PID" ]]; then
             printf '[Service]\nEnvironment=BT_VID=%s\nEnvironment=BT_PID=%s\n' "$VID" "$PID" > "$SNAP_DROPIN" \
                 || { echo "    ERROR: could not write $SNAP_DROPIN" >&2; FAILED=1; }
             echo "  + wrote $SNAP_DROPIN"
+            mkdir -p "$(dirname "$SNAPEV_DROPIN")" && \
+            printf '[Service]\nEnvironment=BT_VID=%s\nEnvironment=BT_PID=%s\n' "$VID" "$PID" > "$SNAPEV_DROPIN" \
+                || { echo "    ERROR: could not write $SNAPEV_DROPIN" >&2; FAILED=1; }
+            echo "  + wrote $SNAPEV_DROPIN"
         fi
     else
         echo "  would write: $DROPIN (BT_VID=$VID BT_PID=$PID)"
         (( METRICS )) && echo "  would write: $SNAP_DROPIN (BT_VID=$VID BT_PID=$PID)"
+        (( METRICS )) && echo "  would write: $SNAPEV_DROPIN (BT_VID=$VID BT_PID=$PID)"
     fi
 else
     echo "  default device $VID:$PID — no drop-in needed"
@@ -533,6 +541,23 @@ install_file "$SRC/systemd/bt-trial-auto.service" /etc/systemd/system/bt-trial-a
 # archive is what fixes it, and it has to run without anyone remembering.
 install_file "$SRC/systemd/bt-journal-backup.service" /etc/systemd/system/bt-journal-backup.service 0644
 install_file "$SRC/systemd/bt-journal-backup.timer"   /etc/systemd/system/bt-journal-backup.timer   0644
+
+# The journal FILES themselves, copied as they are once journald has closed them: a boot
+# can lose its start while it is still running, which bt-backup-journal's export of a
+# finished boot never sees (2026-10-23). Its units name /usr/local/bin/bt-journal-files,
+# so the tool and its three units are installed together. It needs zstd and refuses
+# without it, so with no zstd none of the four is installed (the units would only fail).
+if command -v zstd >/dev/null 2>&1; then
+    JOURNALFILES=1
+    install_file "$SRC/tools/bt-journal-files" /usr/local/bin/bt-journal-files 0755
+    install_file "$SRC/systemd/bt-journal-files.service" /etc/systemd/system/bt-journal-files.service 0644
+    install_file "$SRC/systemd/bt-journal-files.timer"   /etc/systemd/system/bt-journal-files.timer   0644
+    install_file "$SRC/systemd/bt-journal-files-shutdown.service" \
+                 /etc/systemd/system/bt-journal-files-shutdown.service 0644
+else
+    JOURNALFILES=0
+    echo "  WARNING: zstd not found — bt-journal-files and its units not installed"
+fi
 
 # The raw HCI captures rotate too (bt-capture keeps 400 files, bt-trace prunes by free
 # space). Their archiver ran on a transient timer that every reboot removed (2026-11-13).
@@ -691,6 +716,9 @@ run systemctl enable --now bt-trial-auto
 # Enabled unconditionally: it archives and never acts on the controller, and the
 # whole point is that it runs when nobody remembers to.
 run systemctl enable --now bt-journal-backup.timer
+# And the journal-file copy: it copies closed journal files and never acts on the controller.
+(( JOURNALFILES )) && run systemctl enable --now bt-journal-files.timer
+(( JOURNALFILES )) && run systemctl enable --now bt-journal-files-shutdown.service
 # The same for the raw-capture archive: it reads captures and never acts on the controller.
 # Only where it was installed: the investigation machine's checkout (above).
 (( RAWARCHIVE )) && run systemctl enable --now bt-raw-archive.timer

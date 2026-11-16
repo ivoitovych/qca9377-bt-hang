@@ -6,9 +6,20 @@
 #   bt-trial step "<what you did>"    mark a protocol step (optional but recommended)
 #   bt-trial hang                     record: the controller hung
 #   bt-trial ok                       record: it survived (verifies the controller answers)
-#   bt-trial abort                    discard the open trial
+#   bt-trial abort [--discard]        close without a row; the directory is kept
+#                                     (renamed .aborted-<stamp>); --discard deletes it
+#   bt-trial status                   what the open trial has accumulated so far
 #   bt-trial report                   failure rate per build — the denominators
 #   bt-trial audit                    recheck every recorded row against the journal
+#   bt-trial autostart | autostop     the boot-time open and shutdown-time close,
+#                                     run by the units; not for hand use
+#
+# MANUAL `hang`, `ok` AND `start` SEND HCI. Each runs `hciconfig <hci> name`
+# (a Read Local Name) on the controller under study: `start` once, `ok` twice
+# (the verdict and the "responds afterwards" column), `hang` once (that column).
+# They are deliberate interventions by an operator looking at the controller.
+# `autostop` sends nothing unless BT_TRIAL_PROBE=1. Without hciconfig the answer
+# is "cannot tell": `ok` records `ended_unprobed`, not `failed`.
 #
 # WHY: "the patched build ran for an hour" means nothing without a baseline. This
 # project has mistaken absence-of-observed-failure for a fix more than once. Every
@@ -108,6 +119,11 @@ EOF
 # healthy cannot be trusted to report on the hardware.
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 
+# Status: 0 the controller answered; 1 it did not (device or hci node absent, or
+# hciconfig failed or timed out); 2 CANNOT TELL (no hciconfig on this machine).
+# Callers must not read 2 as "dead": a machine without hciconfig would record
+# every manual `ok` as a failure (review T-09, 2026-11-15). hciconfig's own exit
+# status is folded into 1 below, so 2 can only mean "no hciconfig".
 hci_alive() {
     local d dev="" h=""
     for d in "$SYSFS_USB"/*; do
@@ -119,7 +135,7 @@ hci_alive() {
     for p in "$dev"/*/bluetooth/hci*; do [[ -e "$p" ]] && h=$(basename "$p") && break; done
     [[ -n "$h" ]] || return 1
     command -v hciconfig >/dev/null 2>&1 || return 2
-    timeout 6 hciconfig "$h" name >/dev/null 2>&1
+    timeout 6 hciconfig "$h" name >/dev/null 2>&1 || return 1
 }
 
 # ── EXPERIMENTAL ENVIRONMENT FINGERPRINT ──────────────────────────────────
@@ -340,10 +356,11 @@ case "${1:-}" in
 
 protocol) protocol ;;
 
-# Delegated rather than implemented here. The audit must NOT share this file's
+# Delegated rather than implemented here. The audit keeps its own copy of the
 # detectors — an audit built on the same regex as the tool it audits can only
 # ever agree with itself, and the defect it exists to catch was exactly a
-# pattern that matched this project's wording and not the kernel's. Keeping it
+# pattern that matched this project's wording and not the kernel's. (The
+# patterns are identical today; see the header of bt-trial-audit.) Keeping it
 # in a separate file that reads the journal through the seam also makes it
 # drivable from a fixture, which this one is not.
 audit)
@@ -356,10 +373,13 @@ audit)
 start)
     build="${2:?usage: bt-trial start <build>   (stock, A, B, C, D)}"
     [[ -e "$CUR" ]] && { echo "a trial is already open:"; sed 's/^/  /' "$CUR"; exit 1; }
-    if ! hci_alive; then
+    hci_alive; _alive=$?
+    if (( _alive == 1 )); then
         echo "${R}Controller is not responding.${O} Cold power-off first — a trial that"
         echo "starts on a dead controller measures nothing."
         exit 1
+    elif (( _alive == 2 )); then
+        echo "bt-trial: no hciconfig here, so the controller's answer was not checked; starting anyway" >&2
     fi
     mkdir -p "$STATE" "$TRIALS"
     n=$(next_trial_no "$build") || exit 1
@@ -382,7 +402,9 @@ start)
     echo "${B}Trial $build #$n started${O}  (protocol v$PROTOCOL_VERSION)"
     echo "  uptime: $(uptime -p)"
     echo
-    protocol | sed -n '3,10p'
+    # Steps 2 to 7 of the protocol; step 1 is this command and step 0 was
+    # printed in full by `bt-trial protocol`.
+    protocol | sed -n '11,22p'
     echo
     echo "  then: bt-trial hang   |   bt-trial ok"
     ;;
@@ -463,7 +485,10 @@ autostop)
     # Opt-in means the value 1, not "set to anything": BT_TRIAL_PROBE=0 probed
     # until 2026-09-20 (follow-up F2). Anything other than 1 is passive.
     if [[ "${BT_TRIAL_PROBE:-}" == 1 ]]; then
-        if hci_alive; then exec "$0" ok; else exec "$0" hang; fi
+        # Only a definite "no" is a hang; 2 (no hciconfig) goes to `ok`, which
+        # records it as unprobed.
+        hci_alive; _alive=$?
+        if (( _alive == 1 )); then exec "$0" hang; else exec "$0" ok; fi
     fi
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
     # Filtered inside journalctl (see KJ_RE below): unfiltered, a day of
@@ -794,9 +819,13 @@ hang|ok)
     # BT_TRIAL_PASSIVE (set by autostop) means: classify from the journal alone,
     # send nothing. The probe on `ok` stays for an operator closing a trial by
     # hand, where it is a deliberate act on a controller they are looking at.
-    if [[ "$1" == hang ]] || { [[ "${BT_TRIAL_PASSIVE:-}" != 1 ]] && ! hci_alive; }; then
+    # hci_alive's 2 ("cannot tell": no hciconfig) is neither alive nor dead: the
+    # row says `ended_unprobed`, as for a passive close.
+    _alive=0
+    if [[ "$1" != hang && "${BT_TRIAL_PASSIVE:-}" != 1 ]]; then hci_alive; _alive=$?; fi
+    if [[ "$1" == hang ]] || (( _alive == 1 )); then
         trial_result=failed
-    elif [[ "${BT_TRIAL_PASSIVE:-}" == 1 ]]; then
+    elif [[ "${BT_TRIAL_PASSIVE:-}" == 1 ]] || (( _alive == 2 )); then
         # NOT "survived". A passive close asked the controller nothing, so it
         # measured nothing about liveness: no timeout was seen in the journal
         # (or the journal was unreadable — bt1_status carries that as
@@ -898,8 +927,8 @@ hang|ok)
     # bt-health-snapshot invocations, which are the systematic, journal-visible
     # source. Other raw-HCI probes happen and are NOT counted here:
     #   * bt-trial's own hci_alive(), which runs `hciconfig <hci> name`
-    #   * every bt-state invocation, which does the same
-    # Those are operator- or script-driven and leave no dedicated journal entry,
+    #     (bt-state and bt-status send nothing unless given --probe)
+    # That one is operator- or script-driven and leave no dedicated journal entry,
     # so the column is a lower bound on the intervention count. Treating it as
     # the total would understate the exposure it exists to measure.
     #
@@ -954,7 +983,10 @@ hang|ok)
     # the hciconfig spy in the suite: the autostop path still sent two commands
     # after the classifier had been made passive.
     if [[ "${BT_TRIAL_PASSIVE:-}" == 1 ]]; then resp_after=unprobed
-    elif hci_alive; then resp_after=yes; else resp_after=no; fi
+    else
+        hci_alive; _ra=$?
+        case "$_ra" in 0) resp_after=yes ;; 2) resp_after=unprobed ;; *) resp_after=no ;; esac
+    fi
     # Resolve the device by VID/PID rather than by bus path: after a reset it
     # can re-enumerate at a different address, and a hardcoded path would then
     # report "gone" for a device that is present and working.
@@ -1266,5 +1298,5 @@ status)
     fi
     ;;
 
-*)  sed -n '2,18p' "$0"; exit 1 ;;
+*)  sed -n '2,22p' "$0"; exit 1 ;;
 esac

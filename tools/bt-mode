@@ -27,7 +27,12 @@
 #   experiment   observe the defect; accept that a hang needs a cold power-off
 #
 # Passive capture (bt-capture, bt-trace, bt-usbmon, dynamic debug) stays on in
-# BOTH modes. Those observe; they do not intervene.
+# BOTH modes. Those observe; they do not intervene. One exception to read
+# precisely: etc/modprobe.d/btusb-qca9377.conf carries the LOAD-TIME dyndbg
+# options as well as enable_autosuspend=0, and `experiment` moves that file aside
+# whole, so in experiment mode the probe-time debug lines are not requested at the
+# next module load; bt-dyndbg.service (boot-time, after the load) still sets its
+# narrower set in both modes.
 #
 # EVERYTHING HERE IS REVERSIBLE. Config files are moved aside with a .disabled
 # suffix rather than edited or deleted, and `bt-mode mitigation` puts them back.
@@ -201,6 +206,6 @@ case "${1:-status}" in
     status)     show_status ;;
     experiment) set_experiment ;;
     mitigation) set_mitigation ;;
-    -h|--help)  sed -n '2,38p' "$0" ;;
+    -h|--help)  sed -n '2,/^$/p' "$0" ;;   # the whole header, up to its first blank line
     *) echo "bt-mode: unknown mode: $1" >&2; echo "usage: bt-mode [status|experiment|mitigation]" >&2; exit 1 ;;
 esac
