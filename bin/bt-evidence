@@ -11,6 +11,10 @@
 # in a bug report without an attached transcript is just an assertion. A kernel
 # maintainer needs to see what was run, what the machine did, and in what order.
 #
+# The state snapshots at start and stop send NOTHING to the controller; with
+# BT_EVIDENCE_PROBE=1 they run `hciconfig <hci> name` (an HCI Read Local Name)
+# and record responds=yes|no, otherwise responds=unprobed.
+#
 # Everything written here is passed through the log sanitiser, so sessions are
 # safe to commit. Binary btsnoop captures are NOT collected — they cannot be
 # sanitised and stay in /var/log/bt-health/trace/.
@@ -66,7 +70,12 @@ snapshot_state() { # -> stdout
             break
         fi
     done
-    if [[ "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
+    # PASSIVE BY DEFAULT, like bt-mark and bt-state (review I-03, 2026-11-15): the
+    # snapshot runs at `start` and `stop` of a session and used to send an HCI
+    # Read Local Name each time, with no way to turn it off, into the window the
+    # session records. BT_EVIDENCE_PROBE=1 asks for the probe, as a deliberate act.
+    alive=unprobed
+    if [[ "${BT_EVIDENCE_PROBE:-}" == 1 && "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
         timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
     fi
     echo "## device"
