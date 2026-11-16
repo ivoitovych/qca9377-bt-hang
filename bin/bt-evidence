@@ -235,6 +235,6 @@ status)
     ;;
 
 *)
-    sed -n '2,17p' "$0"
+    sed -n '2,/^$/p' "$0"   # the whole header, not a fixed range
     exit 1 ;;
 esac
