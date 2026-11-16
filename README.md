@@ -130,8 +130,10 @@ and `bluetoothd` crashing, leaving the adapter powered and never scanning again 
 command; `tools/bt-status` gives the verdict on the first.
 
 **If your controller is different**, most of this transfers. `bt-diagnose`, `bt-state`,
-`bt-boots`, `bt-crash` and `sanitize-logs.sh` work on any USB controller; every tool
-takes `BT_VID`/`BT_PID`; `bt-incident` collects a hang that already happened into a
+`bt-boots`, `bt-crash` and `sanitize-logs.sh` work on any USB controller; the tools that
+look the controller up by its USB id take `BT_VID`/`BT_PID` (`bt-state` detects the device when
+they are unset; `bt-status` defaults to `13d3:3503`; `bt-crash`, `bt-boots` and `sanitize-logs.sh`
+do not read them); `bt-incident` collects a hang that already happened into a
 sanitised, publishable session; `bt-exhibit` captures a claim with its command and output
 in one pass; the journal seam (`tools/lib/journal.sh`) lets every analysis run over a
 fixture instead of a live machine. Specific to this part: the alternate-setting reading in
@@ -150,12 +152,15 @@ two-line addition to
 
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
   under review; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
-  to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-12; the
-  patches are still pending in patchwork, and the series still applies to bluetooth-next; the
-  CI's own mirror pull requests were closed by its bot on 2026-11-11/12, which is not a review:
+  to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-15; the
+  patches are still `new` in patchwork; the CI's own mirror pull requests were closed by its bot
+  on 2026-11-11/12, which is not a review, and its rule makes v2 also a resend:
   [`reviews/2026-11-12T1508Z-upstream-contributions-status.md`](reviews/2026-11-12T1508Z-upstream-contributions-status.md)).
+  The first v2 candidate, whose second patch waits under `hdev->lock`, hangs the test guest with
+  debug-only delays (3 of 3, 2026-11-15) and is not to be sent; the candidate is a
+  non-sleeping 2/2, with its checks and cover still to do (`docs/STATUS.md`, top).
   On the laptop the series ran from 2026-10-23 to 10-29 with three headsets
-  ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
+  ([`contributions/CO-02-sco-connect-reuses-closing-link/`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
 - **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,
   6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273 (`EX-061`). Ubuntu's `7.0.0-42` lacks it;
   `7.0.0-43` carries it and is published in noble-updates and noble-security. The laptop has run
@@ -171,7 +176,7 @@ two-line addition to
   are released in BlueZ 5.88 (tables above).
 - **A report to Qualcomm on the ROM firmware's hang** (`CO-25`), sent 2026-10-29 to the kernel's
   Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted, not
-  sent (2026-11-12).
+  sent (read again 2026-11-15; no other reply).
 - **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
   with send packages ready or in preparation, waiting for the author's decision (the table "What
   to send" in [`contributions/README.md`](contributions/README.md) names each package's current
@@ -180,9 +185,16 @@ two-line addition to
   parameter (`CO-35`); btusb fixes for a controller that fails to resume (`CO-43`) and a
   management-interface status fix for a command timeout (`CO-44`); an independent fix for an
   open mesh use-after-free (`CO-04`) and a mesh locking fix (`CO-05`); a stable request for two
-  more QCA device-table entries (`CO-22`); BlueZ use-after-frees at exit (`CO-37`); a hidden
-  advertising instance in the management interface (`CO-38`); and an Ubuntu update for a `btmon`
-  crash (`CO-11`). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`,
+  more QCA device-table entries (`CO-22`); a hidden advertising instance in the management
+  interface (`CO-38`); a btusb fix for the wrong alternate setting when one of two SCO links goes
+  down (`CO-21`) and a btusb change for the error messages at call hang-up (`CO-20`, patch 1
+  alone); the extended-advertising duration overflow (`CO-12`); a BlueZ use-after-free in
+  `a2dp_reconfig()` (`CO-23`); BlueZ use-after-frees at exit (`CO-37`); a BlueZ fix for a
+  temporary device kept alive by non-discoverable advertisements (`CO-39`) and a one-line
+  emulator fix (`CO-41`). Some of these wait for the author's decision on the route (`CO-12`,
+  `CO-23`, `CO-37`, `CO-35`). One Ubuntu update for a `btmon` crash and three other BlueZ 5.72
+  fixes is built and tested, not filed (`CO-11`, `CO-03`, `CO-37`, `CO-40`; the bundle named in
+  the table). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`,
   `U16`, `U18`) are still being investigated.
 - **Off-topic, outside Bluetooth:** audio CDs played through GNOME's CD backend paused about
   3 seconds every 16 seconds on this laptop. Two fixes were submitted to gvfs on 2026-11-07
@@ -266,7 +278,8 @@ patches/bluez/        the applied BlueZ patches, their verification script and m
   send-2026-10-18/    the two cleanups sent 2026-10-18, as mailed, with their re-test
   cleanup/            the first draft (2026-10-07) of the a2dp cleanup, superseded
 patches/kernel/       the MGMT fix (86ef0f58bdec) as sent, and bt9-stable/: the BT-9 backports
-patches/diag/         diagnostic btusb builds (E1, E3) and the stable request for dc16388d45ec
+patches/diag/         the E1 diagnostic btusb patch, the recipes for E3 (the upstream entry, built
+                      per kernel; no patch file) and the stable request for dc16388d45ec
 patches/mesh-tester/  the mesh series v1 to v3 (not sent as one), the shared/mgmt drafts and the
                       Tested-by reply as sent; patches/wireplumber/: the U11 suggestion, not posted
 retest/mesh-tx-leak/  reproducer, kernel configs and 159 VM logs for the retest of another
@@ -283,9 +296,11 @@ archive/              (git-ignored, local) every raw HCI capture, compressed and
 cache/  tmp/          (git-ignored, local) upstream trees and tools; run outputs
 ```
 
-**Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment
-(report first, then the reaction on `review/<timestamp>-fixes`), per the convention in
-[`reviews/README.md`](reviews/README.md). Kernel findings are recorded on `main` as they
+**Branches.** `main` is the record. By the convention in
+[`reviews/README.md`](reviews/README.md), an assessment is written on a branch
+`review/<UTC timestamp>` (report first, then the reaction on `review/<timestamp>-fixes`);
+which remote holds such a branch at a given time is not fixed (the 16 old remote branches were
+deleted on 2026-11-15; BRIEF, hand-off, "Old remote branches" lists what remains). Kernel findings are recorded on `main` as they
 are found (since 2026-10-09); held work lands on `main` by cherry-pick, never by merge. CI (`.github/workflows/checks.yml`) runs the suite, the
 coverage floors and the publish scan on every push; `devtools/ci` reads its verdict.
 
