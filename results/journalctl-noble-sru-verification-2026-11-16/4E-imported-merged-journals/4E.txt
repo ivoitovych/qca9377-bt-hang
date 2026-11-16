@@ -1,0 +1,157 @@
+E1-header-same: 24 files, distinct header machine IDs 1, distinct entry _MACHINE_ID 3, entries 9600
+E2-header-eq-entry: 24 files, distinct header machine IDs 3, distinct entry _MACHINE_ID 3, entries 9600
+E3-header-unrelated: 24 files, distinct header machine IDs 24, distinct entry _MACHINE_ID 3, entries 9600
+E4-header-only: 24 files, distinct header machine IDs 24, distinct entry _MACHINE_ID 1, entries 9600
+E5-header-swapped: 24 files, distinct header machine IDs 3, distinct entry _MACHINE_ID 3, entries 9600
+# the earlier 'two machine IDs' fixture (make-sets.py, twomachines): header IDs and entry IDs
+twomachines: 40 files, distinct header machine IDs 1, distinct entry _MACHINE_ID 2
+# E1-header-same: 24 files
+E1-header-same	-o export (forward)	s819	0	124800	4145936	13722a458e9c5a5a3bc8434dc0421a9bdfcc19680e27202eb26d39fb6ef2c08d
+E1-header-same	-o export (forward)	p820	0	124800	4145936	13722a458e9c5a5a3bc8434dc0421a9bdfcc19680e27202eb26d39fb6ef2c08d
+VERDICT	E1-header-same	-o export (forward)	SAME
+E1-header-same	-o export -r	s819	0	124800	4145936	d9f3f4cf4dcb2aebfaa401667d576fb7273a326068a4f185bd1d649ca37b4841
+E1-header-same	-o export -r	p820	0	124800	4145936	d9f3f4cf4dcb2aebfaa401667d576fb7273a326068a4f185bd1d649ca37b4841
+VERDICT	E1-header-same	-o export -r	SAME
+E1-header-same	-o cat	s819	0	9600	124800	7953a390071c9274550896a811d6e81c55795df13c2cc60c8bcf2e7cc8bef2d8
+E1-header-same	-o cat	p820	0	9600	124800	7953a390071c9274550896a811d6e81c55795df13c2cc60c8bcf2e7cc8bef2d8
+VERDICT	E1-header-same	-o cat	SAME
+E1-header-same	-o cat -r	s819	0	9600	124800	146db47274bddd21491b2a4444080ec4c84b8f7b34ae45eaf983a5726c3704b3
+E1-header-same	-o cat -r	p820	0	9600	124800	146db47274bddd21491b2a4444080ec4c84b8f7b34ae45eaf983a5726c3704b3
+VERDICT	E1-header-same	-o cat -r	SAME
+E1-header-same	--list-boots	s819	0	7	634	455f1f0dc01486fd2bad61a470f3b62abbe18aeb715420be5b38183ee57a22a0
+E1-header-same	--list-boots	p820	0	7	634	455f1f0dc01486fd2bad61a470f3b62abbe18aeb715420be5b38183ee57a22a0
+VERDICT	E1-header-same	--list-boots	SAME
+E1-header-same	-b <newest boot id>	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E1-header-same	-b <newest boot id>	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E1-header-same	-b <newest boot id>	SAME
+E1-header-same	-k	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E1-header-same	-k	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E1-header-same	-k	SAME
+E1-header-same	-n 100	s819	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+E1-header-same	-n 100	p820	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+VERDICT	E1-header-same	-n 100	SAME
+E1-header-same	--since/--until a 60 s window	s819	0	1601	64044	7b391707c29f0f2448a786deaf1eb6add3958a45f686ad619f7a883a039182a2
+E1-header-same	--since/--until a 60 s window	p820	0	1601	64044	7b391707c29f0f2448a786deaf1eb6add3958a45f686ad619f7a883a039182a2
+VERDICT	E1-header-same	--since/--until a 60 s window	SAME
+ORDER	E1-header-same	s819	entries 9600 of 9600; each exactly once: True; equals true order: False; adjacent inversions 5; longest displacement 1999
+ORDER	E1-header-same	p820	entries 9600 of 9600; each exactly once: True; equals true order: False; adjacent inversions 5; longest displacement 1999
+# E2-header-eq-entry: 24 files
+E2-header-eq-entry	-o export (forward)	s819	0	124800	4145936	a706b83720336ca081b309a2cf37f5d270a37c21cfa6ed870ecc307c9f899389
+E2-header-eq-entry	-o export (forward)	p820	0	124800	4145936	a706b83720336ca081b309a2cf37f5d270a37c21cfa6ed870ecc307c9f899389
+VERDICT	E2-header-eq-entry	-o export (forward)	SAME
+E2-header-eq-entry	-o export -r	s819	0	124800	4145936	94fa9ade2c4f10fd46cdb9f8c07c98b5a4e58761dbb742ac069906e454516994
+E2-header-eq-entry	-o export -r	p820	0	124800	4145936	94fa9ade2c4f10fd46cdb9f8c07c98b5a4e58761dbb742ac069906e454516994
+VERDICT	E2-header-eq-entry	-o export -r	SAME
+E2-header-eq-entry	-o cat	s819	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+E2-header-eq-entry	-o cat	p820	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+VERDICT	E2-header-eq-entry	-o cat	SAME
+E2-header-eq-entry	-o cat -r	s819	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+E2-header-eq-entry	-o cat -r	p820	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+VERDICT	E2-header-eq-entry	-o cat -r	SAME
+E2-header-eq-entry	--list-boots	s819	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+E2-header-eq-entry	--list-boots	p820	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+VERDICT	E2-header-eq-entry	--list-boots	SAME
+E2-header-eq-entry	-b <newest boot id>	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E2-header-eq-entry	-b <newest boot id>	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E2-header-eq-entry	-b <newest boot id>	SAME
+E2-header-eq-entry	-k	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E2-header-eq-entry	-k	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E2-header-eq-entry	-k	SAME
+E2-header-eq-entry	-n 100	s819	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+E2-header-eq-entry	-n 100	p820	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+VERDICT	E2-header-eq-entry	-n 100	SAME
+E2-header-eq-entry	--since/--until a 60 s window	s819	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+E2-header-eq-entry	--since/--until a 60 s window	p820	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+VERDICT	E2-header-eq-entry	--since/--until a 60 s window	SAME
+ORDER	E2-header-eq-entry	s819	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+ORDER	E2-header-eq-entry	p820	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+# E3-header-unrelated: 24 files
+E3-header-unrelated	-o export (forward)	s819	0	124800	4145936	b4dd44029cbba1d2a18221f7ad94aac332d1626519bb0bd99538f3ffcc77eb10
+E3-header-unrelated	-o export (forward)	p820	0	124800	4145936	b4dd44029cbba1d2a18221f7ad94aac332d1626519bb0bd99538f3ffcc77eb10
+VERDICT	E3-header-unrelated	-o export (forward)	SAME
+E3-header-unrelated	-o export -r	s819	0	124800	4145936	b103796c8bd25664ac71fbfafee265bdea008cf74ec2824f3679507fe4a2a30d
+E3-header-unrelated	-o export -r	p820	0	124800	4145936	b103796c8bd25664ac71fbfafee265bdea008cf74ec2824f3679507fe4a2a30d
+VERDICT	E3-header-unrelated	-o export -r	SAME
+E3-header-unrelated	-o cat	s819	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+E3-header-unrelated	-o cat	p820	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+VERDICT	E3-header-unrelated	-o cat	SAME
+E3-header-unrelated	-o cat -r	s819	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+E3-header-unrelated	-o cat -r	p820	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+VERDICT	E3-header-unrelated	-o cat -r	SAME
+E3-header-unrelated	--list-boots	s819	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+E3-header-unrelated	--list-boots	p820	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+VERDICT	E3-header-unrelated	--list-boots	SAME
+E3-header-unrelated	-b <newest boot id>	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E3-header-unrelated	-b <newest boot id>	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E3-header-unrelated	-b <newest boot id>	SAME
+E3-header-unrelated	-k	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E3-header-unrelated	-k	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E3-header-unrelated	-k	SAME
+E3-header-unrelated	-n 100	s819	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+E3-header-unrelated	-n 100	p820	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+VERDICT	E3-header-unrelated	-n 100	SAME
+E3-header-unrelated	--since/--until a 60 s window	s819	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+E3-header-unrelated	--since/--until a 60 s window	p820	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+VERDICT	E3-header-unrelated	--since/--until a 60 s window	SAME
+ORDER	E3-header-unrelated	s819	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+ORDER	E3-header-unrelated	p820	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+# E4-header-only: 24 files
+E4-header-only	-o export (forward)	s819	0	124800	4145915	d743091bb2b04464081df36e3ca2535ec799e7808c2f3754f8ba105d7b57036a
+E4-header-only	-o export (forward)	p820	0	124800	4145915	d743091bb2b04464081df36e3ca2535ec799e7808c2f3754f8ba105d7b57036a
+VERDICT	E4-header-only	-o export (forward)	SAME
+E4-header-only	-o export -r	s819	0	124800	4145915	20a7005ed87e091ab0e9ee8c8187b79b1079b50f6450bdb60ffe0c5168605f1c
+E4-header-only	-o export -r	p820	0	124800	4145915	20a7005ed87e091ab0e9ee8c8187b79b1079b50f6450bdb60ffe0c5168605f1c
+VERDICT	E4-header-only	-o export -r	SAME
+E4-header-only	-o cat	s819	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+E4-header-only	-o cat	p820	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+VERDICT	E4-header-only	-o cat	SAME
+E4-header-only	-o cat -r	s819	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+E4-header-only	-o cat -r	p820	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+VERDICT	E4-header-only	-o cat -r	SAME
+E4-header-only	--list-boots	s819	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+E4-header-only	--list-boots	p820	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+VERDICT	E4-header-only	--list-boots	SAME
+E4-header-only	-b <newest boot id>	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E4-header-only	-b <newest boot id>	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E4-header-only	-b <newest boot id>	SAME
+E4-header-only	-k	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E4-header-only	-k	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E4-header-only	-k	SAME
+E4-header-only	-n 100	s819	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+E4-header-only	-n 100	p820	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+VERDICT	E4-header-only	-n 100	SAME
+E4-header-only	--since/--until a 60 s window	s819	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+E4-header-only	--since/--until a 60 s window	p820	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+VERDICT	E4-header-only	--since/--until a 60 s window	SAME
+ORDER	E4-header-only	s819	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+ORDER	E4-header-only	p820	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+# E5-header-swapped: 24 files
+E5-header-swapped	-o export (forward)	s819	0	124800	4145936	a37c10f9506ffb95eac686a36ef1cd3ffa54eaa4fbd45d838df5a1e76e8b2b46
+E5-header-swapped	-o export (forward)	p820	0	124800	4145936	a37c10f9506ffb95eac686a36ef1cd3ffa54eaa4fbd45d838df5a1e76e8b2b46
+VERDICT	E5-header-swapped	-o export (forward)	SAME
+E5-header-swapped	-o export -r	s819	0	124800	4145936	e451bc58e923433254b59060cf4a70aad586e5115f477399be2ba000b2d235f5
+E5-header-swapped	-o export -r	p820	0	124800	4145936	e451bc58e923433254b59060cf4a70aad586e5115f477399be2ba000b2d235f5
+VERDICT	E5-header-swapped	-o export -r	SAME
+E5-header-swapped	-o cat	s819	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+E5-header-swapped	-o cat	p820	0	9600	124800	2a691ce82eba51d06046019877b0976ada0de59e81c8cfa17c74c364b75148d1
+VERDICT	E5-header-swapped	-o cat	SAME
+E5-header-swapped	-o cat -r	s819	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+E5-header-swapped	-o cat -r	p820	0	9600	124800	0f2301eba7c307609a10d45e637a0025b24d894111d01114a9192a55e59d88af
+VERDICT	E5-header-swapped	-o cat -r	SAME
+E5-header-swapped	--list-boots	s819	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+E5-header-swapped	--list-boots	p820	0	5	448	4fa1999964d2d06f01b5c493bcb7b75d8851527b29e88aa69b3c15ae5221d577
+VERDICT	E5-header-swapped	--list-boots	SAME
+E5-header-swapped	-b <newest boot id>	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E5-header-swapped	-b <newest boot id>	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E5-header-swapped	-b <newest boot id>	SAME
+E5-header-swapped	-k	s819	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+E5-header-swapped	-k	p820	0	1600	64000	dd1074569a5130b7f216ff53e7988074c3e92673442e064740e98837cf85705b
+VERDICT	E5-header-swapped	-k	SAME
+E5-header-swapped	-n 100	s819	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+E5-header-swapped	-n 100	p820	0	100	4000	119d9912ba4b3e9588d4fa5c0f0b327ca985a669918b8badc1c0e79a39178fc5
+VERDICT	E5-header-swapped	-n 100	SAME
+E5-header-swapped	--since/--until a 60 s window	s819	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+E5-header-swapped	--since/--until a 60 s window	p820	0	5761	241960	111fc1f88aa5ea030a2be67dcb47f08e62897b56bb600e2fccbcaddc975050ab
+VERDICT	E5-header-swapped	--since/--until a 60 s window	SAME
+ORDER	E5-header-swapped	s819	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
+ORDER	E5-header-swapped	p820	entries 9600 of 9600; each exactly once: True; equals true order: True; adjacent inversions 0; longest displacement 0
