@@ -1,0 +1,125 @@
+title: sd-journal: don't compare all files for every entry | state: open | merged: False | draft: False
+author: Ar-maan05 | created: 2026-11-01T23:31:27Z | updated: 2026-11-03T08:15:59Z | closed: None
+head: f26f6637ac580c02f9cb845b40b128378fdc97f2 perf/journal-next-runner-up | base: main 2361f7b6881f0f69a88f6b151e6386479ee70154
+commits: 1 additions: 141 deletions: 5 changed files: 3
+labels: ['journal', 'tests', 'please-review', 'claude-review']
+
+== PR body ==
+reading the journal looks at every journal file for every single entry, even tho only the file we just read from has anything new, and with rotated files that one nearly always wins again. so the more files you have, the slower every read gets.
+
+```
+journalctl -o cat            before   after
+real journal, 100 files      6.2s     3.5s
+1M entries, 100 rotated      0.7s     0.27s
+1M entries, 1000 rotated     6.3s     0.30s
+1M entries, 100 interleaved  0.87s    0.88s
+```
+
+the full scan now also remembers the runner-up. if the winner's next entry still comes before it, there's no need to look at the other files. anything else falls back to the full scan, which still runs at least once a second so new entries get picked up. the runner-up is only tracked once a file has won twice in a row, so interleaved journals don't pay for it.
+
+one tradeoff: when following the journal (`-f`), the shortcut is off while a file that isn't archived has run out of entries, because it could still get a new one that sorts earlier. plain `journalctl` opens the journal as immutable, so it keeps the shortcut either way.
+
+for the original version i compared old and new output byte for byte and ran seeded random walks, about 10M entries in total, all identicall. after the review fixes i re-ran the journal tests, compared output on the real journal (plain, `-p err`, `-r -u`) and a 1000 file journal, and re-timed those two (3.5s and 0.25s). the table is from before the fixes. added a test for a new entry showing up in a file that was already at the end, it fails without the fix.
+
+
+== commits ==
+f26f6637ac580c02f9cb845b40b128378fdc97f2 2026-11-02T14:13:41Z sd-journal: don't compare all files for every entry
+
+== files ==
+src/libsystemd/sd-journal/journal-internal.h +6 -0
+src/libsystemd/sd-journal/sd-journal.c +89 -5
+src/libsystemd/sd-journal/test-journal-interleaving.c +46 -0
+
+== reviews ==
+[2026-11-02T03:45:56Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:45:58Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:45:59Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:46:00Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:46:01Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:46:01Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T03:46:02Z] github-actions[bot] COMMENTED (commit aef81be394)
+[2026-11-02T06:38:49Z] github-actions[bot] COMMENTED (commit 5e95e068b1)
+[2026-11-02T06:38:50Z] github-actions[bot] COMMENTED (commit 5e95e068b1)
+
+== inline review comments ==
+[2026-11-02T03:45:57Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1158 (commit f26f6637ac, reply_to None)
+Claude: **must-fix**: Files at EOF in the last full scan aren't rechecked. An entry journald appends to one (e.g. system.journal while user-1000.journal floods) can sort before the winner's next entry; the next full scan then skips it as passed, so -f loses it. Don't cache scans where an online file hit EOF.
+--------------------
+[2026-11-02T03:45:58Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1187 (commit aef81be394, reply_to None)
+Claude: **must-fix**: scan_same_file survives seeks, so the first scan after a seek gets cached and the fast path skips the retry for files whose SEEK lookup found nothing, losing their entries.
+```suggestion
+                bool track_runner_up = j->scan_same_file && j->current_location.type == LOCATION_DISCRETE;
+```
+--------------------
+[2026-11-02T03:45:59Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1910 (commit aef81be394, reply_to None)
+Claude: **nit**: scan_runner_up is left dangling if the freed file was the runner-up. Safe only because readers check scan_winner first; clear both.
+```suggestion
+        j->scan_winner = j->scan_runner_up = NULL;
+```
+--------------------
+[2026-11-02T03:46:00Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1790 (commit aef81be394, reply_to None)
+Claude: **nit**: This splits the f->path comment from the ordered_hashmap_put() it explains and also runs when the put fails. Move it next to j->current_invalidate_counter++ below.
+--------------------
+[2026-11-02T03:46:01Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1013 (commit aef81be394, reply_to None)
+Claude: **nit**: The tree spells this `static inline _always_inline_` (see siphash24.c); same for compare_locations() below.
+--------------------
+[2026-11-02T03:46:01Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1235 (commit aef81be394, reply_to None)
+Claude: **nit**: The `: -1` fallback is dead since `!runner_up ||` already covers that case. Use the same `if (!runner_up) … else { compare }` shape as the `found` logic above.
+--------------------
+[2026-11-02T03:46:02Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1306 (commit f26f6637ac, reply_to None)
+Claude: **nit**: This 1s duplicates the `.interval = USEC_PER_SEC` of tail_timestamp_ratelimit in journal_file_open(), which the comment relies on. Share a constant (e.g. in journal-file.h) so they can't drift apart.
+--------------------
+[2026-11-02T06:38:49Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1226 (commit 5e95e068b1, reply_to None)
+Claude: **suggestion**: Non-follow readers (journalctl without -f) open with SD_JOURNAL_ASSUME_IMMUTABLE, and journal_file_read_tail_timestamp() already takes that to mean files don't grow. Skip the reset here too when FLAGS_SET(j->flags, SD_JOURNAL_ASSUME_IMMUTABLE) is set, so filtered reads keep the shortcut.
+--------------------
+[2026-11-02T06:38:50Z] github-actions[bot] on src/libsystemd/sd-journal/sd-journal.c:1225 (commit 5e95e068b1, reply_to None)
+Claude: **suggestion**: f->header->state is read after next_beyond_location() has already hit EOF. If journald appends to the file and archives it in between, the scan is still cached and the new entry can be skipped. Read the state into a local before calling next_beyond_location().
+--------------------
+
+== issue comments ==
+[2026-11-02T01:44:22Z] github-actions[bot]
+Reviewed f26f6637ac (architecture, correctness, lifetimes, security, style, tests). No new issues found, 1 still open.
+
+### Must fix
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1158`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742456) Files at EOF in the last full scan aren't rechecked. An entry journald appends to one (e.g. system.journal while user-1000.journal floods) can sort before the winner's next entry; the next full scan then skips it as passed, so -f loses it. Don't cache scans where an online file hit EOF.
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1187`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742518) scan_same_file survives seeks, so the first scan after a seek gets cached and the fast path skips the retry for files whose SEEK lookup found nothing, losing their entries.
+
+### Suggestions
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1226`](https://github.com/systemd/systemd/pull/44579#discussion_r4439541806) Non-follow readers (journalctl without -f) open with SD_JOURNAL_ASSUME_IMMUTABLE, and journal_file_read_tail_timestamp() already takes that to mean files don't grow. Skip the reset here too when FLAGS_SET(j->flags, SD_JOURNAL_ASSUME_IMMUTABLE) is set, so filtered reads keep the shortcut.
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1225`](https://github.com/systemd/systemd/pull/44579#discussion_r4439541887) f->header->state is read after next_beyond_location() has already hit EOF. If journald appends to the file and archives it in between, the scan is still cached and the new entry can be skipped. Read the state into a local before calling next_beyond_location().
+
+### Nits
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1910`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742586) scan_runner_up is left dangling if the freed file was the runner-up. Safe only because readers check scan_winner first; clear both.
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1790`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742631) This splits the f->path comment from the ordered_hashmap_put() it explains and also runs when the put fails. Move it next to j->current_invalidate_counter++ below.
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1013`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742675) The tree spells this `static inline _always_inline_` (see siphash24.c); same for compare_locations() below.
+- [x] [`src/libsystemd/sd-journal/sd-journal.c:1235`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742728) The `: -1` fallback is dead since `!runner_up ||` already covers that case. Use the same `if (!runner_up) … else { compare }` shape as the `found` logic above.
+- [ ] [`src/libsystemd/sd-journal/sd-journal.c:1306`](https://github.com/systemd/systemd/pull/44579#discussion_r4438742782) This 1s duplicates the `.interval = USEC_PER_SEC` of tail_timestamp_ratelimit in journal_file_open(), which the comment relies on. Share a constant (e.g. in journal-file.h) so they can't drift apart.
+
+<!-- claude-pr-review -->
+<!-- claude-review-state {"count":3,"head":"f26f6637ac580c02f9cb845b40b128378fdc97f2","dismissed":[]} -->
+
+[Workflow run](https://github.com/systemd/systemd/actions/runs/41459935696)
+--------------------
+[2026-11-02T03:48:05Z] yuwata
+Please address suggestions by Claude, at first.
+--------------------
+[2026-11-02T03:57:51Z] Ar-maan05
+thanks, both of the must-fix ones were real. a new entry could get lost if its file had already been read to the end, so the shortcut stays off in that case now, and theres a test for it. reads right after a seek dont use it anymore either. took the smaller cleanups too, except the shared constant since it seemed out of scope for this pr. rotated journals are still just as fast, definately worth keeping.
+
+--------------------
+[2026-11-02T14:13:46Z] Ar-maan05
+took both of these too. there was a small window where a new entry could still slip by, thats closed now, and normal journalctl reads (not following with -f) keep the speedup even when filtering. tests pass and the output is the same as before, so i think the bot feedback should all be handled now except the shared constant one.
+
+--------------------
+
+== events ==
+2026-11-02T00:27:40Z labeled bluca 
+2026-11-02T01:59:59Z labeled github-actions[bot] 
+2026-11-02T02:00:02Z labeled github-actions[bot] 
+2026-11-02T03:47:32Z unlabeled yuwata 
+2026-11-02T03:47:32Z labeled yuwata 
+2026-11-02T03:57:48Z head_ref_force_pushed Ar-maan05 5e95e068b12c7c5b5cdf95c84fc54f4131572761
+2026-11-02T05:09:25Z labeled github-actions[bot] 
+2026-11-02T05:09:27Z labeled github-actions[bot] 
+2026-11-02T05:09:28Z unlabeled github-actions[bot] 
+2026-11-02T14:13:44Z head_ref_force_pushed Ar-maan05 f26f6637ac580c02f9cb845b40b128378fdc97f2
