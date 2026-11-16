@@ -778,7 +778,7 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
    (61/300; never to the stable list directly — Greg KH's form letter). Same bot, kernel check
    set; **acceptance is silent** (patchwork-bot "applied"), 53 % of accepted series had a bot
    fail/warning, 33 % a tester fail, only `VerifyFixes` is never failed; 39 % were v2+. ⚠️
-   **Sashiko** (Linux Foundation LLM reviewer) reviews every list submission and the maintainer
+   **Sashiko** (the Linux Foundation's automated reviewer) reviews every list submission and the maintainer
    quotes it — so the external review before sending is the right rehearsal. Rebase against
    **both** `bluetooth/master` and `bluetooth-next/master` on send day. Tips fetched into
    `cache/linux` (`bluetooth-next`, `bluetooth`, `stable`, mainline remotes) — refresh with

@@ -11,7 +11,7 @@ found the code change correct. This one has two jobs of equal weight:
 
 1. **Review the mail itself, as the maintainers will receive it.** Treat
    `0001-…patch` as the only thing that exists. It is the only thing the
-   maintainers, the list's CI bot and the automated LLM reviewer (Sashiko) are
+   maintainers, the list's CI bot and the automated reviewer (Sashiko) are
    certain to read. Everything else in this package is background they will
    never see unless they ask.
 2. **Look beyond what we asked.** We know our own blind spots only as far as
@@ -47,7 +47,7 @@ Then check the mail line by line:
   on `bluetooth-next` (`base-commit: 671d566d3c3b`). It also applies to
   `bluetooth`. Should the base be `bluetooth`?
 - **Bots.** What would CheckPatch, GitLint, SubjectPrefix, VerifyFixes or
-  VerifySignedOff flag? What would an LLM reviewer object to?
+  VerifySignedOff flag? What would an automated reviewer object to?
 - **Recipients.** The plan is to send to linux-bluetooth, with Cc to Marcel
   Holtmann, Luiz Augusto von Dentz (author of `f53e1c9c726d`) and
   linux-kernel, as `get_maintainer.pl` lists them. The send uses

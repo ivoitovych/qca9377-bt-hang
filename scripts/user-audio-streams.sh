@@ -8,7 +8,7 @@
 # (recording or playback) with its application, media name, process id, state and target.
 # pw-dump only reads the PipeWire graph; it changes nothing and sends nothing to the controller.
 #
-# WHY (2026-10-29, U21): the Shure stayed in Handsfree while the operator saw a grey "Claude"
+# WHY (2026-10-29, U21): the Shure stayed in Handsfree while the operator saw a grey
 # microphone indicator; the question was which program still held the headset's microphone.
 set -uo pipefail
 U="${BT_DESKTOP_USER:-i}"

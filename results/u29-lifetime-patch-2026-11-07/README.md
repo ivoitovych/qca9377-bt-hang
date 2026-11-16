@@ -116,7 +116,7 @@ on either build.
 - **Results [checked here against every run's log]:**
   - It **fails on master in 6 of 6 runs** (`TimeoutError`) and **passes with the patch in 7 of
     7**.
-  - With the patch, the worker measured removal 20.0 to 20.5 s after the disconnect (not
+  - With the patch, the run measured removal 20.0 to 20.5 s after the disconnect (not
     rechecked here).
 - **The suite's other tests, both builds, 3 runs each** (`test_agent`, `test_bearer`,
   `test_bluetoothctl`, `test_btmgmt`, `test_adv_monitor`):

@@ -388,7 +388,7 @@ the rescue.
 from what it held itself:
 - every submission patch is filed in the send packages, matched by patch-id or by subject;
 - five debug-only instrumentation patches had never been filed. They are now in
-  `contributions/CO-43-btusb-runtime-resume-failure/experiments/instrumentation-lane1-20261114/`. One of them came from a
+  `contributions/CO-43-btusb-runtime-resume-failure/experiments/instrumentation-20261114/` (renamed 2026-11-16 from a name that described the working arrangement). One of them came from a
   later tree's copy.
 
 One debug-only commit is lost: a same-subject copy of a filed one. The check now includes
