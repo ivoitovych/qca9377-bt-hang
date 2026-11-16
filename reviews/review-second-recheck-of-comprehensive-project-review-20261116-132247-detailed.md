@@ -2054,14 +2054,8 @@ No parser regression found in bt-ui-atspi.py (registration_mode reports failed r
 ## Privacy inventory: files added to reviews/ and comms/ since a8d0eb45 (no judgement)
 `git diff --name-only a8d0eb45 HEAD -- comms reviews`: no comms file; reviews: three new files + README.md.
 1. reviews/2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md (54 lines). Pasted message, "kept as received, except that one branch name is replaced by '[a separate branch]'" (lines 3-7). Describes how work is done:
-   - :12 "I'm starting the reaction report in my branch and verifying the two new risks the workers raised"
-   - :14 "All twenty rechecks are in. Verifying two new problems the workers reported ..."
+   - lines 12, 14, 16, 18, 38, 44, 50 and 52-54 (not repeated here; the file was later removed from the tip of main).
    - :16 (publish scan) "The publish scan flags one quoted Message-ID fragment ... rewording it, then committing and pushing."
-   - :18 "pushed to my branch as commit `3f8e8f62` (authored and committed as you, no trailers) ... nothing was run except the read-only `scripts/send-table-check.py`"
-   - :38 "Working-arrangement wording: unchanged ... a pasted session transcript in `comms/2026-11-15T2010Z-…`. No scan pattern exists yet."
-   - :44 "the test switch for the identity gate ... ignores `pushurl`, and passes in another local clone"
-   - :50 "The environment had reset the global git identity to a tool identity again; the guard hook refused the commit, I restored your identity, and the commit went through clean."
-   - :52-54 "Files are in `reviews/` on [a separate branch]: ..." (file names with stamps).
 2. reviews/2026-11-16T1300Z-co46-noble-sru-review-reviewer-7-verbatim.md (112 lines). Pasted, "Received 2026-11-16 ~13:00 UTC, relayed by the operator ... Kept as received" (:3-6). Tool residue ":10 Worked for 3m 1s"; :14 "I reviewed the supplied package ... I did not independently rebuild the Ubuntu packages or reproduce the reported timings." No lines about sessions/hooks/identities found by grep (words session, worker, agent, hook, identity, branch only as technical content: :38 "Upstream PR #30209", :103 "packaging-branch MP").
 3. reviews/2026-11-16T0000Z-project-review-recheck-checks.md (81 lines). Not a pasted message (maintainer's own checks). Lines about arrangement: :4 "The recheck itself (`3f8e8f62`, two files) is on a separate branch, like the review (`162d3b9`)"; :11 "operator: waits for the operator's decision"; :64 "The working arrangement in the text, and a scan pattern (P-01 to P-03, S-11, N-01) | operator | Asked again"; :66 "Where the review files live | operator".
 4. reviews/README.md: new sections are an index and dated notes; no arrangement text.

@@ -122,13 +122,8 @@ in force.
 
 - **A-01 (High, privacy, new, checked): the reviewer's chat messages are stored on `main`
   verbatim.** `reviews/2026-11-16T0000Z-project-review-recheck-reaction-verbatim.md`:
-  - `:12`, `:14`: "… verifying the two new risks the workers raised", "All twenty rechecks are
-    in. Verifying two new problems the workers reported";
-  - `:18`: "pushed to my branch as commit `3f8e8f62` (authored and committed as you, no
-    trailers)";
-  - `:50`: "The environment had reset the global git identity to a tool identity again; the
-    guard hook refused the commit, I restored your identity, and the commit went through
-    clean."
+  - lines 12, 14, 18 and 50 of that file (not repeated here; the file has since been removed
+    from the tip of `main`, see the page of 2026-11-16 that follows this one).
   The branch name was replaced by "[a separate branch]"; these four lines were kept. Read
   together they say that the commits under the author's name on that branch were made by
   something that is not the author, and that a hook exists to keep it so. This is the single
