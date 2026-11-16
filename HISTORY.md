@@ -4733,6 +4733,43 @@ suite does not run on the laptop while a trial is open.
   afternoon and resumed from what was on disk. The experiments' results for the frozen test set,
   the open-reader vacuum test, the old format and imported journals were not yet committed.
 
+**The second round on `main`, and the passwords closed.**
+- **All on `main`:** the operator's answers A1 to A4 went in. The comms note was reduced to its facts.
+  The authored documents were reworded forward, and moved HISTORY blocks carry a dated edit note.
+  Seven findings-only review pages went to `reviews/`. CI was green on `286bb74`.
+- **The sandbox self-test:** it checked host-name resolution with `getent`, which the suite now fakes as a
+  declared machine tool, so the probe reached only the fake. It now asks the resolver itself.
+- **B1 closed.** Port 587 could not be reached from this machine. Port 465 refused all 15 old app
+  passwords. The operator's account page lists none. No further checks are needed.
+
+**The backport request's safety questions, answered.** Every item reviewer 7 asked for was run, with
+stock 8.19 from noble-proposed against the 8.20 test build. Results are on `research/journalctl-file-scaling`
+(`results/journalctl-noble-sru-verification-2026-11-16/`).
+- **No stock/patched difference anywhere:**
+  - frozen copies (36 comparisons);
+  - files written by systemd 249 without `tail_entry_offset` (21 comparisons; the fallback path ran
+    under gdb);
+  - imported and merged journals (45 comparisons);
+  - a booted noble guest whose journald wrote two numbered streams through three rotations, with a
+    follower: nothing lost, duplicated or reordered, and `--verify` clean.
+- **Files removed under an open reader:**
+  - The case that looked like a regression (the library reading forward, file truncated) failed 0 of 6
+    runs on stock and 3 of 6 patched. Over 56 runs each, stock failed 17 and patched 21 (p = 0.55).
+  - The failure is a SIGBUS in both builds. The library installs no handler; `journalctl` and journald do,
+    and never died that way.
+  - Both builds report "Bad message" when a file ahead of the reader is truncated. That is what upstream
+    101b8633c2 addresses, and it is in neither build.
+- **Host timings at 100 files, every run to completion:**
+  - `-b all`: 908 s against 84 s;
+  - apport's `-b -a --system`: 24 s against 3 s;
+  - sos's reverse read: 220 s against 20 s.
+
+  Stock makes 540 to 560 fstat-family calls per printed line; the patched build makes a constant number.
+- **Default file counts:** `SystemMaxFiles=100` holds a default directory to about 100 files in all. A
+  single-user desktop plausibly keeps 10 to 40. The laptop's 492 come from its own settings.
+- **The publish scan** stopped the first push: the intermediate commits named journal files with `@`. The
+  items were committed again from their final files.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
