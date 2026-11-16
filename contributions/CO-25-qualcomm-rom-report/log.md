@@ -276,6 +276,11 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   ssl`): 15 distinct app passwords in the transcript, every one `AUTH LOGIN→334 user→334
   pass→535` ("5.7.8 Username and Password not accepted"), this send's among them (fingerprint
   `sha256:b871ddd4`, first seen 2026-10-29T01:33:50Z): **revoked**.
+  *Re-checked 2026-11-16 (operator's decision B1: meet the project's own 587 rule).* Port 587 could
+  not be reached from this machine (all 15: `[Errno 101] Network is unreachable`, no login
+  attempted), as on 2026-10-18. On 465 every one of the 15 again answered a clean
+  `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username and Password not accepted"): a refusal of the
+  password itself, not the mid-AUTH close the 587 rule guards against. **All 15 revoked.**
 - Arrival: lore answered `t.mbox.gz` with its bot check ("Making sure you're not a bot!") and a
   page fetch with 403. **Confirmed later the same night** in the operator's Chrome through the
   browser extension (the session restarted with Chrome support): the page
