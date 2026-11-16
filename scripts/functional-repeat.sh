@@ -89,6 +89,7 @@ log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*" | tee -a "$OUT/run.log"; }
 
 sides=(base)
 (( ${#PATCHES[@]} )) && sides+=(patched)
+nores=0; skips=0
 for side in "${sides[@]}"; do
 	git -C "$SRC" reset --quiet --hard "$BASE_SHA"
 	if [[ "$side" == patched ]]; then
@@ -124,9 +125,18 @@ if n == 0:
     print("NO-RESULT no testcase in the junit file")
 PY
 		if grep -qE '^(FAIL|NO-RESULT)' "$OUT/$side.$n.result"; then fails=$((fails + 1)); fi
+		if grep -qE '^NO-RESULT' "$OUT/$side.$n.result"; then nores=$((nores + 1)); fi
+		skips=$((skips + $(grep -cE '^SKIP' "$OUT/$side.$n.result" || true)))
 		printf '%-8s run %2d: %s\n' "$side" "$n" "$(tr '\n' ' ' <"$OUT/$side.$n.result" | cut -c1-200)" | tee -a "$SUMMARY"
 	done
 	echo "$side: $fails failure(s) in $RUNS run(s)" | tee -a "$SUMMARY"
 	echo | tee -a "$SUMMARY"
 done
+# A run with no result (the tests did not start, or left no junit file) is not 0 failures,
+# and skipped cases are not passes: both are said, and a run with no result is exit 2.
+echo "skipped cases over all runs: $skips" | tee -a "$SUMMARY"
+if (( nores )); then
+	echo "NO RESULT in $nores run(s): the failure counts above are NOT a measurement" | tee -a "$SUMMARY" >&2
+	exit 2
+fi
 exit 0

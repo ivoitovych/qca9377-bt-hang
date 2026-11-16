@@ -52,7 +52,8 @@ make -C "$KBUILD" M="$OUT/drivers/bluetooth" KCFLAGS="-I$SRC/include" modules 2>
 rc=${PIPESTATUS[0]}
 echo "── result: make rc=$rc"
 KO="$OUT/drivers/bluetooth/btusb.ko"
-[[ -f "$KO" ]] || exit "${rc:-1}"
+# no module is a failure whatever make said: `rc` can be 0 with nothing built (no target)
+[[ -f "$KO" ]] || { echo "build-btusb-module: no $KO was produced (make rc=$rc)" >&2; exit $(( ${rc:-1} == 0 ? 1 : ${rc:-1} )); }
 modinfo -F version "$KO" | sed 's/^/   version:    /'
 modinfo -F srcversion "$KO" | sed 's/^/   srcversion: /'
 vm=$(modinfo -F vermagic "$KO")

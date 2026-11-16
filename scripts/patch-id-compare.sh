@@ -19,4 +19,6 @@ pid() {
 a=$(pid "$A"); b=$(pid "$B")
 echo "$a  $A"
 echo "$b  $B"
-if [[ -n "$a" && "$a" == "$b" ]]; then echo "SAME"; else echo "DIFFERENT"; fi
+# exit status: 0 SAME, 1 DIFFERENT, 2 when a patch id could not be made (an empty id is no answer)
+if [[ -z "$a" || -z "$b" ]]; then echo "NOT COMPARED: no patch id for $([[ -z "$a" ]] && echo "$A")$([[ -z "$b" ]] && echo " $B")" >&2; exit 2; fi
+if [[ "$a" == "$b" ]]; then echo "SAME"; else echo "DIFFERENT"; exit 1; fi

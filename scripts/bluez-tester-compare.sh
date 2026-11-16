@@ -51,7 +51,7 @@ while (( $# )); do
 	--out) OUT="$2"; shift ;;
 	--label) LABEL="$2"; shift ;;
 	--keep-work) KEEP_WORK=1 ;;
-	-h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+	-h|--help) sed -n '2,/^set -/{/^set -/!p}' "$0"; exit 0 ;;
 	-*) echo "bluez-tester-compare: unknown option $1" >&2; exit 2 ;;
 	*) PATCHES+=("$(readlink -f "$1")") ;;
 	esac
@@ -108,7 +108,7 @@ for line in m.group(1).splitlines():
 PY
 }
 
-rc=0
+rc=0; regress=0
 for side in base patched; do
 	build_side "$side" || { rc=2; continue; }
 	for t in ${TESTERS//,/ }; do
@@ -163,7 +163,7 @@ print(f"   REGRESSIONS: {regress}")
 sys.exit(1 if regress else 0)
 PY
 	cmp_rc=${PIPESTATUS[0]}
-	if (( cmp_rc == 2 )); then rc=2; elif (( cmp_rc != 0 && rc == 0 )); then rc=1; fi
+	if (( cmp_rc == 2 )); then rc=2; elif (( cmp_rc != 0 )); then regress=1; (( rc == 0 )) && rc=1; fi
 	for side in base patched; do
 		for n in $(seq 1 "$RUNS"); do
 			f="$OUT/$t.$side.$n.log"
@@ -176,7 +176,8 @@ PY
 	done
 done
 echo | tee -a "$SUMMARY"
-(( rc == 1 )) && echo "RESULT: regressions found" | tee -a "$SUMMARY"
+# a regression found in one tester is printed even when another side was incomplete (exit 2)
+(( regress )) && echo "RESULT: regressions found" | tee -a "$SUMMARY"
 (( rc == 2 )) && echo "RESULT: incomplete — a build failed or a tester gave no verdicts; nothing there was compared" | tee -a "$SUMMARY"
 (( rc == 0 )) && echo "RESULT: no case passes on the base and fails with the patches" | tee -a "$SUMMARY"
 exit $rc

@@ -6,7 +6,9 @@
 # GOOD and NOTE findings have no check (nothing to fix). Read-only.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
-c() { grep -cE "$2" "$1" 2>/dev/null || echo 0; }          # count matches in file
+# count matches in file: `grep -c` prints 0 AND exits 1 on no match, so `|| echo 0` printed a
+# second 0; a file that is not there is said, not counted as zero
+c() { local k; [[ -r "$1" ]] || { echo "(no file $1)"; return; }; k=$(grep -cE "$2" "$1" 2>/dev/null || true); echo "${k:-0}"; }
 n() { grep -rlE "$2" $1 2>/dev/null | wc -l; }              # files matching in dir
 say() { printf '%-7s %-58s %s\n' "$1" "$2" "$3"; }
 

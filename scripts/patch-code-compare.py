@@ -58,7 +58,8 @@ def patch_id(text):
 
 def main(argv):
     if len(argv) != 3:
-        sys.exit(__doc__)
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
     a, b = mails(argv[1]), mails(argv[2])
     if not a or a.keys() != b.keys():
         print(f"the sets do not pair up: {sorted(a)} vs {sorted(b)}")

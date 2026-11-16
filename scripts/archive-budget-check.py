@@ -52,14 +52,19 @@ def main(argv):
         print(f"archive-budget-check: no archive directory at {root}")
         return 0
     full = False
+    stores = 0
     for name in sorted(os.listdir(root)):
         path = os.path.join(root, name)
         if not os.path.isfile(os.path.join(path, "MANIFEST.tsv")):
             continue
+        stores += 1
         state, line = store_line(path)
         full = full or state == "FULL"
         if not warn_only or state != "OK":
             print(line)
+    if stores == 0:
+        # an archive directory with no store in it is not "nothing is full": say so
+        print(f"archive-budget-check: {root} holds no archive store (no */MANIFEST.tsv) — nothing was checked")
     return 1 if full else 0
 
 

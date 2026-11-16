@@ -24,11 +24,15 @@ set -u
 ctl=/sys/kernel/debug/dynamic_debug/control
 dir=/var/log/bt-health/usbmon
 if [ "${1:-}" = "--off" ]; then
-	echo 'file drivers/usb/core/hub.c -p' >"$ctl"
-	echo 'file drivers/usb/core/driver.c -p' >"$ctl"
+	# each write is checked: "USB core debug off" after a refused write would be a claim
+	# about a state nobody looked at
+	off_ok=1
+	echo 'file drivers/usb/core/hub.c -p' >"$ctl" 2>/dev/null || off_ok=0
+	echo 'file drivers/usb/core/driver.c -p' >"$ctl" 2>/dev/null || off_ok=0
 	pkill -f "bt17-usbmon-capture" && echo "usbmon capture stopped"
-	echo "USB core debug off"
-	exit 0
+	if [ "$off_ok" = 1 ]; then echo "USB core debug off"; exit 0; fi
+	echo "USB core debug NOT switched off: a write to $ctl failed (root and debugfs needed)" >&2
+	exit 2
 fi
 [ -w "$ctl" ] || { echo "needs root and debugfs ($ctl)"; exit 2; }
 echo 'file drivers/usb/core/hub.c +p' >"$ctl"

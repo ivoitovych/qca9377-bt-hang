@@ -17,8 +17,24 @@ if [[ "$B" == 0 || "$B" == "$CUR" ]]; then
 	echo "== btusb loaded now: version $(cat /sys/module/btusb/version 2>/dev/null) srcversion $(cat /sys/module/btusb/srcversion 2>/dev/null)"
 fi
 echo "== firmware setup (kernel log)"
-journalctl -k -b "$B" --no-pager -o short-iso --grep 'rampatch|NVM file|QCA:|E1:' || echo "   (none)"
+# journalctl --grep exits 1 when nothing matched and says nothing: that is "(none)". Any other
+# failure is NOT READ, and the script exits 2: "(none)" must not cover a read that failed.
+unread=0
+jsec() {   # journalctl arguments
+	local errf out rc
+	errf=$(mktemp) || { echo "   NOT READ: mktemp failed"; unread=1; return; }
+	out=$(journalctl "$@" 2>"$errf"); rc=$?
+	if (( rc == 0 )) || { (( rc == 1 )) && [[ ! -s "$errf" ]]; }; then
+		if [[ -n "$out" ]]; then printf '%s\n' "$out"; else echo "   (none)"; fi
+	else
+		echo "   NOT READ: journalctl exited $rc: $(head -c 150 "$errf" | tr '\n' ' ')"; unread=1
+	fi
+	rm -f "$errf"
+}
+jsec -k -b "$B" --no-pager -o short-iso --grep 'rampatch|NVM file|QCA:|E1:'
 echo "== error-level hci0 lines (command timeouts, 0x2005, corrupted SCO, unknown handles)"
-journalctl -k -b "$B" -p err --no-pager -o short-iso --grep 'hci0' || echo "   (none)"
+jsec -k -b "$B" -p err --no-pager -o short-iso --grep 'hci0'
 echo "== SCO ledger"
-"$HERE/sco-ledger-boots.sh" "$B"
+"$HERE/sco-ledger-boots.sh" "$B"; led=$?
+(( unread )) && { echo "ERROR: a journal section above could not be read" >&2; exit 2; }
+exit "$led"

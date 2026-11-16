@@ -269,6 +269,10 @@ def main(args):
     only = [a for a in args if not a.startswith("--")]  # optional: rows whose contribution contains this
     inv = next((a.split("=", 1)[1] for a in args if a.startswith("--inventory=")), INVENTORY)
     rows = [r for r in read_inventory(inv) if not only or any(o in r["contribution"] for o in only)]
+    if not rows:
+        # an empty inventory or a filter that matched nothing checked nothing, which is not a pass
+        print("sent-mail-check: no inventory row selected — nothing was checked", file=sys.stderr)
+        return 2
     bad = 0
     counts = {}
     for row in rows:
@@ -286,6 +290,13 @@ def main(args):
         else:
             try:
                 verdict, report, pa, pb = compare(row)
+            except FileNotFoundError as e:
+                # a local file that is not there is a finding about the repository, not an
+                # unreachable network
+                print(f"{tag}  MISSING LOCAL FILE: {e}")
+                bad += 1
+                counts["MISSING LOCAL FILE"] = counts.get("MISSING LOCAL FILE", 0) + 1
+                continue
             except OSError as e:
                 print(f"{tag}  unreachable: {e}", file=sys.stderr)
                 return 2
