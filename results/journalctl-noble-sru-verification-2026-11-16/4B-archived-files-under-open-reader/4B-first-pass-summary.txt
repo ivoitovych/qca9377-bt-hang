@@ -1,0 +1,66 @@
+reader     mode      victim   | stock exit      miss  dup  entries  fromRem unord | patched exit    miss  dup  entries  fromRem unord | diff?
+api-bwd    dealloc   current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-bwd    dealloc   future   | 0x5,2x1         7800    0     8253      553     0 | 0x6                0    0     9600      600     0 |  <-- DIFFERENT
+api-bwd    dealloc   future2  | 0x5,2x1         4800    0     8224      624     0 | 0x6                0    0     9400     1000     0 |  <-- DIFFERENT
+api-bwd    dealloc   past     | 0x6                0    0     9600      500     0 | 0x6                0    0     9600      500     0 |
+api-bwd    none      current  | 0x3                0    0     9600        0     0 | 0x3                0    0     9600        0     0 |
+api-bwd    truncate  current  | -7x1,0x5        8400    0     8153      553     0 | 0x6                0    0     9600      600     0 |  <-- DIFFERENT
+api-bwd    truncate  future   | -7x2,0x4        4314    0     8881      600     0 | -7x2,0x4        3550    0     9008      600     0 |  <-- DIFFERENT
+api-bwd    truncate  future2  | -7x4,0x2        8785    0     7870      934     0 | -7x2,0x4        4574    0     8771     1133     0 |  <-- DIFFERENT
+api-bwd    truncate  past     | -7x1,0x5         611    0     9498      600     0 | -7x1,0x5         495    0     9518      600     0 |  <-- DIFFERENT
+api-bwd    unlink    current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-bwd    unlink    future   | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-bwd    unlink    future2  | 0x6                0    0     9267      867     0 | 0x6                0    0     9483     1083     0 |  <-- DIFFERENT
+api-bwd    unlink    past     | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-fwd    dealloc   current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-fwd    dealloc   future   | 0x6                0    0     9417      417     0 | 0x6                0    0     9600      600     0 |  <-- DIFFERENT
+api-fwd    dealloc   future2  | 0x6                0    0     9083      683     0 | 0x6                0    0     9600     1200     0 |  <-- DIFFERENT
+api-fwd    dealloc   past     | 0x6                0    0     9600      500     0 | 0x6                0    0     9600      500     0 |
+api-fwd    none      current  | 0x3                0    0     9600        0     0 | 0x3                0    0     9600        0     0 |
+api-fwd    truncate  current  | 0x6                0    0     9500      500     0 | -7x3,0x3       10973    0     7771      600     0 |  <-- DIFFERENT
+api-fwd    truncate  future   | -7x5,0x1       30159    0     4321      347     0 | -7x1,0x5        2543    0     9126      550     0 |  <-- DIFFERENT
+api-fwd    truncate  future2  | -7x3,0x3       14433    0     6760      765     0 | -7x3,0x3        3533    0     8761      950     0 |  <-- DIFFERENT
+api-fwd    truncate  past     | -7x2,0x4       12373    0     7538      600     0 | -7x2,0x4        5086    0     8752      600     0 |  <-- DIFFERENT
+api-fwd    unlink    current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+api-fwd    unlink    future   | 0x6                0    0     9333      333     0 | 0x6                0    0     9567      567     0 |  <-- DIFFERENT
+api-fwd    unlink    future2  | 0x6                0    0     9200      800     0 | 0x6                0    0     9600     1200     0 |  <-- DIFFERENT
+api-fwd    unlink    past     | 0x6                0    0     9600      500     0 | 0x6                0    0     9600      500     0 |
+jc-follow  dealloc   current  | followedx6     43230    0     2362      167     0 | followedx6     43230    0     2362      167     0 |
+jc-follow  dealloc   future   | followedx6     43238    0     2311       18     0 | followedx6     43238    0     2311       18     0 |
+jc-follow  dealloc   future2  | followedx6     43248    0     2092        0     0 | followedx6     43239    0     2094        0     0 |  <-- DIFFERENT
+jc-follow  dealloc   past     | followedx6     42636    0     2394      400     0 | followedx6     42645    0     2392      400     0 |  <-- DIFFERENT
+jc-follow  none      current  | followedx3     21618    0     2394        0     0 | followedx3     21627    0     2391        0     0 |  <-- DIFFERENT
+jc-follow  truncate  current  | followedx6     43230    0     2394       99     0 | followedx6     43230    0     2394       99     0 |
+jc-follow  truncate  future   | followedx6     43236    0     2394        0     0 | followedx6     43254    0     2391        0     0 |  <-- DIFFERENT
+jc-follow  truncate  future2  | 1x1,followedx5 43232    0     2095        0     0 | 1x1,followedx5 43241    0     2093        0     0 |  <-- DIFFERENT
+jc-follow  truncate  past     | followedx6     43236    0     2394        0     0 | followedx6     43245    0     2392        0     0 |  <-- DIFFERENT
+jc-follow  unlink    current  | followedx6     43236    0     2394      100     0 | followedx6     43245    0     2392      100     0 |  <-- DIFFERENT
+jc-follow  unlink    future   | followedx6     43225    0     2305      109     0 | followedx6     43225    0     2305      109     0 |
+jc-follow  unlink    future2  | followedx6     43236    0     2394        0     0 | followedx6     43254    0     2391        0     0 |  <-- DIFFERENT
+jc-follow  unlink    past     | followedx6     43236    0     2394      300     0 | followedx6     43236    0     2394      300     0 |
+jc-fwd     dealloc   current  | 0x6                0    0     9405      405     0 | 0x6                0    0     9405      405     0 |
+jc-fwd     dealloc   future   | 0x1,1x5        31200    0     3823       23     0 | 0x1,1x5        31200    0     3825       25     0 |  <-- DIFFERENT
+jc-fwd     dealloc   future2  | 1x6             5400    0     7500        0     0 | 1x6             5400    0     7500        0     0 |
+jc-fwd     dealloc   past     | 0x6                0    0     9600      500     0 | 0x6                0    0     9600      500     0 |
+jc-fwd     none      current  | 0x3                0    0     9600        0     0 | 0x3                0    0     9600        0     0 |
+jc-fwd     truncate  current  | 0x6                0    0     9570      570     0 | 0x6                0    0     9570      570     0 |
+jc-fwd     truncate  future   | 0x2,1x4        24600    0     4919       19     0 | 0x2,1x4        24600    0     4922       22     0 |  <-- DIFFERENT
+jc-fwd     truncate  future2  | 1x6            18600    0     5300        0     0 | 1x6            18600    0     5300        0     0 |
+jc-fwd     truncate  past     | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-fwd     unlink    current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-fwd     unlink    future   | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-fwd     unlink    future2  | 0x6                0    0     9600     1200     0 | 0x6                0    0     9600     1200     0 |
+jc-fwd     unlink    past     | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-rev     dealloc   current  | 0x4,1x2        10800    0     7667      467     0 | 0x6                0    0     9472      472     0 |  <-- DIFFERENT
+jc-rev     dealloc   future   | 0x1,1x5        14400    0     6620       20     0 | 0x1,1x5        14400    0     6620       20     0 |
+jc-rev     dealloc   future2  | 1x6            25800    0     4100        0     0 | 1x6            25800    0     4100        0     0 |
+jc-rev     dealloc   past     | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-rev     none      current  | 0x3                0    0     9600        0     0 | 0x3                0    0     9600        0     0 |
+jc-rev     truncate  current  | 0x6                0    0     9311      311     0 | 0x6                0    0     9313      313     0 |  <-- DIFFERENT
+jc-rev     truncate  future   | 1x6            24000    0     5015       15     0 | 0x2,1x4        16200    0     6317       17     0 |  <-- DIFFERENT
+jc-rev     truncate  future2  | 1x6            20400    0     5000        0     0 | 1x6            20400    0     5000        0     0 |
+jc-rev     truncate  past     | 0x6                0    0     9600      500     0 | 0x6                0    0     9600      500     0 |
+jc-rev     unlink    current  | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-rev     unlink    future   | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
+jc-rev     unlink    future2  | 0x6                0    0     9600     1100     0 | 0x6                0    0     9600     1100     0 |
+jc-rev     unlink    past     | 0x6                0    0     9600      600     0 | 0x6                0    0     9600      600     0 |
