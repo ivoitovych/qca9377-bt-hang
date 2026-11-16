@@ -78,3 +78,18 @@ gh                # GitHub's API, with the host's credentials. No test reaches i
 
 # /proc/uptime is read by uptime(1) itself, which no BT_PROC seam can redirect
 uptime
+
+# the desktop session and the package database, which the shipped tools ask and the tests did not
+# declare: each answers from THIS machine unless a test stubs it
+gsettings
+pw-metadata
+dbus-monitor
+dpkg
+dpkg-query
+getent            # the user database (passwd, group): another machine answers differently
+ps                # the process table
+pgrep
+# df is NOT listed: bt-journal-files, bt-usbmon and bt-trace ask it about a directory the test
+# made, in four harnesses (one of them a script a test runs), and the floors they compare it with
+# are set through the BT_*_FREE_MIN_GB seams; its answer about the scratch directory is not a
+# verdict about the machine, and the stub it would need is a free-space fake in each of them.
