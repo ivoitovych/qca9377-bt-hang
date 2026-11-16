@@ -1,0 +1,41 @@
+# installed: 255.4-1ubuntu8.18, journalctl systemd 255 (255.4-1ubuntu8.18)
+# patched: systemd 255 (255.4-1ubuntu8.20)
+# user: uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),20(dialout),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),999(systemd-journal)
+# journal files visible: 50 (0 user)
+# /run/systemd/system exists: no
+# systemctl status in this container: System has not been booted with systemd as init system (PID 1). Can't operate. Failed to connect to bus: Host is down 
+# the boot of the newest journal files is this container's boot: yes
+sys-50	patched	list-boots	1	0	0.029	0.005	0.025	6	0
+sys-50	patched	list-boots	2	0	0.029	0.005	0.025	6	0
+sys-50	patched	list-boots	3	0	0.030	0.002	0.029	6	0
+sys-50	patched	-u cron.service -n 10	1	0	0.060	0.004	0.029	10	0
+sys-50	patched	-u cron.service -n 10	2	0	0.022	0.005	0.018	10	0
+sys-50	patched	-u cron.service -n 10	3	0	0.021	0.001	0.021	10	0
+sys-50	patched	-b (newest boot)	1	0	4.106	4.053	0.171	480000	0
+sys-50	patched	-b -1	1	0	4.615	4.551	0.206	480000	0
+sys-50	patched	-k -b all	1	0	1.873	1.149	0.345	95837	0
+sys-50	patched	-b all (full read)	1	0	33.773	33.325	0.934	2400004	0
+sys-50	patched	apport JournalErrors: --priority=warning -b --lines=1000	1	0	0.056	0.016	0.026	1000	0
+sys-50	patched	apport recent_syslog: --quiet -b -a --system	1	0	3.034	3.003	0.139	480000	0
+sys-50	patched	sos journalctl --disk-usage	1	0	0.010	0.004	0.006	1	0
+sys-50	patched	sos journalctl --list-boots	1	0	0.029	0.010	0.019	6	0
+sys-50	patched	sos full: --no-pager --reverse (first 100 MB)	1	141	10.399	10.374	0.349	104857600	0
+sys-50	patched	sos this boot: --no-pager --boot --reverse (first 100 MB)	1	0	4.099	4.093	0.231	81675309	0
+sys-50	patched	sos last boot: --no-pager --boot -1 --reverse (first 100 MB)	1	0	3.905	3.916	0.204	81666085	0
+sys-50	stock	list-boots	1	0	0.029	0.007	0.023	6	0
+sys-50	stock	list-boots	2	0	0.029	0.009	0.020	6	0
+sys-50	stock	list-boots	3	0	0.028	0.004	0.025	6	0
+sys-50	stock	-u cron.service -n 10	1	0	0.023	0.007	0.017	10	0
+sys-50	stock	-u cron.service -n 10	2	0	0.022	0.006	0.017	10	0
+sys-50	stock	-u cron.service -n 10	3	0	0.023	0.006	0.019	10	0
+sys-50	stock	-b (newest boot)	1	0	45.608	10.497	35.276	480000	0
+sys-50	stock	-b -1	1	0	47.727	10.961	36.942	480000	0
+sys-50	stock	-k -b all	1	0	25.124	5.630	19.535	95837	0
+sys-50	stock	-b all (full read)	1	124	600.012	136.798	463.981	2385998	1
+sys-50	stock	apport JournalErrors: --priority=warning -b --lines=1000	1	0	0.231	0.049	0.161	1000	0
+sys-50	stock	apport recent_syslog: --quiet -b -a --system	1	0	47.037	10.285	36.916	480000	0
+sys-50	stock	sos journalctl --disk-usage	1	0	0.008	0.001	0.008	1	0
+sys-50	stock	sos journalctl --list-boots	1	0	0.028	0.004	0.024	6	0
+sys-50	stock	sos full: --no-pager --reverse (first 100 MB)	1	141	277.564	64.527	213.587	104857600	0
+sys-50	stock	sos this boot: --no-pager --boot --reverse (first 100 MB)	1	0	63.912	15.899	48.517	81675309	0
+sys-50	stock	sos last boot: --no-pager --boot -1 --reverse (first 100 MB)	1	0	65.763	16.225	50.012	81666085	0

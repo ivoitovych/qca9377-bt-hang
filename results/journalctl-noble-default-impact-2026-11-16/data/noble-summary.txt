@@ -1,0 +1,96 @@
+
+== mixed-25
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.01       0.01       0.01       0.01            3  -
+-u cron.service -n 10                                                          0.01       0.01       0.01       0.01           10  -
+-b (newest boot)                                                              59.91      60.00       6.12       6.30       630000  9.8x
+-b -1                                                                         26.86      27.04       3.91       4.03       408000  6.9x
+-k -b all                                                                      2.90       2.91       0.29       0.30        30553  9.9x
+-b all (full read)                                                           109.71     110.03      11.52      11.82      1038001  9.5x
+apport JournalErrors: --priority=warning -b --lines=1000                       0.13       0.13       0.03       0.03         1000  4.7x
+apport recent_syslog: --quiet -b -a --system                                  17.89      18.01       3.09       3.20       480000  5.8x
+sos journalctl --disk-usage                                                    0.01       0.01       0.01       0.01            1  -
+sos journalctl --list-boots                                                    0.01       0.01       0.01       0.01            3  -
+sos full: --no-pager --reverse (first 100 MB)                                 81.32      81.78       7.13       7.47    104857600  11.4x
+sos this boot: --no-pager --boot --reverse (first 100 MB)                     33.73      34.12       5.62       5.94    104857600  6.0x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                  22.27      22.51       3.58       3.79     69854630  6.2x
+
+== mixed-50
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.02       0.02       0.02       0.02            5  1.0x
+-u cron.service -n 10                                                          0.02       0.02       0.02       0.02           10  -
+-b (newest boot)                                                              64.70      64.92       4.89       5.04       630000  13.2x
+-b -1                                                                         64.29      64.52       5.06       5.20       630000  12.7x
+-k -b all                                                                     11.91      11.93       0.62       0.63        62993  19.2x
+-b all (full read)                                                           528.41     528.91      25.10      25.61      2094003  21.1x
+apport JournalErrors: --priority=warning -b --lines=1000                       0.23       0.23       0.03       0.03         1000  7.1x
+apport recent_syslog: --quiet -b -a --system                                  34.68      34.84       2.83       2.93       480000  12.2x
+sos journalctl --disk-usage                                                    0.01       0.01       0.01       0.01            1  -
+sos journalctl --list-boots                                                    0.02       0.03       0.02       0.02            5  1.1x
+sos full: --no-pager --reverse (first 100 MB)                                238.17     238.72       9.76      10.07    104857600  24.4x
+sos this boot: --no-pager --boot --reverse (first 100 MB)                     61.73      62.20       4.93       5.19    104857600  12.5x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                  64.16      64.60       4.98       5.25    104857600  12.9x
+
+== sys-25
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.01       0.01       0.01       0.01            4  -
+-u cron.service -n 10                                                          0.01       0.02       0.01       0.01           10  -
+-b (newest boot)                                                              27.94      28.10       3.46       3.56       480000  8.1x
+-b -1                                                                         28.01      28.18       3.53       3.64       480000  7.9x
+-k -b all                                                                      5.70       5.71       0.49       0.50        47697  11.7x
+-b all (full read)                                                           152.96     153.40      12.90      13.23      1200002  11.9x
+apport JournalErrors: --priority=warning -b --lines=1000                       0.12       0.12       0.04       0.03         1000  3.3x
+apport recent_syslog: --quiet -b -a --system                                  28.81      28.99       3.34       3.46       480000  8.6x
+sos journalctl --disk-usage                                                    0.01       0.01       0.01       0.01            1  -
+sos journalctl --list-boots                                                    0.01       0.01       0.02       0.02            4  -
+sos full: --no-pager --reverse (first 100 MB)                                 98.02      98.50       7.05       7.36    104857600  13.9x
+sos this boot: --no-pager --boot --reverse (first 100 MB)                     29.56      29.95       4.01       4.23     81675309  7.4x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                  27.29      27.61       4.01       4.24     81666085  6.8x
+
+== sys-50
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.03       0.03       0.03       0.03            6  1.0x
+-u cron.service -n 10                                                          0.02       0.02       0.02       0.02           10  1.0x
+-b (newest boot)                                                              45.61      45.77       4.11       4.22       480000  11.1x
+-b -1                                                                         47.73      47.90       4.62       4.76       480000  10.3x
+-k -b all                                                                     25.12      25.16       1.87       1.49        95837  13.4x
+-b all (full read)                                                           600.01     600.78      33.77      34.26      2400004  17.8x STOCK TIMED OUT
+apport JournalErrors: --priority=warning -b --lines=1000                       0.23       0.21       0.06       0.04         1000  4.1x
+apport recent_syslog: --quiet -b -a --system                                  47.04      47.20       3.03       3.14       480000  15.5x
+sos journalctl --disk-usage                                                    0.01       0.01       0.01       0.01            1  -
+sos journalctl --list-boots                                                    0.03       0.03       0.03       0.03            6  1.0x
+sos full: --no-pager --reverse (first 100 MB)                                277.56     278.11      10.40      10.72    104857600  26.7x
+sos this boot: --no-pager --boot --reverse (first 100 MB)                     63.91      64.42       4.10       4.32     81675309  15.6x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                  65.76      66.24       3.90       4.12     81666085  16.8x
+
+== mixed-150
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.13       0.13       0.22       0.21           11  0.6x
+-u cron.service -n 10                                                          0.05       0.05       0.08       0.08           10  0.6x
+-b (newest boot)                                                             180.30     180.32      16.69      16.89       630000  10.8x
+-b -1                                                                        175.68     175.94      10.98      11.19       630000  16.0x
+-k -b all                                                                    122.01     121.73       7.14       5.87       191997  17.1x
+-b all (full read)                                                           600.01     600.05     204.68     206.24      6300009  2.9x STOCK TIMED OUT
+apport JournalErrors: --priority=warning -b --lines=1000                       0.58       0.57       0.30       0.13         1000  1.9x
+apport recent_syslog: --quiet -b -a --system                                  86.56      86.73       4.92       5.07       480000  17.6x
+sos journalctl --disk-usage                                                    0.01       0.01       0.02       0.02            1  -
+sos journalctl --list-boots                                                    0.11       0.11       0.19       0.16           11  0.6x
+sos full: --no-pager --reverse (first 100 MB)                                300.01     300.17      34.34      34.86    104857600  8.7x STOCK TIMED OUT
+sos this boot: --no-pager --boot --reverse (first 100 MB)                    167.21     167.64       7.57       7.81    104857600  22.1x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                 170.89     171.35       7.54       7.77    104857600  22.7x
+
+== sys-100
+query                                                                    stock wall  stock cpu patch wall  patch cpu  lines/bytes  speed-up (wall)
+list-boots                                                                     0.11       0.11       0.07       0.07           11  1.4x
+-u cron.service -n 10                                                          0.04       0.04       0.03       0.03           10  1.3x
+-b (newest boot)                                                              87.06      87.22       3.65       3.75       480000  23.9x
+-b -1                                                                         88.90      89.06       3.81       3.92       480000  23.3x
+-k -b all                                                                    101.14     100.05       3.68       3.47       191997  27.5x
+-b all (full read)                                                           600.01     596.15      84.65      85.70      4800009  7.1x STOCK TIMED OUT
+apport JournalErrors: --priority=warning -b --lines=1000                       0.45       0.40       0.05       0.05         1000  8.8x
+apport recent_syslog: --quiet -b -a --system                                  84.13      84.30       2.93       3.02       480000  28.7x
+sos journalctl --disk-usage                                                    0.01       0.01       0.01       0.01            1  -
+sos journalctl --list-boots                                                    0.08       0.08       0.07       0.07           11  1.2x
+sos full: --no-pager --reverse (first 100 MB)                                300.01     300.25      17.99      18.33    104857600  16.7x STOCK TIMED OUT
+sos this boot: --no-pager --boot --reverse (first 100 MB)                     84.76      85.07       4.08       4.30     81675309  20.8x
+sos last boot: --no-pager --boot -1 --reverse (first 100 MB)                  85.55      85.86       4.13       4.36     81666085  20.7x

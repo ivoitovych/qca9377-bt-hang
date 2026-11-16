@@ -1,0 +1,100 @@
+apport_2.28.3-0ubuntu0.1.debian.tar.xz
+apport_2.28.3-0ubuntu0.1.dsc
+apport_2.28.3.orig.tar.xz
+apport_2.28.3.orig.tar.xz.asc
+src
+apport:
+  Installed: (none)
+  Candidate: 2.28.3-0ubuntu0.1
+sosreport_4.11.2-0ubuntu0~24.04.1.debian.tar.xz
+sosreport_4.11.2-0ubuntu0~24.04.1.dsc
+sosreport_4.11.2.orig.tar.gz
+src
+sosreport:
+  Installed: (none)
+  Candidate: 4.11.2-0ubuntu0~24.04.1
+=== apport: journalctl in the source
+apport/src/apport/hookutils.py:601:        command = ["journalctl", "--quiet", "-b", "-a"]
+apport/src/apport/hookutils.py:780:        ["journalctl", "--priority=warning"] + args
+apport/src/.pc/Add-general-hooks.patch/apport/hookutils.py:600:        command = ["journalctl", "--quiet", "-b", "-a"]
+apport/src/.pc/Add-general-hooks.patch/apport/hookutils.py:779:        ["journalctl", "--priority=warning"] + args
+apport/src/tests/unit/test_hookutils.py:110:            args=None, returncode=0, stdout=b"journalctl output", stderr=b""
+apport/src/tests/unit/test_hookutils.py:118:        self.assertEqual(report.get("JournalErrors"), "journalctl output")
+apport/src/tests/unit/test_hookutils.py:122:                "journalctl",
+apport/src/tests/unit/test_hookutils.py:133:            args=None, returncode=0, stdout=b"journalctl output", stderr=b""
+apport/src/tests/unit/test_hookutils.py:141:        self.assertEqual(report.get("JournalErrors"), "journalctl output")
+apport/src/tests/unit/test_hookutils.py:144:            ["journalctl", "--priority=warning", "-b", "--lines=1000"],
+apport/src/tests/unit/test_hookutils.py:166:        cmd = ["journalctl", "--quiet", "-b", "-a"]
+=== apport: the function that collects it
+759-        attach_gsettings_schema(report, schema)
+760-
+761-
+762:def attach_journal_errors(report: ProblemReport, time_window: int = 10) -> None:
+763-    """Attach journal warnings and errors.
+764-
+765-    If the report contains a date, get the journal logs around that
+766-    date (plus/minus the time_window in seconds). Otherwise attach the
+767-    latest 1000 journal logs since the last boot.
+768-    """
+769-    if not os.path.exists("/run/systemd/system"):
+770-        return
+771-
+772-    crash_timestamp = report.get_timestamp()
+773-    if crash_timestamp:
+774-        before_crash = crash_timestamp - time_window
+775-        after_crash = crash_timestamp + time_window
+776-        args = [f"--since=@{before_crash}", f"--until=@{after_crash}"]
+777-    else:
+778-        args = ["-b", "--lines=1000"]
+779-    report["JournalErrors"] = command_output(
+780-        ["journalctl", "--priority=warning"] + args
+781-    )
+782-
+783-
+784-def attach_network(report):
+785-    """Attach generic network-related information to report."""
+786-    report["IpRoute"] = command_output(["ip", "route"])
+787-    report["IpAddr"] = command_output(["ip", "addr"])
+=== sos: journal commands in the logs plugin
+78:        self.add_cmd_output("journalctl --disk-usage")
+81:        # collect journal logs if:
+83:        # - systemd-journald service exists
+85:        journal = any(self.path_exists(self.path_join(p, "log/journal/"))
+87:        if journal and self.is_service("systemd-journald"):
+88:            self.add_journal(tags=['journal_full', 'journal_all'],
+90:            self.add_journal(boot="this", tags='journal_since_boot')
+91:            self.add_journal(boot="last", tags='journal_last_boot')
+94:                    "/var/log/journal/*",
+95:                    "/run/log/journal/*"
+110:    meaning those such as /var/log/messages, rsyslog, and journals that are
+113:    Note that the --since option will apply to journal collections by this
+115:    expect typical journal collections to include the "full" journal, as well
+116:    as journals limited to this boot and the previous boot.
+132:            self.add_cmd_output("journalctl -o export")
+135:            self.add_journal(since=f"-{days}days")
+=== sos: default command timeout
+sosreport/src/sos/report/__init__.py:129:        'plugin_timeout': TIMEOUT_DEFAULT,
+sosreport/src/sos/report/__init__.py:130:        'cmd_timeout': TIMEOUT_DEFAULT,
+sosreport/src/sos/report/__init__.py:681:            _bout = sos_get_command_output('brctl show', timeout=15)
+sosreport/src/sos/report/__init__.py:1076:                        val = self.opts.plugin_timeout or TIMEOUT_DEFAULT
+sosreport/src/sos/report/__init__.py:1078:                        val = self.opts.cmd_timeout or TIMEOUT_DEFAULT
+sosreport/src/sos/report/__init__.py:1338:                t.result(timeout=timeout)
+sosreport/src/sos/options.py:298:            if name in ['log_size', 'plugin_timeout', 'cmd_timeout'] \
+sosreport/src/sos/report/plugins/__init__.py:523:    :cvar plugin_timeout: Timeout in seconds for this plugin as a whole
+sosreport/src/sos/report/plugins/__init__.py:524:    :vartype plugin_timeout: ``int``
+sosreport/src/sos/report/plugins/__init__.py:526:    :cvar cmd_timeout:  Timeout in seconds for individual commands
+sosreport/src/sos/report/plugins/__init__.py:527:    :vartype cmd_timeout:   ``int``
+sosreport/src/sos/report/plugins/__init__.py:542:    plugin_timeout = TIMEOUT_DEFAULT
+sosreport/src/sos/report/plugins/__init__.py:543:    cmd_timeout = TIMEOUT_DEFAULT
+sosreport/src/sos/report/plugins/__init__.py:694:                        'plugin_timeout' or 'timeout'
+sosreport/src/sos/report/plugins/__init__.py:732:        provided on the commandline via -k plugin.timeout=value, or the value
+sosreport/src/sos/report/plugins/__init__.py:735:        _timeout = self.timeout_from_options('plugin_timeout', 'timeout',
+sosreport/src/sos/report/plugins/__init__.py:736:                                             self.plugin_timeout)
+sosreport/src/sos/report/plugins/__init__.py:742:        provided on the commandline via -k plugin.cmd-timeout=value, or the
+sosreport/src/sos/report/plugins/__init__.py:745:        _cmdtimeout = self.timeout_from_options('cmd_timeout', 'cmd-timeout',
+sosreport/src/sos/report/plugins/__init__.py:746:                                                self.cmd_timeout)
+=== sos: other plugins that call journalctl
+sosreport/src/sos/report/plugins/logs.py
+sosreport/src/sos/report/plugins/foreman_proxy.py
+sosreport/src/sos/report/plugins/__init__.py
+sosreport/src/sos/report/plugins/systemd.py
