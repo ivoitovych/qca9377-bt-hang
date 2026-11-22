@@ -137,3 +137,55 @@ and the one where our existing harnesses (the mesh-tester runs, the kmemleak and
 sweeps) are the homework already half done. Not to be requested before the commit is in
 mainline.
 
+### 3.4 Ubuntu 24.04 (noble): what it ships today and what is reported
+
+Published today (Launchpad `getPublishedSources`, checked for the first two):
+
+| package | noble today | development release |
+|---|---|---|
+| `bluez` | **5.72-0ubuntu5.8** in Updates (2026-10-21) and Security (2026-10-13); nothing in Proposed, nothing in the unapproved queue | 5.88-1 (2026-11-07) |
+| `linux-hwe-7.0` | **7.0.0-43.43~24.04.1** in Updates (2026-11-11) and Security (2026-11-12); **7.0.0-44.44~24.04.1 in Proposed since 2026-11-20** | — |
+| `pipewire` | 1.0.5-1ubuntu3.3 | 1.6.x |
+| `wireplumber` | 0.4.17-1ubuntu4.1 | 0.5.x |
+| `gnome-control-center` | 46.7 (…24.04.6) | 51.0 |
+| `gnome-bluetooth3` | 46.0-1ubuntu1 | — |
+| `systemd` | 255.4-1ubuntu8.19 in Updates since 2026-11-19 (CO-46's dossier says it is in Proposed) | 262.1 |
+
+The noble kernel, from its changelog's subject lines (an inference from subjects, not from the
+diff): the stable base is v7.2.9 for `-42`, v7.2.11 for `-43`, v7.2.15/v7.3.1 for `-44`.
+
+| fix | `-42` | `-43` (installed on the laptop) | `-44` (proposed) |
+|---|---|---|---|
+| `dc16388d45ec`, the QCA9377 entry (CO-09) | no | yes | yes |
+| `96d006ae6445`, discovery that never stops (BT-9) | yes | yes | yes |
+| `86ef0f58bdec`, our MGMT fix (BT-8) | no | yes | yes |
+| the L2CAP pair `32d86e048d8e` + `608e0b7a675b` (CO-35) | no | no | no |
+| the xHCI ep0 fix (CO-45) | no | no | no |
+
+| item | verdict | what decides it | proposed register text |
+|---|---|---|---|
+| CO-09 | **delivered** | in noble-updates since `-43` | closed (already so) |
+| CO-03 (U12 for noble) | **fixed by others, backport candidate** | `a14d59725` + `664a5d3785a1` are in BlueZ 5.80 and in the development release's 5.88-1; absent from noble 5.8; **no Launchpad bug exists** for "A2DP lost when the microphone opens" (searches with zero results are kept in the companion file) | the fixed-in-development rule of an Ubuntu stable update is met; the bug is to be filed by the operator from the bundle's text |
+| CO-11a (btmon for noble) | **fixed by others, backport candidate** | `fdbfe0018` (5.80) and `dca0f10fd` (5.88, not "master" as the dossier says) are both in 5.88-1; no Launchpad bug for the btmon abort. The version numbers the dossier's debdiffs used for the two newer series were taken on 2026-11-10 by an unrelated `mpris-proxy` fix (LP #2172906) | renumber the two debdiffs; the one for the development release is obsolete (5.88-1 has both fixes) |
+| CO-37's 5.72 backport of U24 | **fixed by others, backport candidate** | `7e3212fa233e` is in 5.88-1; absent from noble; no bug | with the bundle |
+| CO-37's U23 fix for noble | not yet eligible | U23 is not fixed upstream (3.2), so it is not in the development release | BlueZ first; noble only after acceptance. The bundle should not carry it until then |
+| CO-40 | **fixed by others, backport candidate** | `a6ac17f0e393` is in 5.78 and 5.88-1; absent from noble; no bug for `br-connection-unknown` | with the bundle or alone |
+| our own BlueZ fixes (`a734b06059cb`, `0bed9886cff3`, `ae23df052290`) | **backport candidates**, optional | all three are in 5.88-1; none in noble; the nearest Launchpad bug is #1689448 (a `transport_cb` crash of 2017) | the two crash fixes are real user-visible crashes on 5.72 (`EX-032`, `EX-041`) and qualify; the `shared/mgmt` one is a leak |
+| the bundle `5.72-0ubuntu5.9` | version still free | the base 5.8 is still current and no `5.9` exists in any pocket; a security upload could take the number first | re-check the base on the day of filing; the stable-update team may ask for one bug per fix |
+| CO-07 / U6 (input meter) | **fixed by others, backport candidate**, held | noble's 46.7 lacks the six commits; no Launchpad bug for the dead meter | after CO-32, as planned |
+| CO-19 / U1 (codec line) | **fixed by others, backport candidate** | noble's PipeWire 1.0.5 lacks `805e5cf9c`; no bug | after the laptop test |
+| CO-32 / U19 (Ubuntu's own WirePlumber patch) | **still ours** | LP #2122640 is Fix Released for noble (2025-10-09), with no regression note and no follow-up bug | a new bug against `wireplumber` in noble with the one-line change, after the laptop test |
+| CO-29 / U14 | no action available | noble stays at 0.4.17; upstream fixed it only by the 0.5 rewrite | unchanged |
+| CO-46 (journalctl) | **fixed by others, backport candidate** | noble's systemd reached 8.19 in Updates on 2026-11-19 without the fix; no Launchpad bug | the request's upload number becomes 8.20; the dossier's "in Proposed" is out of date |
+| CO-45 / BT-22 (xHCI ep0) | **not yet fixed anywhere** | patchwork 14964105 (linux-usb, 2026-11-09) is `new` (checked); in no kernel. The register says "queued upstream 2026-11-09" | correct the row: posted, not applied |
+| X1 (gvfs) | cannot tell | LP #1967258, which the dossier cites, is a bug against `totem` (New, 2022) with the same symptom and no `gvfs` task | link it when the upstream change is merged |
+
+Adjacent Launchpad bugs found, not the same defects: #2056196 (headset disconnected on a
+remote A2DP to HSP change, noble), #2159829 (an A2DP regression in 5.72-0ubuntu5.5, Fix
+Released), #2173777 (PipeWire: headset microphone stops after a profile switch with
+WirePlumber 0.5.17; newer series only), gnome-control-center #2167667 (no input selectable on
+A2DP, New).
+
+Not checked: the Ubuntu CVE tracker for the btmon CVE the bundle's notes mention; any kernel
+diff; GNOME's tracker.
+
