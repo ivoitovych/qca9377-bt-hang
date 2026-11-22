@@ -17,6 +17,7 @@ directory touches Bluetooth.
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
 | `sandbox [--self-test] [-- cmd]` | run the suite in a **decoy world** and list every place it reached for the real machine |
+| `ci-container <job> [tree]` | **where tests run:** one CI job (`serial`, `validate`, `coverage`, `awk-coverage`, `awk-uncovered`, `py-coverage`, `decoy`) in a container with no network, only the tree's tracked and new (not ignored) files exported and mounted read-only, an unprivileged user; image `ci-image/Dockerfile`. Never a home-made harness on the machine (2026-11-16: one overwrote `/usr/bin/journalctl`). Known in this image (2026-11-22, the same on `e420203` and on the tree after it): `access-audit`'s self-test fails on the user lookup's reads of `/etc/passwd` and `/etc/nsswitch.conf`, and `doc-main-hashes` is inconclusive with no network. Judge a run against the same job on its base |
 | `access-audit [--self-test] [-- cmd]` | run the suite under **strace** and list every file access, made or attempted, that reached the machine outside `tests/access-allowlist` |
 | `mutate <file> [--lines A-B] \| --self-test` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
 | `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |

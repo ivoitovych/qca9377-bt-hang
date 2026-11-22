@@ -65,6 +65,11 @@ at lines 1884–1888 and `profiles/audio/a2dp.c` the stream guard at 2697–2700
 
 **The sequence, UTC — neither v2 arrived before the merge:**
 
+*(noted 2026-11-22: unlike the 09-19 bot times below, the two bot rows here cannot be CEST. Read
+as CEST, 22:42 would be 20:42 UTC, five minutes before v2 was mailed at 20:47 UTC (the time in
+its Message-ID, `docs/sent-mails.tsv`). So they are UTC, or the bot's own clock is later still.
+The mails' headers are not in the repository.)*
+
 | when | event |
 |---|---|
 | 09-19 18:44 | v1 of both mailed |

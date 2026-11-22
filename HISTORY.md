@@ -4780,6 +4780,33 @@ stock 8.19 from noble-proposed against the 8.20 test build. Results are on `rese
     before and after the upgrade.
   - The review package was regenerated, with no hits, for the second review round before filing.
 
+## A stub where journalctl should be, an audit of the machine, and the leftovers removed (2026-11-16 → 11-22)
+
+- **The stub.** On 2026-11-16 at 12:21:45 a test run wrote its journalctl stub over `/usr/bin/journalctl`
+  on the laptop. It ran as root, outside the suite's guards, and a fixture directory it computed came back
+  empty. The stub stayed until it was found and the binary restored on 2026-11-20.
+  - The persistent journal lost the boot of 11-16 18:48 (72 s) and the current boot from 11-18 13:48 until
+    11-20 15:03:07.
+  - The closer of trials E3 #12 and #13 read the journal through the stub
+    (`evidence/trials/E3/trial-12/`, `trial-13/`, `trial-14/`).
+  - The rule that came out of it: tests run only in `devtools/ci-container` or `devtools/sandbox`, never
+    through a harness that sources pieces of `tests/run-tests`. `devtools/ci-container` was added to the
+    repository on 11-22, and it exports only the tree's tracked and new files.
+- **An outside audit of the machine (2026-11-21).**
+  - Clean: every packaged file except one unrelated program, a kernel without taint, and stock boot,
+    module and kernel settings.
+  - Added beside the packages, and this project's: E3 modules left in fallback kernels, ELL in `/usr`, the
+    trial label still `E3`, X1's `gvfsd-cdda` diversion and CO-03's `bluetoothd`. Each was matched to its
+    record and checksum.
+- **Removed on 2026-11-22:** every out-of-tree module (E3 for `-34` and `-42`, and the leftover
+  `7.0.0-38` directory with CO-02's `bluetooth.ko`), and ELL in `/usr`. Copies of the modules are in
+  `tmp/`. ELL *was* in the linker cache, contrary to the 10-22 note; nothing used it.
+- **Trial label.** From the next boot the trials are `stock-fixed`. Rows E3 #11–#14 ran the stock module
+  (`evidence/trials/E3/NOTE-label-E3-after-2026-11-12.md`). Row 12 was recomputed from its intact journal;
+  row 13 cannot be.
+- **Kept on purpose:** the `gvfsd-cdda` diversion until gvfs decides on !368 (19 stalls to 0 on the
+  laptop), and CO-03's `bluetoothd`, which runs now and carries the October CVE fixes.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*

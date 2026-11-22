@@ -1,0 +1,57 @@
+#!/bin/bash
+# ci-container <job> [tree] — run one CI job inside a container: no network, an export of the
+# tree's tracked and new (not ignored) files mounted read-only and copied inside, an unprivileged
+# user, low CPU share. Nothing the job does can reach the machine's /usr, /etc, /run or journal.
+#
+#   jobs: serial | validate | coverage | awk-coverage | awk-uncovered | py-coverage | decoy
+#   tree: the checkout or worktree to test (default: the one this script lives in)
+#
+# This is where tests run. Not on the machine itself, and never through a home-made harness
+# that sources pieces of tests/run-tests: on 2026-11-16 such a harness, run as root on the
+# machine, computed an empty fixture directory and overwrote /usr/bin/journalctl with a test
+# stub (four days of journal lost). A single block runs here as
+# `tests/run-tests --section <name>` via the serial job's command, or in devtools/sandbox.
+#
+# The image is devtools/ci-image/Dockerfile (tag ci-runner:2), built on first use.
+set -u
+job="${1:?usage: ci-container <job> [tree]}"
+W="${2:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+[[ -d "$W/.git" || -f "$W/.git" ]] || { echo "ci-container: $W is not a checkout" >&2; exit 2; }
+W="$(cd "$W" && pwd)"
+case "$job" in
+	serial)        cmd='tests/run-tests --serial' ;;
+	validate)      cmd='devtools/repo-validate .' ;;
+	coverage)      cmd='devtools/coverage --quiet --min 80' ;;
+	awk-coverage)  cmd='devtools/awk-coverage --min 95' ;;
+	awk-uncovered) cmd='devtools/awk-coverage --uncovered' ;;
+	py-coverage)   cmd='devtools/py-coverage --min 80' ;;
+	decoy)         cmd='devtools/sandbox' ;;
+	*) echo "ci-container: unknown job $job" >&2; exit 2 ;;
+esac
+IMG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ci-image"
+docker image inspect ci-runner:2 >/dev/null 2>&1 || docker build -q -t ci-runner:2 "$IMG" || exit 2
+# ONLY WHAT GIT WOULD PUBLISH goes in: tracked files plus new files that are not ignored, exported to a
+# fresh directory. The checkout itself also holds ignored bulk (tmp/, raw captures under archive/) that a
+# test must never see; mounting it whole would hand all of that to the job.
+SCRATCH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/tmp"   # ignored, so never itself exported
+mkdir -p "$SCRATCH" || exit 2
+EXP=$(mktemp -d "${CI_EXPORT_DIR:-$SCRATCH}/ci-export.XXXXXX") || exit 2
+trap 'rm -rf "$EXP"' EXIT
+git -C "$W" ls-files -z -co --exclude-standard \
+	| tar -C "$W" --null --ignore-failed-read -T - -cf - \
+	| tar -C "$EXP" -xf - || { echo "ci-container: export of $W failed" >&2; exit 2; }
+chmod -R a+rX "$EXP"
+docker run --rm --cpu-shares 256 --network none --user runner -v "$EXP:/src:ro" ci-runner:2 bash -c '
+	set -u
+	mkdir -p /home/runner/work && cp -a /src/. /home/runner/work/repo && cd /home/runner/work/repo || exit 2
+	git config --global --add safe.directory /home/runner/work/repo
+	rm -rf tmp .git
+	want=$(sed -n "s/^[[:space:]]*WANT:[[:space:]]*\"\(.*\)\"[[:space:]]*\$/\1/p" .github/workflows/checks.yml | head -1)
+	mail=${want##*<}; mail=${mail%>}
+	git config --global user.name "${want% <*}"; git config --global user.email "$mail"
+	git init -q -b main && git add -A && git commit -q -m "tree under test" || exit 2
+	git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git 2>/dev/null
+	export BT_SUITE_JOBS=4
+	nice -n 19 ionice -c 3 '"$cmd"'
+	echo "JOB-EXIT=$?"
+'

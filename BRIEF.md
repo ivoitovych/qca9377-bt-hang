@@ -251,7 +251,8 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     Repository health).
 > - **Still open from before (carried forward):** the 11-02 review round's decisions D1–D14
 >   (`contributions/review-2026-11-02/followups.md`) stay the operator's; today's packages put
->   D1/D2 (CO-02 v2: -EBUSY on a live link, -ECONNABORTED only when nothing holds it) and D6 (one
+>   D1 (CO-02: when to post v2, and its label) and D2 (the mismatch patch's error code: -EBUSY on a
+>   live link, -ECONNABORTED only when nothing holds it) and D6 (one
 >   Ubuntu upload for the 5.72 fixes) in front of him as built options, not as decisions taken.
 >   Watch X1's MRs !368/!369 for comments (`scripts/cd-trace/x1-check-submission.py`; none on
 >   11-14) and each boot's start-up for BT-16 (third occurrence 11-13 on `-43` stock). CO-25's reply
@@ -836,7 +837,8 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
    control run: boots from then on load the STOCK `bluetooth.ko`; check with
    `scripts/module-updates.sh status`. History of the install:
    ⚠️ **INSTALLED 2026-09-24 00:5x: `/lib/modules/7.0.0-31-generic/updates/bluetooth.ko`**
-   (patched, Ubuntu source, srcversion `66D38200362CD82D3F68A9D`, sha256 `815e7378…b90b72`),
+   (patched, Ubuntu source, srcversion `66D38200362CD82D3F68A9D`, sha256 `815e73781b0e15cf2b0c9a2697ab8c4aa37dc75f035d81e181808c2ee1b90b72`, the file
+   `tmp/runtime/bluetooth-patched.ko`, read 2026-11-22),
    `depmod -a` done; not in the initramfs, so it loads from the first boot after. Checked first:
    `scripts/check-modversions.sh` — all 9 dependants (btusb, btintel, btbcm, btrtl, btmtk,
    btqca, rfcomm, bnep, hidp) accept its CRCs, 0 mismatches. **Every trial and exhibit from

@@ -292,7 +292,8 @@ fi
 # beside the main checkout (../private-config/publish-wording.txt), or wherever
 # BT_PRIVATE_WORDING names. It applies to ADDED lines only — staged additions or a
 # push — never to --all: older text is a separate decision (operator, 2026-11-16).
-# On a machine without the list (CI) the check says so and does not pass silently.
+# On a machine without the list (CI) the check is skipped, and does not fail. It prints a line
+# saying it was not run, except under --quiet, where it prints nothing.
 if [[ "$SCOPE" == "staged additions" || "$SCOPE" == pushed* ]]; then
     MAINROOT=$(cd "$(git rev-parse --git-common-dir)/.." 2>/dev/null && pwd)
     WORDLIST="${BT_PRIVATE_WORDING:-$MAINROOT/../private-config/publish-wording.txt}"

@@ -195,6 +195,28 @@ machine, evidence in [`results/laptop-only-work-2026-11-11/`](../results/laptop-
 
 ## The investigation machine
 
+- **Changed 2026-11-22, on the operator's word ("please do it all"), after an outside audit of the
+  machine (2026-11-21):**
+  - **No out-of-tree module remains for any kernel** (`find /lib/modules -path "*/updates/*"`: empty).
+    E3's btusb was removed from `7.0.0-34` and `7.0.0-42` (`scripts/module-updates.sh --krel <k>
+    --module btusb remove`; both now resolve to the stock `btusb.ko.zst`). The leftover
+    `/lib/modules/7.0.0-38-generic` (kernel uninstalled, no package owned it: 11 index files, E3's
+    btusb and CO-02's `bluetooth.ko`) was removed. Byte-identical copies stay in `tmp/`
+    (`runtime-e3/`, `runtime-e3-7.0.0-38/`, `runtime-e3-7.0.0-42/`, `co02-hw/module/full/`; SHA-256
+    checked before removal). **Booting a fallback kernel now loads its stock btusb:** `-42` and
+    `-34` lack `13d3:3503`, so on them BT-1 is back.
+  - **ELL removed from `/usr`** (the 2026-10-21 `make install` of `scripts/ci-local.sh`: `libell.so*`,
+    `libell.la`, `pkgconfig/ell.pc`, `/usr/include/ell/`, 56 files). Correction: it *was* in the
+    linker cache (`ldconfig -p`: `libell.so.0 => /lib/libell.so.0`); no installed package needs it,
+    `bluetoothd` does not link it, no process had it mapped; `ldconfig` rebuilt, 1517 → 1515 entries.
+  - **Trial label:** the drop-in `bt-trial-auto.service.d/override.conf` now says
+    `BT_BUILD=stock-fixed` (was `E3` since 2026-09-30). Not `stock`: that series is the stock
+    kernels *without* the entry. Takes effect at the next boot; nothing was reloaded. Rows E3
+    #11–#14: `evidence/trials/E3/NOTE-label-E3-after-2026-11-12.md`.
+  - Kept on purpose: X1's `gvfsd-cdda` diversion (until gvfs decides on !368), CO-03's `bluetoothd`
+    (installed 11-13, built from 5.8's source, so it has the October CVE fixes), and the operator's
+    own sudo rule.
+
 - ⚠️ **Read 2026-11-14 00:46 UTC (sysfs, journal and module-file reads only). The machine runs
   Ubuntu's `7.0.0-43-generic` with the stock btusb and the stock `bluetooth.ko`; E3 is retired.**
   `uname -r` → `7.0.0-43-generic`; no `/lib/modules/7.0.0-43-generic/updates/`;
@@ -262,6 +284,10 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
   - **A new trial reused the directory.** At 21:53:22 `bt-trial-auto` opened a new "E3 #2" in the same directory (`/run/bt-trial/current`: `start=1792439602`, `n=2`). It rewrote `state-before.txt` and emptied `steps.log`. The earlier versions are in git (`git diff evidence/trials/E3/trial-02/`), so nothing tracked was lost. This is the same pattern as 10-11 and 10-13.
   - **Why the shutdown step must change:** `BRIEF.md` §9.11.
 - ⚠️ **Until the fixed `bt-trial` is INSTALLED, a shutdown with a trial open can still lose its row, and it probes the controller.** The installed closer reads the whole kernel log with no budget, runs `bt-state`, then decodes every capture (48 GB) whenever the trial saw a SCO setup, and only then writes the row: lines 406, 630, 700 and 879 of `/usr/local/bin/bt-trial`. For E3 #2 that matters only if a call happens before the shutdown. And the installed `autostop` is not passive: it runs `hci_alive` (`hciconfig hci0 name`, HCI Read Local Name) at lines 357, 595 and 794, and the installed `bt-mark` it calls at 631 sends the same command. That is up to four commands to the controller at each shutdown with a trial open, as at every such shutdown since 2026-09-18 (checked 2026-10-18). **An abrupt stop loses the row even with the fix, as on 2026-10-13 and 2026-10-19: no ExecStop runs.** The fix is in `main`'s source, not on the machine. The first trial E3 #1 lost its row at a shutdown: it ran on `-34` from 2026-10-01 00:13 until the shutdown at 2026-10-11 16:24:45.
+- **Resolved; read 2026-11-22:** the running bluetoothd (pid 2653, `readlink /proc/2653/exe` →
+  `/usr/local/libexec/bluetooth/bluetoothd`) is CO-03's build, SHA-256 `59d2ea79…a2453`, built from
+  5.72-0ubuntu5.8's source, so it carries the October security fixes. What follows is the record
+  as it stood before.
 - ⚠️ **The running bluetoothd lacks Ubuntu's October security fixes** (checked 2026-10-19). It is this project's build: `20-patched-bluetoothd.conf` runs `/usr/local/libexec/bluetooth/bluetoothd` (`readlink /proc/<pid>/exe`), built 2026-08-25 from 5.72-0ubuntu5.5's source with the two BT-7 fixes. Ubuntu has since shipped 5.72-0ubuntu5.6 to 5.8, and 5.7 (2026-10-07) fixes five CVEs: CVE-2026-19774 (A2DP stack overflow), CVE-2026-75032 (AVRCP out-of-bounds read), CVE-2026-80185 (SDP XML type confusion), CVE-2026-80186 (EIR stack overflow) and CVE-2026-85218 (AVRCP out-of-bounds parsing) (`/usr/share/doc/bluez/changelog.Debian.gz`). The packaged 5.8 binary is installed but not running. Removing the drop-in would bring back the BT-7 crashes (`EX-032`). The next build is ours from 5.8's source, with the BT-7 fixes and U12's `a14d59725`. It is built and VM-tested as `5.72-0ubuntu5.9~co03.1` (CO-03, 2026-10-31); installing it is the operator's decision.
   - **Staged 2026-11-13 19:2x CET, on the operator's word ("You can install the build fix").**
     - CO-03's `bluetoothd` (taken from `bluez_5.72-0ubuntu5.9~co03.1_amd64.deb`; the package's SHA-256 is `ffbedfd78fcdc124a343070663bb45739e554aa750c52bd514cb527d23b40c4a`, and `59d2ea79b4d98eb4f1e04de1d1622908a263885856cb13ea770109431f8a2453` is the SHA-256 of the daemon binary inside it, not of the package (`results/laptop-only-work-2026-11-11/headset-session/SESSION-CHECKLIST.md`, lines 709-710; corrected 2026-11-16) replaced `/usr/local/libexec/bluetooth/bluetoothd`, the path the drop-in runs.

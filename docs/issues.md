@@ -1549,8 +1549,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   during the MOMENTUM session — one appeared later that boot during a Shure mSBC link
   (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
-  earbud-specific unless the earbuds also go silent on E3 — that test is next. *(The 10-01
-  state: "next" is not current; see the dated state below.)*
+  earbud-specific unless the earbuds also go silent on E3 (as of 10-01 that was the next test;
+  it was answered by the 11-11 recordings, the dated state below).
   **State 2026-11-16 (from `docs/STATUS.md` and the CO-18 row of `contributions/README.md`):**
   the recordings mined on 11-11 show the earbuds receiving 100 % CRC-valid mSBC with signal, so the
   silence is on their side; CO-18 was dropped as a kernel item (research 2026-11-01); the

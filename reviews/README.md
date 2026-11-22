@@ -544,6 +544,9 @@ track them. Read a file for its content; the date in its name is when it was wri
 | [20261116-132247-second-recheck-findings.md](20261116-132247-second-recheck-findings.md) | Findings-only copy of the second recheck (`main` at `bbec102f`): what was confirmed, what is left |
 | [20261116-132247-second-recheck-detailed-findings.md](20261116-132247-second-recheck-detailed-findings.md) | Findings-only copy of the second recheck's companion file |
 | [20261116-135757-third-recheck-findings.md](20261116-135757-third-recheck-findings.md) | Findings-only copy of the third recheck (the save-time wording check and the second round's remains) |
+| [20261116-142253-fourth-recheck-findings.md](20261116-142253-fourth-recheck-findings.md) | Findings-only copy of the fourth recheck (`main` at `ea994867`): what the round answered, the short list left |
+| [20261122-025747-fifth-recheck-findings.md](20261122-025747-fifth-recheck-findings.md) | Findings-only copy of the fifth recheck (`main` at `e420203b`): the older wording carried out, the same short list |
+| [2026-11-22T0400Z-project-review-fourth-and-fifth-recheck-checks.md](2026-11-22T0400Z-project-review-fourth-and-fifth-recheck-checks.md) | Each item of the fourth and fifth rechecks checked on the tree and on the machine, and what was done; both ancestry checks confirmed |
 
 ## Adding a report
 

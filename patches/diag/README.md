@@ -5,8 +5,9 @@
 > `13d3:3503` entry, since 2026-11-12 (`contributions/CO-09-ubuntu-kernel-qca9377-entry/README.md`;
 > `docs/STATUS.md`), so the section "E3 for 7.0.0-42 ... running since" describes a kernel the
 > laptop no longer runs. The "E1 result" below (37 links, two boots, one headset) is the count of
-> 2026-09-29; other pages of the project give later, larger counts for the same line of
-> evidence, which are not reconciled here. Only the E1 patch is kept in this directory.
+> 2026-09-29. The settled counts are in `BRIEF.md` §0/§3: E1 ran 58 links over three boots and
+> two headsets with 0 timeouts (`EX-058`), and E3 ran 16 links over two headsets with 0 timeouts
+> (`EX-057`). (Noted 2026-11-22.) Only the E1 patch is kept in this directory.
 
 Kept separately until 2026-10-09. Each build changes **one** variable against the
 failing baseline (stock `btusb`, `13d3:3503` matched as a generic device, legacy `0x0428`,
