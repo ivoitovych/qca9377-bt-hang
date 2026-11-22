@@ -189,3 +189,32 @@ A2DP, New).
 Not checked: the Ubuntu CVE tracker for the btmon CVE the bundle's notes mention; any kernel
 diff; GNOME's tracker.
 
+### 3.5 PipeWire, WirePlumber, GNOME, gvfs, systemd
+
+For PipeWire and WirePlumber the project's rule stands: the operator writes any report
+himself; "next step" is evidence for him. PipeWire master read at `20128216d` (2026-11-22),
+WirePlumber at `c6a331d2` (2026-11-21).
+
+| item | verdict | what decides it | proposed register text |
+|---|---|---|---|
+| CO-36 / U15 (the delayed HFP volume resend outlives the link) | **still ours** | master still arms the 1.5 s resend in `sco_ready()` and stops it neither on release nor on hang-up; no issue or merge request | unchanged: the operator's duplicate search, then his report |
+| CO-31 / U17 (a refused SCO connect is retried at once) | **still ours** | `backend-native.c:2699` on master still retries `ECONNABORTED` immediately (checked); an issue search for the word returns nothing; open issue 5533 (a stall on a Bluetooth profile switch) is adjacent | unchanged; name 5533 and CO-02 in the report |
+| U7 (codec switch under a live SCO link), the PipeWire side | **overlap, adjacent** | issue 5506 is **closed** (2026-11-19, checked) by Pauli Virtanen's `710136cc7`, "reject AT+BCC while SCO setup is in progress" (2026-11-07; master only, in no release tag). It does not cover a switch while a link is live. Another author's merge request 3083 for 5506 is still open | the U7 row says "adjacent open report 5506": it is closed; the kernel part stays CO-02 |
+| CO-33 / U20 and the quirk for U15 | **still ours** | `bluez-hardware.conf` on master has no Shure or Sennheiser entry (checked); the one `hw-volume-mic` precedent is "Air 1 Plus" | unchanged: the local test, then the operator's entry |
+| CO-08 / U10 (Tronsmart T8 silent on SBC-XQ) | **still ours** | no Tronsmart entry or issue; open issue 5545 (another headset one-sided on SBC-XQ) is the same class | unchanged |
+| U30 (HFP gains outside 0 to 15) | still ours, cause inferred | no report; the send path has no range check | reproduce first |
+| CO-19 / U1 | **fixed by others, backport candidate** | `805e5cf9c`, first in 1.1.81 (checked) | 3.4 |
+| CO-15 / U11 | still ours, a configuration note | WirePlumber issues 352 and 1036 closed, 914 open as a design discussion | unchanged |
+| CO-29 / U14 | fixed by the 0.5 rewrite | 0.4 is not developed | 3.4 |
+| CO-24 / U5 | dropped | nothing upstream | unchanged |
+| CO-07 / U6, U4 | still ours for the Ubuntu bug | gnome-control-center's main branch has no meter or codec-row fix beyond what 47.0 had; merge request 3536 (2026-11-13) and issues 3710, 3715 are adjacent | 3.4 |
+| CO-42 / U13 / U29 (a failed setup shows nothing) | **still ours**, a comment only | gnome-bluetooth merge request 137 is open and unchanged since 2025-02-23; issue 18 is open; issue 176 (LE passkey) is a new neighbour | unchanged; add issue 176 |
+| U31 | cannot tell | commits of early 2026 in libgnome-volume-control handle port-less Bluetooth streams; which version noble bundles was not checked | check the bundled version |
+| X1 (gvfs, two merge requests) | **still ours, waiting** | merge requests 368 and 369 and issues 893 and 894 are open with no comment since 2026-11-07; no `cdda` commit upstream since 2026-02-25 | unchanged: wait, or a polite reminder, the operator's choice |
+| X2 to X4 | still ours | nothing upstream | unchanged |
+| CO-46 (journalctl and the number of journal files) | **fixed by others, backport candidate**; one part still open upstream | the two commits the dossier names (`99e6f682d3`, `51b2bcf835`, Yu Watanabe, 2024-01-03) are in systemd v256; noble has 255.4. Upstream pull request 44579, which the dossier measures the remaining growth against, is open, with rework requested (last push 2026-11-02); issue 31486 is open | the noble request stays ours (3.4) |
+| BlueZ issue 1554 (our reply of 2026-10-09) | no change | open; one tester's reply of 2026-10-14; nothing later | unchanged |
+
+Not checked: comment threads on PipeWire issues and on gnome-bluetooth 137 and 18 (a login is
+needed); WirePlumber's suspend script at its tip.
+
