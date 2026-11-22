@@ -45,6 +45,7 @@ wrong turns, which a clean summary loses.
 | Log | Effort |
 |---|---|
 | [Coverage effort work log](2026-08-13T1214Z-coverage-effort-worklog.md) | the test-coverage effort opened by the 12:14Z assessment |
+| [Kernel contributions review work log](2026-11-22T1240Z-kernel-contributions-review-worklog.md) | the kernel contributions review of 2026-11-22: each consistency or upstream finding (F-01 to F-43) as it was found |
 
 ## Reports
 
@@ -88,6 +89,7 @@ wrong turns, which a clean summary loses.
 | 2026-11-07T15:00Z | [U29: the second reviewer's third message](2026-11-07T1500Z-u29-reviewer-2-third-message-verbatim.md) | the sixth reviewer's checked answer and the first emulator test; written before the second test's result | No new claim. Taken into U29: evaluate master's `Device1.Disconnected` reason before any new API; a regression matrix for a lifetime change, of which the reproduction already covers 0x18, 0x1A and advertising stopping, and not yet no-Flags, paired/trusted, or a connection or pairing in progress |
 | 2026-11-07T15:15Z | [U29: the second reviewer's fourth message](2026-11-07T1515Z-u29-reviewer-2-fourth-message-verbatim.md) | recommendation and a draft GNOME report | Recommends both tracks locally, with no submission without the author's yes; carries a draft gnome-bluetooth report for the author to work from. Both tracks started 11-07 (a BlueZ lifetime patch with its regression matrix; a runtime check on gnome-bluetooth master `adf070af`) |
 | 2026-11-07T20:00Z | [U29: the second reviewer's fifth message](2026-11-07T2000Z-u29-reviewer-2-fifth-message-verbatim.md) | the GNOME runs on master and with MR !137 | Agrees the GNOME step is !137, not a new issue; asks for tests of a device removed during pairing and of deliberate versus peer cancellation (started), and a local extension for `AuthenticationRejected` (not started: who writes a GNOME patch is the author's decision). Its second part, about another contributor, is not kept here |
+| 2026-11-22T12:40Z | [Kernel contributions: readiness and state](2026-11-22T1240Z-kernel-contributions-readiness.md) ([work log](2026-11-22T1240Z-kernel-contributions-review-worklog.md)) | every kernel contribution, sent or possible: its dossier, STATUS, the index, BRIEF; upstream read live (patchwork, the stable queue, bluetooth-next) | **Readiness 0–100 from nine gates per item, 25 items.** Top: CO-43 E and CO-44 (89), CO-38 (83). None ran on the laptop in its current form, and only CO-43 E and CO-44 have checked dry runs. Since 11-16 upstream: the maintainer's accepted `1d7a52778858` covers the mesh ground of CO-04, CO-05, CO-14 and CO-06, capped until re-tested. CO-35's 7.3.y requests are queued by the stable team itself, so they are not to send. Cen Zhang's v2 overlaps CO-05 and CO-12. 43 consistency findings in the log |
 
 ---
 
