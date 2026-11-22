@@ -32,6 +32,100 @@ row is given so that the maintainer of `main` can apply it.
 Sections 1 (summary) and 2 (what to do) are written last; section 3 holds the items as they
 were checked.
 
+## 1. Summary
+
+**Has someone else already fixed what we were preparing?** For five kernel items, yes; for
+the rest, no.
+
+| | items |
+|---|---|
+| **Fixed by others since our packages were made; ours are not to be sent** | CO-04, CO-05 1/2, CO-06, CO-14 (all by the Bluetooth maintainer's `1d7a52778858`, in bluetooth-next since 2026-11-19); CO-12 (Cen Zhang's `d7e77168da`, same day, the same clamp as ours) |
+| **Someone's pending patch touches the same lines** | BT-13 (Wentao Liang, 14942649, the same branch as CO-02 v2 1/2); CO-43 B2 (Jens Willmer, 14973994); CO-41 (a pending emulator series nearby) |
+| **Still ours, nothing competing found** | kernel: CO-02, CO-20, CO-21, CO-26, CO-30, CO-38, CO-44, CO-43 E, A and the BT-24/25 pair. BlueZ: CO-23, CO-37 (U23, U25 to U27), CO-39, CO-41, U13, U16, U18, U28, the tests of CO-02, CO-38, CO-44. Desktop: CO-36, CO-31, CO-33, CO-08, CO-42, X1 to X4 |
+| **Fixed upstream by others, and a backport is the open step** | stable kernels: CO-35 (6.18, 6.12, 6.6), CO-22 (every line), later the mesh fix and the advertising clamp. Ubuntu 24.04: CO-03, CO-11a, CO-37's U24, CO-40, our own two BlueZ crash fixes, CO-19, CO-07, CO-46 |
+| **Delivered, nothing left** | CO-09, CO-10, CO-28, CO-34, the BT-8 and BT-9 work, BT-14 |
+| **Obsolete** | CO-11b (the patch it would test is superseded and the daemon-side cause is fixed in 5.88); the two 7.3.y mails of CO-35 (the stable team queued those commits itself) |
+
+**Is there a sign that work was taken from this repository?** None was found. The fixes that
+overtook ours cite their own sources: the mesh fix carries three links to the list's automated
+reviewer and one `Fixes:` tag; the clamp is part of a series that began on 2026-10-30, before
+our package. The five items were on a path that several people were already fixing, as the
+register itself recorded in October.
+
+**Public reports of the same defects.** No Launchpad bug exists for any defect in the Ubuntu
+bundle. Kernel bugzilla has one report of BT-6's message (219992) and one of BT-14 (222177).
+syzbot's bug for CO-04 could not be read. The BlueZ sibling report of U13 (GitHub issue 2700)
+was marked stale on 2026-11-22 and will close without a reply.
+
+**Links between our items through one upstream change.**
+- CO-04, CO-05, CO-06, CO-14 and the Tested-by on the mesh leak patch: all one commit now.
+- CO-12 and CO-38 share a test series (the AdvDur cases are held in CO-38's series B); CO-12's
+  code is fixed, its tests are not upstream.
+- CO-02, BT-13 and CO-30: one function; Wentao Liang's patch and CO-02 v2 1/2 edit the same
+  branch, and CO-30 waits on CO-02.
+- BT-6 and CO-20: the same teardown tail; the newline fix for BT-6's message is already queued
+  for five stable lines.
+- CO-03, CO-11a, CO-37's U24, CO-40 and the BT-7 fixes: one Ubuntu upload.
+- U7 in PipeWire and CO-02 in the kernel: the PipeWire report was closed by a fix for a
+  neighbouring case; the kernel part is still CO-02.
+
+**Corrections to today's readiness report and to the registers** (each with its source in
+section 3): Cen Zhang's series is applied, not `new`, and it fixes CO-12; CO-35's pair is in
+`queue-7.3` and three sibling patches are queued for 6.18, 6.12 and 6.6; the xHCI fix is
+posted, not queued in any tree; BT-14 is released in 6.12.115; the newline fix is
+`f51ee3bb5fbe`, not `f3d041ec63f7`; Kevin Dewald's two BlueZ patches are applied; PipeWire
+issue 5506 is closed; `dca0f10fd` is in the 5.88 tag; systemd 8.19 is in noble-updates;
+`7.0.0-44` is in noble-proposed; Launchpad 1967258 is a `totem` bug; 14927631 is superseded.
+
+## 2. What to do, in order
+
+Nothing below was done here. Each step names the homework the project's rule requires before
+anything is sent.
+
+**A. Stop: packages that must not go out as they are**
+1. CO-04, CO-05 1/2, CO-14, CO-06 and CO-12: mark "fixed upstream by another author" in the
+   register and in "What to send". Keep the dossiers: their harnesses are the test of the
+   upstream fix.
+2. CO-35's two 7.3.y mails; CO-11b.
+
+**B. Backport requests that are the right thing to do, and what each still needs**
+3. **CO-22** (two device-table lines, in mainline since v7.4-rc1, in no stable line or queue):
+   the request exists. Needs: the cherry-pick and `btusb` build repeated on today's seven
+   tips, the queue check repeated on the day, the operator's word.
+4. **CO-35** for 6.18.y, 6.12.y, 6.6.y: needs a rebase onto 6.18.64, 6.12.118, 6.6.162 **plus
+   the three L2CAP patches now in those queues** (they touch the same functions), then the
+   l2cap-tester run on base and on base plus the pair for each line, checkpatch, and a fresh
+   look at whether the stable team is working through the same series on its own (it queued
+   three of its patches on 2026-11-17, so the pair may follow without a request; asking
+   before sending three series would be the considerate order).
+5. **The Ubuntu bluez upload** (CO-03, CO-11a, U24, CO-40, optionally the two crash fixes):
+   every fix is in the development release, no bug exists, the version is free. Needs: one
+   Launchpad bug per fix in the stable-update form, the bundle rebuilt on 5.72-0ubuntu5.8 as
+   published today, U23's fix left out until BlueZ has it, the laptop test of CO-03 that is
+   still open, the debdiffs of the two newer series renumbered.
+6. **Later, when the commits reach mainline:** the mesh fix `1d7a52778858` (use-after-free,
+   syzbot reproducer, no `Cc: stable`) and the advertising clamp in `d7e77168da`. Needs then:
+   a check of whether the stable scripts took them; if not, a request for 7.3.y, 6.18.y,
+   6.12.y and hand backports for 6.6.y and 6.1.y, each run under our mesh-tester, kmemleak and
+   lockdep harnesses on base and on base plus the fix. This is where the work already done on
+   CO-04, CO-05 and CO-14 has its use.
+7. CO-46 for noble: the upload number is now 8.20; a Launchpad bug first.
+
+**C. Our own patches that nobody else has, by how little is left**
+8. CO-44 and CO-38: apply check on `cf357cfc02` (`mgmt.c` moved), their testers on the new
+   tip; CO-38's BlueZ cases compared with the tests applied on 2026-11-12.
+9. CO-43 E, then A and the BT-24/25 pair: they apply to the tip; the bot's CI on the tip.
+10. CO-20 patch 1, CO-21.
+11. CO-02 v2: it is also the resend. Name 14942649 in the cover.
+12. BlueZ: CO-23, CO-39, then CO-41 after the pending emulator series, then CO-37's U23.
+13. The tests that remain ours where the code was fixed by others: the AdvDur cases (CO-12),
+    and a test report on the mesh fix (CO-04's cases on the tip).
+
+**D. Small, and soon**
+14. A comment on BlueZ issue 2700 before it closes (U13).
+15. The corrections listed at the end of section 1.
+
+
 ## 3. The items, as checked
 
 Verdicts used: **still ours** (nothing competing found) · **overlap** (someone's pending patch
@@ -218,3 +312,34 @@ WirePlumber at `c6a331d2` (2026-11-21).
 Not checked: comment threads on PipeWire issues and on gnome-bluetooth 137 and 18 (a login is
 needed); WirePlumber's suspend script at its tip.
 
+### 3.6 Kernel: btusb, L2CAP, the stable lines, the QCA items
+
+Stable releases today (kernel.org): mainline 7.4-rc3; 7.3.5, 6.18.64 and 6.12.118 (all
+2026-11-17); 6.6.162, 6.1.192, 5.15.225, 5.10.274 (2026-11-06). The packages refreshed on
+11-14 were made on 7.3.4, 6.18.63 and 6.12.117.
+
+| item | verdict | what decides it | proposed register text |
+|---|---|---|---|
+| CO-43 E (anchor a deferred URB under `txlock`, BT-23) | **still ours** | on the tip the anchoring in `submit_or_queue_tx_urb()` is still outside the lock; nobody else has posted on it; E, A and the BT-24/25 pair apply to the tip with offsets of at most five lines (not built). The driver file on bluetooth-next is now `drivers/bluetooth/btusb_main.c` (checked), so a stable form for 6.18 and older needs the `btusb.c` path | unchanged: goes first |
+| CO-43 A (BT-20), BT-24/25 pair | **still ours** | `btusb_waker()` and the deferred anchor are untouched; no btusb suspend, resume or reset commit since 2026-10-14 except an unrelated debugfs fix | unchanged: after E |
+| CO-43 B2 (BT-19), held | **overlap** | Jens Willmer's "Bluetooth: btusb: Wait for setup to finish before system sleep", patchwork 14973994 (2026-11-11, `new`, checked), fixes another defect (Realtek firmware download across a sleep) and collides with B2 in the driver's struct and `btusb_disconnect()`. Its author offered a v2 that moves the flush into the core, which would remove the collision | unchanged: held; rebase if his patch is applied |
+| CO-43 D v2 (BT-18), held | still ours | no upstream thread on a fix in btusb or the USB core | unchanged: the linux-usb question is unsent |
+| BT-17 / CO-43 C | still ours, local | `dcaf83ead130` is in 7.3.y, for MT7922/MT7925 only; nothing extends it | unchanged |
+| CO-45 / BT-22 (xHCI ep0) | **not applied anywhere yet** | the xHCI maintainer answered "Added to queue" on 2026-11-09; the patch (14964105) is `new` and is in none of mainline, the usb trees read, any stable queue, or noble's `-44` | 3.4 |
+| CO-35 / BT-10 (L2CAP ECRED deferred-accept hang) | **fixed by others, backport candidate; partly taken by the stable team** | `32d86e048d8e` and `608e0b7a675b` are in `queue-7.3` (checked), not yet released (7.3.5 lacks them). `queue-6.18`, `queue-6.12` and `queue-6.6` hold three other L2CAP patches of the same author's series (among them "hold chan in l2cap_ecred_conn_rsp") and **not** the pair (checked). Nobody has posted the pair as a backport (patchwork, no hit) | the two 7.3.y mails are not to be sent; our 6.18/6.12/6.6 backports are still wanted, and must be rebased onto today's tips plus the patches now queued there, then re-run |
+| BT-15 (SCI response layout) | fixed by others, queued | `5874f8d03268` is in `queue-7.3` (checked); expected in 7.3.6 | nothing to send |
+| BT-14 (6.12.y `getsockopt`) | **delivered** | the fix is in v6.12.115 (checked); bugzilla 222177 is the public report | `docs/STATUS.md` still says "watch": close |
+| BT-11 | cannot tell | no patch or report for the 6.12.y iso-tester stall | reopen only if it reproduces on 6.12.118 |
+| CO-22 (two ASUS QCA ROME entries for stable) | **fixed by others, backport candidate, still unrequested** | `d54601f21f` ("add ASUS 0b05:1868 to QCA Rome quirks", mainline 2026-09-28, in v7.4-rc1) is in none of 7.3.y, 6.18.y, 6.12.y, 6.6.y, 6.1.y and in no stable queue (checked) | unchanged: ready; repeat the tip and queue check on the day of sending (the request names the tips of 11-14) |
+| CO-25 (the report to Qualcomm) | cannot tell | no new QCA9377 or `qca_devices_table` patch, bugzilla entry or Launchpad bug; the list thread could not be read (lore) | unchanged: the reply v4 is unsent |
+| CO-09, CO-10, CO-28, the BT-9 backports | **delivered** | as the register says; BT-9 as `9a328ae014`, `80861f424f`, `dafb564a49` | closed |
+
+Near CO-43 and not touching it: Leon Romanovsky's MediaTek btusb patch (14998567), two USB
+core patches on autoresume, a full-speed ep0 patch (14966463) next to CO-45.
+
+Not checked: lore, the stable list itself, the 5.15 and 5.10 trees (their queues only).
+
+## 4. Companion file
+
+The part readers' findings as written, one block per item, with every query and what it
+returned (also the queries that found nothing): [`2026-11-22T1519Z-contributions-upstream-check-detail.md`](2026-11-22T1519Z-contributions-upstream-check-detail.md).
