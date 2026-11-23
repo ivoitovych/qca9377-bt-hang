@@ -22,7 +22,8 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 **What you can get from this repository**
 
 - **Diagnose a failure:** tools that tell a controller timeout, a `bluetoothd` crash and an
-  audio-layer problem apart — four things that look identical to a user.
+  audio-layer problem apart, three failures that look identical to a user (and from a link
+  that came up and worked: "Is this your problem?" below).
 - **Inspect upstream fixes:** the accepted commits, their reasoning and the evidence behind
   them, plus the backports and the tests of other authors' patches.
 - **Investigate your own device:** reusable log analysis, incident capture and sanitisation
@@ -62,7 +63,7 @@ of older kernels, and testing other authors' patches as posted.
 | upstream | contribution | state |
 |---|---|---|
 | Linux stable | Backport request for [`dc16388d45ec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc16388d45ec) (the QCA9377 device-table entry, authored by Tibor Harcsa — the fix for this repository's original hang), with the cherry-pick and build verified on every target line (`EX-059`) | requested 2026-10-02 ([lore](https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com)); queued for seven lines (stable-queue [`007ed56547de`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/commit/?id=007ed56547dedc050e1af25976bdfb299aa99b67), `EX-061`); **released in 7.2.10 and 6.18.56** (2026-10-11), **6.12.113** (2026-10-15), **6.6.160** (2026-10-21) **and 6.1.191, 5.15.224 and 5.10.273** (2026-10-30): every live stable line |
-| Linux Bluetooth (MGMT) | `Tested-by` on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure" ([patchwork 14831271](https://patchwork.kernel.org/patch/14831271/)), which its author had not reproduced: the leak reproduced without fault injection (a Mesh Send while powered off), the posted patch compared with an unpatched control in QEMU, and requests answered Failed shown to be transmitted later; reproducer, configs and 159 VM logs in [`retest/mesh-tx-leak/`](retest/mesh-tx-leak/REPORT.md) | sent 2026-10-06 ([lore](https://lore.kernel.org/r/20261006201800.3597400-1-yaroslav.voytovych@gmail.com)); the patch is pending |
+| Linux Bluetooth (MGMT) | `Tested-by` on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure" ([patchwork 14831271](https://patchwork.kernel.org/patch/14831271/)), which its author had not reproduced: the leak reproduced without fault injection (a Mesh Send while powered off), the posted patch compared with an unpatched control in QEMU, and requests answered Failed shown to be transmitted later; reproducer, configs and 159 VM logs in [`retest/mesh-tx-leak/`](retest/mesh-tx-leak/REPORT.md) | sent 2026-10-06 ([lore](https://lore.kernel.org/r/20261006201800.3597400-1-yaroslav.voytovych@gmail.com)); the patch is overtaken: the maintainer's own `1d7a52778858` ("Bluetooth: mgmt: Fix mesh transmission locking and lifetime", in bluetooth-next since 2026-11-19) fixes the same leak, and the patch itself stays `new` in patchwork |
 | Linux stable | Backports of [`96d006ae6445`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=96d006ae6445) (Jiajia Liu's fix for simultaneous discovery that never stops, which left this laptop unable to scan for days) to 6.12, 6.6 and 6.1 — the lines where the `dc16388d45ec` backport gives this device the quirk that exposes it — each built and tested with a new deterministic `mgmt-tester` case that fails without the backport and passes with it ([`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md)) | sent 2026-10-10 ([6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com), [6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com), [6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)); queued 2026-10-11; **released in 6.12.113** (2026-10-15), **6.6.160** (2026-10-21) **and 6.1.191** (2026-10-30) |
 | Linux stable | `Tested-by` on the 6.6.160-rc2 stable review: every BlueZ CI tester suite run on the release candidate and on its base in QEMU, compared case by case ([`contributions/CO-10-stable-6.6.160-rc2/`](contributions/CO-10-stable-6.6.160-rc2/README.md)) | sent 2026-10-21 ([lore](https://lore.kernel.org/r/20261021030542.1434603-1-yaroslav.voytovych@gmail.com)); 6.6.160 released the same day |
 
@@ -88,7 +89,7 @@ did not occur in the recorded trials:
 
 | build | what it tested | result | record |
 |---|---|---|---|
-| E1 — QCA setup only | the firmware-load half of the entry, no reset callback | 58 SCO links, three boots, two headset models, every hang-up answered, 0 command timeouts | `EX-055`, `EX-056`, `EX-058` |
+| E1 — QCA setup only | the firmware-load half of the entry, no reset callback | 58 SCO links, three boots, two headset models, every hang-up answered, 0 command timeouts | `EX-058` (the 58 links); `EX-056` (7 of them, on one of those boots) and `EX-055` (the setup loading) are not added to it |
 | E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` (and later rebuilt for `7.0.0-38`, 2026-10-11, and `7.0.0-42`, 2026-10-30) | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
 
 The entry is upstream commit `dc16388d45ec` ("Bluetooth: btusb: Add IMC Networks QCA9377
@@ -145,13 +146,22 @@ from v7.3, stable 7.2.10, 6.18.56, 6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10
 noble-proposed build on 2026-11-11; published in noble-updates and noble-security, seen
 2026-11-12); `7.0.0-42` and earlier do not. Until your distribution ships one, the entry is a
 two-line addition to
-`drivers/bluetooth/btusb.c`. Check which `btusb` you run with
+`drivers/bluetooth/btusb.c` (`drivers/bluetooth/btusb_main.c` on bluetooth-next, where the
+driver has been split; no release has that layout yet). Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-11-15 (a summary; the dated state of each item is its row in `docs/STATUS.md`)
+## Current direction — 2026-11-23 (a summary; the dated state of each item is its row in `docs/STATUS.md`)
 
+- **Ready to send, in this order** (2026-11-23, each tested in QEMU on bluetooth-next and, for the
+  first two, on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and 6.1.192; they wait for the author's
+  Signed-off-by and send):
+  - `CO-38`, a hidden advertising instance in the management interface, with its BlueZ test;
+  - `CO-44`, a timed-out management command reported as an authentication failure, with its
+    BlueZ test;
+  - `CO-22`'s stable request;
+  - `CO-43`, three btusb fixes for deferred transmit URBs (leaks and two races).
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
-  under review; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
+  sent, with no maintainer reply; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
   to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-15; the
   patches are still `new` in patchwork; the CI's own mirror pull requests were closed by its bot
   on 2026-11-11/12, which is not a review, and its rule makes v2 also a resend:
@@ -182,13 +192,13 @@ two-line addition to
   with send packages ready or in preparation, waiting for the author's decision (the table "What
   to send" in [`contributions/README.md`](contributions/README.md) names each package's current
   directory and state): stable backports for an L2CAP deferred-accept hang on the 6.18, 6.12
-  and 6.6 lines (the 7.3 line was queued by the stable team itself on 2026-11-22; the older
-  lines hang only with the non-default `enable_ecred` parameter) (`CO-35`); btusb fixes for a controller that fails to resume (`CO-43`) and a
-  management-interface status fix for a command timeout (`CO-44`); an error-path fix in the mesh
+  and 6.6 lines (the 7.3 line was seen queued by the stable team itself on 2026-11-22; the
+  6.18, 6.12 and 6.6 queues hold three sibling patches of the same series, which our backports
+  are to be rebased onto; the older lines hang only with the non-default `enable_ecred`
+  parameter) (`CO-35`); an error-path fix in the mesh
   send path (`CO-26`; our mesh use-after-free and locking fixes, `CO-04` and `CO-05`, were
   overtaken on 2026-11-19 by the maintainer's own applied fix); a stable request for two
-  more QCA device-table entries (`CO-22`); a hidden advertising instance in the management
-  interface (`CO-38`); a btusb fix for the wrong alternate setting when one of two SCO links goes
+  more QCA device-table entries (`CO-22`, also above); a btusb fix for the wrong alternate setting when one of two SCO links goes
   down (`CO-21`) and a btusb change for the error messages at call hang-up (`CO-20`, patch 1
   alone); a BlueZ use-after-free in
   `a2dp_reconfig()` (`CO-23`); BlueZ use-after-frees at exit (`CO-37`); a BlueZ fix for a
@@ -245,7 +255,9 @@ the controller's firmware, which is what the missing entry withheld on Linux.
    asserted and later refuted, so nobody re-asserts one.
 
 The formulation of the controller fault as the issue register carries it (`docs/issues.md`,
-where it is filed as `BT-1`, the project's own search handle):
+where it is filed as `BT-1`, the project's own search handle). It describes the symptom and
+was written before the cause was found; the cause is the missing device-table entry above (the
+first HCI command after a transparent SCO stream starts, on the ROM firmware):
 
 <!-- BT1-CURRENT-BEGIN -->
 > The controller sometimes enters a non-responsive HCI state during synchronous-audio link

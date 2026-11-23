@@ -52,10 +52,12 @@ Recent detail may be shortened. Settled state is never dropped.
   (boot log: `QCA: patch rome 0x302 build 0x3e8`). E1 (that firmware setup only) and E3 (the
   exact upstream entry) ran 74 links with 0 timeouts (§3). What the ROM firmware does wrong is
   not known and not claimed (§4).
-- **E3 and kernel updates.** E3 is btusb with that entry, built for one kernel ABI into
-  `/lib/modules/<krel>/updates/`. Before any new kernel boots, run `scripts/btusb-has-device.py`
-  on its **stock** btusb (default ID `13d3:3503`) with the control; if ABSENT, E3 is rebuilt for
-  it first. A changelog or a version number proves nothing (backports).
+- **E3 and kernel updates.** E3 was btusb with that entry, built for one kernel ABI into
+  `/lib/modules/<krel>/updates/`. It is **retired** since `7.0.0-43`, whose stock btusb has the
+  entry. The check stays as a safeguard: before a new kernel boots, run
+  `scripts/btusb-has-device.py` on its **stock** btusb (default ID `13d3:3503`) with the control.
+  Only if a kernel lacked the entry (ABSENT) would E3 be rebuilt for it. A changelog or a version
+  number proves nothing (backports).
 - **Dangerous on this machine, and why.**
   - Never unload, reload, rebind or swap btusb or `bluetooth.ko` on the running system: a
     reload kills even a *healthy* controller here (`EX-046`, 09-23), and recovery needs a
@@ -90,12 +92,16 @@ Recent detail may be shortened. Settled state is never dropped.
   - BlueZ `b79d4a887` (A1, the a2dp duplicate check) and `7bc9684dc` (A2, the emulator VLA), applied 10-19, identical to what was sent (same patch-id, checked 10-20);
   - the BT-9 stable backports of `96d006ae6445`: released in 6.12.113 (10-15, `9a328ae01489`), 6.6.160 (10-21, `80861f424fe5`) and 6.1.191 (10-30, `dafb564a498e`) (5.15 and 5.10 rightly get the entry without it: the code it fixes is first in v6.1);
   - the `Tested-by` on 6.6.160-rc2 (CO-10, sent 10-21).
-- **Submitted, under review:** CO-02, "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (`Cc: stable`) and its BlueZ sco-tester test, sent 2026-10-27 17:50 +0100 (patchwork 14919266–14919269). The list bot passed both (the BlueZ test with its expected smatch note); no human reply on 10-28. If Luiz Augusto von Dentz's pending tester series (patchwork series 1191414, sco-tester off GLib) lands first, the test needs a port. **2026-11-02:** still no human reply; the series went out unversioned, so the next posting is **v2** (the fold of 2 and 3, the BlueZ test port, possibly the mismatch patch); the tester series did land (`e37f17751`), so the port is owed.
+- **Submitted, under review:** CO-02, "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (`Cc: stable`) and its BlueZ sco-tester test, sent 2026-10-27 17:50 +0100 (patchwork 14919266–14919269). The list bot passed both (the BlueZ test with its expected smatch note); no human reply on 10-28. If Luiz Augusto von Dentz's pending tester series (patchwork series 1191414, sco-tester off GLib) lands first, the test needs a port. **2026-11-02:** still no human reply; the series went out unversioned, so the next posting is **v2** (the fold of 2 and 3, the BlueZ test port, possibly the mismatch patch); the tester series did land (`e37f17751`), so the port is owed. **Corrected 2026-11-23:** that v2 plan is history. The first v2 candidate, whose 2/2 sleeps under `hdev->lock`, can deadlock (3 of 3 with debug-only delays, 11-15) and is not to be sent. The current candidate is 1/2 plus a non-sleeping 2/2 (`contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/patches/alt-2of2/`), with the mismatch patch later and alone. Its checkpatch, the bot's CI and the send commands are still to do (`contributions/README.md`, "What to send", the "CO-02 v2" row). Still no human reply.
 - **Waiting for replies (as re-checked 2026-10-28, not re-read since; the submission rows of `docs/STATUS.md` win):** CO-02 (above); the Tested-by on Hui Peng's
   mesh_tx leak patch (10-06; still `new`); the #1554 retest by a second affected user (nothing
-  since 10-14). Every other authors' mesh fix is still `new` with no maintainer reply (STATUS,
-  the mesh row). Stable: every line is released (above; corrected 2026-11-15). **Since 10-29 lore
-  is readable from here over git**: `scripts/lore-git-message.sh <list> <message-id>` (lore's git
+  since 10-14). ~~Every other authors' mesh fix is still `new` with no maintainer reply~~
+  **(corrected 2026-11-23:** the maintainer's own `1d7a52778858`, in bluetooth-next since 11-19,
+  fixes the mesh send path. It overtakes Hui Peng's patch, the other authors' mesh fixes, and our
+  CO-04, CO-05 1/2, CO-06 and CO-14. CO-26 stands alone. STATUS, the mesh row and the top
+  paragraph.) Stable: every line is released (above; corrected 2026-11-15). **Since 10-29 lore
+  is readable from here over git** (re-checked 2026-11-23: the archive answered and was searched, no 403;
+  another machine got 403 on 11-22, so try it once on a new machine): `scripts/lore-git-message.sh <list> <message-id>` (lore's git
   archive is not behind the bot check), so the stable list's review mails can be looked up the
   same way.
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
@@ -105,10 +111,10 @@ Recent detail may be shortened. Settled state is never dropped.
   - **the CO-02 module on the laptop:** ran from 10-23 to the 10-29 15:20 shutdown on `-38`; `-42` ran without it, and the laptop left `-42` on 11-12 (above; corrected 2026-11-16);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacked five CVE fixes of 2026-10-07 (resolved: since the staging of 11-13 the running daemon is CO-03's build from 5.8's source, read 2026-11-22, STATUS machine section; corrected 2026-11-23) (STATUS), then the U12 backport request (CO-03); **U12 struck again 2026-10-31 13:42** (`EX-084`–`EX-088`): the backport is the remedy. It is built and VM-tested as of 10-31: `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes and the U12 backport, and on the trigger it goes from losing A2DP 70/70 to 0/70 (`contributions/CO-03-bluez-u12-backport/backport/`). It has been staged on disk since 11-13 and runs after the next bluetoothd start; the test with the MOMENTUM 4 is still the operator's (hand-off below; corrected 2026-11-15);
-  - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; **replaced 2026-11-13 by the persistent `bt-raw-archive.timer`**, STATUS, the machine section; corrected 2026-11-16; budget 20 GB, the coordinator's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is flagged by a start-up check (STATUS, the desktop capture);
+  - ~~restarting the raw-capture archive timer~~ **restarted 2026-10-29 on the operator's word, and again 2026-10-30 after the `-42` reboot** (`bt-trace-archive.timer`, transient: gone at every reboot; **replaced 2026-11-13 by the persistent `bt-raw-archive.timer`**, STATUS, the machine section; corrected 2026-11-16; budget 20 GB, the project's choice: the backlog plus about two weeks at ~0.6 GB/day while free space stays above journald's 20 GB floor; "a few months" would need ~55 GB for bt-trace alone, more than this disk can spare: another disk is the operator's call; captures from 10-09 06:46 to 10-18 14:14 were already deleted by bt-trace's free-space floor before the restart); and the desktop HCI capture (`bt-capture`, keeps 400, deletes the oldest; every August and September file already gone): its oldest 40 archived 10-29 by `scripts/desktop-capture-archive.sh` (897 MB); **the operator raised its budget to 10 GB on 10-29 for one run over the rest, no timer; it filled at 254 files (later files compress 1.57×, not 2.85×), and the operator raised it to 20 GB the same night for the remaining 131**; whether to archive it regularly later stays open; an archive at 80 % of its `BUDGET_GB` is flagged by a start-up check (STATUS, the desktop capture);
   - an Ubuntu SRU for `dc16388d45ec` (less pressing: Ubuntu's next stable base should carry it; an inference);
   - the U6 SRU; the U7 and U17 PipeWire reports and the U15/U20 quirk entries (PipeWire's rules: the operator writes); the U11 opt-in proposal; U19's Launchpad report;
-  - a reply on Jiale Yao's power-off patch (patchwork 14864878; its comparison was re-run in the research of 2026-11-01: 8 of 26 to 21 of 26 and 20 of 26, while the backlog-3 and removal cases still fail, CO-06; corrected 2026-11-16);
+  - ~~a reply on Jiale Yao's power-off patch~~ (patchwork 14864878; **closed 2026-11-23:** that patch and CO-06 are overtaken by `1d7a52778858`, so no reply is owed);
   - debug builds: GNOME Settings, and `btusb` for U8;
   - shellcheck; a second copy of the capture archive (§7); recording the running `bluetoothd` in `bt-trial` (§8a);
 - **Machine:**
@@ -139,14 +145,14 @@ Recent detail may be shortened. Settled state is never dropped.
     corrected 2026-11-15). The desktop capture runs again since 10-23 22:12:30 (STATUS). **Number reuse and `failed` rows (added 2026-11-16):** E3 #5 and #11 also reused a trial number (`evidence/trials/E3/trial-05/NOTE-two-uses-of-this-number.md`, `evidence/trials/E3/trial-11/NOTE-two-trials-one-number.md`); that reuse is recorded in those note files only, not in `results.tsv`. E3 #3 to #11 all carry the verdict `failed` with 0 links in `results.tsv`; notes for #3, #4 and #5 say what that means, and #6, #7, #8, #10 and #11 have none, so their `failed` is not explained in the repository. The trial reports (`tools/lib/trial-summary.awk`, `tools/lib/trial-sco-table.awk`) exclude a `failed` row with BT-1 not observed and name it, so none of these counts as a survival.
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`; since 2026-11-13 the persistent `bt-raw-archive.timer` runs it (STATUS, the machine section; corrected 2026-11-16), where before it was a transient timer that every reboot removed. The 10-11 to 10-30 history: paused from 2026-10-11 to 10-29 (captures from 10-09 06:46 to 10-18 14:14 were lost to bt-trace's free-space floor meanwhile); restarted 10-29 on the operator's word with a 20 GB budget, and again on 10-30 after the `-42` reboot (`docs/tooling-index.md` has the command). Rules: §7, "Evidence".
-- **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; CO-04's independent fix for the mesh use-after-free; on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11; BT-12 to BT-15 are released, queued upstream or not ours, STATUS); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
+- **Open investigations:** `U10`, the Tronsmart T8 silent on SBC-XQ (waiting on the operator's test-sound check); `U13`/`U18` and `U16`, BlueZ defects with the laptop's headsets, needing reproducers and patches; ~~CO-04's independent fix for the mesh use-after-free~~ (overtaken by `1d7a52778858`, 2026-11-23); on 6.12.114 an iso-tester stall with a lockdep warning, not analysed (STATUS, BT-11; BT-12 to BT-15 are released, queued upstream or not ours, STATUS); since 11-05 BT-16 (three start-up failures) and BT-17 to BT-25 (btusb resume and the MGMT status; STATUS rows, hand-off below) (`docs/issues.md`).
 - **Who works where:**
   - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge. The old remote branches were deleted on 2026-11-15 (see the hand-off below).
   - The test-suite maintainer works on the branch `tests/test-suite` and rebases it onto `main` when `main` moves (`comms/2026-11-13T0100Z-from-test-suite-maintainer-to-everyone.md`; this line said "merges `main` into it" until 2026-11-16; the branches `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main` that this line named before 2026-11-16 are among the 16 deleted on 2026-11-15, §0 hand-off below).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-11-23** (a fresh hand-off after the upstream re-read of 11-22 and two outside rounds on the kernel send queue; the 11-14 block moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
-ready that day, the outside-review document, the Ubuntu bundle, the five tracks; the 11-12 block
+ready that day, the outside-review document, the Ubuntu bundle, the five work lines; the 11-12 block
 moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-12** (the registers reconciled
 with each other and with upstream; the hand-off brought to 11-12; the reset count corrected to two
 controlled tests). Before that,
@@ -189,25 +195,33 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - Rule learned: check "applied or not" in the tree (`git merge-base --is-ancestor`), never in
 >     patchwork's state alone.
 > - **The send queue.** Two outside rounds agree on it: the five rankings of 11-22 and the five
->   reviews of 11-23 (`reviews/2026-11-23T0404Z-…`). One mail at a time, several days apart:
->   1. **CO-38's kernel patch, alone** (`CO-38-…/send-20261123/`, with `Cc: stable`), its BlueZ test
->      (rewritten small on 11-23) the same day.
->   2. **CO-44** (`CO-44-…/send-20261123/`, message trimmed, no `Cc: stable` after its precedent).
->   **Both were tested on 11-23** on bluetooth-next and on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and
->   6.1.192 (`CO-38-…/send-20261123/RUNS-20261123.md`): each new case fails 3/3 on base and passes
->   3/3 patched, and nothing else changes. What is left for both is the Signed-off-by, the send
->   commands and the dry runs.
->   **The btusb series is regenerated (11-23):** `CO-43-…/series-20261123/` holds the three patches on
->   public `cf357cfc025e` in the new order (leak fix first). The final code equals the old order's,
->   checkpatch is clean, and the W=1 builds pass at every step. Its QEMU reruns are done (105 runs). Each
->   patch's case goes from failing on base to passing with the patch. The new multi-URB test (a command
->   plus 2 ACL packets) leaks 3 skbs on base and none with the series. Nothing else changes, and no kernel
->   report appears. The testing notes are in the patches, and the old packages are marked SUPERSEDED.
+>   reviews of 11-23 (`reviews/2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`).
+>   One mail at a time, several days apart. All paths are under `contributions/`:
+>   1. **CO-38's kernel patch, alone**, with `Cc: stable`
+>      (`CO-38-read-adv-features-hidden-instances/send-20261123/patch/`). Its BlueZ test, rewritten
+>      small on 11-23 (`CO-38-read-adv-features-hidden-instances/send-20261123/bluez/`), goes the
+>      same day.
+>   2. **CO-44**, message trimmed, no `Cc: stable` after its precedent
+>      (`CO-44-mgmt-timeout-reported-as-auth-failed/send-20261123/kernel/`, BlueZ test in
+>      `CO-44-mgmt-timeout-reported-as-auth-failed/send-20261123/bluez/`).
+>      **Tested on 11-23 (CO-38 and CO-44):** on bluetooth-next and on 7.3.5, 6.18.64, 6.12.118,
+>      6.6.162 and 6.1.192 (`CO-38-read-adv-features-hidden-instances/send-20261123/RUNS-20261123.md`),
+>      each new case fails 3/3 on base and passes 3/3 patched, and nothing else changes. Left for
+>      both: the Signed-off-by, the send commands and the dry runs.
 >   3. **Beside them, CO-22's stable request v4**
 >      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
 >      day.
->   4. **The btusb series** (`CO-43-…/series-20261123/`): ready apart from the
->      operator's `Cc: stable` call on 1/3 and the send-day steps.
+>   4. **The btusb series** (`CO-43-btusb-runtime-resume-failure/series-20261123/`), regenerated on
+>      11-23:
+>      - three patches on public `cf357cfc025e`, the leak fix first; the final code equals the old
+>        order's;
+>      - checkpatch clean, and W=1 builds pass at every step;
+>      - 105 QEMU runs: each patch's case goes from failing on base to passing with the patch. The new
+>        multi-URB test (a command plus 2 ACL packets) leaks 3 skbs on base and none with the series.
+>        Nothing else changes, and no kernel report appears;
+>      - testing notes in the patches; recipients in `recipients.txt`; the old packages are marked
+>        SUPERSEDED.
+>      Left: the operator's `Cc: stable` call on 1/3 and the send-day steps.
 >   5. **CO-26**, regenerated alone with its fault injection rerun.
 >
 >   No reviewer found a correctness defect in the five kernel diffs. What remains is tests,
@@ -234,11 +248,16 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     (ported to `main` as `e86a631`) and the whole-project review's branch.
 > - **The day's records:**
 >   - `reviews/2026-11-22T1240Z-kernel-contributions-readiness.md`, with its work log F-01 to F-48;
->   - `…1513Z-five-kernel-submissions-for-outside-review.md`, rebuilt by
->     `scripts/kernel-review-pack/build_top5.py`;
->   - `…1519Z-contributions-upstream-check.md`;
->   - `…1526Z-first-submission-ranking-findings-and-checks.md`;
->   - `2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`.
+>   - `reviews/2026-11-22T1513Z-five-kernel-submissions-for-outside-review.md`, rebuilt by
+>     `scripts/kernel-review-pack/build_top5.py`; the one to share with outside reviewers (the
+>     11-14 twelve-item document is outdated);
+>   - `reviews/2026-11-22T1519Z-contributions-upstream-check.md`;
+>   - `reviews/2026-11-22T1526Z-first-submission-ranking-findings-and-checks.md`;
+>   - `reviews/2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`;
+>   - `reviews/2026-11-23T0540Z-bluez-test-with-kernel-fix-practice.md`;
+>   - `reviews/2026-11-23T0353Z-foundation-documents-review.md` and
+>     `reviews/2026-11-23T1738Z-foundation-documents-recheck.md` (ported from the reviewer's branch),
+>     with their checks in `reviews/2026-11-23T0800Z-foundation-documents-review-findings-and-checks.md`.
 > - **CI:** `checks` is green. The access-audit workflow has been red on every push since at least
 >   11-16 (STATUS, Repository health) and is not fixed.
 > - **Carried forward from the 11-14 block:**
