@@ -74,18 +74,44 @@ no `Cc: stable`, and it is not in 7.3.5 (S-3's count).
 **S-8. A stable release can bring a file rename.** 7.3.6 already has `drivers/bluetooth/btusb_main.c`, from the
 backported btusb split. 6.18 and older still have `btusb.c`. A patch made on bluetooth-next applies to them only
 with the rename, as a cherry-pick's rename detection does it.
-- Evidence: `tmp/kernel-queue-20261123/apply-co43-1-lines.sh`: OK on all seven tips.
+- Evidence, in two steps:
+  - `tmp/kernel-queue-20261123/apply-co43-1-lines.sh` (rewrites the path, then applies): OK on all seven tips.
+  - A real cherry-pick: `tmp/kernel-queue-20261123/cherry-pick-lines.sh 888176e9a640` runs
+    `git merge-tree --write-tree --merge-base=<c>^ <tip> <c>`, with rename detection. It is CLEAN on all seven
+    tips, landing in `btusb_main.c` on 7.3.6 and in `btusb.c` on 6.18.65 down to 5.10.275.
+  - Only the second proves what the stable team's cherry-pick will do.
+- Checked: 2026-11-23.
+- Re-check: per stable release.
+
+**S-9. CO-44's precedent stayed in mainline.** `7eac80614300` (MGMT RFKILLED mapping, `Fixes:`, no stable tag) is
+in mainline and in none of the seven stable lines. 7.3.6 took 36 other `Fixes:`-only Bluetooth commits but not
+this one.
+- Evidence: `tmp/kernel-queue-20261123/backport-in-lines.sh 7eac80614300`.
 - Checked: 2026-11-23.
 - Re-check: per stable release.
 
 ## Testing expected before a send
 
-**T-1. The upstream kernel CI runs ten BlueZ testers:** bnep, iso, l2cap, mgmt, rfcomm, sco, ioctl, mesh, smp and
-userchan. gap-tester needs D-Bus and bluetoothd and waits forever in a plain test-runner guest. hci-tester and
-6lowpan-tester are not in the CI.
-- Evidence: `cache/action-ci/run-kernel-ci.py` l.1087–1096.
-- Checked: 2026-11-23.
+**T-1. The upstream kernel CI (`bluez/action-ci`) lists eleven BlueZ testers and picks them by changed file.**
+- The eleven: l2cap, iso, bnep, mgmt, rfcomm, sco, ioctl, mesh, smp, userchan and 6lowpan.
+- The selection, by file:
+  - `net/bluetooth/mgmt.c` (and `mgmt_util.c`, `mgmt_config.c`, `include/net/bluetooth/mgmt.h`) → mgmt-tester and
+    mesh-tester;
+  - `drivers/bluetooth/` → none;
+  - a file matching no rule → all.
+- Not in the CI: gap-tester, which needs D-Bus and bluetoothd and waits forever in a plain test-runner guest, and
+  hci-tester.
+- Evidence: `git -C cache/action-ci grep -n -E 'tester|mgmt|drivers' refs/remotes/bluez/HEAD -- config.json`,
+  l.37–48, 79–86, 157–161.
+- Checked: 2026-11-23, `bluez/action-ci` HEAD `c7d077f185cd`.
+- Correction: an earlier reading of the old fork `BluezTestBot/action-ci` (2024-11) gave ten testers and no
+  selection.
 - Re-check: when the CI repository changes.
+
+**T-5. The BlueZ testers never load btusb.** They run on emulated controllers over `vhci`, so they give no
+coverage of a btusb change. For btusb, the evidence is the emulated USB device bound to the real driver over
+usbip, with kmemleak, KASAN and lockdep.
+- From: `reviews/2026-11-23T2130Z-four-questions-findings-and-checks.md`; T-1's `__none__` rule agrees.
 
 **T-2. Every upstream moves within a day, so test on the tips of the send day.** On 2026-11-23 alone, bluetooth-next
 gained 15 Bluetooth commits, BlueZ master moved, seven stable releases came out (7.3.6 … 5.10.275), and mainline
