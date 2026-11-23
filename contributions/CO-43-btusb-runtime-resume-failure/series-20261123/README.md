@@ -65,7 +65,7 @@ checkpatch errors, and the files apply in order to `cf357cfc025e` and give the s
 **Still to do:**
 1. ~~Reruns~~ and ~~testing text~~: done (above).
 2. **Replace the old packages:** add SUPERSEDED.md to `../send-20261113/E/` and `../send-bt24-bt25-20261114/` (done 2026-11-23).
-3. **Recipients:** `get_maintainer.pl` on the final tree, with Oliver Neukum on Cc as the `Fixes:` author.
+3. ~~Recipients~~: done, `recipients.txt` (2026-11-23).
 4. **Send day:** the operator's Signed-off-by, checkpatch, the bot checks and a dry run.
 5. **Operator's call:** `Cc: stable` on 1/3, where the reviewers are split. There is none on 2/3 and 3/3.
 6. **Laptop soak:** only on the operator's word.

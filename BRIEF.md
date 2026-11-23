@@ -206,7 +206,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   3. **Beside them, CO-22's stable request v4**
 >      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
 >      day.
->   4. **The btusb series** (`CO-43-…/series-20261123/`): ready apart from the recipients, the
+>   4. **The btusb series** (`CO-43-…/series-20261123/`): ready apart from the
 >      operator's `Cc: stable` call on 1/3 and the send-day steps.
 >   5. **CO-26**, regenerated alone with its fault injection rerun.
 >
@@ -216,7 +216,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - ~~CO-38's BlueZ test rewrite and its run~~, ~~CO-44's testers on the tip~~, ~~the btusb series
 >     and its new test~~: done 11-23;
 >   - the dry runs (CO-38, CO-44, the btusb series) once the operator's Signed-off-by is in;
->   - get_maintainer.pl for the btusb series;
+>   - ~~get_maintainer.pl for the btusb series~~: done 11-23 (`recipients.txt`);
 >   - CO-26;
 >   - the CO-35 rebase.
 > - **Open for the operator:**
