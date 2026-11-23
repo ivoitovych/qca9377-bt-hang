@@ -396,3 +396,66 @@ apply check on today's tip before a send. Their "applies to bluetooth-next" clai
 outside lock" (patchwork 15008482, 2026-11-21, `new`) is about M-5's mechanism: a destroy
 callback, `mesh_next()`, run under `cmd_sync_work_lock` (STATUS l.101). · M-5's row, "removed by
 CO-04", should be re-read against both 1d7a52778858 and this patch.
+
+**F-44** · 15:30Z · bluetooth-next `cf357cfc025e`, `net/bluetooth/mgmt.c` `mesh_send_sync()` (read in
+the code, l.2441–2507) · This refines F-41 from the commit message to the code:
+- **CO-05 1/2 is in the tree in substance.** The function now takes `hdev->lock` at its start and
+  releases it before `hci_schedule_adv_instance_sync()`.
+- **CO-26's defect is still there.** When `hci_add_adv_instance()` fails, `err = PTR_ERR(adv)` is
+  set and the function continues. Unless the instance timeout is armed, it still calls
+  `hci_schedule_adv_instance_sync()` for the mesh instance that was never added, and returns that
+  result instead of `err`.
+- **CO-26 applies alone.** Its `review-fixes-20261114/variant-B-without-fixes/0002-*.patch` applies
+  to the tip by itself (scratch-index check).
+
+· Consequence: CO-26 becomes its own small candidate. It needs regenerating with a message that no
+longer leans on 1/2, and a rerun of its fault injection. CO-05 1/2 is to be dropped.
+(`2026-11-22T1526Z-first-submission-ranking-findings-and-checks.md`, finding 3.)
+
+**F-45** · 15:30Z · CO-43 BT-24/25 (scratch-index check on the same tip) · The leak fix
+(`send-bt24-bt25-20261114/0002-*.patch`) conflicts unless the race fix (0001) is applied first, on E
+and on the bare tip. · An outside suggestion to send the leak fix alone means regenerating it,
+not reordering the pair.
+
+**F-46** · 2026-11-23 · **correction of F-19 and of the readiness report's CO-12 row** (prompted
+by the upstream check on branch `research/contributions-upstream-check-20261122`,
+`2026-11-22T1519Z-contributions-upstream-check.md` §3.3). Cen Zhang's "Bluetooth: hci_sync: Fix
+remaining advertising instance UAFs" is **applied**: bluetooth-next `d7e77168da` (committed
+2026-11-19, signed off by the maintainer). The tip read on 11-22, `cf357cfc025e`, already contained
+it (`git merge-base --is-ancestor d7e77168da cf357cfc025e` → 0). F-19 called the series `new`,
+because patchwork still shows 14999296/14999297 as `new` today. That was patchwork's state, not
+the tree's.
+- The commit converts the timeout in `u32` and clamps to `U16_MAX`: `hci_sync.c` on the tip,
+  `set->duration = cpu_to_le16(min_t(u32, duration / 10, U16_MAX))`. That is **CO-12's fix**.
+- CO-12's package now **conflicts** with the tip (scratch-index check).
+- As applied, its `mgmt.c` part does not touch `mesh_send_sync()`. That function's lock comes
+  from `1d7a52778858`, so F-44's attribution stands.
+
+· Consequences:
+- CO-12 is superseded, in the same class as CO-04, CO-05 1/2, CO-06 and CO-14. Its readiness
+  row (52) is wrong.
+- What stays ours is the BlueZ duration tests: CO-38's held series B. They should now pass
+  upstream and become tests for the applied fix.
+- Lesson: an "applied or not" claim is checked against the tree (`git merge-base --is-ancestor`
+  or `git log --grep`), never against patchwork's state alone.
+
+**F-47** · 2026-11-23 · stable queue (read: `queue-6.18`, `queue-6.12`, `queue-6.6` listings) ·
+Confirming the same check: all three queues hold three other L2CAP patches from the same upstream
+work, and not CO-35's pair:
+- "Bluetooth: L2CAP: hold chan in l2cap_ecred_conn_rsp";
+- "… hold l2cap_conn lock in l2cap_connec…";
+- "… take chan lock for l2cap_chan_add re…".
+
+`queue-6.6` also holds several other L2CAP fixes. · CO-35's 6.18.y, 6.12.y and 6.6.y backports
+must be rebased onto the tips plus these queued patches and re-run before they can be sent. Their
+11-14 test results do not cover that base. Asking the stable team whether they mean to take the
+pair, as the upstream check suggests, is the operator's call.
+
+**F-48** · 2026-11-23 · the same upstream check, detail file (BT-13 entry) · Wentao Liang's 14942649
+(the BT-13 branch, conflicting with CO-02 v2 1/2) drew an objection on the list on 11-04: the
+sender used several identities, the patch has no checkpatch run and no reproduction or test, and
+it came as unorganised independent patches. The bot's CheckPatch and l2cap-tester also failed.
+No maintainer has commented on its merit, and it is not applied (the tip still has the branch).
+· CO-02 v2 need not wait for it. The textual conflict stays a rebase question if it is ever
+applied. (The detail file quotes that patch's trailer verbatim, including tool names. That line
+should be paraphrased if the file is ported to `main`.)
