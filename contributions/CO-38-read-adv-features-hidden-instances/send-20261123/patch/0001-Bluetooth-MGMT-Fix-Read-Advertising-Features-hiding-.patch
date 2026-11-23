@@ -1,4 +1,4 @@
-From 58ebe4c5b89793d7f5a3bf3fab8fc1d83a315e1d Mon Sep 17 00:00:00 2001
+From b6a774e861938f2f9ba4ca7967c03bf9993cb3a6 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sat, 14 Nov 2026 01:47:30 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
@@ -20,11 +20,10 @@ Cc: stable@vger.kernel.org
 Tested in QEMU with a new mgmt-tester case, "Read Advertising
 Features - Success 3 (Instance 2 only)", sent to BlueZ separately: it
 adds only instance 2 and expects exactly that instance in the reply.
-On bluetooth-next cf357cfc025e it fails 3 of 3 runs without this patch
-and passes 3 of 3 with it. The same holds on 7.3.5, 6.18.64, 6.12.118,
-6.6.162 and 6.1.192. The patched kernels also carried a one-line MGMT
-timeout fix sent separately; besides the two new cases, no mgmt-tester
-or mesh-tester result changed.
+With this patch alone the case passes 3 of 3 runs and without it
+fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
+6.18.65, 6.12.119, 6.6.163 and 6.1.193. In the ten testers of the
+Bluetooth kernel CI, no other case changed on any of these kernels.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -43,7 +42,7 @@ index d21538634bc3..01969ab57339 100644
  			instance++;
  		} else {
 
-base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
+base-commit: 5063a0717aa238f5242bf6b4abb8ddc1741ce682
 -- 
 2.43.0
 

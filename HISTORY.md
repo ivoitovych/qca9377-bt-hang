@@ -4845,6 +4845,56 @@ since September. The project's own records of these defects were public. Being o
 is the ordinary outcome of a busy subsystem, and a reason to send the small, finished items
 sooner.
 
+## Testing to a stable standard, every tree moving at once, and evidence instead of votes (2026-11-23)
+
+**The day's work.** Five outside reviews of the send packages led to these changes:
+- CO-38's BlueZ test was rewritten from 388 lines to 30;
+- CO-44's message was trimmed;
+- the btusb fixes became one three-patch series with the leak fix first, on a public base. 105 QEMU runs
+  include a new test with several URBs deferred, which leaked on base and not with the series;
+- CO-26 was regenerated alone, and its fault injection rerun on the tip.
+
+Two rechecks found only wording and packaging points, all applied.
+
+**The operator set a testing standard.**
+- A `Cc: stable` comes only after building and testing on every line the fix reaches.
+- The same suites run on bluetooth-next and mainline.
+- Each patch that is sent alone is tested alone.
+- Exact versions are recorded per image; raw logs are compressed and kept privately.
+
+The first stable-line runs of the day showed it was worth having. A tester hung in the guest on 7.3.5, and every
+tree moved during the evening: bluetooth-next, mainline (v7.4-rc4), BlueZ, and seven stable releases. So all
+testing was redone on the new tips. One image was built per patch, after a reviewer noticed that the joint image
+did not match a send order days apart. A watchdog was added for guest hangs: the known L2CAP deferred-accept hang
+(CO-35) on 6.18, 6.12 and 6.6, and an ISO hang on 6.12 (BT-11).
+
+**Result on bluetooth-next, mainline and 7.3.6 down to 6.1.193:**
+- each one-line MGMT fix changes exactly its own test case;
+- in the ten testers, nothing else changes, and every hang hits the same case with and without the patch;
+- no kernel report differs.
+
+The runs also exposed defects on the older lines themselves, on both base and patched, now to be registered:
+KASAN use-after-frees on 6.1.193 and a recursive-locking report on 6.12.119.
+
+**The trailers were settled by precedent, not by vote.** Asked for evidence, the reviewers produced checkable
+history, and each piece was confirmed in the tree:
+- post-split btusb fixes reaching the old `btusb.c` on 6.18 to 6.1, once by hand; on 7.3 the stable team took the
+  split itself as a dependency;
+- an MGMT correction reverted from stable after it broke bluetoothd;
+- the closest MGMT status precedent staying mainline-only;
+- Bluetooth's internal errno fixes going both ways.
+
+One reviewer's measurement looked decisive and turned out to be a snapshot: on 7.3.5, `Fixes:`-only commits
+almost never reached stable, but 7.3.6, released that day, took 36 of 87. My own register entry on backport
+forms was corrected the same evening. Another reviewer found that 6.18 had reverted two device-ID backports whose
+firmware was too new for older distributions. That question goes into any ID stable request now, and CO-22's
+answer is in its mail: its firmware has shipped since 2015.
+
+**What was learned is now kept.** Every review had been rediscovering upstream practice. Two passes over all
+review records and all outside reviewers' texts yielded 149 candidate facts. A third pass merged and checked them
+into `docs/upstream-practice.md`: verified facts with evidence, contested questions with both sides, and refuted
+claims dropped.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*

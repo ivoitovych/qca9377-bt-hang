@@ -178,6 +178,75 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **NIGHT UPDATE (2026-11-23, about 22:30 UTC; it supersedes the lines below where they differ).**
+> Nothing was sent.
+> - **The operator's testing standard (2026-11-23):**
+>   - a `Cc: stable` only after a build and all relevant tests on every affected line;
+>   - the same suites on bluetooth-next and mainline;
+>   - one image per sent patch;
+>   - versions recorded per image;
+>   - raw logs compressed and kept privately.
+> - **Every upstream moved on 11-23:**
+>   - bluetooth-next `5063a0717aa2`;
+>   - mainline v7.4-rc4 `b6a9fa34ce41`;
+>   - stable 7.3.6, 6.18.65, 6.12.119, 6.6.163, 6.1.193, 5.15.226, 5.10.275;
+>   - BlueZ master `1608f8361`.
+>
+>   The earlier runs of 11-23 (on 7.3.5 … 6.1.192) stay as evidence for those tips.
+> - **CO-38 and CO-44 on the current tips: done.**
+>   - **Trees:** bluetooth-next, mainline and 7.3.6 down to 6.1.193; images base / +CO-38 only / +CO-44 only.
+>   - **Suites:** the 10 testers our runs used. The upstream CI lists 11, so 6lowpan-tester is still to run on
+>     all images; T-1 of the register.
+>   - **Result:** each patch's own case fails 3/3 on base and passes 3/3 with it alone. In every tester, no
+>     other case changes, and no kernel report differs.
+>   - **Hangs**, the same case with and without each patch:
+>     - 6.18, 6.12 and 6.6: l2cap "Ext-Flowctl Server - Accept 2 Close 1" (CO-35's hang);
+>     - 6.12: iso "Broadcaster Receiver Defer Get BASE - Success" (BT-11).
+>
+>     A watchdog in `tmp/kernel-queue-20261123/run-tips.sh` stops them; `last-case.py --annotate` labels them.
+>   - **Evidence:** `contributions/CO-38-read-adv-features-hidden-instances/send-20261123/evidence/tips-20261123/`
+>     holds the per-image `.versions`, the raw-log SHA-256s, `compare-tips.txt` and `report-diff.txt`. The raw
+>     logs are in private `backup/local-work`, `2026-11-23-test-runs/kernel-queue-runs.tar.zst`.
+>   - **The patches** are regenerated on `5063a0717aa2` with unchanged patch-ids, and their testing notes cite
+>     these results. The BlueZ tests are re-exported alone on `1608f8361`.
+> - **Trailer decisions, after an evidence round of five outside reviewers**
+>   (`reviews/2026-11-23T2200Z-three-decisions-evidence-findings-and-checks.md`):
+>   - **CO-44:** `Fixes:` only, 4 of 5;
+>   - **CO-43 1/3:** `Cc: stable`, 5 of 5, once its seven-line runs pass;
+>   - **CO-26:** variant A, 5 of 5. `Fixes: b338d91703fa` was verified as the origin: `mesh_send_sync()` is born
+>     there with the `err`/schedule path.
+>
+>   These are recommended; the operator confirms. The `MGMT_STATUS_BUSY` return stays out of CO-26.
+> - **Running:** the btusb agent's job for CO-43 1/3 on all seven current stable tips.
+>   - It started at 22:25 on the line "suites done (tips2, final)".
+>   - Per line: tip and tip+1/3 with debug code; the kmemleak cases, the multi-URB case and the matrix (392 guest
+>     runs); W=1, and a `CONFIG_PM=n` build; its tree compared with the real cherry-pick.
+>   - Its work area is the machine-local `co43-series-20261123` folder.
+>   - Its report decides the 1/3 tag.
+> - **Found, to register (BT rows to add):** pre-existing on both base and patched:
+>   - 6.1.193 KASAN use-after-free in `hci_connect_le_scan_cleanup` (iso-tester);
+>   - 6.1.193 use-after-free in `sco_chan_del` (sco-tester);
+>   - 6.1.193 lockdep `discov_off` (known);
+>   - 6.12.119 iso recursive locking with the hang (BT-11).
+>
+>   Likely backport candidates: find the upstream fixes.
+> - **Done 11-23 night:**
+>   - **`docs/upstream-practice.md` filled:** about 65 verified entries, 7 contested, an unverified list, 4 dropped.
+>   - **Register corrections:** S-4 (the backport form says nothing of the route); S-8 (rename precedents); K-3
+>     (an ID backport can need new firmware); K-4; K-5 (an MGMT correction reverted from stable).
+>   - **CO-22 mail:** a firmware sentence. Its 0x302 files have shipped since 2015, `23d13405`. `d54601f21faf`
+>     cherry-picks clean on all seven tips.
+>   - **BlueZ patches carry no `Signed-off-by`** (B-4).
+>   - **Archive budgets:** raised to 24 and 30 GB (operator).
+> - **Open:**
+>   - **The reviewers** were asked about sending several submissions close together. netdev limits 15 patches
+>     outstanding per tree; no Bluetooth rule is known. They were also asked whether netdev's rule (state
+>     kernel modification or error injection used to reproduce) binds Bluetooth. If so, move the "debug-only
+>     delay" and fault-injection clauses of CO-43 2/3, 3/3 and CO-26 into the body.
+>   - **Reviewer 1:** the operator considers retiring it; it added no unique finding.
+>   - **Local commits to export:** cache/linux branch `co43-series-20261123` (`scripts/export-local-work.py`).
+>   - **Then:** the dry runs, after the operator's Signed-off-by.
+>
 > - **The machine** (STATUS, "The investigation machine"):
 >   - Ubuntu `7.0.0-43` with the stock btusb and `bluetooth.ko`. No `updates/` module remains for
 >     any kernel since 11-22, and ELL was removed from `/usr`.

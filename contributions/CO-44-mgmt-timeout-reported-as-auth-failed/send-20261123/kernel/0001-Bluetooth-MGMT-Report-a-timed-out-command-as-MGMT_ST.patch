@@ -1,4 +1,4 @@
-From c972e296991fda04484a4b03a07ac58c24d9372e Mon Sep 17 00:00:00 2001
+From 7277aa8f0c8adf4c0aaa44fc6ebafa0309441ce8 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 13 Nov 2026 04:19:58 +0100
 Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
@@ -26,12 +26,12 @@ Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1"
 ---
 Tested in QEMU with BlueZ's doc/tester.config and a new mgmt-tester
 case, "Set Device Class - Timeout 1", sent to BlueZ separately: its
-emulated controller drops Write Class of Device. On bluetooth-next
-cf357cfc025e the case gets Authentication Failed in 3 of 3 runs
-without this patch and passes 3 of 3 with it. The patched kernel also
-carried a one-line Read Advertising Features fix sent separately;
-besides the two new cases, no mgmt-tester, l2cap-tester, smp-tester or
-mesh-tester result changed.
+emulated controller drops Write Class of Device. Without this patch
+the case gets Authentication Failed in 3 of 3 runs, and with this
+patch alone it passes 3 of 3, on bluetooth-next 5063a0717aa2,
+v7.4-rc4, 7.3.6, 6.18.65, 6.12.119, 6.6.163 and 6.1.193. In the ten
+testers of the Bluetooth kernel CI, no other case changed on any of
+these kernels.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -50,7 +50,7 @@ index d21538634bc3..117ae7ab070b 100644
  		return MGMT_STATUS_NO_RESOURCES;
  	case -EISCONN:
 
-base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
+base-commit: 5063a0717aa238f5242bf6b4abb8ddc1741ce682
 -- 
 2.43.0
 
