@@ -113,3 +113,108 @@ stale is corrected, and the page already carries the upstream state of 2026-11-2
 mesh items and CO-35. What is left is the heading's date, one "pending" that has been
 overtaken, and the pre-cause paragraph.
 
+### `BRIEF.md`, lines 1–100 (read in full)
+
+- **FD-11 (Medium, stale against the README of the same tree).** `BRIEF.md:93`, "Submitted,
+  under review: CO-02 …": the last dated sentence is of 2026-11-02 and describes v2 as "the
+  fold of 2 and 3, the BlueZ test port, possibly the mismatch patch". `README.md:153-162` and
+  the "What to send" table describe the v2 that exists: patch 1 plus a non-sleeping 2/2, the
+  first candidate withdrawn because it can deadlock, the mismatch patch later and alone. The
+  state block was "corrected 2026-11-15 where marked"; this bullet is not marked and not
+  corrected.
+- **FD-12 (Medium, overtaken upstream).** `BRIEF.md:94-97`, "Waiting for replies": "Every other
+  authors' mesh fix is still `new` with no maintainer reply". The bullet says it was not
+  re-read since 2026-10-28, which is honest, but the fact behind it changed in kind on
+  2026-11-18: the maintainer applied his own fix for that path (`1d7a52778858`), which
+  overtakes those patches and four of our own items. A reader who starts here, as the file
+  instructs, meets the mesh work as still waiting.
+- **FD-13 (Low).** `BRIEF.md:55-58`, the foundation bullet "E3 and kernel updates" is written
+  in the present tense ("Before any new kernel boots, run `scripts/btusb-has-device.py` … if
+  ABSENT, E3 is rebuilt for it first"). E3 is retired since `7.0.0-43` (the next bullet group
+  says so). The check itself stays useful; the bullet could say that it is now a safeguard
+  for a kernel that would lack the entry, not a standing duty.
+- **FD-14 (Low, to confirm on the laptop).** `BRIEF.md:98-100`: "Since 10-29 lore is readable
+  from here over git". From the environment of the upstream check of 2026-11-22 the same git
+  archive answered 403. That is another machine, so it is not a contradiction; it is a reason
+  to try the script once before relying on the sentence.
+- **Known and unchanged (review S-12):** the file says it is "not the current snapshot"
+  (`:9-10`) and that there is "one hand-off block, not a stack" (`:18-21`), and it carries a
+  state block dated 2026-10-28 with corrections of four later dates above a hand-off block.
+  The maintainer's record leaves this as an editorial decision.
+- Consistent: the foundation bullets (device, BT-1 with 12 deaths and 74 links, the dangers,
+  BT-9, BT-7 and BT-8); the accepted list against the stable trees read on 2026-11-22
+  (`9a328ae01489`, `80861f424fe5`, `dafb564a498e` found again); the 1200-line budget (925 lines).
+
+### `BRIEF.md`, lines 101–262 (the state block's second half and the hand-off block; lines over 520 characters were cut at 520)
+
+- **FD-15 (Medium to High, a contradiction inside `BRIEF.md` on what may be sent).** The
+  hand-off block, which the file says to read first, lists under "Patch ready" (`:191-192`):
+  "CO-44, CO-38, CO-43 E, A and BT-24/25, **CO-04**, CO-22, CO-21, CO-20 patch 1, CO-39, CO-41;
+  CO-35, **CO-05** + CO-26, **CO-12**, CO-23 and CO-37". Sixty lines above, the state block
+  (`:104`, a correction dated 2026-11-23) says "CO-04, CO-05 1/2, CO-14 and CO-12 are
+  overtaken by applied upstream fixes; CO-26 stands alone; CO-35's 7.3.y mails are not to be
+  sent", and `README.md:181-183` says the same. The correction reached one of the two lists in
+  the file. This is the same kind of drift the review of 2026-11-15 called its first finding
+  (a hand-off that names what must no longer be sent), in a new instance.
+- **FD-16 (Medium).** `BRIEF.md:210-214`, "New findings 11-14": "**CO-14 confirmed** … a fix in
+  `mgmt_index_removed()` takes it to 0", and the lockdep cycle "none with CO-04". Both are
+  overtaken by `1d7a52778858`, which flushes the pending sends in `mgmt_index_removed()` and
+  removes the callback behind the cycle (upstream check, 3.3). The bullet is unmarked.
+- **FD-17 (Medium).** `BRIEF.md:200-203`: "One document for outside reviewers holds all twelve
+  kernel items verbatim … The operator shares it with the reviewers." That document now
+  carries its own note that it was not regenerated and that one recorded checksum no longer
+  matches; five of its twelve items (CO-04, CO-05, CO-12, and with them CO-14 and CO-06 in the
+  text) are overtaken upstream; and `main` has a newer document for outside review
+  (`d0d68155`, "five kernel submissions, a self-contained document for outside review",
+  2026-11-22). The hand-off still presents the older one as the one to share.
+- **FD-18 (Low).** `BRIEF.md:142`, "Open investigations": "CO-04's independent fix for the mesh
+  use-after-free" is still listed as open. `:112-113`, "a reply on Jiale Yao's power-off patch"
+  is still an open operator decision; that patch is overtaken by the same commit and CO-06 is
+  to be closed (upstream check).
+- **FD-19 (Low, date).** `BRIEF.md:148`: "Last updated: 2026-11-16 (corrections only …)". The
+  file carries corrections dated 2026-11-22 and 2026-11-23 (`:104`, `:106`, `:182-183`).
+- **FD-20 (Low).** `BRIEF.md:228-231`: the public repository "now has `main`, `tests/test-suite`,
+  `research/journalctl-file-scaling` and the whole-project review's branch (`ls-remote`,
+  2026-11-15)". On 2026-11-23 there is a fifth, `research/contributions-upstream-check-20261122`
+  (FD-10). The same bullet says the two commits of the deleted `ci/upstream-ci-local` "are on
+  `main` as the ports `8b71499` and `a56141e`": in the clone used for the rechecks those two
+  ids were not ancestors of `main`; that clone was shallow, so the statement still needs one
+  `git merge-base --is-ancestor` on a full clone.
+- **FD-21 (Low, wording of the kind the author decided to remove).** `BRIEF.md:108` still says
+  "the coordinator's choice"; `:149` "the five tracks". The pass of 2026-11-16 reworded the
+  rest of the file.
+- Corrected since the review and consistent now: the D1/D2 gloss (`:254-256`); the survivals;
+  the trial directory and number reuse (`:132-138`); the persistent archive timer; the branch
+  names; the CI line ("not true after 11-14"); the bundle against the staged build; the
+  machine on `-43` and the running daemon (read 2026-11-22).
+
+## Where the reading stopped, and what it means
+
+**Read:** `README.md` in full (367 lines, 32 kB) and `BRIEF.md` lines 1 to 262 of 925 (the
+introduction, the foundation, the whole state block and the whole hand-off block; about 40 kB,
+with the longest lines cut at 520 characters). **Not read in this review:** `BRIEF.md` §1 to
+§10 (lines 263 to 925: the bug statement, the signature table, settled and unsettled, the
+retractions, the BlueZ patches, the constraints, the method rules, the open threads),
+`contributions/README.md`, `docs/STATUS.md`, `docs/issues.md`, `HISTORY.md`. The plan's items 3
+and 4 were not reached: the two documents read took the budget, mostly because `BRIEF.md`'s
+state and hand-off blocks are long single lines. Nothing is concluded here about the unread
+documents.
+
+**Summary of what was found (21 findings, none in code).**
+- `README.md` is in good order: three small items (the heading's date, one "pending" that has
+  been overtaken, the pre-cause formulation of the fault), and it already carries the upstream
+  state of 2026-11-22.
+- `BRIEF.md` has absorbed the upstream check in its state block and not in its hand-off block.
+  The one finding that matters before a send is **FD-15**: the hand-off's "Patch ready" list
+  still names CO-04, CO-05 and CO-12. With it go FD-16 and FD-17 (the CO-14 finding and the
+  outside-review document, both presented as current) and FD-11, FD-12 (the CO-02 and
+  "waiting for replies" bullets of the state block).
+- The cause is the one named in the review as S-12: the file keeps two long "current" blocks,
+  each corrected in place by dated insertions, so a correction lands in one and not the other.
+  A hand-off block rewritten for 2026-11-23, replacing the one of 11-14, would remove FD-15 to
+  FD-20 at once, and it is what the file's own rule ("replaced, not topped up", `:20-21`) asks.
+
+**Suggested order:** FD-15, then FD-16, FD-17, FD-11, FD-12 (all in `BRIEF.md`), then FD-02 in
+`README.md`; the rest are small.
+
+*Reading closed on 2026-11-23. This file is not edited after this point.*
