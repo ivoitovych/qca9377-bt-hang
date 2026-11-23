@@ -246,3 +246,111 @@ controller's.
    tree. A checksum list is a promise; either the files are there or the list should say
    "kept elsewhere" per line.
 
+## 7. How the work is organised
+
+**Review as a habit.** The project reviews itself more than any I know of this size: about
+130 files under `reviews/`, outside readers for every package, a review of the reviews. It
+has paid: the lock cycle in CO-02 v2 and the rebind break in the btusb series were found
+before anyone upstream had to. It also has a cost that the project does not count. Each
+round produces a document, a checks document that answers it, corrections in several
+registers, and new text for the next round to find stale. The five rechecks of the
+whole-project review are an example and I am part of it: by the fourth, the findings were
+mostly about text written in answer to the third.
+
+*My suggestion:* a review ends with a short list, the list is worked off, and the next
+review is of something else. A recheck is a table of ids with one word each, not a page.
+And a rule of proportion: a review of documents should not create more document than it
+removes.
+
+**Many hands on one record.** Several maintainers and parallel pieces of work write into
+the same registers. The failures this produced are all recorded honestly: work left in a
+private area and nearly lost at a disk clean-up, five failed pushes while porting results,
+CI red because ported scripts lacked a mode bit, the same fact corrected in one register and
+not the other. The fixes so far are rules. I would prefer structure: each piece of work
+writes only inside its own dossier, and one step (a script) carries the dossier's state line
+into the registers. Then two pieces of work cannot disagree in a shared file, because
+neither writes there.
+
+**What is published.** The author decided on 2026-11-16 that public text keeps findings
+and not the way the work is done, and `main` now follows it in the authored documents. Two
+things remain from that decision, and they are his: text that is still in the history, and
+machine output with one machine's paths in about 2,650 files. If the history is ever to be
+rewritten, the cheapest moment is before more is built on it; if it is not, the decision
+can be written down once so that it is not reopened in every review. For the machine
+output, section 6 point 2 is the same remedy seen from the other side: logs that are not in
+git cannot carry anything.
+
+**The one machine.** Everything rests on one laptop that is in daily use and on one
+person's time for sends. The project knows this (the rule that only the operator touches
+the machine's Bluetooth is a good one). Two consequences are worth saying aloud. The
+laptop-only steps (the CO-03 daemon test, the headset session, the reboot that closes a
+trial) are the real bottleneck for several items and they are short; an hour at the laptop
+with a written checklist would release more than a week of preparation does. And the
+emulation the project built for the btusb work (a real driver against an emulated
+controller) is the way out of the dependence: every defect that can be moved into it can be
+tested without the laptop and by anyone.
+
+## 8. Direction
+
+**The original goal is reached.** The hang is explained, fixed upstream by another author's
+entry, backported to every stable line at this project's request, and delivered in the
+distribution the laptop runs. `BRIEF.md` says the endgame is an upstream fix; it has
+happened. The project has since become something else: a steady source of small, well
+tested fixes for Linux Bluetooth and the desktop audio path, found on one ordinary machine.
+That is a good thing to be, and it deserves to be said in the README's first paragraph
+rather than inferred from the tables.
+
+**Three questions I would put to the author.**
+
+1. *What is the unit of success now?* If it is fixes that reach users, the measures are
+   sends per month, the share applied, and the time from finding to release; by those the
+   best period was September and October. If it is the record, the measure is whether a
+   stranger can use it; by that the record is too large. The two pull against each other
+   for the same hours.
+2. *How wide?* The register has forty-six kernel and BlueZ items, thirty-one desktop issues
+   and an audio-CD backend. Each open item costs something every time the registers are
+   reconciled. I would close, with one line each, everything that has had no step for a
+   month and that is not on the send queue, and reopen an item only when someone is about
+   to work on it. A closed item with its evidence kept loses nothing.
+3. *Where does the project stand toward upstream as a participant?* It has, so far, sent
+   patches and test reports. The people on the list also review each other's patches. The
+   project is unusually well equipped for that: it can run any posted Bluetooth patch
+   against the testers on several stable lines in an afternoon, and it already did so twice
+   (the mesh leak patch, the 6.6 release candidate). A tested-by on someone else's fix, the
+   same week it is posted, costs the maintainers nothing and is remembered. It is also the
+   natural use of the harnesses that the overtaken mesh items left behind.
+
+**A caution on backports.** The rule "leave no homework" is most demanding here, and
+rightly: a backport request asks the stable maintainers to trust a test they did not run.
+The upstream check listed the candidates. I would send them in order of how little can go
+wrong: device-table entries first (CO-22: two lines, a build on each line), then fixes
+whose upstream commit applies unchanged, and hand backports of locking changes (the L2CAP
+pair for the older lines, later the mesh fix) only after asking on the list whether the
+author or the stable team already has them in hand. For the L2CAP series the stable team
+queued three sibling patches on its own on 2026-11-17; that is a sign that asking first is
+the considerate order.
+
+## 9. What I would do first
+
+In this order, and nothing else until the first three are done:
+
+1. Send CO-38's kernel patch and, a few days later, CO-44: both tested on every line on
+   2026-11-23, both of the small form that was applied unchanged before.
+2. File the Ubuntu `bluez` bugs and the upload: every fix is released upstream, none is
+   reported on Launchpad, the build exists.
+3. Send CO-22's stable request after the day's queue check.
+4. Report the mesh harness results on the maintainer's applied fix as a test report, and
+   close CO-04, CO-05 1/2, CO-06, CO-12 and CO-14 in the registers with one line each.
+5. Rewrite `BRIEF.md` without its state block; shorten the STATUS rows to a fixed shape;
+   make the README's direction block point instead of restate.
+6. Put the base-against-patched harness into the repository as one tool.
+7. Decide D1 to D14, the history question and the review branches, each once, in writing.
+8. Then the btusb series as an RFC with its emulation, and CO-02 v2 as the resend.
+
+**A last remark.** The project's strongest habit is that it would rather be shown wrong
+than be left wrong, and it writes the correction down. Everything above is offered in that
+spirit and may be wrong in the same way; the items in section 9 are the ones I am most sure
+of, and sections 7 and 8 are the ones I am least sure of, because they are about choices
+that are the author's to make.
+
+*Complete. Written on 2026-11-23 from the readings named at the top; not edited afterwards.*
