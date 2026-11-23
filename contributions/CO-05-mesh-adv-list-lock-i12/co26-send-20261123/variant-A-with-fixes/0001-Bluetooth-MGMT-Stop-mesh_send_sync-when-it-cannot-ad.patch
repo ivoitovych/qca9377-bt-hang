@@ -24,8 +24,7 @@ cf357cfc025e:
           mesh_send_sync -> -12, mesh_send_start_complete(err=-12)
 
 User space gets the same Mesh Packet Complete event in both cases, so
-this is a cleanup of the error path and not a change in what a client
-sees.
+this fixes the error path without changing what a client sees.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 ---

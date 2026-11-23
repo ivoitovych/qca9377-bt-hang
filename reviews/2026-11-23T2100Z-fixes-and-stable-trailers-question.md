@@ -49,10 +49,52 @@ own one-liner, "Bluetooth: MGMT: Return -EBUSY from mesh_send_sync()", with `Fix
 tag. Reviewer 7 notes that the command handler's own `mgmt_cmd_status(..., MGMT_STATUS_BUSY)` is in the right
 status domain and stays as written.
 
+## Reviewer 6's answer, and the measurement it rests on
+
+Reviewer 6 answered last and reversed their earlier vote for variant B. Their reason was a measurement: of the
+mainline Bluetooth commits after v7.3, the 21 with `Cc: stable` gave 13 backports in 7.3.5, the 87 with
+`Fixes:` only gave 2, and the 79 with neither gave 1. They concluded that `Fixes:` alone almost never leads to
+a backport in this subsystem. They also noted that AUTOSEL can lag by weeks.
+
+**Rechecked** with `tmp/kernel-queue-20261123/fixes-only-backports.py` on the same set:
+- mainline `v7.3..origin/master`, Bluetooth paths, committer date 2026-10-01 to 2026-11-23, no merges: 21, 87 and
+  79 commits;
+- a backport counts if a stable commit names the upstream SHA in either form, "commit … upstream" or
+  "[ Upstream commit … ]".
+
+| line | `Cc: stable` (21) | `Fixes:` only (87) | neither (79) |
+|---|---|---|---|
+| 7.3.5 (`988117cc1bb1`) | 13 | 2 | 1 |
+| 7.3.6 (released 2026-11-23) | 14 | **36** | 12 |
+| 6.18.65 | 14 | **24** | 4 |
+
+Their numbers are exact for 7.3.5, but the conclusion does not hold once 7.3.6 is in. That release took a
+batch the stable team chose itself, for example `878dd63b2828`, from `32d86e048d8e`, a `Fixes:`-only commit
+carrying Sasha Levin's sign-off. So in this subsystem `Fixes:` alone does lead to backports, weeks later.
+
+**For the packages:**
+- CO-44 and CO-26 without `Cc: stable` can still reach stable through this selection.
+- Only `Cc: <stable+noautosel@kernel.org> # reason` keeps a commit out. Whether to use it on CO-44 is the
+  operator's decision.
+- Since the stable team may take both anyway, testing them on the affected lines is worth having.
+
+Reviewer 6's other points:
+- CO-38 keep both trailers; CO-44 `Fixes:` only; CO-26 variant A. These agree with the others.
+- CO-43: `Fixes:` on all three and no `Cc: stable` on any at submission. 1/3 qualifies on merit, but they
+  would send tested backports after it lands, because the stable lines still have `btusb.c`.
+  - Checked: 1/3 applies on all seven stable tips with the rename handled as a cherry-pick does.
+  - 7.3.6 already has `btusb_main.c`.
+  - So it is three for `Cc: stable` on 1/3 against one for a later backport mail, with one neutral.
+- CO-26 message: "cleanup" contradicts a `Fixes:` tag. **Fixed** in variant A, which now reads "this fixes the
+  error path without changing what a client sees". checkpatch is unchanged.
+- The BUSY return: fold it into CO-26 as a second hunk, under a title such as "Fix the error returns of
+  mesh_send_sync()". The other four keep it out. Folding would also need a run of the busy path, which no
+  evidence covers yet.
+
 ## Outcome
 
 - **CO-38, CO-44 and CO-43 2/3, 3/3:** the packages already carry what all answers recommend. Nothing changes.
-- **CO-43 1/3:** three of four answers favour `Cc: stable`. Under the operator's rule it waits for the build and tests on
+- **CO-43 1/3:** three of five answers favour `Cc: stable`, one a backport mail after it lands, one is neutral. Under the operator's rule it waits for the build and tests on
   all seven affected lines, which are queued.
-- **CO-26:** variant A is the view of three of four. Choosing A or B stays the operator's call.
+- **CO-26:** variant A is the view of four of five (reviewer 6 changed sides). Choosing A or B stays the operator's call.
 - **`MGMT_STATUS_BUSY`:** left out of CO-26, as recorded in its package.
