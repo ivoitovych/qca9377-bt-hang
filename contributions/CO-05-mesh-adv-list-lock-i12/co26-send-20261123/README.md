@@ -38,5 +38,14 @@ comes in two variants, which differ in one line. Choosing one is the operator's 
 **checkpatch** `--strict --no-tree --no-signoff`: 0 errors. Variant A has only the "unknown commit id"
 warning that `--no-tree` gives; variant B has no warning.
 
+**A neighbouring defect, kept out on purpose** (an outside recheck, 2026-11-23 evening). A few lines above the
+change, `mesh_send_sync()` returns `MGMT_STATUS_BUSY` (0x0a, a positive MGMT status) where an errno is expected
+(bluetooth-next `mgmt.c` l.2462). `mgmt_status()` reads a positive value as an HCI status: 0x0a is "Max Number
+of SCO Connections", so it becomes `MGMT_STATUS_NO_RESOURCES`. The Mesh Packet Complete event carries no status,
+so nothing is visible. CO-26 stays one change. A separate one-liner (`-EBUSY`) is a candidate, and whether to
+make it is the operator's call.
+
+**Fixes: variant:** two outside reviewers prefer A (with `Fixes:`, no `Cc: stable`), one prefers B.
+
 **Still to do:** the operator's choice of A or B, the Signed-off-by, the bot's checks and a dry run.
 Recipients: `get_maintainer.pl` at send time. CO-26 is fifth in the queue (`BRIEF.md`, hand-off).

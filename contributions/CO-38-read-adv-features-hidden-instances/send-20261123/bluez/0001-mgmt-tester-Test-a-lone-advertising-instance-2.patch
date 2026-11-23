@@ -1,4 +1,4 @@
-From f6fc1a152574f42aecec0f165bc1a55a9f70b31f Mon Sep 17 00:00:00 2001
+From 5d4bbecb82a2ac93a46964039c27faf4bcf79c98 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Mon, 23 Nov 2026 05:33:25 +0100
 Subject: [PATCH BlueZ] mgmt-tester: Test a lone advertising instance 2
@@ -15,10 +15,10 @@ kernel compares each instance number with the number of instances.
  1 file changed, 33 insertions(+), 3 deletions(-)
 
 diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index 9d8b57404..ff041a3b8 100644
+index 18dbd3f89..212980da4 100644
 --- a/tools/mgmt-tester.c
 +++ b/tools/mgmt-tester.c
-@@ -5193,6 +5193,22 @@ static const struct generic_data read_adv_features_success_2 = {
+@@ -5183,6 +5183,22 @@ static const struct generic_data read_adv_features_success_2 = {
  	.expect_status = MGMT_STATUS_SUCCESS,
  };
  
@@ -41,7 +41,7 @@ index 9d8b57404..ff041a3b8 100644
  /* simple add advertising command */
  static const uint8_t add_advertising_param_uuid[] = {
  	0x01,			/* adv instance */
-@@ -7207,17 +7223,17 @@ static void setup_add_advertising_not_powered(const void *test_data)
+@@ -7197,17 +7213,17 @@ static void setup_add_advertising_not_powered(const void *test_data)
  						NULL, NULL);
  }
  
@@ -62,7 +62,7 @@ index 9d8b57404..ff041a3b8 100644
  
  	mgmt_send(data->mgmt, MGMT_OP_SET_LE, data->mgmt_index,
  						sizeof(param), &param,
-@@ -7233,6 +7249,16 @@ static void setup_add_advertising(const void *test_data)
+@@ -7223,6 +7239,16 @@ static void setup_add_advertising(const void *test_data)
  						NULL, NULL);
  }
  
@@ -79,7 +79,7 @@ index 9d8b57404..ff041a3b8 100644
  static void setup_add_advertising_connectable(const void *test_data)
  {
  	struct test_data *data = tester_get_data();
-@@ -15501,6 +15527,10 @@ int main(int argc, char *argv[])
+@@ -15461,6 +15487,10 @@ int main(int argc, char *argv[])
  				&read_adv_features_success_2,
  				setup_add_advertising,
  				test_command_generic);
@@ -90,6 +90,8 @@ index 9d8b57404..ff041a3b8 100644
  
  	test_bredrle("Add Advertising - Failure: LE off",
  					&add_advertising_fail_1,
+
+base-commit: 1608f836188610aabeff5a3164169ebe0360e443
 -- 
 2.43.0
 
