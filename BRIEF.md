@@ -149,7 +149,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Who works where:**
   - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge. The old remote branches were deleted on 2026-11-15 (see the hand-off below).
   - The test-suite maintainer works on the branch `tests/test-suite` and rebases it onto `main` when `main` moves (`comms/2026-11-13T0100Z-from-test-suite-maintainer-to-everyone.md`; this line said "merges `main` into it" until 2026-11-16; the branches `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main` that this line named before 2026-11-16 are among the 16 deleted on 2026-11-15, §0 hand-off below).
-- **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
+- **Sending:** nothing is sent without the operator's word. Before any send, read `docs/upstream-practice.md` (the verified register of upstream behaviour, started 2026-11-23), and run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-11-23** (a fresh hand-off after the upstream re-read of 11-22 and two outside rounds on the kernel send queue; the 11-14 block moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
 ready that day, the outside-review document, the Ubuntu bundle, the five work lines; the 11-12 block
@@ -928,6 +928,7 @@ date are not in them (corrected 2026-11-16, as the review of 11-15 found).*
 
 | | |
 |---|---|
+| how the upstreams behave and what they expect (trailers, stable, CI, BlueZ tests, patchwork), one verified fact each; read before any send and point reviewers to it | `docs/upstream-practice.md` |
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
 | one dossier per possible contribution: findings, experiments, log, references | `contributions/` (index: `contributions/README.md`) |
