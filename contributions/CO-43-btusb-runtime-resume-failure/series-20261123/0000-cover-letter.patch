@@ -22,7 +22,17 @@ An HCI command left behind as in 2 or 3 times out. Patch 3 relies on
 patch 2. Patch 1 is independent of both and comes first, so that it
 can be taken alone.
 
-TESTING PARAGRAPH: to be written from the reruns of 2026-11-23
+Tested in QEMU guests with KASAN, lockdep, kmemleak and hung-task
+detection, four CPUs, with an emulated QCA9377 (13d3:3503) attached
+over usbip to btusb. Fault injection and delays were in the test kernel
+only. Each patch's notes give its case. Beyond those, six other
+emulated cases (a dead device, a device that answers after the
+reset-resume, a dropped event with and without a wedged controller, 30
+suspend and resume cycles, power-off during a resume) and a 100-cycle
+stress run with concurrent senders gave the same results on the base
+tree and with the series, apart from the leaks it removes. The
+power-off case fails on both and is not addressed here. There were no
+kernel reports in any run.
 
 Iaroslav Voitovych (3):
   Bluetooth: btusb: Free the skb of a deferred URB that is discarded

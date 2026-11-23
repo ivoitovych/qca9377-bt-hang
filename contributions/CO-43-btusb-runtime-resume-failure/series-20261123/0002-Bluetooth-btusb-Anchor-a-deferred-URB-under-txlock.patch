@@ -18,6 +18,12 @@ lock order does not change.
 
 Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
+Found while reproducing a runtime resume failure with an emulated USB
+controller. With the window widened by a debug-only delay and a resume
+forced inside it (QEMU, usbip), the command was parked, timed out and
+the device was reset ("Resetting usb device") without this patch, in 3
+of 3 runs. With it, the command was sent at that resume in 3 of 3.
+
  drivers/bluetooth/btusb_main.c | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 

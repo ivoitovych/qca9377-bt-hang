@@ -24,9 +24,47 @@ local-only `04b58d680611` is gone.
   `btusb_main.c` is compiled at each step, and no warning comes from it. The full bzImage of the series also
   builds. Script: `tmp/kernel-queue-20261123/build-co43-steps.sh` (machine-local).
 
+## Reruns, 2026-11-23 (QEMU, 4 CPUs, KASAN, lockdep, kmemleak, hung-task; emulated 13d3:3503 over usbip)
+
+The test kernels are the base `cf357cfc025e`, 1/3, 1–2/3 and 1–3/3, each with a debug-only commit
+(`evidence-summaries/apply-debug-co43.py.txt`; it is in no patch). There were 105 guest runs. Summaries are in
+`evidence-summaries/`; the raw logs stay machine-local, because they carry the emulated devices' addresses.
+
+| case | base | 1/3 | 1–2/3 | 1–3/3 |
+|---|---|---|---|---|
+| kmemleak objects: failed resume, command deferred (3 runs) | 1, 1, 2 | 0, 0, 0 | | 0, 0, 0 |
+| kmemleak: `play_deferred()` submission fails | 0, 0, 1 | 0, 0, 0 | | 0, 0, 0 |
+| kmemleak: dead device, then close | 2, 5, 2 | 0, 0, 0 | | 0, 0, 0 |
+| kmemleak: dead device, hci0 powered off | 2, 3, 2 | 0, 0, 0 | | 0, 0, 0 |
+| kmemleak: healthy suspend and resume (1 run) | 0 | 0 | | 0 |
+| **new:** command + 2 ACL deferred, first submission fails (5 runs) | 2, 6, 6, 6, 6 | | | 0 ×5 |
+| widened anchoring window, command sent inside it (3 runs) | | parked, timed out (0x05 after ~2.0 s), then "Resetting usb device" ×3 | sent at that resume (0x00 after 0.399 s) ×3 | |
+| failed resume with a second sender: deferred anchor afterwards (3 runs) | not empty ×3 | not empty ×3 | not empty ×3 | empty ×3 |
+| six other emulated cases (2 runs each) | as 1–3/3 | | | identical to base (the power-off-during-resume case fails on both) |
+| stress, 100 cycles, 3 seeds | 95/95 ok, 0 parked, 24–26 leaked objects | | | 95/95 ok, 0 parked, 0 leaked |
+
+- **The multi-URB test:** the debug line reads, in all ten runs on both kernels, "deferred before 3 (2 with NULL
+  setup_packet), tx_in_flight before 0 after 0, anchor after empty". Base's kmemleak sites are all
+  `alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg`: the command skb and both ACL skbs, 208 + 640
+  bytes each. The setup packet and the URBs are freed already. So the cleanup loop at the end of `play_deferred()`
+  is now covered.
+- **The widened window on 1/3:** the stale send at the next resume was **not seen**. The command timeout leads to
+  `btusb_reset()` ("Resetting usb device."), the device re-enumerates, and the parked command is lost, never sent.
+  So 2/3's message keeps "times out" and claims no stale send; its note names the reset.
+- **Differs from the 11-14 table:** base's `play_deferred()` row found 0, 0, 1 objects this time (2, 1, 2 then). The
+  new multi-URB case shows the same leak reliably.
+- **Kernel reports:** none in any of the 105 logs (BUG, WARNING, KASAN, lockdep, hung task, Call Trace; grep
+  re-run by me).
+- **Host check after the pass:** `dpkg --verify` of systemd, bluez, util-linux, coreutils and kmod is clean, and
+  the journal holds the current boot. The only system files changed were Chrome's three apt files, rewritten by
+  anacron's `cron.daily` at 07:36:57.
+
+**Done the same day:** the testing notes below `---` in each patch and the cover's testing paragraph. Still 0
+checkpatch errors, and the files apply in order to `cf357cfc025e` and give the series branch.
+
 **Still to do:**
-1. **Reruns** on the new base and in the new order, and the multi-URB test of the plan. These are running.
-2. **Testing text:** one testing sentence per patch below `---`, and the cover's testing paragraph.
+1. ~~Reruns~~ and ~~testing text~~: done (above).
+2. **Replace the old packages:** add SUPERSEDED.md to `../send-20261113/E/` and `../send-bt24-bt25-20261114/` (done 2026-11-23).
 3. **Recipients:** `get_maintainer.pl` on the final tree, with Oliver Neukum on Cc as the `Fixes:` author.
 4. **Send day:** the operator's Signed-off-by, checkpatch, the bot checks and a dry run.
 5. **Operator's call:** `Cc: stable` on 1/3, where the reviewers are split. There is none on 2/3 and 3/3.

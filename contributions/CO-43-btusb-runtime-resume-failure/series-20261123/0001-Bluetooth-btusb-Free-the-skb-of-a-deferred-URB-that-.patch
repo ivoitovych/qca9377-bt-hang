@@ -36,6 +36,12 @@ usb_get_from_anchor() like the drain does, so each URB is freed once.
 
 Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
+Tested in QEMU (KASAN, lockdep, kmemleak) with an emulated controller
+over usbip. The failed-resume, failed-submission, dead-device and close
+cases leaked on the base tree and not with this patch. So did a command
+and two ACL packets deferred together, with the first submission in
+play_deferred() failing (kmemleak: 3 skbs from hci_sock_sendmsg()).
+
  drivers/bluetooth/btusb_main.c | 32 ++++++++++++++++++++++++--------
  1 file changed, 24 insertions(+), 8 deletions(-)
 

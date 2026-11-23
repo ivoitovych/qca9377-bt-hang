@@ -1,0 +1,106 @@
+#!/usr/bin/python3 -I
+# apply-debug-co43.py <btusb_main.c>
+# DEBUG ONLY (test kernels, never in a patch). Adapted from the BT-24/BT-25 harness of 2026-11-14.
+# Module parameters of btusb (all default 0 = off):
+#   bt_inject=1     the interrupt URB submission at resume fails (reaches the failure path)
+#   bt_inject=2     the first usb_submit_urb() in play_deferred() fails
+#   bt24_delay_ms=N the failure path of btusb_resume() sleeps N ms at its "done:" label and a work
+#                   item sends one more HCI command (Read BD_ADDR) halfway through the sleep
+#   bt23_delay_ms=N submit_or_queue_tx_urb() waits N ms after its suspend decision (E's widened window)
+#   bt25_wait_ms=N  with bt_inject=2, the resume sleeps N ms before play_deferred(), so that several
+#                   senders can defer URBs first
+# Log line after an injected play_deferred() failure (printed outside txlock, values read under it):
+#   "bt25-dbg: deferred before N (M with NULL setup_packet), tx_in_flight before X after Y, anchor after empty|NOT empty"
+# Works on the base and on every step of the series: the "done:" label and the other anchors are
+# the same text in all four trees.
+import sys
+
+p = sys.argv[1]
+s = open(p).read()
+
+
+def rep(old, new):
+    global s
+    assert s.count(old) == 1, old
+    s = s.replace(old, new)
+
+
+block = r'''/* DEBUG ONLY: fault injection for the CO-43 series emulation runs */
+static int bt_inject;
+static int bt24_delay_ms;
+static unsigned int bt25_wait_ms;
+module_param(bt_inject, int, 0644);
+module_param(bt24_delay_ms, int, 0644);
+module_param(bt25_wait_ms, uint, 0644);
+static struct hci_dev *bt24_hdev;
+static bool bt25_fired;
+static int bt25_n, bt25_null, bt25_before_inflight, bt25_after_inflight;
+static bool bt25_after_empty;
+
+static void bt24_send_fn(struct work_struct *w)
+{
+	struct sk_buff *skb;
+
+	msleep(bt24_delay_ms / 2);
+	skb = bt_skb_alloc(3, GFP_KERNEL);
+	if (!skb)
+		return;
+	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
+	skb_put_data(skb, "\x09\x10\x00", 3);
+	btusb_send_frame(bt24_hdev, skb);
+	pr_info("bt24-dbg: second sender done\n");
+}
+static DECLARE_WORK(bt24_send_work, bt24_send_fn);
+
+static void play_deferred(struct btusb_data *data)
+'''
+rep("static void play_deferred(struct btusb_data *data)\n", block)
+
+# bt23_delay_ms is used in submit_or_queue_tx_urb(), which comes earlier in the file
+rep("static bool reset = true;\n",
+    "static bool reset = true;\n/* DEBUG ONLY (CO-43 widened-window test) */\nstatic unsigned int bt23_delay_ms;\nmodule_param(bt23_delay_ms, uint, 0644);\n")
+
+# bt_inject=2: the first submission in play_deferred() fails
+rep("\t\terr = usb_submit_urb(urb, GFP_ATOMIC);\n\t\tif (err < 0) {\n\t\t\tif (err != -EPERM",
+    "\t\tif (bt_inject == 2) {\t/* DEBUG ONLY */\n\t\t\tbt_inject = 0;\n\t\t\tbt25_fired = true;\n\t\t\terr = -ENOMEM;\n\t\t} else {\n\t\t\terr = usb_submit_urb(urb, GFP_ATOMIC);\n\t\t}\n\t\tif (err < 0) {\n\t\t\tif (err != -EPERM")
+
+# bt_inject=1: the interrupt URB submission at resume fails
+rep("\t\terr = btusb_submit_intr_urb(hdev, GFP_NOIO);\n\t\tif (err < 0) {\n\t\t\tclear_bit(BTUSB_INTR_RUNNING",
+    "\t\tif (bt_inject == 1) {\t/* DEBUG ONLY */\n\t\t\tbt_inject = 0;\n\t\t\terr = -ENOMEM;\n\t\t} else {\n\t\t\terr = btusb_submit_intr_urb(hdev, GFP_NOIO);\n\t\t}\n\t\tif (err < 0) {\n\t\t\tclear_bit(BTUSB_INTR_RUNNING")
+
+# the shared label that starts the locked section (same text with and without the fix)
+rep("done:\n\tspin_lock_irq(&data->txlock);\n",
+    "done:\n\tif (err && bt24_delay_ms) {\t/* DEBUG ONLY */\n\t\tbt24_hdev = hdev;\n\t\tschedule_work(&bt24_send_work);\n\t\tmsleep(bt24_delay_ms);\n\t\tflush_work(&bt24_send_work);\n\t}\n\tspin_lock_irq(&data->txlock);\n")
+
+# the failed-resume debug line
+rep("\tspin_unlock_irq(&data->txlock);\n\n\treturn err;\n}\n\n#ifdef CONFIG_DEV_COREDUMP",
+    "\tspin_unlock_irq(&data->txlock);\n\tif (err)\t/* DEBUG ONLY */\n\t\tbt_dev_info(hdev, \"bt24-dbg: deferred anchor %s\",\n\t\t\t    usb_anchor_empty(&data->deferred) ? \"empty\" : \"NOT empty\");\n\n\treturn err;\n}\n\n#ifdef CONFIG_DEV_COREDUMP")
+
+# the successful resume: hold before play_deferred(), count before, report after
+rep("\tspin_lock_irq(&data->txlock);\n\tplay_deferred(data);\n\tclear_bit(BTUSB_SUSPENDING, &data->flags);\n\tspin_unlock_irq(&data->txlock);\n\tschedule_work(&data->work);\n",
+    "\tif (bt_inject == 2 && bt25_wait_ms)\t/* DEBUG ONLY */\n\t\tmsleep(bt25_wait_ms);\n"
+    "\tspin_lock_irq(&data->txlock);\n"
+    "\tif (bt_inject == 2) {\t/* DEBUG ONLY */\n"
+    "\t\tstruct urb *dbg_urb;\n\n"
+    "\t\tbt25_n = 0;\n\t\tbt25_null = 0;\n\t\tbt25_before_inflight = data->tx_in_flight;\n"
+    "\t\tspin_lock(&data->deferred.lock);\n"
+    "\t\tlist_for_each_entry(dbg_urb, &data->deferred.urb_list, anchor_list) {\n"
+    "\t\t\tbt25_n++;\n\t\t\tif (!dbg_urb->setup_packet)\n\t\t\t\tbt25_null++;\n\t\t}\n"
+    "\t\tspin_unlock(&data->deferred.lock);\n\t}\n"
+    "\tplay_deferred(data);\n"
+    "\tclear_bit(BTUSB_SUSPENDING, &data->flags);\n"
+    "\tbt25_after_inflight = data->tx_in_flight;\t/* DEBUG ONLY */\n"
+    "\tbt25_after_empty = usb_anchor_empty(&data->deferred);\n"
+    "\tspin_unlock_irq(&data->txlock);\n"
+    "\tif (bt25_fired) {\t/* DEBUG ONLY */\n"
+    "\t\tbt25_fired = false;\n"
+    "\t\tbt_dev_info(hdev, \"bt25-dbg: deferred before %d (%d with NULL setup_packet), tx_in_flight before %d after %d, anchor after %s\",\n"
+    "\t\t\t    bt25_n, bt25_null, bt25_before_inflight, bt25_after_inflight,\n"
+    "\t\t\t    bt25_after_empty ? \"empty\" : \"NOT empty\");\n\t}\n"
+    "\tschedule_work(&data->work);\n")
+
+# E's widened window: after the suspend decision in submit_or_queue_tx_urb()
+rep("\tspin_unlock_irqrestore(&data->txlock, flags);\n\n\tif (!suspending)\n\t\treturn submit_tx_urb(hdev, urb);\n",
+    "\tspin_unlock_irqrestore(&data->txlock, flags);\n\n\t/* DEBUG ONLY: widen the window after the decision */\n\tif (suspending && bt23_delay_ms)\n\t\tmdelay(bt23_delay_ms);\n\n\tif (!suspending)\n\t\treturn submit_tx_urb(hdev, urb);\n")
+open(p, "w").write(s)
+print("ok")

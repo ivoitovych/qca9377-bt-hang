@@ -199,21 +199,24 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   commands and the dry runs.
 >   **The btusb series is regenerated (11-23):** `CO-43-…/series-20261123/` holds the three patches on
 >   public `cf357cfc025e` in the new order (leak fix first). The final code equals the old order's,
->   checkpatch is clean, and the W=1 builds pass at every step. Its QEMU reruns and the multi-URB test
->   were running at the hand-off; the testing text waits for them (that directory's README).
+>   checkpatch is clean, and the W=1 builds pass at every step. Its QEMU reruns are done (105 runs). Each
+>   patch's case goes from failing on base to passing with the patch. The new multi-URB test (a command
+>   plus 2 ACL packets) leaks 3 skbs on base and none with the series. Nothing else changes, and no kernel
+>   report appears. The testing notes are in the patches, and the old packages are marked SUPERSEDED.
 >   3. **Beside them, CO-22's stable request v4**
 >      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
 >      day.
->   4. **The btusb series:** E plus the BT-24/25 pair as three patches, the leak fix first, on a
->      public base, with a multi-URB test (`CO-43-…/SERIES-PLAN-20261123.md`).
+>   4. **The btusb series** (`CO-43-…/series-20261123/`): ready apart from the recipients, the
+>      operator's `Cc: stable` call on 1/3 and the send-day steps.
 >   5. **CO-26**, regenerated alone with its fault injection rerun.
 >
 >   No reviewer found a correctness defect in the five kernel diffs. What remains is tests,
 >   messages and packaging.
 > - **Work next, needing no decision:**
->   - CO-38's BlueZ test rewrite and its base-against-patched run;
->   - CO-44's testers on the tip and its dry run;
->   - the btusb series regeneration and its new test;
+>   - ~~CO-38's BlueZ test rewrite and its run~~, ~~CO-44's testers on the tip~~, ~~the btusb series
+>     and its new test~~: done 11-23;
+>   - the dry runs (CO-38, CO-44, the btusb series) once the operator's Signed-off-by is in;
+>   - get_maintainer.pl for the btusb series;
 >   - CO-26;
 >   - the CO-35 rebase.
 > - **Open for the operator:**

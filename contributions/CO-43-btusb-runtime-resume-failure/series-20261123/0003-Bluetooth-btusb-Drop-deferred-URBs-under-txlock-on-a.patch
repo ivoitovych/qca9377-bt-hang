@@ -23,6 +23,11 @@ HCI closed, and drop the deferred URBs only when an error was returned.
 
 Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
+Tested in QEMU with a debug-only delay in the failure path and a second
+command sent inside it: the deferred anchor was left non-empty after
+the failed resume without this patch (3 of 3 runs) and was empty with
+it (3 of 3).
+
  drivers/bluetooth/btusb_main.c | 12 ++++++++----
  1 file changed, 8 insertions(+), 4 deletions(-)
 

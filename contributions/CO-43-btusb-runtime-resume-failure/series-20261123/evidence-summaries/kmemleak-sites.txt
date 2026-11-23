@@ -1,0 +1,50 @@
+== kmemleak sites, base-dbg kml runs
+logs/runs/base-dbg-k-inject1-1.log: 1 objects
+    1 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-inject1-2.log: 1 objects
+    1 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-inject1-3.log: 2 objects
+    1 x size 208   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+    1 x size 640   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+logs/runs/base-dbg-k-inject2-1.log: 0 objects
+logs/runs/base-dbg-k-inject2-2.log: 0 objects
+logs/runs/base-dbg-k-inject2-3.log: 1 objects
+    1 x size 208   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+logs/runs/base-dbg-k-dead-1.log: 2 objects
+    2 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-dead-2.log: 5 objects
+    2 x size 208   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+    2 x size 640   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+    1 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-dead-3.log: 2 objects
+    2 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-deadoff-1.log: 2 objects
+    2 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-deadoff-2.log: 3 objects
+    1 x size 208   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+    1 x size 640   hci_cmd_sync_alloc <- __hci_cmd_sync_sk <- __hci_cmd_sync_status_sk <- hci_update_class_sync <- hci_cmd_sync_work
+    1 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+logs/runs/base-dbg-k-deadoff-3.log: 2 objects
+    2 x size 8     alloc_ctrl_urb <- btusb_send_frame <- hci_send_frame <- hci_cmd_work <- process_one_work
+== kmemleak sites, multi runs on base-dbg
+logs/runs/base-dbg-multi-aclfirst-1.log: 6 objects
+    3 x size 208   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+    3 x size 640   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+logs/runs/base-dbg-multi-aclfirst-2.log: 6 objects
+    3 x size 208   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+    3 x size 640   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+logs/runs/base-dbg-multi-cmdfirst-1.log: 2 objects
+    1 x size 208   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+    1 x size 640   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+logs/runs/base-dbg-multi-cmdfirst-2.log: 6 objects
+    3 x size 208   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+    3 x size 640   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+logs/runs/base-dbg-multi-cmdfirst-3.log: 6 objects
+    3 x size 208   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+    3 x size 640   alloc_skb_with_frags <- sock_alloc_send_pskb <- hci_sock_sendmsg <- sock_write_iter <- vfs_write
+== kmemleak sites, multi runs on s123-dbg
+logs/runs/s123-dbg-multi-aclfirst-1.log: 0 objects
+logs/runs/s123-dbg-multi-aclfirst-2.log: 0 objects
+logs/runs/s123-dbg-multi-cmdfirst-1.log: 0 objects
+logs/runs/s123-dbg-multi-cmdfirst-2.log: 0 objects
+logs/runs/s123-dbg-multi-cmdfirst-3.log: 0 objects
