@@ -27,9 +27,9 @@ Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1"
 Tested in QEMU with BlueZ's doc/tester.config and a new mgmt-tester
 case, "Set Device Class - Timeout 1", sent to BlueZ separately: its
 emulated controller drops Write Class of Device. On bluetooth-next
-da3cc02587c6 the case gets Authentication Failed without this patch
-and passes with it (mgmt-tester 526 -> 527 of 527); l2cap-tester and
-smp-tester are unchanged.
+cf357cfc025e the case gets Authentication Failed in 3 of 3 runs
+without this patch and passes 3 of 3 with it; the rest of mgmt-tester,
+l2cap-tester, smp-tester and mesh-tester is unchanged.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

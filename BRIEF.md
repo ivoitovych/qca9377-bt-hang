@@ -190,10 +190,13 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     patchwork's state alone.
 > - **The send queue.** Two outside rounds agree on it: the five rankings of 11-22 and the five
 >   reviews of 11-23 (`reviews/2026-11-23T0404Z-…`). One mail at a time, several days apart:
->   1. **CO-38's kernel patch, alone** (`CO-38-…/send-20261123/`, with `Cc: stable`). Its BlueZ test
->      is to be rewritten small first (that directory's README).
+>   1. **CO-38's kernel patch, alone** (`CO-38-…/send-20261123/`, with `Cc: stable`), its BlueZ test
+>      (rewritten small on 11-23) the same day.
 >   2. **CO-44** (`CO-44-…/send-20261123/`, message trimmed, no `Cc: stable` after its precedent).
->      Its testers are to be rerun on the tip, and its dry run redone.
+>   **Both were tested on 11-23** on bluetooth-next and on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and
+>   6.1.192 (`CO-38-…/send-20261123/RUNS-20261123.md`): each new case fails 3/3 on base and passes
+>   3/3 patched, and nothing else changes. What is left for both is the Signed-off-by, the send
+>   commands and the dry runs.
 >   3. **Beside them, CO-22's stable request v4**
 >      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
 >      day.

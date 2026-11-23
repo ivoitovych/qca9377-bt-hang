@@ -28,9 +28,16 @@ characters.
   that `--no-tree` gives;
 - the BlueZ test applies to BlueZ master `1adfe662efef` (11-22).
 
+**Done 2026-11-23 (later the same day):** item 1. The run is in
+`../../CO-38-read-adv-features-hidden-instances/send-20261123/RUNS-20261123.md`, where one image
+per line carried both fixes. On bluetooth-next `cf357cfc025e` the case fails 3/3 on base and
+passes 3/3 patched, and nothing else changes in mgmt-tester, l2cap-tester, smp-tester or
+mesh-tester. The same holds on 7.3.5 to 6.1.192. The patch's testing note now gives
+`cf357cfc025e`.
+
 **Still to do before a send:**
-1. Rerun mgmt-tester, l2cap-tester and smp-tester, base against patched, on today's tip. `mgmt.c`
-   changed by +294/−83 since `da3cc02587c6`. Then update the base hash and counts in the notes.
+1. ~~Rerun mgmt-tester, l2cap-tester and smp-tester, base against patched, on today's tip
+   (`mgmt.c` changed by +294/−83 since `da3cc02587c6`), then update the notes.~~ Done, see above.
 2. The operator adds his Signed-off-by. Then rerun checkpatch and the bot's sign-off checks on the
    exact file, and do a new `git send-email` dry run. `../send-20261113/send-commands.txt` STEP
    2a/2b still applies; only the file paths change.

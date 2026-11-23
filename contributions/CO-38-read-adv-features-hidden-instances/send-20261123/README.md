@@ -10,15 +10,23 @@ findings 1–3, 15, 23).
   added.
 - `Cc: stable@vger.kernel.org` added. Four of five reviewers were for it, and follow-up D12
   recommended it.
-- A testing paragraph added below `---`. It states only the case run on `da3cc02587c6` on
-  2026-11-14.
+- A testing paragraph added below `---`. Since the later run of 2026-11-23 it names the new case
+  and its result on `cf357cfc025e` and the five stable lines.
 
 **Checked 2026-11-23:**
 - the patch applies to bluetooth-next `cf357cfc025e`;
 - `checkpatch.pl --strict --no-tree --no-signoff`: 0 errors, only the "unknown commit id" warning
   that `--no-tree` gives.
 
-**Still to do before a send:**
+**Done 2026-11-23 (later the same day).** The BlueZ test is rewritten:
+`bluez/0001-mgmt-tester-Test-a-lone-advertising-instance-2.patch`, 30 lines plus a small refactor,
+a 47-character subject, and checkpatch clean. The run on bluetooth-next and the five stable lines
+is in `RUNS-20261123.md`: the new case fails 3/3 on base and passes 3/3 patched on every line,
+and nothing else changes. The patch's testing note now says so. Items 1 and 2 below are done.
+
+**Still to do before a send:** items 3 to 5 below, and the dry run. The BlueZ test goes the same
+day as its own mail (`../../../reviews/2026-11-23T0540Z-bluez-test-with-kernel-fix-practice.md`).
+
 1. **Rewrite the BlueZ test.** The current `../bluez-split-20261114/series-a/` adds 388 lines:
    duration timing, replacement and ext-params paths, and a membership check that allows extra
    entries. Four of five reviewers asked for it to be replaced. The new case:

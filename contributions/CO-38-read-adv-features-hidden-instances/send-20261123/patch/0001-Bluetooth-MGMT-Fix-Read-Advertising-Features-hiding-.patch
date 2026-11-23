@@ -17,10 +17,13 @@ Compare with le_num_of_adv_sets, as the comment says.
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
 ---
-Tested in QEMU with a BlueZ mgmt-tester case, sent to BlueZ
-separately, that reads the advertising features after instance 1 of
-two has been removed: on bluetooth-next da3cc02587c6 it fails without
-this patch, instance 2 missing, and passes with it.
+Tested in QEMU with a new mgmt-tester case, "Read Advertising
+Features - Success 3 (Instance 2 only)", sent to BlueZ separately: it
+adds only instance 2 and expects exactly that instance in the reply.
+On bluetooth-next cf357cfc025e it fails 3 of 3 runs without this patch
+and passes 3 of 3 with it, and the rest of mgmt-tester and mesh-tester
+is unchanged. The same holds on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and
+6.1.192.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
