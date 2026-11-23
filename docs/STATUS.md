@@ -199,7 +199,7 @@ into `archive/hci-capture/`, 3 GB budget, never deletes) archived the oldest 40 
 `MANIFEST.tsv` 40 rows; all 386 originals still in place). At that ratio the other 346 would take
 about 7.7 GB more. **Budget raised by the operator, 2026-10-29: 10 GB for `archive/hci-capture`,
 for one run over the whole directory** (`desktop-capture-archive.sh --budget-gb 10`), no timer.
-Each archive records its budget in `BUDGET_GB` (bt-trace: 10, the operator's figure of 10-11; corrected 2026-11-15: bt-trace 20 GB since 10-29 and the desktop capture 25 GB since 11-13, under the persistent `bt-raw-archive.timer`, `scripts/raw-capture-archive-all.sh`);
+Each archive records its budget in `BUDGET_GB` (bt-trace: 10, the operator's figure of 10-11; corrected 2026-11-15: bt-trace 20 GB since 10-29 and the desktop capture 25 GB since 11-13, under the persistent `bt-raw-archive.timer`, `scripts/raw-capture-archive-all.sh`; **raised 2026-11-23 by the operator by 20 %: bt-trace 24 GB, the desktop capture 30 GB**, when they stood at 16.89 of 20 and 20.65 of 25 GB with 42 GB free on the disk);
 `scripts/archive-budget-check.py` compares use with it, and a start-up check prints a ⚠️ at
 80 % and FULL at 100 %, so the warning reaches every session, not only the archiver's own output.
 **Result of the 10 GB run (2026-10-29 ~02:00): FULL at 10.04 GB, 254 files archived**
