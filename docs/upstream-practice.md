@@ -36,7 +36,7 @@ points here, so the reviewer does not rediscover these facts.
 - Evidence: S-1, l.133–136.
 - Practice: five of five outside answers of 2026-11-23 agree, and so do the documents.
 
-**S-3. In Bluetooth, the stable team takes many commits that carry `Fixes:` without `Cc: stable`, weeks after
+**S-3. In Bluetooth, many commits that carry `Fixes:` without `Cc: stable` reach stable, weeks after
 mainline.**
 - Evidence: `tmp/kernel-queue-20261123/fixes-only-backports.py 2026-10-01 2026-11-23 <ranges>` on mainline commits
   after v7.3 (Bluetooth paths, no merges: 21 with `Cc: stable`, 87 with `Fixes:` only, 79 with neither). A backport
@@ -52,13 +52,20 @@ mainline.**
 - From: the same review record; an outside count on 7.3.5 alone had concluded the opposite.
 - Re-check: monthly. The share depends on when the stable team's batches land, so count on more than one release.
 
-**S-4. The two stable backport forms.** A patch requested with `Cc: stable` arrives as "commit <sha> upstream". A
-commit the stable team chose itself arrives as "[ Upstream commit <sha> ]", with a Sasha Levin sign-off. A search
-for backports must match both.
-- Evidence: `git -C cache/linux log -n 1 878dd63b2828` (7.3.y) begins with
-  `[ Upstream commit 32d86e048d8efedb7aa6cbbd3c36c3c435401c92 ]` and ends with `Signed-off-by: Sasha Levin`.
-  `32d86e048d8e` has `Fixes:` and no stable tag.
-- Checked: 2026-11-23.
+**S-4. Stable copies name their upstream commit in two forms, "commit <sha> upstream" and
+"[ Upstream commit <sha> ]".** A search for backports must match both. **The form does not tell who chose the
+commit.** *Corrected 2026-11-23 evening:* this entry said the bracketed form marks the stable team's own picks.
+An outside reviewer showed a counter-example, checked here: a `Cc: stable` commit whose stable copy uses the
+bracketed form with Sasha Levin's sign-off.
+- Evidence:
+  - `git -C cache/linux log -n 1 878dd63b2828` (7.3.y) begins with
+    `[ Upstream commit 32d86e048d8efedb7aa6cbbd3c36c3c435401c92 ]` and ends with Sasha Levin's sign-off.
+    `32d86e048d8e` has `Fixes:` and no stable tag.
+  - `git -C cache/linux log -n 1 b415ba15d072` (6.18.y), the copy of `df5e35f1663a`, which has `Cc: stable`:
+    `[ Upstream commit df5e35f1663a… ]`, `Cc: stable@vger.kernel.org`, Sasha Levin's sign-off.
+  - So only a `[PATCH AUTOSEL]` mail on the list shows that the stable team nominated a commit itself.
+- Checked: 2026-11-23 (`tmp/kernel-queue-20261123/check-precedents.sh`).
+- Effect on S-3: the counts of commits **reaching** stable stand. They do not show by which route each one came.
 
 **S-5. `Fixes:` with no stable tag is the usual form in Bluetooth.** Of the November commits in bluetooth-next with
 `Fixes:`, 14 of about 100 also carry `Cc: stable`, and 6 of the latest 50.
@@ -86,6 +93,13 @@ with the rename, as a cherry-pick's rename detection does it.
     `git merge-tree --write-tree --merge-base=<c>^ <tip> <c>`, with rename detection. It is CLEAN on all seven
     tips, landing in `btusb_main.c` on 7.3.6 and in `btusb.c` on 6.18.65 down to 5.10.275.
   - Only the second proves what the stable team's cherry-pick will do.
+- **Precedents (checked 2026-11-23, `tmp/kernel-queue-20261123/check-precedents.sh`):**
+  - `df5e35f1663a` is a `btusb_main.c` fix with `Cc: stable`. 6.18.y has it in `btusb.c` as `b415ba15d072`,
+    with the note "[ sashal: Adapted the patch to the Bluetooth USB driver's original source filename. ]".
+  - `fa96916cfd05` is a `btusb_main.c` fix with `Fixes:` only. It is in `btusb.c` on 6.18.y (`ce982d4892f2`),
+    6.12.y (`8b905b598c45`), 6.6.y (`41494c00aa34`) and 6.1.y (`45e27026c59b`), with no adaptation note.
+  - So the stable team does take post-split btusb fixes into the older lines, once with a recorded manual
+    adaptation.
 - Checked: 2026-11-23.
 - Re-check: per stable release.
 
