@@ -102,3 +102,183 @@ microphone (U12) is correct in every single project's tests.
 Count: of about forty defects in the register that are code defects, about thirty fall to
 suites A, B and C, which need nothing but the emulator and instrumented builds.
 
+## 4. The suites, one by one
+
+### A. Interleaving tests
+
+*Purpose.* Find what goes wrong when event B arrives during operation A.
+
+*Architecture.* The emulated controller gets one new ability: **hold**. Every command it
+receives and every event it would send passes a gate; a test can stop at the gate, do
+something else, and release. An existing tester case then becomes a list of steps (command
+sent, status event, complete event, each MGMT reply). The generator takes two cases A and B
+that concern the same adapter or the same peer and produces one test per step of A: run A to
+that step, hold, run B, release. The expected result is not written by hand; it is a small
+set of **invariants** that must hold in every interleaving:
+
+- every command gets exactly one reply, of the documented length;
+- no reply says Success for something that did not happen;
+- when both operations are over, the state that userspace is told equals the state the
+  controller is in (discovering, connected, advertising, powered);
+- a later, plain operation still works (the adapter is not stuck Busy).
+
+*Content.* Pairs within discovery, connection set-up and tear-down (ACL, SCO, ISO, LE),
+advertising, power and the mesh send path; in the daemon, the same for D-Bus methods
+(StartDiscovery and StopDiscovery, Connect and Disconnect, Acquire and Release,
+SetConfiguration and Close).
+
+*Why it is tractable.* Twenty operations of five steps give some two thousand cases of a
+second each in a virtual machine. BT-9's fix test is one such case written by hand; the
+suite is that case, generated.
+
+### B. Lifetime tests under sanitizers
+
+*Purpose.* Find what is used after it is freed, never freed, or locked in two orders, when
+something ends.
+
+*Architecture.* The same step list as in A, with a fixed set of **endings** injected at each
+step: power off; remove the controller; the peer disappears; the socket is closed; the
+daemon gets SIGTERM; the daemon loses its bus; the client that asked leaves the bus. The
+kernel is built with KASAN, kmemleak, lockdep and the lock-assertion option, on several
+CPUs; the daemon with ASan and leak checking. The verdict is **the absence of a report**,
+plus the invariants of A. A teardown that leaks fails the case.
+
+*Content.* Every tester case times seven endings. The existing testers, run to the end with
+leak checking on, are the first tenth of this suite and cost nothing to switch on.
+
+### C. Error-contract tests
+
+*Purpose.* Check what is *said* when something fails.
+
+*Architecture.* A table, per command, of the ways it can fail (the controller answers with
+each error status; never answers; answers late; memory allocation fails at each call in the
+path, using the kernel's fault injection) and of the status the management interface and
+the D-Bus API document for that failure. The test injects each and compares. Where no
+status is documented, the test's first run is the finding.
+
+*Content.* Every MGMT command; every D-Bus method of the adapter, device and media
+interfaces; boundary values of every numeric field (zero, one, the largest, one more);
+listings read back after every change.
+
+### D. Transport tests
+
+*Purpose.* Test the driver that every real adapter uses and no emulated one does.
+
+*Architecture.* A controller model that is a **USB device in userspace** (the project built
+one over usbip for the btusb work), exposing chosen descriptors, endpoints and alternate
+settings, and scriptable to: stall an endpoint, delay or drop a transfer, stop answering,
+disappear, come back needing a reset, refuse a resume. The real `btusb` binds to it in a
+virtual machine. Cases: probe with each descriptor layout in the device table's families;
+set-up of each vendor path with a firmware download that succeeds, fails or is already
+done; suspend and resume idle and under traffic, with each failure; SCO over each alternate
+setting with one and two links; close and disconnect with requests pending. Assertions on
+both sides: what the kernel reports, and what the device saw on the wire.
+
+*Note.* The same idea serves the UART and SDIO transports with a different model.
+
+### E. Stable-line matrix
+
+*Purpose.* Catch a change that reached a stable line without what it depends on.
+
+*Architecture.* No new tests: suites A to D and the existing testers, run on the tip of
+every maintained line and on every release candidate, compared case by case with the
+previous release of the same line. The project did this once by hand for 6.6.160 and found
+four visible fixes and one hang; done by a machine for every candidate it would have found
+BT-10, BT-14 and BT-15 before they were released.
+
+### F. Stack tests
+
+*Purpose.* Test what the user has: the kernel, `bluetoothd`, the sound server and its
+session policy together.
+
+*Architecture.* One virtual machine with all of them, and a second emulated controller
+driven by a **scripted peer**: a small program that plays a headset (hands-free and A2DP
+roles, the AT command dialogue, codec negotiation, volume reports) or a speaker, a keyboard,
+an LE-only device, with each documented quirk as a switch ("reports microphone gain 0",
+"answers the codec switch before the old link is gone", "advertises with flags 0",
+"refuses pairing outside pairing mode"). A test is a short story: connect, play, open the
+microphone, switch codec, hang up, switch the adapter off and on. Assertions at three
+levels: what went over the air (from the capture), what each daemon reported, and what a
+client sees (which profile, which default device, is audio flowing).
+
+*Content.* The stories are the project's own incident records, one per `U` issue. Each
+recorded headset becomes a profile of the scripted peer, which is how a quirk found on one
+laptop becomes a regression test for everyone.
+
+### G. Hardware conformance
+
+*Purpose.* The one thing emulation cannot do: real firmware.
+
+*Architecture.* A shelf of controllers (one per family in the driver's device table is
+about a dozen), each on a host that can cut its power, running one fixed script per kernel
+candidate: enumerate, load firmware, scan, connect a reference peer, a wideband call
+repeated twenty times with a hang-up each, suspend and resume idle and in a call, cold and
+warm boot. The verdict is the absence of a command timeout and of a transport error. Second
+part, with no hardware at all: a **static check of the device table** against the vendor
+families' known USB ids, which is the check that would have flagged this laptop's
+controller years ago.
+
+## 5. Principles of composition
+
+1. **Generate from what exists.** A hand-written case covers the race someone already
+   thought of. A step list and a generator cover the ones nobody did, and they grow when a
+   new operation gets its first plain test.
+2. **Invariants, not expected outputs.** In an interleaving the "right" answer is often one
+   of several. What must always hold is small and can be stated once.
+3. **Endings are first-class.** Every operation is tested to its normal end and to every
+   abnormal one.
+4. **Instrumented builds are the default verdict.** A sanitizer report is a failure in
+   every suite; a test that passes while the kernel log has a warning has not passed.
+5. **Imperfect peers.** The emulated controller and the emulated peer must be able to be
+   late, out of order, silent and wrong, each as a named, repeatable switch.
+6. **Assert on both sides of every boundary.** What the upper layer was told, and what the
+   lower layer actually did.
+7. **Deterministic first, random second.** Each case replays exactly; a random walk over
+   the same steps and endings runs beside it and saves its seed.
+8. **Every field defect becomes a profile or a case.** A bug report is not closed by the
+   fix but by the test that fails without it. This project already works that way.
+9. **One matrix.** The same suites on mainline, the development tree and every stable line.
+
+## 6. What exists already, and what would have to be built
+
+*Exists:* BlueZ's testers and the emulated controller; its unit tests; the test runner that
+boots a kernel in a virtual machine; the newer functional tests with two virtual hosts; the
+list's CI on every patch; syzbot for the socket interfaces; the kernel's sanitizers and
+fault injection. From this project: the hold-like hook used for BT-9's test, the userspace
+USB controller, the leak and lock sweeps for the mesh path, the tester comparison across
+stable lines.
+
+*To build, smallest first:*
+1. leak and sanitizer checking as part of every existing tester verdict (suite B's first
+   tenth; days);
+2. the stable-line run for every release candidate (suite E; machine time and a script the
+   project has in pieces);
+3. the hold gate in the emulator and the step lists (suite A; the core piece, weeks);
+4. the endings and the generator (suites A and B complete);
+5. the error table (suite C; it is also documentation the interfaces lack);
+6. the userspace USB controller as a maintained tool (suite D);
+7. the scripted peer and the combined virtual machine (suite F; the largest, and the one
+   that needs agreement between three projects);
+8. the hardware shelf (suite G; money and a place, not code).
+
+## 7. What tests cannot do, and a first step
+
+- **Firmware that nobody can read** stays outside everything but suite G, and G sees only
+  the devices on the shelf.
+- **Design choices** are not defects: that a newly connected headset does not become the
+  default output (U11) passes any test until someone decides what should happen.
+- **A generator finds what its invariants can express.** "Audio is flowing" needs a real
+  signal check; "the user was told" needs a desktop.
+- **Cost.** Suites A and B multiply cases by steps and endings; they need a budget and a
+  way to run the changed part first.
+
+*A first step that fits this project.* Items 1 and 2 of section 6 are within its reach now
+and are contributions in the project's own style: a patch to the test runner that fails a
+case on a leak or a sanitizer report, with the count of what it finds on the current tree,
+and a published table of the testers on each stable release candidate. Either would be
+welcome upstream because it gives the maintainers results and asks nothing of them. The
+hold gate is the piece worth proposing as a design on the list before writing it, with
+BT-9's test and the SCO reuse test as the two examples of what it turns from a week's work
+into a generated case.
+
+*Complete. Written on 2026-11-23; not edited afterwards.*
