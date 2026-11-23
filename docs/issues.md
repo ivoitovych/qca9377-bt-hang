@@ -116,7 +116,10 @@ register keeps each issue's evidence, reasoning and falsifiers. What changed sin
   count, the done path completes the wrong request, and a scheduler window starts a packet
   twice (M-1, three patches under outside review); a `u16 duration` overflow for timeouts
   above 65 s (M-2, note only). Both are developed separately until sent; this
-  register records the facts.
+  register records the facts. **2026-11-23:** M-2 is fixed upstream by Cen Zhang's
+  `d7e77168da` (bluetooth-next, 11-19: a `u32` conversion clamped to `U16_MAX`; CO-12 is not to
+  be sent). The double start of M-1 is addressed by the maintainer's `1d7a52778858`
+  (`docs/STATUS.md`, top).
 - **U1–U9** — the userspace audio items are listed in their own section below, each tagged
   [log] / [operator] / [inference]; `STATUS.md` carries their lifecycle states (U5 withdrawn,
   U6 fixed upstream in GNOME 47, U7 and U9 confirmed, the rest observed).
@@ -752,6 +755,10 @@ this controller.
 
 ## M-4 — mesh sends pending at controller removal are leaked, with their socket reference
 
+**Status 2026-11-23: very likely fixed upstream by another author.** The maintainer's
+`1d7a52778858` (bluetooth-next, 11-19) flushes the mesh transmissions left at close and at index
+removal. Not yet confirmed with our kmemleak harness on the tip (CO-14).
+
 **Status 2026-11-14: reproduced in emulation; a fix written; checked on copy; mgmt-tester only
 in part.** `contributions/CO-14-mesh-at-device-removal/` (from the work area
 `<work area>/lane1-btusb-20261114/task4/`).
@@ -922,6 +929,11 @@ second running the 3-DH test; found when `scripts/compare-tester-verdicts.py` re
 **Reportable:** the one-line patch is the report; the operator's decision.
 
 ## BT-13 — `hci_connect_sco()`'s `-ENOLINK` path drops a hold the caller never got
+
+**Status 2026-11-23: another author's patch is posted.** Wentao Liang's "Bluetooth: delete the
+new SCO link if linking it fails" (patchwork 14942649, 2026-11-04, `Cc: stable`) fixes this
+branch. It is `new` and not applied, it drew a list objection to how it was made, and it
+conflicts textually with CO-02 v2 1/2 (`docs/STATUS.md`, BT-13).
 
 **Status 2026-10-28: confirmed in source, not reproduced; a cold path.** A new connection starts at
 `refcnt` 0, so a failed link allocation leaves it at −1, with no `disc_work` queued and still in

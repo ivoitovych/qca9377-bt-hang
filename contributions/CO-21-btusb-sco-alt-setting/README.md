@@ -2,7 +2,7 @@
 
 **2026-11-11:** real btusb runs in a QEMU guest against a userspace controller through usbip:
 base fails all 5 scenarios, the patch passes 5 of 5. Bot CI on current bluetooth-next: no new
-findings except GitLint, patch 2's title at 81 characters. The posted patch changes 20 of
+findings except GitLint, patch 2's title at 81 characters. The patch (never posted; "posted" was written here until 2026-11-23) changes 20 of
 `bluetooth.ko`'s 94 CRCs, so a laptop run needs the test-only variant. Modules, procedure and
 logs: `../../results/laptop-only-work-2026-11-11/btusb-modules-and-emulator/`.
 

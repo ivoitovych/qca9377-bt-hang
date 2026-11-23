@@ -1,5 +1,13 @@
 # CO-14 — mesh at device removal: pending sends leak with their socket (M-4); the lock-order cycle (M-5)
 
+> **2026-11-23: very likely overtaken upstream; not to be sent until checked.** The maintainer's
+> applied `1d7a52778858` (bluetooth-next, 11-19) flushes "the transmissions left, dequeuing the
+> entries still queued for them … when the controller is closed … or the index is removed".
+> That is M-4's leak. To confirm, run this dossier's kmemleak removal harness
+> (`fix-20261114/harness/`; 86 leaked objects → 0) on `cf357cfc025e`. M-5 is to be re-read
+> against that commit and against Zheng Shuhao's pending 15008482. Records: `docs/STATUS.md`
+> (M-4, M-5).
+
 **State (2026-11-14): reproduced in emulation; a fix written on top of CO-04; nothing sent.**
 `fix-20261114/` (copied from `<work area>/lane1-btusb-20261114/task4/`; `RESULTS.md`
 there has every command and result; `logs/totals.txt` the counts). STATUS rows `M-4`, `M-5`;

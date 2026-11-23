@@ -1,5 +1,10 @@
 # CO-06 — Review reply on Jiale Yao's mesh power-off fix
 
+> **2026-11-23: moot.** The maintainer's applied `1d7a52778858` (bluetooth-next, 11-19) flushes the
+> mesh transmissions left when the controller is closed, auto power-off included. That is the
+> power-off completion problem this reply would have discussed. No reply is planned.
+> Records: `docs/STATUS.md` (top).
+
 > **Note of 2026-11-16:** the rerun that the "State: blocked (2026-10-28)" line below calls
 > missing was done in the research of 2026-11-01: 8 of 26 became 21 of 26 and 20 of 26, the
 > backlog-3 and removal cases still fail, and the patch does not apply on top of CO-04. The

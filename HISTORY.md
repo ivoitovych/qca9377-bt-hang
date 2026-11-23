@@ -4470,7 +4470,8 @@ btusb candidates (CO-43) and a one-line MGMT fix (CO-44) were written the same d
 outside reviewers, and every review point was checked against the source. The verdicts reshaped
 the work: B, the first timeout fix, was shown to leave a wedged controller dead (its own
 counterexample, 6/6), and D was judged a fallback, not a fix, with BT-18 sent to linux-usb as a
-question first. E, A and CO-44 were packaged to send alone that night. The test suite's eight
+question first (corrected 2026-11-23: routed there, not sent. The question is drafted in CO-43's
+`drafts/bt18-linux-usb-question-20261113/` and has not been mailed). E, A and CO-44 were packaged to send alone that night. The test suite's eight
 commits were landed on `main` one by one, as its maintainer asked.
 
 **11-14, morning: the records were checked before they were used.** STATUS and
@@ -4806,6 +4807,43 @@ stock 8.19 from noble-proposed against the 8.20 test build. Results are on `rese
   row 13 cannot be.
 - **Kept on purpose:** the `gvfsd-cdda` diversion until gvfs decides on !368 (19 stalls to 0 on the
   laptop), and CO-03's `bluetoothd`, which runs now and carries the October CVE fixes.
+
+## Five of our kernel fixes overtaken, and what is left to send (2026-11-22 → 11-23)
+
+**The question that day was what to send first.** A readiness rating of every kernel item
+(`reviews/2026-11-22T1240Z-kernel-contributions-readiness.md`) and five outside rankings of "the
+easiest first submission" agreed on the top:
+- CO-38's one-line kernel fix alone;
+- then CO-44, with its notes trimmed;
+- then CO-43 E, with CO-22's stable request beside them.
+
+A self-contained document for outside reviewers holds the five most ready items
+(`reviews/2026-11-22T1513Z-five-kernel-submissions-for-outside-review.md`). On the same day, all
+four of its kernel patches applied to bluetooth-next's tip, its two BlueZ tests to BlueZ master,
+and CO-22's pair to all seven stable tips.
+
+**Upstream had moved in the week since our last read (11-15).**
+- **The mesh transmit path.** The maintainer fixed it himself: `1d7a52778858`, applied 11-19,
+  citing Sashiko's reports on the other authors' mesh patches. That covers CO-04, CO-05's first
+  patch, CO-06 and CO-14.
+- **The advertising duration.** Cen Zhang's `d7e77168da`, applied 11-19, carries CO-12's clamp.
+  His v2 changelog says the clamp answers Sashiko's review of his v1, which had no clamp.
+- **CO-35's 7.3.y.** The stable team queued what CO-35 asked for 7.3.y by itself, and queued three
+  sibling patches on the older lines.
+- **What remains ours:**
+  - CO-26: a failed add is still lost on the tip, and the patch applies alone;
+  - the BlueZ duration tests;
+  - CO-35's older-line backports, after a rebase.
+
+**A mistake of ours, caught by a second check the same day.** The readiness report called Cen
+Zhang's series `new`, because patchwork still says so. The tree already had it. An "applied or
+not" claim is now checked in the tree (`git merge-base --is-ancestor`), not in patchwork.
+
+**Nothing points to our work having been taken.** Both fixes that overtook ours name their
+sources: automated reviews of patches on a code path that four other authors had been patching
+since September. The project's own records of these defects were public. Being overtaken here
+is the ordinary outcome of a busy subsystem, and a reason to send the small, finished items
+sooner.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 

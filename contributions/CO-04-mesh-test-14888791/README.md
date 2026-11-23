@@ -1,5 +1,23 @@
 # CO-04 — syzbot's mesh_send_sync use-after-free: our independent fix
 
+> **2026-11-23: overtaken upstream; not to be sent.**
+> - **The fix.** The Bluetooth maintainer's "Bluetooth: mgmt: Fix mesh transmission locking and
+>   lifetime" was posted 11-17 and accepted 11-18 as patchwork 14998382. It is bluetooth-next
+>   `1d7a52778858`, committed 11-19. By its message, it:
+>   - clears `HCI_MESH_SENDING` only together with the removal of the transmission;
+>   - queues the cmd_sync entries by handle instead of a raw `mesh_tx` pointer;
+>   - does not take `hdev->lock` from `-ECANCELED` callbacks.
+>
+>   That is this patch's mechanism and design. Its sources are Sashiko reports on the other
+>   authors' mesh patches.
+> - **What is left of ours:** this dossier's harness (the UnregSweep lockdep sweep, the cancel
+>   cases), run on bluetooth-next `cf357cfc025e` to look for a gap. That would make a small new
+>   patch, or a Tested-by on the applied commit (the operator's call).
+> - **Records:** `docs/STATUS.md` (top, M-5); `../../reviews/2026-11-22T1240Z-kernel-contributions-review-worklog.md`
+>   F-41.
+>
+> The `Closes:` and `Cc: stable` trailers in `review-fixes-20261114/` are moot with it.
+
 > **Note of 2026-11-16 (newer than the state of 2026-10-29 below):** the package to send is
 > `review-fixes-20261114/` (mail form in `patch/`, `git am` form in `patch-bare/`), and
 > `send-20261114/` is superseded; the line "The send file is `patch/0001-…`" in

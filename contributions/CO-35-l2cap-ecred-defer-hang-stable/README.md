@@ -1,5 +1,22 @@
 # CO-35 — BT-10: the L2CAP ECRED deferred-accept hang on the stable lines
 
+> **2026-11-23: the 7.3.y requests are answered by the stable team itself; the older lines need a
+> rebase.**
+> - **7.3.y.** `608e0b7a675b`, `32d86e048d8e` and BT-15's `5874f8d03268` are all in `queue-7.3`
+>   (read 2026-11-22 12:47 UTC). So `review-fixes-20261114/mail-from-send-20261114/request-v4-20261114.eml`
+>   and `request-sci-7.3.y-20261114.eml` are **not to be sent**.
+> - **6.18, 6.12, 6.6.** The pair is not queued, but those queues hold three sibling L2CAP lock
+>   patches ("hold chan in l2cap_ecred_conn_rsp", "hold l2cap_conn lock in l2cap_connec…", "take
+>   chan lock for l2cap_chan_add re…"). Before anything is sent:
+>   - rebase the 6.18.y, 6.12.y and 6.6.y series onto the tips (6.18.64, 6.12.118, 6.6.162) plus
+>     those queued patches;
+>   - re-run the deferred-accept case and the l2cap-tester;
+>   - re-run `ci-local.sh --kernel`, last run 11-02;
+>   - reword the covers, which cite the 7.3.y request.
+>
+>   Whether to ask the stable team first is the operator's. Records: `docs/STATUS.md` (BT-10,
+>   BT-15).
+
 > **Note of 2026-11-16 (newer than the banner below):** the package to send is
 > `review-fixes-20261114/` (notes, the reduced prerequisite), with the request, the SCI request,
 > the covers and the full backports copied into `review-fixes-20261114/mail-from-send-20261114/`;

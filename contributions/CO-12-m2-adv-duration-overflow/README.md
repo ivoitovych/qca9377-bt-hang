@@ -1,5 +1,19 @@
 # CO-12 — M-2: extended-advertising duration overflow
 
+> **2026-11-23: fixed by another author; not to be sent.**
+> - **The fix.** Cen Zhang's "Bluetooth: hci_sync: Fix remaining advertising instance UAFs",
+>   bluetooth-next `d7e77168da` (committed 11-19, signed off by the maintainer), does the timeout
+>   conversion in `u32` and clamps it to `U16_MAX`. On the tip:
+>   `set->duration = cpu_to_le16(min_t(u32, duration / 10, U16_MAX))`. That is this dossier's
+>   clamp.
+> - **Its origin.** His v2 changelog says the clamp answers concerns raised by Sashiko's
+>   automated review of his v1.
+> - **Our package.** `send-20261114/` now conflicts with the tip.
+> - **Still ours:** the BlueZ duration tests (CO-38's held `bluez-split-20261114/series-b-held/`),
+>   which should now pass upstream, and a stable request for the clamp once it is in mainline.
+> - **Correction:** the readiness report of 2026-11-22 12:40Z called his series `new`, from
+>   patchwork's state. The tree had it (work log F-46).
+
 **State (2026-11-01):** reproduced in QEMU (22 mgmt-tester cases) and a clamp drafted
 (`patch/draft-2026-11-01/`); not sent. The outside reviews agree the overflow is real; the clamp
 is a mitigation (above 655 s it ends at 655.35 s, not at the requested time), so the mail names

@@ -181,19 +181,20 @@ two-line addition to
 - **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
   with send packages ready or in preparation, waiting for the author's decision (the table "What
   to send" in [`contributions/README.md`](contributions/README.md) names each package's current
-  directory and state): a stable request for an L2CAP deferred-accept hang that affects the
-  7.3, 6.18, 6.12 and 6.6 lines, and the older lines only with the non-default `enable_ecred`
-  parameter (`CO-35`); btusb fixes for a controller that fails to resume (`CO-43`) and a
-  management-interface status fix for a command timeout (`CO-44`); an independent fix for an
-  open mesh use-after-free (`CO-04`) and a mesh locking fix (`CO-05`); a stable request for two
+  directory and state): stable backports for an L2CAP deferred-accept hang on the 6.18, 6.12
+  and 6.6 lines (the 7.3 line was queued by the stable team itself on 2026-11-22; the older
+  lines hang only with the non-default `enable_ecred` parameter) (`CO-35`); btusb fixes for a controller that fails to resume (`CO-43`) and a
+  management-interface status fix for a command timeout (`CO-44`); an error-path fix in the mesh
+  send path (`CO-26`; our mesh use-after-free and locking fixes, `CO-04` and `CO-05`, were
+  overtaken on 2026-11-19 by the maintainer's own applied fix); a stable request for two
   more QCA device-table entries (`CO-22`); a hidden advertising instance in the management
   interface (`CO-38`); a btusb fix for the wrong alternate setting when one of two SCO links goes
   down (`CO-21`) and a btusb change for the error messages at call hang-up (`CO-20`, patch 1
-  alone); the extended-advertising duration overflow (`CO-12`); a BlueZ use-after-free in
+  alone); a BlueZ use-after-free in
   `a2dp_reconfig()` (`CO-23`); BlueZ use-after-frees at exit (`CO-37`); a BlueZ fix for a
   temporary device kept alive by non-discoverable advertisements (`CO-39`) and a one-line
-  emulator fix (`CO-41`). Some of these wait for the author's decision on the route (`CO-12`,
-  `CO-23`, `CO-37`, `CO-35`). One Ubuntu update for a `btmon` crash and three other BlueZ 5.72
+  emulator fix (`CO-41`). Some of these wait for the author's decision on the route (`CO-23`,
+  `CO-37`, `CO-35`). One Ubuntu update for a `btmon` crash and three other BlueZ 5.72
   fixes is built and tested, not filed (`CO-11`, `CO-03`, `CO-37`, `CO-40`; the bundle named in
   the table). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`,
   `U16`, `U18`) are still being investigated.
@@ -220,7 +221,7 @@ Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29
                10-29 also the CO-02 series' bluetooth.ko (EX-071); 7.0.0-42-generic with E3 and the
                stock bluetooth.ko from 2026-10-30; 7.0.0-43-generic with its own stock btusb (it
                carries the entry; E3 retired) and the stock bluetooth.ko since 2026-11-12 22:55
-BlueZ        : 5.72 (the running patched daemon is a rebuild of 5.72-0ubuntu5.5; the package is 5.72-0ubuntu5.8 since 2026-10-14)
+BlueZ        : 5.72 (the running daemon is this project's build from 5.72-0ubuntu5.8's source with the BT-7 fixes and U12's backport, CO-03, read 2026-11-22; the package is 5.72-0ubuntu5.8 since 2026-10-14)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
 Companion    : ath10k_pci qca9377 hw1.1 (one combo chip)

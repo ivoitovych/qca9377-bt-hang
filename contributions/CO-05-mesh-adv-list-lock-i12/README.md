@@ -1,5 +1,18 @@
 # CO-05 — Mesh I12: advertising list changed without `hdev->lock`
 
+> **2026-11-23: patch 1/2 overtaken upstream; patch 2/2 (CO-26) becomes its own candidate.**
+> - **1/2.** On bluetooth-next `cf357cfc025e`, `mesh_send_sync()` takes `hdev->lock` at its start
+>   and releases it before `hci_schedule_adv_instance_sync()`. That comes from the maintainer's
+>   `1d7a52778858` (11-19), so 1/2 is not to be sent.
+> - **2/2 (CO-26).** Its defect is still on the tip. When `hci_add_adv_instance()` fails,
+>   `err = PTR_ERR(adv)` is set and the function goes on to schedule the mesh instance that was
+>   never added, returning that result instead of `err`. `review-fixes-20261114/variant-B-without-fixes/0002-*.patch`
+>   applies to the tip by itself (checked 11-22).
+> - **To send CO-26 alone:** regenerate it on the tip with a message that does not lean on 1/2,
+>   rerun its fault injection, and run the bot's checks.
+> - **Records:** `docs/STATUS.md` (top); `../../reviews/2026-11-22T1240Z-kernel-contributions-review-worklog.md`
+>   F-44.
+
 > **Note of 2026-11-16 (newer than the state of 2026-10-29 below):** the package to send is
 > `review-fixes-20261114/` (variant A with `Fixes:`, variant B without); `send-20261114/` is
 > superseded. The code is unchanged since 10-29, warnings 3 to 0 as before; mesh sending is held
