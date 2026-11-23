@@ -45,7 +45,7 @@ of SCO Connections", so it becomes `MGMT_STATUS_NO_RESOURCES`. The Mesh Packet C
 so nothing is visible. CO-26 stays one change. A separate one-liner (`-EBUSY`) is a candidate, and whether to
 make it is the operator's call.
 
-**Fixes: variant:** reviewers 2, 3 and 7 prefer A, with `Fixes:` and no `Cc: stable`. Their reason: `Fixes:`
+**Fixes: variant:** reviewers 2, 3 and 7 prefer A, with `Fixes:` and no `Cc: stable` (all three confirmed in the focused round of 2026-11-23 evening). Their reason: `Fixes:`
 records a real bug's origin, whatever user space sees. Reviewer 1 prefers B. The stable rules document
 `Cc: <stable+noautosel@kernel.org> # reason` for keeping a fix out of automatic selection, an option only one
 reviewer suggests (`../../../reviews/2026-11-23T2100Z-fixes-and-stable-trailers-question.md`).
