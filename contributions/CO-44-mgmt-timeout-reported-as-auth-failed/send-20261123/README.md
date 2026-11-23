@@ -19,14 +19,19 @@ findings 4–8).
 - The subject is kept. Reviewer 7 offers "Bluetooth: MGMT: Report command timeouts correctly";
   that choice is the operator's.
 
-**The BlueZ test** (`bluez/`) is unchanged from `../send-20261113/bluez/`. Its subject is 46
-characters.
+**The BlueZ test** (`bluez/`) has the same content as `../send-20261113/bluez/` (patch-id
+`21bec9e9…`). On 2026-11-23 evening it was re-exported alone on BlueZ master `1608f8361`, with
+`[PATCH BlueZ]` and that `base-commit`. Its subject is 46 characters. It carries no
+`Signed-off-by`, and none is added: BlueZ's `HACKING` forbids it (`docs/upstream-practice.md` B-4).
 
 **Checked 2026-11-23:**
-- the kernel patch applies to bluetooth-next `cf357cfc025e`;
+- the kernel patch, regenerated in the evening on `cf357cfc025e` with the same patch-id, applies
+  there;
 - `checkpatch.pl --strict --no-tree --no-signoff`: 0 errors, only the "unknown commit id" warning
   that `--no-tree` gives;
-- the BlueZ test applies to BlueZ master `1adfe662efef` (11-22).
+- the BlueZ test applies to BlueZ master `1608f8361` with no offset.
+- bluetooth-next has since moved, to `5063a0717aa2`. `base-commit:` follows the tip on the send
+  day, and the testing note follows the current-tips runs.
 
 **Done 2026-11-23 (later the same day):** item 1. The run is in
 `../../CO-38-read-adv-features-hidden-instances/send-20261123/RUNS-20261123.md`, where one image

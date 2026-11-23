@@ -24,6 +24,12 @@ a 47-character subject, and checkpatch clean. The run on bluetooth-next and the 
 is in `RUNS-20261123.md`: the new case fails 3/3 on base and passes 3/3 patched on every line,
 and nothing else changes. The patch's testing note now says so. Items 1 and 2 below are done.
 
+**Re-exported the same evening:**
+- **The BlueZ test** went alone on BlueZ master `1608f8361`: `[PATCH BlueZ]`, that `base-commit`, the same
+  patch-id `70a48730…`. It carries no `Signed-off-by` (`docs/upstream-practice.md` B-4).
+- **The kernel patch** went on `cf357cfc025e` with the same patch-id. Its testing note follows the
+  current-tips runs, which test CO-38 alone.
+
 **Still to do before a send:** items 3 to 5 below, and the dry run. The BlueZ test goes the same
 day as its own mail (`../../../reviews/2026-11-23T0540Z-bluez-test-with-kernel-fix-practice.md`).
 

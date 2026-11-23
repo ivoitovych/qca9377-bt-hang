@@ -21,8 +21,10 @@ forgotten or lost between working sessions. The IDs come from
 This table is the one place that says which directory holds the text to send. The hand-off and
 STATUS point here, and every package's older directory carries a `SUPERSEDED.md` (a separate file
 in that directory, not a line at the top of its README).
-Nothing in it is sent until the operator says so. Each package carries no Signed-off-by: the
-operator adds his own. (Exception, noted 2026-11-16: the six CO-35 backports carry the original
+Nothing in it is sent until the operator says so. Each package carries no Signed-off-by. On kernel
+patches, the operator adds his own. BlueZ patches never carry one: BlueZ's `HACKING` (l.122–123)
+says "Do *not* add 'Signed-off-by' lines … including them is actually an error", and none of the
+operator's applied BlueZ commits has one. (Exception, noted 2026-11-16: the six CO-35 backports carry the original
 authors' chain and, since 2026-11-02, a Signed-off-by of the operator, as stable backports need
 the submitter's; the operator confirms it at send time.) The open decisions are in each package's
 notes where it has them (a `NOTES-FOR-OPERATOR.md` exists for CO-35, CO-21, CO-43 A, CO-43 E,

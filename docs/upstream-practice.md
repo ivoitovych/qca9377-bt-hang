@@ -141,6 +141,12 @@ on unfixed kernels.
 **B-3. Generate each BlueZ test alone on the current master.** One cut on a tree that holds the other test applies
 only with offsets.
 
+**B-4. A BlueZ patch carries no `Signed-off-by`; a kernel patch must carry the sender's.**
+- Evidence: BlueZ `HACKING` l.122–123: "Do *not* add 'Signed-off-by' lines … including them is actually an
+  error". None of the operator's applied BlueZ commits has one (`git log -n 1 b79d4a887`).
+- Checked: 2026-11-23, BlueZ master `1608f8361`. A rule recorded since 2026-11-08 from
+  `doc/maintainer-guidelines.rst`.
+
 ## Patchwork and applied state
 
 **P-1. Patchwork can show `new` for a series already applied.** Check applied state in the tree with
