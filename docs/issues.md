@@ -1244,6 +1244,37 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - **When it would happen:** hci0 closed while commands are deferred on a suspended device, or a failed resume with deferred data. Both are rare; each costs at most a few small allocations.
 - **Next (the 11-13 plan; done 2026-11-14, see the status block above):** a kmemleak run in emulation that closes hci0 with a command deferred; then a fix together with BT-24 (drain under `txlock`, free with `dev_kfree_skb_any()`).
 
+## BT-26 — 6.1.193: KASAN use-after-free in `hci_connect_le_scan_cleanup` (iso-tester)
+
+**Status 2026-11-23: found, not analysed.** It showed in the current-tips runs of CO-38 and CO-44, in QEMU with
+KASAN and lockdep. BlueZ master iso-tester on stable 6.1.193 (`1ca1436ccc68`) reports "BUG: KASAN:
+use-after-free in hci_connect_le_scan_cleanup". The report is the same on base and on both patched images, so it
+belongs to the line, not to our patches (`contributions/CO-38-read-adv-features-hidden-instances/send-20261123/evidence/tips-20261123/report-diff.txt`).
+- **Raw logs:** private backup, `2026-11-23-test-runs/kernel-queue-runs.tar.zst`, `tips2/runs/6.1-*-iso-full.log`.
+- **Next:**
+  - the case that triggers it (from the log);
+  - whether mainline and 6.6+ have a fix 6.1 lacks: a backport candidate, as with BT-9.
+
+## BT-27 — 6.1.193: KASAN use-after-free in `sco_chan_del` (sco-tester)
+
+**Status 2026-11-23: found, not analysed.** Same run set as BT-26. sco-tester on 6.1.193 reports "BUG: KASAN:
+use-after-free in sco_chan_del", identically on base and both patched images. This may touch the SCO paths of
+CO-02.
+- **Next:** the case; whether an upstream fix exists for 6.1 (a backport candidate); whether it relates to CO-02.
+
+## BT-28 — 6.12.119: iso-tester hangs in "ISO Broadcaster Receiver Defer Get BASE - Success", with recursive-locking lockdep
+
+**Status 2026-11-23: found; probably BT-11's 6.12 observation.** In the same run set, iso-tester on 6.12.119
+(`e2e4b92c2b2a`) hangs in that case on base and both patched images. The hung-task detector reports the hang,
+and lockdep reports "possible recursive locking detected". BT-11 recorded an iso-tester stall with a
+recursive-locking warning on 6.12.114, not analysed.
+- **Next:** the lock chain from the log, and whether a mainline ISO fix is missing in 6.12.y.
+
+**Also seen in the same runs, already known:**
+- **CO-35's L2CAP deferred-accept hang** ("L2CAP Ext-Flowctl Server - Accept 2 Close 1"): on 6.18.65, 6.12.119
+  and 6.6.163 with and without our patches. 7.3.6 now carries the fix pair. Older lines: CO-35's backports.
+- **6.1's lockdep warning in `discov_off`:** on 6.1.193, as on 6.1.192 earlier the same day.
+
 ---
 
 ## U1–U31 — userspace problems seen during the E1/E3 tests (2026-09-26 →)
