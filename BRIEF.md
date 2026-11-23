@@ -197,6 +197,10 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   6.1.192 (`CO-38-…/send-20261123/RUNS-20261123.md`): each new case fails 3/3 on base and passes
 >   3/3 patched, and nothing else changes. What is left for both is the Signed-off-by, the send
 >   commands and the dry runs.
+>   **The btusb series is regenerated (11-23):** `CO-43-…/series-20261123/` holds the three patches on
+>   public `cf357cfc025e` in the new order (leak fix first). The final code equals the old order's,
+>   checkpatch is clean, and the W=1 builds pass at every step. Its QEMU reruns and the multi-URB test
+>   were running at the hand-off; the testing text waits for them (that directory's README).
 >   3. **Beside them, CO-22's stable request v4**
 >      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
 >      day.
