@@ -1,0 +1,70 @@
+From a2e59249c17018b86e22d559857804684af26bbb Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 23 Nov 2026 06:48:50 +0100
+Subject: [PATCH 3/3] Bluetooth: btusb: Drop deferred URBs under txlock on a
+ failed resume
+
+When btusb_resume() cannot submit the interrupt or bulk URB, it drops
+the deferred URBs without txlock and only then clears BTUSB_SUSPENDING
+under it. A sender that takes txlock in between still sees the flag
+and anchors its URB on data->deferred. That is after the only point
+where this resume drops deferred URBs, so the URB stays deferred until
+the next suspend and resume, and an HCI command in it times out.
+
+Do both under txlock, so that a sender either anchors its URB before
+the drop, and the URB is dropped with the others, or sees the flag
+cleared and submits it. This relies on the sender anchoring under
+txlock, which the previous patch makes it do. btusb_resume() already
+takes the anchor's lock inside txlock, so the lock order does not
+change, and btusb_discard_deferred() may run with interrupts disabled.
+
+The two failure branches now share the label that ends a resume with
+HCI closed, and drop the deferred URBs only when an error was returned.
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+---
+ drivers/bluetooth/btusb_main.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index e18b124d0bb7..3861669460d5 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -5061,7 +5061,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		err = btusb_submit_intr_urb(hdev, GFP_NOIO);
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_INTR_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 	}
+ 
+@@ -5069,7 +5069,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 		err = btusb_submit_bulk_urb(hdev, GFP_NOIO);
+ 		if (err < 0) {
+ 			clear_bit(BTUSB_BULK_RUNNING, &data->flags);
+-			goto failed;
++			goto done;
+ 		}
+ 
+ 		btusb_submit_bulk_urb(hdev, GFP_NOIO);
+@@ -5093,10 +5093,14 @@ static int btusb_resume(struct usb_interface *intf)
+ 
+ 	return 0;
+ 
+-failed:
+-	btusb_discard_deferred(data);
+ done:
+ 	spin_lock_irq(&data->txlock);
++	/* Drop the deferred URBs and clear BTUSB_SUSPENDING in one critical
++	 * section: a sender that anchored a URB after the drop but before
++	 * the flag was cleared would leave it parked until the next resume.
++	 */
++	if (err)
++		btusb_discard_deferred(data);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+ 	spin_unlock_irq(&data->txlock);
+ 
+-- 
+2.43.0
+

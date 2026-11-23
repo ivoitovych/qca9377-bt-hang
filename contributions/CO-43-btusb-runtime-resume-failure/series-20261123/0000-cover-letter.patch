@@ -1,0 +1,39 @@
+From a2e59249c17018b86e22d559857804684af26bbb Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 23 Nov 2026 06:49:09 +0100
+Subject: [PATCH 0/3] Bluetooth: btusb: Fix deferred URB leaks and races
+
+btusb defers a transmit URB while the device is suspending or
+suspended, anchors it on data->deferred, and sends it at the next
+resume. Three things can go wrong with such a URB:
+
+ 1: when it is discarded instead of sent (btusb_close(), a failed
+    resume, or a failed submission in play_deferred()), the skb it
+    carries is never freed, and at two of the four places neither is
+    its setup packet;
+ 2: submit_or_queue_tx_urb() anchors it after dropping txlock, so a
+    resume that completes in between leaves it anchored on an active
+    device until the next suspend and resume;
+ 3: a failed resume drops the deferred URBs before it clears
+    BTUSB_SUSPENDING under txlock, so a URB anchored in between is
+    left behind in the same way.
+
+An HCI command left behind as in 2 or 3 times out. Patch 3 relies on
+patch 2. Patch 1 is independent of both and comes first, so that it
+can be taken alone.
+
+TESTING PARAGRAPH: to be written from the reruns of 2026-11-23
+
+Iaroslav Voitovych (3):
+  Bluetooth: btusb: Free the skb of a deferred URB that is discarded
+  Bluetooth: btusb: Anchor a deferred URB under txlock
+  Bluetooth: btusb: Drop deferred URBs under txlock on a failed resume
+
+ drivers/bluetooth/btusb_main.c | 49 +++++++++++++++++++++++++---------
+ 1 file changed, 37 insertions(+), 12 deletions(-)
+
+
+base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
+-- 
+2.43.0
+
