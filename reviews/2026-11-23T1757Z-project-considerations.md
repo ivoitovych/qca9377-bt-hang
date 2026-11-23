@@ -148,3 +148,101 @@ tree moves underneath meanwhile. Two things follow.
    has been built since 2026-11-14. Filing it is the highest value per hour of anything on
    the list, in my judgement.
 
+## 4. Code and tools
+
+**The state.** About 240 shell, awk and Python files. The tools under `tools/` and `bin/`
+are careful: probes are opt-in, the journal is read through one seam, the dangerous actions
+have guards. The review's code findings were of three kinds, and all three are instructive.
+
+1. *A clean answer from a check that could not look.* A boot that could not be read printed
+   "0 timeouts"; an unreadable journal window "agreed"; a gate exited 0 when its tool was
+   missing. The project's own rule names this ("ENUMERATED == 0 is a refusal"), and the fixes
+   of the two rounds were good. The lesson I would keep: this defect does not come from
+   carelessness, it comes from shell. A pipeline's status, a `grep` that finds nothing, a
+   command substitution: each has a quiet failure that reads as zero.
+2. *An unsafe action left reachable.* `uninstall.sh` reloaded the driver; the module-swap
+   script still ran. Both are fixed. They were reachable because the safety rule lived in
+   `BRIEF.md` and not in the code. A rule that matters should be a refusal in the program;
+   prose is for the reason.
+3. *Text about the code that the code had left behind.* Headers, usage ranges printed with
+   `sed -n '2,18p'`, comments naming old behaviour. Small, many, and each one a place where a
+   reader learns the wrong thing.
+
+**What I would change.**
+
+1. *Move the larger tools to Python.* `tools/bt-trial` is about 70 kB of bash and
+   `tests/run-tests` is 925 kB of bash in one file. The three kinds of defect above are far
+   rarer in a language with exceptions, real return values and a test framework. The project
+   already writes good Python in `scripts/`. I would not rewrite everything; I would stop
+   adding to the large shell files and port the two or three that carry the evidence
+   (`bt-trial`, the SCO ledger, the archive tools).
+2. *One exit-code convention, stated once and tested once.* 0 measured and clean, 1 measured
+   and found, 2 could not measure. Many scripts now follow it after the fixes; a single
+   helper and a single test over every script would keep it so.
+3. *Print usage from one function, not from a line range of the header.* A third of the
+   Low findings were a `sed` range that had gone stale.
+4. *Fewer scripts.* `scripts/` holds about 125 files, many written for one day's question.
+   The project's rule is to promote a script that is used twice and it is not followed. I
+   would sort them into "kept and tested" and "the record of one run", and move the second
+   kind beside the result it produced. A reader could then tell which ones are tools.
+5. *No machine paths in tracked code.* Fixed in most places in the last rounds; a check on
+   added lines would keep it fixed.
+
+## 5. Tests
+
+**The state.** The suite is the most unusual part of the project: every check is tied to a
+defect that really shipped, the machine's commands are replaced by tripwires, CI runs it in
+a decoy world that fails on any touch of the real system, and there is a mutation tool. The
+rule "a new check must be observed to fail" is the right rule and the project applies it
+more than most.
+
+**What it costs.** One bash file of about 16,000 lines. The review found some thirty
+assertions that could not fail, in a suite whose first rule is that they must be able to;
+that is a low rate, and it is also what a file of that size produces. CI was red for days
+four times, each time unread, each time because the suite refuses to run locally while a
+trial is open, which on this machine is nearly always.
+
+**What I would change.**
+
+1. *Split the file by tool.* One test file per tool, beside the tool, run by the same
+   runner. The parallel sections already are that split in all but name.
+2. *Make the suite runnable while a trial is open.* The refusal protects the live trial,
+   rightly. A container (the project built `devtools/ci-container` on 2026-11-22) or a
+   separate worktree as the *default* way to run it would remove the cause of the red weeks.
+   A check that cannot be run at the moment of committing is run by CI or by nobody.
+3. *Make red CI loud.* The lesson is recorded four times ("a red badge nobody reads is the
+   same as no CI"). I would have the save command refuse the next commit while the last
+   push's run is red or unread, with one explicit override.
+4. *Test the patches as the suite tests the tools.* The contributions have excellent
+   one-off test records (the VM matrices, the kmemleak sweeps). They are run by hand per
+   package and their scripts carry one machine's paths. One harness, in the repository,
+   that takes a kernel tree and a patch directory and produces the base-against-patched
+   table would turn a day of regeneration into a command, and it is the piece that would
+   shorten the pipeline of section 3 most.
+
+## 6. Evidence
+
+**The state.** The exhibits are the best-kept part: a claim, the command, the output, the
+exit status, whether it was redacted; 97 of them, an index generated from them, corrections
+kept. The trials table is the weakest: numbers reused, rows lost at shutdowns, nine of
+eleven later rows reading `failed` for a reason that is the closer's and not the
+controller's.
+
+**Considerations.**
+
+1. *The result that matters is settled and small.* Twelve failures on the ROM firmware,
+   none in 74 links with the firmware loaded, the entry upstream and in every stable line
+   and in Ubuntu. The trial machinery was built to settle that question; it has. I would
+   close the trial series with a short final note and stop the automatic trials, rather
+   than repair a mechanism whose question is answered. What still needs watching (the
+   start-up failure, the resume failure) is better served by the incident tool, which
+   collects what happened after the fact and does not depend on a clean shutdown.
+2. *Raw output in git.* About 130 MB of logs are tracked. The rule is that the incident
+   window goes into git and bulk does not; the dossiers of November went past it (two of
+   them hold 18 MB each of run logs). They are also where the paths of one machine live in
+   thousands of files. A dossier needs the summary table, the script, and a checksum list
+   of the logs; the logs can live where the capture archive lives.
+3. *Checksum files that do not verify.* Several packages list files that are not in the
+   tree. A checksum list is a promise; either the files are there or the list should say
+   "kept elsewhere" per line.
+
