@@ -34,5 +34,7 @@ characters.
 2. The operator adds his Signed-off-by. Then rerun checkpatch and the bot's sign-off checks on the
    exact file, and do a new `git send-email` dry run. `../send-20261113/send-commands.txt` STEP
    2a/2b still applies; only the file paths change.
-3. When the BlueZ test goes (the same day after the kernel mail's lore link, or after the kernel
-   fix is applied) is the operator's call.
+3. **The BlueZ test goes the same day**, as its own mail after the kernel mail's lore link. That
+   is the established practice (`../../../reviews/2026-11-23T0540Z-bluez-test-with-kernel-fix-practice.md`:
+   7 of 11 pairs; BlueZ often applies such tests before the kernel fix). The operator asked on
+   2026-11-23 to follow the practice.
