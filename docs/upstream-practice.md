@@ -339,6 +339,29 @@ only with offsets.
 
 ## Backports
 
+**K-3. A device-ID backport can be reverted if the ID makes the driver need firmware that older distributions do
+not ship.** 6.18.y reverted two ASUS Realtek ID backports (`42a44fe738f6`, `eff110e062a5`, 2026-11-02). With the
+ID, btrtl required `rtl_bt/rtl8761cu_fw.bin`, which is in linux-firmware only since 20251111. On Debian trixie
+the adapter stopped initializing; without the ID it had worked on its ROM firmware. **Before an ID stable request,
+say which firmware the ID makes the driver load, and since when linux-firmware ships it.**
+- Evidence: `git -C cache/linux log -n 1 42a44fe738f6` (the revert message, with the Debian bug link).
+- Applied: for CO-22's two QCA ROME IDs the files are `qca/rampatch_usb_00000302.bin` and
+  `qca/nvm_usb_00000302.bin`, shipped since 2015-07-14 (`23d13405`). Read from
+  `https://gitlab.com/api/v4/projects/kernel-firmware%2Flinux-firmware/repository/commits?path=qca/rampatch_usb_00000302.bin`.
+- Checked: 2026-11-23. Re-check: per request.
+
+**K-4. The stable team can take an upstream rename or split as a dependency of a later fix.** 7.3.y carries the
+btusb split `10ed5a995f9f` ("btusb: Build the driver from multiple source files") ahead of `7c63ce91cead`, the
+copy of `df5e35f1663a`. On 6.18.y the same fix was adapted by hand instead (S-8).
+- Evidence: `git -C cache/linux log --grep='be58267a34ae' --grep='df5e35f1663a' stable/linux-7.3.y`.
+- Checked: 2026-11-23.
+
+**K-5. MGMT semantic corrections have been reverted from stable after breaking user space.** `59b047bc9808`
+(MGMT/SMP address type, `Cc: stable`) broke bluetoothd's Load Long Term Keys. It was reverted upstream by
+`532f8bcd1c2c` (`Cc: stable`) and on 6.6.y (`c4252955e1fb`) and 6.1.y (`547017ba86aa`). A more correct value
+is not automatically safe for old user space.
+- Evidence: `tmp/kernel-queue-20261123/check-precedents-2.sh`. Checked: 2026-11-23.
+
 **K-1. Stable lines at 2026-11-23.** 7.3.6, 6.18.65, 6.12.119, 6.6.163, 6.1.193, 5.15.226 and 5.10.275 are live; 7.2.15 (2026-11-01) is end of life; mainline v7.4-rc4. A cover naming "7.2.y" must be corrected to the live lines.
 - Evidence: https://www.kernel.org/releases.json -> `stable 7.2.15 2026-11-01 iseol true`; the others `iseol false`.
 - Checked: 2026-11-23; **stale** after the next release. Re-check: before every stable mail.

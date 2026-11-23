@@ -15,6 +15,16 @@ finding 18).
 
 **Checked 2026-11-23:** `scripts/mail-lint.sh` is clean.
 
+**Added the same night:** one paragraph on firmware, after an outside reviewer found that 6.18.y reverted two
+other ASUS ID backports (`42a44fe738f6`, `eff110e062a5`). With those IDs the driver needed a firmware file that
+older distributions lack (`docs/upstream-practice.md` K-3). These two IDs make btusb load
+`qca/rampatch_usb_00000302.bin` and `qca/nvm_usb_00000302.bin`, per `d54601f21faf`'s own log. linux-firmware has
+shipped both files since 2015-07-14 (`23d13405`). The mail now says so; mail-lint is clean.
+
+**Real cherry-pick on the new tips (2026-11-23 night):** `d54601f21faf` is CLEAN on 7.3.6 (into `btusb_main.c`)
+and on 6.18.65 down to 5.10.275 (into `btusb.c`) (`tmp/kernel-queue-20261123/cherry-pick-lines.sh`). The stacked
+pair is to recheck on the send day.
+
 **Facts behind it:**
 - **Queue, 2026-11-22 12:47 UTC:** neither commit is in any queue (`scripts/stable-queue-check.sh
   bluetooth-btusb-add-asus …`).

@@ -22,6 +22,11 @@ both commit messages report repeated "unexpected event for opcode
 0x2005" during LE scanning, which the entry stops. I do not have these
 devices; the runtime results are the authors'.
 
+The entry makes btusb load qca/rampatch_usb_00000302.bin and
+qca/nvm_usb_00000302.bin, as d54601f21faf reports. linux-firmware has
+shipped both files since 2015 (23d13405, "qca: add BT firmware files
+to support QCA ROME chips"), so older distributions have them too.
+
 On 2026-11-22 neither commit was in any of the seven trees or in their
 stable queues, and both applied, in this order, to each tree's tip of
 that day (7.3.5, 6.18.64, 6.12.118, 6.6.162, 6.1.192, 5.15.225,
