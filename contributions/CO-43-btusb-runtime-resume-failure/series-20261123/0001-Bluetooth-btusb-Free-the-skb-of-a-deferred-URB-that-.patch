@@ -38,9 +38,10 @@ Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
 Tested in QEMU (KASAN, lockdep, kmemleak) with an emulated controller
 over usbip. The failed-resume, failed-submission, dead-device and close
-cases leaked on the base tree and not with this patch. So did a command
-and two ACL packets deferred together, with the first submission in
-play_deferred() failing (kmemleak: 3 skbs from hci_sock_sendmsg()).
+cases leaked on the base tree and not with this patch alone or with the
+whole series. A command and two ACL packets deferred together, with the
+first submission in play_deferred() failing, leaked 3 skbs from
+hci_sock_sendmsg() on the base tree and none with the whole series.
 
  drivers/bluetooth/btusb_main.c | 32 ++++++++++++++++++++++++--------
  1 file changed, 24 insertions(+), 8 deletions(-)

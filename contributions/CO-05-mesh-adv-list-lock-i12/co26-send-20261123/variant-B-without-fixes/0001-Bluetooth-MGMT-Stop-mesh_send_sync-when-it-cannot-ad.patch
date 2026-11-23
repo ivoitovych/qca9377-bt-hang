@@ -1,0 +1,80 @@
+From 8ba1bc6245e8eaf89607a16d93fa0e555a91f442 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 14 Nov 2026 14:17:47 +0100
+Subject: [PATCH] Bluetooth: MGMT: Stop mesh_send_sync() when it cannot add the
+ instance
+
+When hci_add_adv_instance() fails, mesh_send_sync() keeps the error in
+err and carries on. It then returns the result of
+hci_schedule_adv_instance_sync() for an instance that was never added,
+and the original error is lost.
+
+Return the error at once instead. hci_schedule_adv_instance_sync() is no
+longer called for a missing instance and mesh_send_start_complete()
+gets the real error.
+
+With a failing allocation injected into hci_add_adv_instance() for the
+first Mesh Send, as seen in a kprobe trace of bluetooth-next
+cf357cfc025e:
+
+  before: hci_add_adv_instance -> -ENOMEM, then
+          hci_schedule_adv_instance_sync(instance 6) -> -ENOENT,
+          mesh_send_sync -> -2, mesh_send_start_complete(err=-2)
+  after:  hci_add_adv_instance -> -ENOMEM,
+          mesh_send_sync -> -12, mesh_send_start_complete(err=-12)
+
+User space gets the same Mesh Packet Complete event in both cases, so
+this is a cleanup of the error path and not a change in what a client
+sees.
+---
+The injection was a test-only module parameter making the first mesh
+add fail, in QEMU with BlueZ's mesh-tester (-s Send), 3 runs on each
+kernel: the trace above in 3 of 3. mesh-tester (10 of 10) and
+mgmt-tester give the same results with and without this patch.
+
+ net/bluetooth/mgmt.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index d21538634bc3..f5439fc30d55 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -2445,7 +2445,6 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+ 	struct adv_info *adv, *next_instance;
+ 	u8 instance = hdev->le_num_of_adv_sets + 1;
+ 	u16 timeout, duration;
+-	int err = 0;
+ 
+ 	hci_dev_lock(hdev);
+ 
+@@ -2473,10 +2472,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+ 				   hdev->le_adv_max_interval,
+ 				   mesh_tx->handle);
+ 
+-	if (!IS_ERR(adv))
+-		mesh_tx->instance = instance;
+-	else
+-		err = PTR_ERR(adv);
++	if (IS_ERR(adv)) {
++		hci_dev_unlock(hdev);
++		return PTR_ERR(adv);
++	}
++
++	mesh_tx->instance = instance;
+ 
+ 	if (hdev->cur_adv_instance == instance) {
+ 		/* If the currently advertised instance is being changed then
+@@ -2503,7 +2504,7 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+ 	if (instance)
+ 		return hci_schedule_adv_instance_sync(hdev, instance, true);
+ 
+-	return err;
++	return 0;
+ }
+ 
+ static void send_count(struct mgmt_mesh_tx *mesh_tx, void *data)
+
+base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
+-- 
+2.43.0
+

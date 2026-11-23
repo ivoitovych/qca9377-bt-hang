@@ -9,7 +9,8 @@ btusb_resume() sends the deferred URBs and clears BTUSB_SUSPENDING
 under txlock. A resume that completes in between leaves the URB
 anchored on an active device: the waker it schedules finds nothing to
 resume, and the URB waits for the next suspend and resume. An HCI
-command in it times out.
+command in it times out, and on controllers with a vendor reset
+callback, such as QCA, the command timeout then resets the device.
 
 Anchor the URB in the same critical section as the flag test, so that
 it is ordered against the replay and the clearing of the flag.

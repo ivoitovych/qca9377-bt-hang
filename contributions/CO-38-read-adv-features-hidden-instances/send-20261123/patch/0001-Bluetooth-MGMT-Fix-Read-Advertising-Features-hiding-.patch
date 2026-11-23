@@ -1,4 +1,4 @@
-From 1fb5fb3351f9a4a9c2417452156eaf6140c4ef8d Mon Sep 17 00:00:00 2001
+From 58ebe4c5b89793d7f5a3bf3fab8fc1d83a315e1d Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Sat, 14 Nov 2026 01:47:30 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
@@ -21,18 +21,19 @@ Tested in QEMU with a new mgmt-tester case, "Read Advertising
 Features - Success 3 (Instance 2 only)", sent to BlueZ separately: it
 adds only instance 2 and expects exactly that instance in the reply.
 On bluetooth-next cf357cfc025e it fails 3 of 3 runs without this patch
-and passes 3 of 3 with it, and the rest of mgmt-tester and mesh-tester
-is unchanged. The same holds on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and
-6.1.192.
+and passes 3 of 3 with it. The same holds on 7.3.5, 6.18.64, 6.12.118,
+6.6.162 and 6.1.192. The patched kernels also carried a one-line MGMT
+timeout fix sent separately; besides the two new cases, no mgmt-tester
+or mesh-tester result changed.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 6ed3bf6f17385..5c92618a0867f 100644
+index d21538634bc3..01969ab57339 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
-@@ -8889,7 +8889,7 @@ static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
+@@ -9074,7 +9074,7 @@ static int read_adv_features(struct sock *sk, struct hci_dev *hdev,
  	instance = rp->instance;
  	list_for_each_entry(adv_instance, &hdev->adv_instances, list) {
  		/* Only instances 1-le_num_of_adv_sets are externally visible */
@@ -42,7 +43,7 @@ index 6ed3bf6f17385..5c92618a0867f 100644
  			instance++;
  		} else {
 
-base-commit: da3cc02587c629420603df4395179ec82955c941
+base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
 -- 
 2.43.0
 

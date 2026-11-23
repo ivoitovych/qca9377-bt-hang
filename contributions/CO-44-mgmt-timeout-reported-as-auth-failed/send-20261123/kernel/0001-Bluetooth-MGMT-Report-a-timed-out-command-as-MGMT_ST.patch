@@ -1,4 +1,4 @@
-From b7df6ff0a81755c09edcf5e5751bf1edc409b257 Mon Sep 17 00:00:00 2001
+From c972e296991fda04484a4b03a07ac58c24d9372e Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 13 Nov 2026 04:19:58 +0100
 Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
@@ -28,14 +28,16 @@ Tested in QEMU with BlueZ's doc/tester.config and a new mgmt-tester
 case, "Set Device Class - Timeout 1", sent to BlueZ separately: its
 emulated controller drops Write Class of Device. On bluetooth-next
 cf357cfc025e the case gets Authentication Failed in 3 of 3 runs
-without this patch and passes 3 of 3 with it; the rest of mgmt-tester,
-l2cap-tester, smp-tester and mesh-tester is unchanged.
+without this patch and passes 3 of 3 with it. The patched kernel also
+carried a one-line Read Advertising Features fix sent separately;
+besides the two new cases, no mgmt-tester, l2cap-tester, smp-tester or
+mesh-tester result changed.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
-index 6ed3bf6f17..0056e34842 100644
+index d21538634bc3..117ae7ab070b 100644
 --- a/net/bluetooth/mgmt.c
 +++ b/net/bluetooth/mgmt.c
 @@ -295,7 +295,7 @@ static u8 mgmt_errno_status(int err)
@@ -48,7 +50,7 @@ index 6ed3bf6f17..0056e34842 100644
  		return MGMT_STATUS_NO_RESOURCES;
  	case -EISCONN:
 
-base-commit: da3cc02587c629420603df4395179ec82955c941
+base-commit: cf357cfc025e7f72851479ed3fb60d5f16413c1b
 -- 
 2.43.0
 

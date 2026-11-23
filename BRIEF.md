@@ -222,7 +222,9 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >      - testing notes in the patches; recipients in `recipients.txt`; the old packages are marked
 >        SUPERSEDED.
 >      Left: the operator's `Cc: stable` call on 1/3 and the send-day steps.
->   5. **CO-26**, regenerated alone with its fault injection rerun.
+>   5. **CO-26** (`CO-05-mesh-adv-list-lock-i12/co26-send-20261123/`): regenerated alone on 11-23, with its
+>      fault injection rerun on the tip (3 of 3 per kernel). Left: variant A (`Fixes:`) or B, the operator's
+>      call, and the send-day steps.
 >
 >   No reviewer found a correctness defect in the five kernel diffs. What remains is tests,
 >   messages and packaging.
@@ -231,7 +233,7 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     and its new test~~: done 11-23;
 >   - the dry runs (CO-38, CO-44, the btusb series) once the operator's Signed-off-by is in;
 >   - ~~get_maintainer.pl for the btusb series~~: done 11-23 (`recipients.txt`);
->   - CO-26;
+>   - ~~CO-26~~: done 11-23;
 >   - the CO-35 rebase.
 > - **Open for the operator:**
 >   - **Stable tags:** confirm the `Cc: stable` choices (CO-38 yes, CO-44 no, both as packaged on

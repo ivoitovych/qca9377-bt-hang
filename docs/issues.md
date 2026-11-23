@@ -1185,7 +1185,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-23 — btusb: a URB can be parked on the deferred anchor after the resume that would send it
 
-**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-23`): CO-43 E has a send package, ready; the dry run was OK on 11-14; nothing sent. It goes first: the rest of the series applies on top of it.**
+**Status 2026-11-14 (added 2026-11-16 from the `docs/STATUS.md` row `BT-23`): CO-43 E has a send package, ready; the dry run was OK on 11-14; nothing sent. It goes first: the rest of the series applies on top of it.** **Corrected 2026-11-23:** E is now 2/3 of `contributions/CO-43-btusb-runtime-resume-failure/series-20261123/`, after the leak fix; the 11-14 package is superseded.
 
 **Status 2026-11-13: race from source (seventh review), reproduced in emulation with the window widened by a debug-only delay; fix candidate CO-43 E; not BT-17.**
 - **Reproduced:** `bt23` scenario, with a 400 ms delay after the decision (debug-only module parameter) and a resume forced meanwhile (`power/control=on`):
@@ -1202,7 +1202,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 - first reproduced on the B2 tree;
 - on E it is reached with test-only fault injection standing in for B2's timing window: the
   deferred anchor is left non-empty 3 of 3 without the fix and empty 3 of 3 with it;
-- the fix is patch 1 of `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/`, which drains the anchor
+- the fix is 3/3 of `contributions/CO-43-btusb-runtime-resume-failure/series-20261123/` (2026-11-23; patch 1 of the superseded `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/` before), which drains the anchor
   under `txlock`; evidence in `results/co43-d2-series-bt24-bt25-2026-11-14/` and the package's
   `CHECKS.md`;
 - the text below is the 11-13 state.
@@ -1219,7 +1219,7 @@ Evidence, with every command and its output: [`results/incident-2026-11-12-1803/
 
 ## BT-25 — btusb: discarding deferred URBs appears to leak their skb and setup packet
 
-**Status 2026-11-14: fixed** by patch 2 of `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/`
+**Status 2026-11-14: fixed** by patch 2 of `contributions/CO-43-btusb-runtime-resume-failure/send-bt24-bt25-20261114/` (2026-11-23: now 1/3 of `contributions/CO-43-btusb-runtime-resume-failure/series-20261123/`, the leak fix first; the old package is superseded)
 (STATUS `BT-25`):
 - kmemleak, 3 runs per case, E alone against E with the two patches: 3/3/1, 2/1/2, 5/3/4 and
   2/2/2 leaked objects against 0 in every run;
