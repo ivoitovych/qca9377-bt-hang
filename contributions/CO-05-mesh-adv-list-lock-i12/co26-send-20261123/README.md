@@ -45,7 +45,10 @@ of SCO Connections", so it becomes `MGMT_STATUS_NO_RESOURCES`. The Mesh Packet C
 so nothing is visible. CO-26 stays one change. A separate one-liner (`-EBUSY`) is a candidate, and whether to
 make it is the operator's call.
 
-**Fixes: variant:** two outside reviewers prefer A (with `Fixes:`, no `Cc: stable`), one prefers B.
+**Fixes: variant:** reviewers 2, 3 and 7 prefer A, with `Fixes:` and no `Cc: stable`. Their reason: `Fixes:`
+records a real bug's origin, whatever user space sees. Reviewer 1 prefers B. The stable rules document
+`Cc: <stable+noautosel@kernel.org> # reason` for keeping a fix out of automatic selection, an option only one
+reviewer suggests (`../../../reviews/2026-11-23T2100Z-fixes-and-stable-trailers-question.md`).
 
 **Still to do:** the operator's choice of A or B, the Signed-off-by, the bot's checks and a dry run.
 Recipients: `get_maintainer.pl` at send time. CO-26 is fifth in the queue (`BRIEF.md`, hand-off).
