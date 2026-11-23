@@ -145,7 +145,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on the branch `tests/test-suite` and rebases it onto `main` when `main` moves (`comms/2026-11-13T0100Z-from-test-suite-maintainer-to-everyone.md`; this line said "merges `main` into it" until 2026-11-16; the branches `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main` that this line named before 2026-11-16 are among the 16 deleted on 2026-11-15, §0 hand-off below).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
+**Last updated: 2026-11-23** (a fresh hand-off after the upstream re-read of 11-22 and two outside rounds on the kernel send queue; the 11-14 block moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-16** (corrections only, after the recheck of the whole-project review of 11-15; the hand-off block below is the one of 11-14, with its lines corrected on 11-15 and 11-16 where marked). Before that, **2026-11-14** (a fresh hand-off: the machine on `-43` stock, the packages made
 ready that day, the outside-review document, the Ubuntu bundle, the five tracks; the 11-12 block
 moved to the end of `HISTORY.md` verbatim). Before that, **2026-11-12** (the registers reconciled
 with each other and with upstream; the hand-off brought to 11-12; the reset count corrected to two
@@ -168,95 +168,75 @@ carried a running list of every update since 10-14, which grew to about 2,800 ch
 superseded by EX-094; EX-096 and EX-097 show that state undone without a reconnect, by a D-Bus
 ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-11-14; read first; the 11-02/11-12 block is at the end of `HISTORY.md`).**
-> STATUS has every submission row (nothing was sent on 11-13 or 11-14). What to send, and from
-> which directory, is the "What to send" table of `contributions/README.md` (the record;
-> `contributions/rd-2026-11-14.md` is the 11-14 working page: every possible contribution with its
-> state when it was written, the R&D left, and the results of five groups of items; it is not
-> kept current).
+> **HAND-OFF (2026-11-23; read first; the 11-14 block is at the end of `HISTORY.md`).**
+> STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
+> from which directory, is the "What to send" table of `contributions/README.md`.
 >
-> - **The machine (read 11-14, STATUS "The investigation machine"):** Ubuntu `7.0.0-43` with the
->   **stock** btusb and `bluetooth.ko` since 11-12 22:55; the stock btusb has `13d3:3503` and the
->   boot loads the patch. **E3 is retired; CO-09 is done.** CO-03's `bluetoothd`, staged on disk on 11-13, is the running
->   daemon (read 2026-11-22; until 2026-11-23 this said "not running until bluetoothd restarts"). `hci0` kernel debug is on (BT-17's arming).
-> - **What to send: the table "What to send" at the top of `contributions/README.md`** (2026-11-15)
->   names the one current directory of every package. Several were replaced on 11-14 after
->   13:23, when that day's outside review was answered (`review-fixes-20261114/`,
->   `A-review-fixes-20261114/`, `patch1-standalone-20261114/`, `send-v2-review-fixes-20261114/`,
->   `send-bt24-bt25-20261114/`, `bluez-split-20261114/`).
->   - Patch ready: CO-44, CO-38, CO-43 E, A and BT-24/25, CO-04, CO-22, CO-21, CO-20 patch 1,
->     CO-39, CO-41; CO-35, CO-05 + CO-26, CO-12, CO-23 and CO-37 with operator decisions open.
->   - Send commands and a checked dry run exist only for CO-44 and CO-43 E; for the others they
->     are to be made before the send.
->   - **Not ready:** CO-02 v2. Its sleeping 2/2 deadlocks with debug delays (3 of 3, 11-15); the
->     candidate is the non-sleeping 2/2 in `review-fixes-20261115/`. Checkpatch, the bot's CI
->     and the send commands are still to do; the cover for the two-patch candidate was rewritten on
->     2026-11-16 (`contributions/CO-02-sco-connect-reuses-closing-link/review-fixes-20261115/msg/cover-alt.txt`;
->     it marks the l2cap-tester and the laptop as not run; corrected 2026-11-16).
->   - **Held:** CO-43 B2 and D v2 (D v2 breaks the system-resume rebind).
->   - **Packages made since 11-13 carry no Signed-off-by**; the operator adds his own; the author
->     line is his real name and address. Nothing sent.
-> - **One document for outside reviewers holds all twelve kernel items verbatim:**
->   `reviews/2026-11-14T0300Z-kernel-patches-ready-to-send-for-outside-review.md`, built by
->   `scripts/kernel-review-pack/build.py` (rerun it after any package changes; it embeds the files
->   by path with their SHA-256). The operator shares it with the reviewers.
-> - **Ubuntu:** one `bluez 5.72-0ubuntu5.9` for CO-03, CO-11a, CO-37's backports and CO-40
->   (`contributions/ubuntu-bluez-5.72-0ubuntu5.9-bundle/`), built and tested, not filed. **Not the
->   build staged on this machine:** the staged `5.72-0ubuntu5.9~co03.1` carries the BT-7 fixes; the
->   bundle's own `5.72-0ubuntu5.9` is a different build without them (read from the `.deb`,
->   2026-11-16). Found with
->   it: CO-11a's resolute/stonking debdiff versions are now taken by unrelated proposed uploads;
->   its tenacious debdiff is obsolete (5.88-1); CVE-2026-105460 (btmon) not yet checked on 5.72.
-> - **New findings 11-14:** a lockdep cycle at controller unregister on the bluetooth-next tip
->   (`cmd_sync_work_lock` vs `unregister_lock` via `mesh_next()`), 2 of 35 boots, none with CO-04;
->   **CO-14 confirmed**: every mesh send pending at controller removal leaks (kmemleak, 86 objects
->   in 10 boots, with and without CO-04), and a fix in `mgmt_index_removed()` takes it to 0 (the
->   regression runs were still going on 11-14).
-> - **Five groups of items were open at 11-14** (their directories in the work area were deleted
->   11-14 after their results were ported, see below; state as of 11-16 in brackets): 1 CO-14
->   (the fix's mgmt-tester runs, the hung-controller lockdep case); 2 CO-30 (the deferred-connect RFC on
->   v2; not re-tested on the non-sleeping 2/2); 3 CO-38's BlueZ TestFunctional failures (shown on
->   11-16 to be a flake: patched failed 2 of 8 runs, base 1 of 7), then CO-12's
->   clamp-or-design package; 4 CO-41 and CO-39 (their packages were made on 11-14, nothing
->   sent); 5 the btmon CVE and CO-11a's renumbered debdiffs. Their results were leads until checked on copy.
-> - **Porting results into the repository (learned 11-14, five failed pushes):** run
->   `tmp/port-check/check.sh <dir>` (a machine-local script, not in a clone: executable bits, the suite's timeout spelling), then
->   `git add -A` and `devtools/repo-scan` before `devtools/save`. Leave in the work area: tester
->   and bot harness logs (emulated controllers' addresses), saved lore/patchwork pages and other
->   people's packaging (their addresses, third-party text), kernel images and binaries, scripts that
->   wait on session-temporary paths. Placeholder addresses (`@example.invalid`) become the
->   operator's real one in authored files and `example.com` in throwaway identities.
-> - **CI:** green on every push since `2a3f253` (11-14); two red runs that day were ported
->   scripts without the executable bit and with a non-canonical timeout grep. **Not true after
->   11-14:** `HISTORY.md`'s chapters of 11-15 and 11-16 record red runs on both days; read CI
->   with `devtools/ci`, not from this line (corrected 2026-11-16).
-> - **After this block was written (11-15 and 11-16; the detail is in `HISTORY.md`):** the
->   whole-project review of 11-15 and its two rechecks, with the fixes they asked for; CO-46, the
->   noble stable-update request for upstream's `journalctl` fix and its one-file review package
->   (`contributions/CO-46-systemd-journalctl-file-count-slowdown/`); the keeper for light mode in
->   `tools/bt-ui-capture` (it survives reboots); U21's second occurrence on 11-16 (a forgotten
->   headset paired again in Handsfree, STATUS).
+> - **The machine** (STATUS, "The investigation machine"):
+>   - Ubuntu `7.0.0-43` with the stock btusb and `bluetooth.ko`. No `updates/` module remains for
+>     any kernel since 11-22, and ELL was removed from `/usr`.
+>   - The trial label is `stock-fixed` from the next boot. Trial E3 #14 has been open since the
+>     boot of 11-18 13:48. The reboot is the operator's.
+>   - The running `bluetoothd` is CO-03's build.
+> - **Upstream since 11-15** (STATUS, top paragraph of 2026-11-23):
+>   - **Overtaken by others' applied fixes, not to be sent:**
+>     - CO-04, CO-05 1/2, CO-06 and CO-14, by the maintainer's `1d7a52778858`;
+>     - CO-12, by Cen Zhang's `d7e77168da`.
+>   - **CO-26** stands alone: a failed add is still lost on the tip.
+>   - **CO-35:** 7.3.y is queued by the stable team itself. The 6.18/6.12/6.6 backports need a
+>     rebase onto three queued sibling patches.
+>   - **CO-22** is still needed.
+>   - Rule learned: check "applied or not" in the tree (`git merge-base --is-ancestor`), never in
+>     patchwork's state alone.
+> - **The send queue.** Two outside rounds agree on it: the five rankings of 11-22 and the five
+>   reviews of 11-23 (`reviews/2026-11-23T0404Z-…`). One mail at a time, several days apart:
+>   1. **CO-38's kernel patch, alone** (`CO-38-…/send-20261123/`, with `Cc: stable`). Its BlueZ test
+>      is to be rewritten small first (that directory's README).
+>   2. **CO-44** (`CO-44-…/send-20261123/`, message trimmed, no `Cc: stable` after its precedent).
+>      Its testers are to be rerun on the tip, and its dry run redone.
+>   3. **Beside them, CO-22's stable request v4**
+>      (`research-2026-11-01/qca-ids/refresh-20261123/`). Queues and builds are re-read on the send
+>      day.
+>   4. **The btusb series:** E plus the BT-24/25 pair as three patches, the leak fix first, on a
+>      public base, with a multi-URB test (`CO-43-…/SERIES-PLAN-20261123.md`).
+>   5. **CO-26**, regenerated alone with its fault injection rerun.
+>
+>   No reviewer found a correctness defect in the five kernel diffs. What remains is tests,
+>   messages and packaging.
+> - **Work next, needing no decision:**
+>   - CO-38's BlueZ test rewrite and its base-against-patched run;
+>   - CO-44's testers on the tip and its dry run;
+>   - the btusb series regeneration and its new test;
+>   - CO-26;
+>   - the CO-35 rebase.
 > - **Open for the operator:**
->   - **Old remote branches: done 2026-11-15.** The operator deleted the 16 the test-suite
->     maintainer's 11-13 note lists (each backed up first), `ci/upstream-ci-local` among them (its
->     two commits are on `main` as the ports `8b71499` and `a56141e`). The public repository now
->     has `main`, `tests/test-suite`, `research/journalctl-file-scaling` and the whole-project
->     review's branch (`ls-remote`, 2026-11-15). `comms/2026-11-15T2130Z-from-main-branch-maintainer-to-test-suite-maintainer.md`
->     still says the deletion "remains the operator's" and quotes this file as saying the 11-13
->     note "gives no command and no count"; both were true of the text it read, neither is true
->     now, and `comms/` is append-only, so this line is the correction (2026-11-16).
->   - **The rest:** the decisions in each package's notes, and the headset session and laptop
->     tests as before (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17).
->   - **Done 11-14:** the 11-13 work areas were deleted, with every result ported (STATUS,
->     Repository health).
-> - **Still open from before (carried forward):** the 11-02 review round's decisions D1–D14
->   (`contributions/review-2026-11-02/followups.md`) stay the operator's; today's packages put
->   D1 (CO-02: when to post v2, and its label) and D2 (the mismatch patch's error code: -EBUSY on a
->   live link, -ECONNABORTED only when nothing holds it) and D6 (one
->   Ubuntu upload for the 5.72 fixes) in front of him as built options, not as decisions taken.
->   Watch X1's MRs !368/!369 for comments (`scripts/cd-trace/x1-check-submission.py`; none on
->   11-14) and each boot's start-up for BT-16 (third occurrence 11-13 on `-43` stock). CO-25's reply
->   v4 is still unsent.
+>   - **Stable tags:** confirm the `Cc: stable` choices (CO-38 yes, CO-44 no, both as packaged on
+>     11-23).
+>   - **CO-44:** when its BlueZ test goes.
+>   - **Laptop runs**, both touching the laptop's Bluetooth: the btusb series soak, and
+>     `btmgmt add-adv` of instance 2 for CO-38.
+>   - **The reboot.**
+>   - **Earlier decision lists:** the incident's decisions D-1 to D-7 (the jail before any agent
+>     work; D-4's log copy has a deadline of about four weeks from 11-21). The 11-02 review round's
+>     D1–D14 also remain listed open.
+>   - **CO-35:** whether to ask the stable team first.
+>   - **Branches:** whether to delete the branches `research/contributions-upstream-check-20261122`
+>     (ported to `main` as `e86a631`) and the whole-project review's branch.
+> - **The day's records:**
+>   - `reviews/2026-11-22T1240Z-kernel-contributions-readiness.md`, with its work log F-01 to F-48;
+>   - `…1513Z-five-kernel-submissions-for-outside-review.md`, rebuilt by
+>     `scripts/kernel-review-pack/build_top5.py`;
+>   - `…1519Z-contributions-upstream-check.md`;
+>   - `…1526Z-first-submission-ranking-findings-and-checks.md`;
+>   - `2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`.
+> - **CI:** `checks` is green. The access-audit workflow has been red on every push since at least
+>   11-16 (STATUS, Repository health) and is not fixed.
+> - **Carried forward from the 11-14 block:**
+>   - CO-25's reply v4 is unsent;
+>   - watch X1's MRs !368/!369, and each boot for BT-16;
+>   - the headset-session laptop tests (CO-03, CO-19, CO-32, CO-08, CO-15, CO-17);
+>   - CO-02 v2: its BlueZ tests must move into the candidate directory before its checks. v1 is at
+>     26 days without a human reply, and the CI bot asked for a resend.
 
 
 ---

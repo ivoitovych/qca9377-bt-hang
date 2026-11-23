@@ -1,0 +1,54 @@
+From b7df6ff0a81755c09edcf5e5751bf1edc409b257 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 13 Nov 2026 04:19:58 +0100
+Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
+ MGMT_STATUS_TIMEOUT
+
+When the controller stops answering, MGMT commands such as Set Powered,
+Add UUID, Remove UUID or Set Device Class fail with Authentication
+Failed although no authentication took place. With a Write Class of
+Device timing out during Remove UUID, btmon showed "Remove UUID
+(0x0011) ... Status: Authentication Failed (0x05)" and bluetoothd
+logged "Failed to remove UUID: Authentication Failed (0x05)".
+
+The synchronous command path returns -ETIMEDOUT when the controller
+does not answer, and mgmt_errno_status() maps -ETIMEDOUT to
+MGMT_STATUS_AUTH_FAILED. Map it to MGMT_STATUS_TIMEOUT instead,
+matching mgmt_status_table[], which already maps the HCI timeout
+statuses that bt_to_errno() turns into ETIMEDOUT to
+MGMT_STATUS_TIMEOUT.
+
+MGMT commands that fail with -ETIMEDOUT now complete with Timeout
+(0x08) instead of Authentication Failed (0x05). Pairing results take
+HCI statuses through mgmt_status_table[] and are unchanged.
+
+Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+---
+Tested in QEMU with BlueZ's doc/tester.config and a new mgmt-tester
+case, "Set Device Class - Timeout 1", sent to BlueZ separately: its
+emulated controller drops Write Class of Device. On bluetooth-next
+da3cc02587c6 the case gets Authentication Failed without this patch
+and passes with it (mgmt-tester 526 -> 527 of 527); l2cap-tester and
+smp-tester are unchanged.
+
+ net/bluetooth/mgmt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 6ed3bf6f17..0056e34842 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -295,7 +295,7 @@ static u8 mgmt_errno_status(int err)
+ 	case -EBUSY:
+ 		return MGMT_STATUS_BUSY;
+ 	case -ETIMEDOUT:
+-		return MGMT_STATUS_AUTH_FAILED;
++		return MGMT_STATUS_TIMEOUT;
+ 	case -ENOMEM:
+ 		return MGMT_STATUS_NO_RESOURCES;
+ 	case -EISCONN:
+
+base-commit: da3cc02587c629420603df4395179ec82955c941
+-- 
+2.43.0
+

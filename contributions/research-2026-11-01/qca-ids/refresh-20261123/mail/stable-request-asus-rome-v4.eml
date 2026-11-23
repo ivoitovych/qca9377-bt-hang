@@ -1,0 +1,34 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: stable@vger.kernel.org
+Cc: Quentin Strydom <qstrydom0@gmail.com>, Konstantin Nazarov <qwertyuiopyyy@gmail.com>, Marcel Holtmann <marcel@holtmann.org>, Luiz Augusto von Dentz <luiz.dentz@gmail.com>, linux-bluetooth@vger.kernel.org
+Subject: Please backport d54601f21faf and cfa67a1dbfd9 (btusb: ASUS QCA Rome IDs) to stable
+
+Hello,
+
+please consider these two commits, in this order, for linux-7.3.y,
+linux-6.18.y, linux-6.12.y, linux-6.6.y, linux-6.1.y, linux-5.15.y and
+linux-5.10.y:
+
+  d54601f21faf ("Bluetooth: btusb: add ASUS 0b05:1868 to QCA Rome
+  quirks")
+  cfa67a1dbfd9 ("Bluetooth: btusb: add ASUS 0b05:1825 to QCA Rome
+  quirks")
+
+Both are in mainline since v7.4-rc1 and carry no Cc: stable tag. They
+add two device IDs to btusb's QCA ROME entries. Without an entry these
+ASUS controllers match only the generic Bluetooth class entry,
+btusb_setup_qca() never runs, and they stay on their ROM firmware;
+both commit messages report repeated "unexpected event for opcode
+0x2005" during LE scanning, which the entry stops. I do not have these
+devices; the runtime results are the authors'.
+
+On 2026-11-22 neither commit was in any of the seven trees or in their
+stable queues, and both applied, in this order, to each tree's tip of
+that day (7.3.5, 6.18.64, 6.12.118, 6.6.162, 6.1.192, 5.15.225,
+5.10.274); cfa67a1dbfd9's context is the line d54601f21faf adds. On
+2026-11-14, on that day's tips, btusb.o built with both commits with
+no new warning (x86_64 defconfig, BT=m, BT_HCIBTUSB=m, W=1; on 6.6.y
+the W=1 build stops on four btmtk.h errors with or without them).
+
+Thank you,
+Iaroslav Voitovych
