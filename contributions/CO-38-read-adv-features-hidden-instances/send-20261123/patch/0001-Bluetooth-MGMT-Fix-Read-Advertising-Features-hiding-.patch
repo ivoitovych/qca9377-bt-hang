@@ -10,7 +10,7 @@ each instance number with the number of instances instead of the number
 of sets. An instance whose number is greater than the current number of
 instances is left out: with instances 1 and 2 added and instance 1
 removed, for example after its timeout, instance 2 is still advertised
-but no longer reported, and no Advertising Removed event says so.
+but no longer reported.
 
 Compare with le_num_of_adv_sets, as the comment says.
 
@@ -22,12 +22,13 @@ Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
 ---
 Tested in QEMU with a new mgmt-tester case, "Read Advertising
-Features - Success 3 (Instance 2 only)", sent to BlueZ separately: it
-adds only instance 2 and expects exactly that instance in the reply.
-With this patch alone the case passes 3 of 3 runs and without it
-fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
+Features - Success 3 (Instance 2 only)", submitted to BlueZ
+separately: it adds only instance 2 and expects exactly that instance
+in the reply. With this patch the case passes 3 of 3 runs and without
+it fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
 6.18.65, 6.12.119, 6.6.163 and 6.1.193. In the ten testers of the
-Bluetooth kernel CI, no other case changed on any of these kernels.
+Bluetooth kernel CI, no other observed case changed on any of these
+kernels.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

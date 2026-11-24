@@ -11,6 +11,11 @@ Without the kernel change "Bluetooth: MGMT: Fix Read Advertising
 Features hiding instances" the instance is left out, because the
 kernel compares each instance number with the number of instances.
 ---
+Kernel fix: <LORE-LINK-OF-THE-KERNEL-PATCH>
+
+This case fails on kernels without that fix. Please apply it once the
+fix is in the kernel the Bluetooth CI runs.
+
  tools/mgmt-tester.c | 36 +++++++++++++++++++++++++++++++++---
  1 file changed, 33 insertions(+), 3 deletions(-)
 

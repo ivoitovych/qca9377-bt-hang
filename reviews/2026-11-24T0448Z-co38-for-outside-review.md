@@ -357,3 +357,12 @@ Should change: <list>
 Answers to section 7: 1. ... 2. ...
 What I checked myself: ...
 ```
+
+## Corrections after the first answers (2026-11-24)
+
+Two statements above were wrong, as reviewers 2, 6 and 7 pointed out. Neither is in the patches.
+- **Section 2, "when its duration ends":** in MGMT, Duration is the rotation slot and Timeout ends the instance.
+  It should read "when its timeout expires". The commit message already says "after its timeout".
+- **Section 4, "the emulated controller offers 5 advertising sets":** `test_bredrle` uses a legacy controller.
+  The 5 is the kernel default, `HCI_MAX_ADV_INSTANCES` (`include/net/bluetooth/hci_core.h:277`, set in
+  `hci_core.c:2656`).
