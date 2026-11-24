@@ -249,6 +249,14 @@ only with offsets.
 
 **R-5. A BlueZ v2 went out 6.5 hours after v1 had been applied (2026-09-21), so fetch master before mailing.** Evidence: incident in `BRIEF.md` section 8 (the record). Checked: 2026-09-21 (record). Re-check: per send (T-2 covers the tip rule).
 
+**R-6. No rule spaces independent first postings; same-day bursts by one author are processed and applied.** netdev's 24 hours is "between postings" under "Resending after review", i.e. versions of the same work. Its volume limit is 15 patches per series and 15 outstanding per tree; our queue is 7 kernel patches. No Bluetooth, stable or maintainer statement asking for spacing between unrelated series was found by four outside reviewers (a negative search). The concern seen in the archive is a contributor's own restraint about review load (an RFCOMM thread of 2026-08-22), and Greg Kroah-Hartman's July 2026 "slow down" was about v3 of the same patch. Precedents checked in the trees:
+- Cen Zhang posted three fixes within 59 s on 2026-06-23. All three are in mainline (`352a59dc1f4a`, `518aa9505fa1`, `384a4b2fef9f`, committed 2026-07-06).
+- Kevin Dewald posted four threads on 2026-10-27. All four landed: BlueZ `0d57c12f5`, `4f3428e9d`, `cad7a98e7` on 10-27/28, and kernel `60b10121db60` on 11-02 after revisions.
+- An outside reviewer's count over the CI mirror, June to November, found burst patches applied no less often than others (71 % against 64 %), and predicts outcome better by track record (37 % for authors with no earlier commit against 57 %). This was not re-run here; we have one applied kernel commit, `86ef0f58bdec`.
+- Evidence: `git -C cache/linux grep -n -E "24 hours|outstanding|Resending after review" bluetooth-next/master -- Documentation/process/maintainer-netdev.rst` → `:421`, `:483`, `:486`. For the bursts, `git -C cache/linux log --author=Cen --since=2026-06-22 --until=2026-07-08 origin/master -- net/bluetooth` and `git -C cache/bluez-upstream log --author=Dewald --since=2026-10-26 origin/master`. The reviewers' texts are in the 2026-11-24 review record.
+- Project convention, not upstream's: one independent kernel thread per day, its BlueZ test the same day. A stable request may share a day with a simple patch. No ready series waits for review of an unrelated one. Answer what comes back before sending more.
+- Checked: 2026-11-24. Re-check: if a maintainer comments on volume.
+
 ## Message style
 
 **M-1. BlueZ's `HACKING` rules for a patch mail.** Send to the list; `[PATCH BlueZ]` prefix; 50/72 formatting with quoted tool output exempt; split by top-level directory without breaking the build; bug fixes before features; a cover letter when introducing a feature.
@@ -262,6 +270,20 @@ only with offsets.
 **M-3. The networking process document says bug fixes must state how the issue was found and validated.** The document is `maintainer-netdev.rst`; it does not name Bluetooth, so applying it to Bluetooth is an inference.
 - Evidence: `git -C cache/linux grep -n "must state how the issue was discovered" ... maintainer-netdev.rst` -> `:289`. Web: https://www.kernel.org/doc/html/latest/process/maintainer-netdev.html "All bug fixes must state how the issue was discovered and validated".
 - Checked: 2026-11-23. Re-check: when the document changes.
+
+**M-6. Reproduction by a modified kernel, a delay or fault injection is stated in the body, above `---`; accepted Bluetooth commits do so.** netdev asks for it (`maintainer-netdev.rst:289-315`, added by `fe8a42931853` on 2026-10-01). It also asks a hardware driver fix to name the hardware it was tested on, so say "emulated" when it was. Applied Bluetooth commits whose permanent body names the method:
+- `9838a80096ba` (ISO, emulated controller, a debug delay to widen the window);
+- `024e05f73a4c` ("a 40 ms diagnostic delay … an instrumented kernel");
+- `9ff737119177` ("a test kernel with scheduling hooks");
+- `add463a65802` ("a test kernel where the socket thread was paused");
+- `555ff78fa719` and `56e20c3d8ad3` ("instrumented kernel");
+- `902fe40bce70` and `5a4bb6a8e981` (fault injection);
+- `ae9c8df1ffb8` (found by code inspection only).
+
+Practice varies: `fa96916cfd05` (btusb) gives no test account.
+- Evidence: `tmp/kernel-queue-20261124/check-review-commits.sh` (machine-local; it prints subject, trees and matching body lines of each).
+- Applied 2026-11-24 to CO-38, CO-44, CO-43 1/3–3/3 and CO-26 A/B: one sentence each on how it was found and how it was reproduced; the run counts stay below `---`.
+- Checked: 2026-11-24. Re-check: not volatile.
 
 **M-4. `Fixes:` names where the issue originated, not every related commit.** "used to make it easy to determine where an issue originated"; an earlier incomplete repair is named in prose, with one `Fixes:` for the origin (project's check on `19cfe912c37b`, 2017 diff). The mapping precedent names the commit that made the path reachable (`7eac806143005`: `Fixes: cf75ad8b41d2`).
 - Evidence: `git -C cache/linux grep -n -A5 "A Fixes: tag indicates" ... submitting-patches.rst` -> `:604-607`; `reviews/2026-11-23T0404Z-...` row 11 for the 2017 diff.
@@ -398,7 +420,7 @@ is not automatically safe for old user space.
 **X-5. How big a BlueZ test for a one-line kernel fix may be.** Four reviewers: shrink (about 30 lines suffice, no timer windows); reviewer 1: normal size for the tester's infrastructure. The test was rewritten to 30 lines on 2026-11-23 and reviewers 2, 3, 7 withdrew their holds; no maintainer was asked.
 - Re-check: when the test is reviewed upstream.
 
-**X-6. Spacing and structure of several sends.** Unrelated patches several days to a week apart (reviewers 3, 6) against no rule and no need to wait (reviewer 7; the guide has no spacing rule); a dependent patch inside one series (reviewers 3, 6, 7) against a separate thread that says "depends on" (reviewers 1, 2). The only primary text is "Each patch should yield a kernel which builds and runs properly" (`git -C cache/linux grep -n "builds and runs properly" ... Documentation/process/5.Posting.rst` -> `:110`).
+**X-6. Structure of dependent sends.** *(Spacing is settled: R-6. Reviewers 3 and 6, who had advised days to a week, withdrew it on 2026-11-24.)* A dependent patch inside one series (reviewers 3, 6, 7; done for CO-43) against a separate thread that says "depends on" (reviewers 1, 2). The only primary text is "Each patch should yield a kernel which builds and runs properly" (`git -C cache/linux grep -n "builds and runs properly" ... Documentation/process/5.Posting.rst` -> `:110`).
 - Re-check: not volatile.
 
 **X-7. Whether Ubuntu takes small or cosmetic fixes into a stable update.** `reviews/2026-10-20T2309Z-contribution-opportunities.md:228`: CO-19 "not worth a request: Ubuntu rarely takes a cosmetic fix"; `reviews/2026-11-22T1519Z-contributions-upstream-check.md:270`: the same item is a "backport candidate". Neither gives a source and the SRU wiki page could not be read today (HTTP 404 on three URL forms).

@@ -6,8 +6,9 @@ Subject: [PATCH] Bluetooth: MGMT: Report a timed out command as
 
 When the controller stops answering, MGMT commands such as Set Powered,
 Add UUID, Remove UUID or Set Device Class fail with Authentication
-Failed although no authentication took place. With a Write Class of
-Device timing out during Remove UUID, btmon showed "Remove UUID
+Failed although no authentication took place. On a QCA9377 that had
+stopped answering, a Write Class of Device timed out during Remove
+UUID; btmon showed "Remove UUID
 (0x0011) ... Status: Authentication Failed (0x05)" and bluetoothd
 logged "Failed to remove UUID: Authentication Failed (0x05)".
 
@@ -21,6 +22,10 @@ MGMT_STATUS_TIMEOUT.
 MGMT commands that fail with -ETIMEDOUT now complete with Timeout
 (0x08) instead of Authentication Failed (0x05). Pairing results take
 HCI statuses through mgmt_status_table[] and are unchanged.
+
+This was reproduced in QEMU with a new mgmt-tester case whose emulated
+controller drops Write Class of Device: Authentication Failed without
+this patch, Timeout with it.
 
 Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
 ---

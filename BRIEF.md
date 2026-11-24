@@ -265,7 +265,14 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >     patchwork's state alone.
 > - **The send queue.** Two outside rounds agree on it: the five rankings of 11-22 and the five
 >   reviews of 11-23 (`reviews/2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`).
->   One mail at a time, several days apart. All paths are under `contributions/`:
+>   **Spacing (changed 2026-11-24, `docs/upstream-practice.md` R-6):** no upstream rule spaces independent
+>   first postings, and same-day bursts by one author were applied. Our own convention is:
+>   - one independent kernel thread per day, with its BlueZ test the same day;
+>   - CO-22 may share CO-38's day;
+>   - nothing waits for review of an unrelated thread.
+>
+>   Every body now says how its bug was found and reproduced, including the test-only kernel changes
+>   (M-6). All paths are under `contributions/`:
 >   1. **CO-38's kernel patch, alone**, with `Cc: stable`
 >      (`CO-38-read-adv-features-hidden-instances/send-20261123/patch/`). Its BlueZ test, rewritten
 >      small on 11-23 (`CO-38-read-adv-features-hidden-instances/send-20261123/bluez/`), goes the

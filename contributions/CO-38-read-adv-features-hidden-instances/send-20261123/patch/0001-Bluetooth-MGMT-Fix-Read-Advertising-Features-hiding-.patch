@@ -14,6 +14,10 @@ but no longer reported, and no Advertising Removed event says so.
 
 Compare with le_num_of_adv_sets, as the comment says.
 
+This was found with mgmt-tester while testing advertising instances,
+and reproduced in QEMU with a new mgmt-tester case that adds only
+instance 2: without this patch the reply lists no instance.
+
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
 ---

@@ -13,9 +13,10 @@ Return the error at once instead. hci_schedule_adv_instance_sync() is no
 longer called for a missing instance and mesh_send_start_complete()
 gets the real error.
 
-With a failing allocation injected into hci_add_adv_instance() for the
-first Mesh Send, as seen in a kprobe trace of bluetooth-next
-cf357cfc025e:
+This was found by reading the code. To reproduce it, a test-only module
+parameter made the allocation in hci_add_adv_instance() fail for the
+first Mesh Send. A kprobe trace on bluetooth-next, without and with
+this patch, shows in 3 of 3 runs each:
 
   before: hci_add_adv_instance -> -ENOMEM, then
           hci_schedule_adv_instance_sync(instance 6) -> -ENOENT,
@@ -27,10 +28,9 @@ User space gets the same Mesh Packet Complete event in both cases, so
 this is a cleanup of the error path and not a change in what a client
 sees.
 ---
-The injection was a test-only module parameter making the first mesh
-add fail, in QEMU with BlueZ's mesh-tester (-s Send), 3 runs on each
-kernel: the trace above in 3 of 3. mesh-tester (10 of 10) and
-mgmt-tester give the same results with and without this patch.
+The runs were in QEMU with BlueZ's mesh-tester (-s Send). mesh-tester
+(10 of 10) and mgmt-tester give the same results with and without this
+patch.
 
  net/bluetooth/mgmt.c | 13 +++++++------
  1 file changed, 7 insertions(+), 6 deletions(-)

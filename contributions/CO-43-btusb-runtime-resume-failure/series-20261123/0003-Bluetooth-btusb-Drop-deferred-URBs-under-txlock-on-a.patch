@@ -21,12 +21,17 @@ change, and btusb_discard_deferred() may run with interrupts disabled.
 The two failure branches now share the label that ends a resume with
 HCI closed, and drop the deferred URBs only when an error was returned.
 
+This was found by reading the code and reproduced in QEMU with an
+emulated controller over usbip, not on hardware. A test-only change
+forced the resume to fail, held the failure path with a delay and sent
+a second command inside it. The deferred anchor was left non-empty
+after the failed resume without this patch in 3 of 3 runs, and was
+empty with it in 3 of 3.
+
 Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
-Tested in QEMU with a debug-only delay in the failure path and a second
-command sent inside it: the deferred anchor was left non-empty after
-the failed resume without this patch (3 of 3 runs) and was empty with
-it (3 of 3).
+The failure was a failing submission of the interrupt URB at resume;
+the second command was Read BD_ADDR, sent from a work item.
 
  drivers/bluetooth/btusb_main.c | 12 ++++++++----
  1 file changed, 8 insertions(+), 4 deletions(-)

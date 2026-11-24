@@ -17,13 +17,18 @@ it is ordered against the replay and the clearing of the flag.
 btusb_resume() already takes the anchor's lock inside txlock, so the
 lock order does not change.
 
+This was found by reading the code while investigating a runtime
+resume failure, and reproduced in QEMU with an emulated controller
+over usbip, not on hardware. With the window widened by a test-only
+delay and a resume forced inside it, the command was parked, timed out
+and the device was reset without this patch in 3 of 3 runs. With it,
+the command was sent at that resume in 3 of 3.
+
 Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
 ---
-Found while reproducing a runtime resume failure with an emulated USB
-controller. With the window widened by a debug-only delay and a resume
-forced inside it (QEMU, usbip), the command was parked, timed out and
-the device was reset ("Resetting usb device") without this patch, in 3
-of 3 runs. With it, the command was sent at that resume in 3 of 3.
+The delay was a test-only module parameter making
+submit_or_queue_tx_urb() wait after its suspend decision; the reset
+was logged as "Resetting usb device".
 
  drivers/bluetooth/btusb_main.c | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)

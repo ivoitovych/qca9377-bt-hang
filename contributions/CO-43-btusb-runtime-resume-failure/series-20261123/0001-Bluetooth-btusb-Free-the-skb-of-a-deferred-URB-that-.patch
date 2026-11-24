@@ -17,9 +17,11 @@ only the setup packet:
   19cfe912c37b ("Bluetooth: btusb: Fix memory leak in play_deferred")
   added those two frees and left the skb out.
 
-With an emulated device that stopped answering, a command deferred
-across a close or a failed resume left a skb and an 8-byte setup packet
-reported by kmemleak each time.
+This was found by reading the code and confirmed in QEMU with an
+emulated controller over usbip, not on hardware. A command deferred
+across the close of a device that had stopped answering, or across a
+resume failure forced by a test-only module parameter, left a skb and
+an 8-byte setup packet reported by kmemleak each time.
 
 Free the skb and the setup packet with the URB at all four places.
 play_deferred() runs with txlock held and interrupts disabled, so use
