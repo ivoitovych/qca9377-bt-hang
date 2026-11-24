@@ -13,8 +13,16 @@
 > - three questions, each saying what its answer would change: whether the ROME setup is right for these
 >   modules, a list of the IDs, and whether this is an erratum.
 >
-> Lint, threading, the 7 recipients and a dry run pass. Every fact is from the 11-24 check
-> (`reply-check-20261124/`) or the sent report. Not sent.
+> Lint, threading, the 7 recipients and a dry run pass. *Corrected after review:* v6 also carried four claims
+> that neither the check nor the report supports:
+> - "the rampatch is the actual fix";
+> - "btusb already gives it [the files] to three";
+> - "three were added this year", which reads as the same three;
+> - 74 links "with that setup", read as the exact entry.
+>
+> **v7** (`drafts/reply-1-zijun-hu-v7.eml`, the same night) fixes them after four outside reviews
+> (`../../reviews/2026-11-24T0400Z-co25-reply-v6-review-findings-and-checks.md`). Lint, threading, the 7
+> recipients and a dry run of the exact file pass. Not sent.
 
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; the text below is this page's history and says "no replies yet" from before the

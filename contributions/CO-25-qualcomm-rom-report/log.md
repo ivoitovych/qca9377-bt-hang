@@ -366,3 +366,19 @@ Not sent; the operator's read and word.
   `scripts/mail-lint.sh`: clean.
 - **No reminder** after silence (F-03, decision D10): dropped from the plan.
 - Not sent: the operator's word, then the dry run, and the operator runs the send.
+
+## 2026-11-24 - v5, v6 and v7
+- **v5:** v4 plus one sentence giving the outcome (74 links clean, twelve failures without). Re-verified on
+  today's trees (`reply-check-20261124/`).
+- **v6:** rewritten after the operator's read: the first mail never said plainly what we ask, why, and what
+  an answer changes. The tone was then corrected on his word: "Please let me explain what I am asking and why"
+  instead of calling the first mail dense; "whatever the product is called" dropped.
+- **v7:** after four outside reviews (reviewers 2, 3, 6, 7), all of whom asked for a revision before sending.
+  - Fixed, 4 of 4: no claim that the rampatch is the fix.
+  - Fixed, 3 or 4 of 4: the files are claimed only for the one device measured; the two groups of three IDs are
+    told apart, and the 2026 ones were added for BLE-scan errors (0b05:1825 is a QCA6174 board,
+    `cfa67a1dbfd9`); the 74 links are split 58/16; recovery is as the report says; ROM 0x302 build 0x111.
+  - Added: a concession to his point; the build changing 0x111 to 0x3e8; the WHENCE naming of QCA61x4 as the
+    reason only Qualcomm can answer; the symptom (first HCI command after mSBC link-up) for matching an erratum.
+- **Not sent.** For the real send, use `--confirm=always` in the operator's terminal, after a dry run of the
+  exact file.

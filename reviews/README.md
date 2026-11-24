@@ -576,3 +576,4 @@ argued about instead of finished — the same reason `tests/run-tests` exists ra
 document describing the invariants.
 
 Then add a row to **Reports** and a block to the **Action register**.
+| 2026-11-24T04:00Z | [CO-25 reply v6: four reviews, checked, and v7](2026-11-24T0400Z-co25-reply-v6-review-findings-and-checks.md) | reviewers 2, 3, 6 and 7 on the reply to Zijun Hu (findings only) | All four: revise before sending. Fixed in v7: no claim that the rampatch is the fix; files claimed only for the one device measured; the two groups of three IDs told apart (0b05:1825 is QCA6174); 74 links split 58/16; recovery as in the report; his point conceded first. Exact-file dry run: 7 recipients |
