@@ -52,8 +52,9 @@ above, already fixed in v7.
 **Not taken from reviewer 1:**
 - "only removing power brought the controller back": stronger than the report, which says "Removing power
   recovered the controller; a warm reboot did not always." v7 keeps those words. *(Corrected after review: this
-  line first added "so sometimes it did", which does not follow; "did not always" says only that a reboot failed
-  at least once.)*
+  line first added "so sometimes it did". The wording alone does not imply that, but our own records do show it:
+  one warm reboot recovered the controller, EX-017, `log.md` claim C10. So "only removing power" is wrong on the
+  evidence, not just on the wording.)*
 - "I am not calling the product a QCA6174A": defensive. The concession of his facts already does this.
 - "Their versions were not measured" for the 2026 IDs is wrong for one of them: `d54601f21faf` records
   "QCA Rome 0x302" for 0b05:1868. v8 claims no version for any of them.
@@ -87,3 +88,21 @@ checked the sentences new in v7 and v8. The texts are kept privately.
   Raised with the operator.
 
 v9: lint clean, header checks PASS, and the dry run of the exact file gives 7 `RCPT TO`, "Result: OK".
+
+## The five reviews of v9 (reviewers 1, 2, 3, 6, 7), checked: v9 kept
+
+Three (2, 6, 7) would send v9 as it is. Reviewer 3 suggests a small v10, and reviewer 1 one added paragraph. The
+texts are kept privately; they are treated as opinions.
+
+| finding | who | check | decision |
+|---|---|---|---|
+| Answer his firmware sentence: name the serial QCA9377 pair (`619d33958d72`) and say btusb does not request it | 1 | the facts are right: WHENCE lists `rampatch_00230302.bin` under "QCA61x4 serial chips", version `QCA6174_DEV.BLD.0111`, and btusb builds `rampatch_usb_%08x` from 0x302 | **not taken**. Reviewers 2, 3, 6 and 7 advise against it: it corrects his sentence in public and brings a second firmware family into Q1, with no basis for it on USB. Q1 already asks what 13d3:3503 should load if not these |
+| Readback order: rampatch → version read → NVM, so "both … return 0, and a later version request reports 0x3e8" misorders it | 3 | **does not hold**: EX-055 also shows the next setup, after both downloads (17:11:25), reading patch 0x3e8, so the sentence is true in the order it states | kept |
+| "btusb therefore loads" omits the status check (0x20) | 3 | true as code detail; the sentence is true for this controller | kept |
+| "only Qualcomm can tell" → "what I am asking Qualcomm to clarify" | 3 | wording preference | offered to the operator |
+| Present the main question in the opening | 3, 6 (2, 7 against) | preference | the operator's structure kept; offered again |
+| Tense: "returned", not "return" | 1 | wording preference | offered to the operator |
+| The reboot record correction went too far: EX-017 shows one reboot recovered it | 6 | **right** (`log.md` C10) | record corrected |
+| `--confirm=always` shows headers only | 2, 6, 7 | right | in the hand-over |
+
+Reviewers 2 and 7 dry-ran or inspected the committed v9 independently: 7 recipients, threading right.
