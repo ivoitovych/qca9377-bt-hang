@@ -1,5 +1,11 @@
 # CO-25 - Report to Qualcomm on the QCA9377 ROM firmware
 
+> **2026-11-24: the reply was re-verified** against today's trees, linux-firmware and the laptop's records
+> (`reply-check-20261124/README.md`). Every claim holds. Lint, threading, the 7 recipients and a
+> `git send-email` dry run all pass. **v5** (`drafts/reply-1-zijun-hu-v5.eml`) adds one sentence restating the
+> report's outcome (74 links clean with the files, twelve failures without). v4 is kept. Not sent: the
+> operator's choice and word.
+
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; the text below is this page's history and says "no replies yet" from before the
 > answer): **sent 2026-10-29 02:33 +0100 after ten review rounds** (`log.md` has rounds 9 and 10).

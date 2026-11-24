@@ -1,0 +1,75 @@
+################ origin/master = b6a9fa34ce41  2026-11-22T14:57:40-08:00
+file: drivers/bluetooth/btusb_main.c
+--- 1. table entries for the three IDs, with their flags line
+drivers/bluetooth/btusb_main.c:303:	{ USB_DEVICE(0x04ca, 0x3015), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-304-						     BTUSB_WIDEBAND_SPEECH },
+drivers/bluetooth/btusb_main.c:293:	{ USB_DEVICE(0x0cf3, 0xe500), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-294-						     BTUSB_WIDEBAND_SPEECH },
+drivers/bluetooth/btusb_main.c:317:	{ USB_DEVICE(0x13d3, 0x3503), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-318-						     BTUSB_WIDEBAND_SPEECH },
+--- 2. every table line or comment naming QCA9377
+drivers/bluetooth/hci_qca.c:2824:	{ .compatible = "qcom,qca9377-bt" },
+--- 3. the ROM 0x302 entry of qca_devices_table
+drivers/bluetooth/btusb_main.c:3618:	{ 0x00000302, 28, 4, 16 }, /* Rome 3.2 */
+--- 4. firmware file names and the log line btusb builds
+drivers/bluetooth/btusb_main.c:3780:		snprintf(fwname, sizeof(fwname), "qca/%s/rampatch_usb_%08x.bin",
+drivers/bluetooth/btusb_main.c:3783:		snprintf(fwname, sizeof(fwname), "qca/rampatch_usb_%08x.bin",
+drivers/bluetooth/btusb_main.c:3793:	bt_dev_info(hdev, "using rampatch file: %s", fwname);
+drivers/bluetooth/btusb_main.c:3806:	bt_dev_info(hdev, "QCA: patch rome 0x%x build 0x%x, "
+drivers/bluetooth/btusb_main.c:3852:		len = snprintf(fwname, max_size, "qca/%s/nvm_usb_%08x",
+drivers/bluetooth/btusb_main.c:3855:		len = snprintf(fwname, max_size, "qca/nvm_usb_%08x",
+drivers/bluetooth/btusb_main.c:3881:	bt_dev_info(hdev, "using NVM file: %s", fwname);
+--- 5. hci_qca's mapping of the qca9377 compatible
+drivers/bluetooth/hci_qca.c-2823-	{ .compatible = "qcom,qca6390-bt", .data = &qca_soc_data_qca6390},
+drivers/bluetooth/hci_qca.c:2824:	{ .compatible = "qcom,qca9377-bt" },
+drivers/bluetooth/hci_qca.c-2825-	{ .compatible = "qcom,wcn3950-bt", .data = &qca_soc_data_wcn3950},
+################ bluetooth-next/master = ffb95458a0f7  2026-11-23T14:47:46-05:00
+file: drivers/bluetooth/btusb_main.c
+--- 1. table entries for the three IDs, with their flags line
+drivers/bluetooth/btusb_main.c:303:	{ USB_DEVICE(0x04ca, 0x3015), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-304-						     BTUSB_WIDEBAND_SPEECH },
+drivers/bluetooth/btusb_main.c:293:	{ USB_DEVICE(0x0cf3, 0xe500), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-294-						     BTUSB_WIDEBAND_SPEECH },
+drivers/bluetooth/btusb_main.c:317:	{ USB_DEVICE(0x13d3, 0x3503), .driver_info = BTUSB_QCA_ROME |
+drivers/bluetooth/btusb_main.c-318-						     BTUSB_WIDEBAND_SPEECH },
+--- 2. every table line or comment naming QCA9377
+drivers/bluetooth/hci_qca.c:2869:	{ .compatible = "qcom,qca9377-bt" },
+--- 3. the ROM 0x302 entry of qca_devices_table
+drivers/bluetooth/btusb_main.c:3618:	{ 0x00000302, 28, 4, 16 }, /* Rome 3.2 */
+--- 4. firmware file names and the log line btusb builds
+drivers/bluetooth/btusb_main.c:3780:		snprintf(fwname, sizeof(fwname), "qca/%s/rampatch_usb_%08x.bin",
+drivers/bluetooth/btusb_main.c:3783:		snprintf(fwname, sizeof(fwname), "qca/rampatch_usb_%08x.bin",
+drivers/bluetooth/btusb_main.c:3793:	bt_dev_info(hdev, "using rampatch file: %s", fwname);
+drivers/bluetooth/btusb_main.c:3806:	bt_dev_info(hdev, "QCA: patch rome 0x%x build 0x%x, "
+drivers/bluetooth/btusb_main.c:3852:		len = snprintf(fwname, max_size, "qca/%s/nvm_usb_%08x",
+drivers/bluetooth/btusb_main.c:3855:		len = snprintf(fwname, max_size, "qca/nvm_usb_%08x",
+drivers/bluetooth/btusb_main.c:3881:	bt_dev_info(hdev, "using NVM file: %s", fwname);
+--- 5. hci_qca's mapping of the qca9377 compatible
+drivers/bluetooth/hci_qca.c-2868-	{ .compatible = "qcom,qca6390-bt", .data = &qca_soc_data_qca6390},
+drivers/bluetooth/hci_qca.c:2869:	{ .compatible = "qcom,qca9377-bt" },
+drivers/bluetooth/hci_qca.c-2870-	{ .compatible = "qcom,wcn3950-bt", .data = &qca_soc_data_wcn3950},
+################ commits naming QCA9377 in drivers/bluetooth (mainline)
+dc16388d45ec 2026-06-29 Tibor Harcsa  Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table
+0324d19cb998 2021-05-18 Daniel Lenski  Bluetooth: btusb: Add a new QCA_ROME device (0cf3:e500)
+37aee136f8c4 2020-04-23 Christian Hewitt  Bluetooth: hci_qca: allow max-speed to be set for QCA9377 devices
+31d4ab856e2d 2020-04-23 Christian Hewitt  Bluetooth: hci_qca: add compatible for QCA9377
+0a03f98b98c2 2017-08-28 Ioan Moldovan  Bluetooth: Add a new 04ca:3015 QCA_ROME device
+################ Zijun Hu's commits in drivers/bluetooth since 2026-10-01
+-- origin/master
+3efdadae3a25 2026-11-02  Bluetooth: hci_conn: Fix SCO/eSCO Transport_Unit_Size for HCI data path
+589b80b65458 2026-09-15  Bluetooth: btnxpuart: Simplify nxp_recv_acl_pkt() by hci_acl_handle()
+3669487308f8 2026-09-13  Bluetooth: btusb: Add support for Qualcomm multi-subsystem QCC2072
+be58267a34ae 2026-09-13  Bluetooth: btusb: Build the driver from multiple source files
+366cdec7fec5 2026-09-13  Bluetooth: Add generic support for vendor packets
+179950cdcb26 2026-09-13  Bluetooth: btusb: Add recv_intr() hook to btusb_data
+51589ddae311 2026-09-13  Bluetooth: hci_event: Use 252 as max CC event payload length in hci_cc_table[]
+9822887f0db0 2026-09-13  Bluetooth: hci_event: Use 254 as max LE Meta subevent payload length in hci_le_ev_table[]
+-- bluetooth-next/master
+3efdadae3a25 2026-11-02  Bluetooth: hci_conn: Fix SCO/eSCO Transport_Unit_Size for HCI data path
+589b80b65458 2026-09-15  Bluetooth: btnxpuart: Simplify nxp_recv_acl_pkt() by hci_acl_handle()
+3669487308f8 2026-09-13  Bluetooth: btusb: Add support for Qualcomm multi-subsystem QCC2072
+be58267a34ae 2026-09-13  Bluetooth: btusb: Build the driver from multiple source files
+366cdec7fec5 2026-09-13  Bluetooth: Add generic support for vendor packets
+179950cdcb26 2026-09-13  Bluetooth: btusb: Add recv_intr() hook to btusb_data
+51589ddae311 2026-09-13  Bluetooth: hci_event: Use 252 as max CC event payload length in hci_cc_table[]
+9822887f0db0 2026-09-13  Bluetooth: hci_event: Use 254 as max LE Meta subevent payload length in hci_le_ev_table[]
