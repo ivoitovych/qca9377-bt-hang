@@ -1,5 +1,9 @@
 # CO-25 - Report to Qualcomm on the QCA9377 ROM firmware
 
+
+> **SENT 2026-11-24 05:33:39 +0100:** the reply v9 to Zijun Hu, by the operator from his own terminal (server 250, 7
+> recipients). Message-ID `<20261124043440.1206949-1-yaroslav.voytovych@gmail.com>`. On lore the same minute, body
+> byte-identical, threading intact. Next: watch the thread for his answer; no reminder is planned (D10).
 > **2026-11-24: the reply was re-verified** against today's trees, linux-firmware and the laptop's records
 > (`reply-check-20261124/README.md`). Every claim holds. Lint, threading, the 7 recipients and a
 > `git send-email` dry run all pass. **v5** (`drafts/reply-1-zijun-hu-v5.eml`) adds one sentence restating the
