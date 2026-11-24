@@ -95,3 +95,20 @@ done for the six packages above; CO-02 v2 and CO-35's backports are not yet.
     (`evidence-summaries/apply-debug-co43.py.txt`).
 - Reviewer 3's CO-26 wording gives the unpatched result as "-ENOENT". The trace in the body gives both values
   (`hci_schedule_adv_instance_sync -> -ENOENT`, `mesh_send_sync -> -2`), so the body keeps the trace.
+
+## Follow-up: a kernel newcomer's 19-patch burst (reviewer 6, 2026-11-24)
+
+- **The claim:** a kernel newcomer posted about 19 patches in a day, and 8 were applied within a day.
+  - **Who:** Simon Mikuda, StreamUnlimited, with 35 BlueZ commits since 2022 and no kernel Bluetooth commit before.
+  - **Which landed:** the self-evident ones with hardware evidence. The behaviour and reference-count changes are
+    pending.
+- **Checked:** 8 commits by him are in bluetooth-next, all committed 11-23. The cache showed 7 until a fresh fetch.
+  BlueZ has 37 commits from him, 35 of them since 2022, and 5 applied on 11-23. No earlier kernel commit. That the
+  posting was about 19 patches was not checked (lore).
+- **Format, as the reviewer read it:** hardware named in the body; packet bytes, traces and spec sections; steps
+  to reproduce; small diffs; bodies as long as needed; no notes below `---`.
+- **Changed:** register R-6 gains the case, and X-4 the format data point. The packages are not changed: our
+  notes below `---` are now short, and whether to keep them stays contested (X-4).
+- **Also found while checking:** bluetooth-next moved from `5063a0717aa2` to `ffb95458a0f7` (14 commits). None
+  touches `net/bluetooth/mgmt.c` or `drivers/bluetooth/btusb_main.c` (`git diff --stat` empty), so the tested
+  patches apply unchanged.
