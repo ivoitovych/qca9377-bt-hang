@@ -33,6 +33,24 @@ candidate.
 
 The rows below carry the detail, dated 2026-11-23.
 
+**2026-11-24, ~03:20 UTC: what upstream is waiting for from us.** Every reply to our mails since 10-01 was
+re-read: 3441 list mails (`scripts/lore-git-replies.py` on a fresh fetch), plus patchwork's checks on CO-02
+(`tmp/kernel-queue-20261124/pw-checks-ours.py`, raw JSON beside it). Only one person has written to us and
+not been answered:
+- **CO-25:** Zijun Hu (Qualcomm), 10-29. The reply has been ready since 11-02
+  (`contributions/CO-25-qualcomm-rom-report/drafts/reply-1-zijun-hu-v4.eml`), waiting for the operator's word.
+- **CO-02 v1** has no human reply, so nothing is owed to a person. It is open in two ways:
+  - Sashiko (`sashiko-nipa`) rated patch 2 `fail`, high, on 10-29. Patch 2 needs patch 3 (fold them, or stable
+    takes both). It is not a deadlock: that was the unsent v2 draft of 11-14.
+  - The CI bot closed the BlueZ test's pull request on 11-11 and asks for a resend.
+
+  Both are answered by v2, not yet ready. The kernel CI passed all 11 testers on v1 (10-27).
+- **Everything else** is applied, released or answered: BT-9's stable backports, the stable requests, and the
+  BlueZ patches. Hui Peng's mesh patch, which carries our Tested-by, is probably overtaken by `1d7a52778858`
+  (not verified).
+- **Not read today:** the gvfs MRs; GNOME GitLab answers this machine with HTTP 406. As of 11-15 they had no
+  reviewer.
+
 **2026-11-15:** the not-yet-accepted rows re-read 00:40–01:15 UTC (patchwork, lore over git,
 GitLab, GitHub, Sashiko, syzbot): **no row changed state**. CO-02's four patches are still `new`;
 the CI bot's rule makes v2 a resend. CO-25's only answer is still Zijun Hu's of 10-29, and our
