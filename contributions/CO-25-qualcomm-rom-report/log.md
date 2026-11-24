@@ -45,7 +45,7 @@
 | C7 | named dying command: `0x0406` in six instances, `0x0c1a` in one; the others are the bare form without an opcode | BRIEF section 2 table: `0x0406` in EX-036, 043, 045, 047, 052, 053; `0x0c1a` in EX-051; EX-033, 037, 038, 040, 042 bare |
 | C8 | first command 34 ms to 9.65 s after link-up | BRIEF section 2 table (EX-033..EX-053); 9.65 s is EX-043 |
 | C9 | controller answers nothing afterwards; USB `GET_DESCRIPTOR` times out (-110); stays enumerated | EX-008, EX-016, EX-054; EX-052 (two `GET_DESCRIPTOR` timeouts) |
-| C10 | a power-off recovered it; a reboot did not always | EX-028 (power-off recovered, reboot did not); EX-027, EX-034 (reboot failed); EX-017 (one reboot recovered) |
+| C10 | a power-off recovered it; a reboot did not always | EX-028 (power-off recovered, reboot did not); EX-027, EX-034 (reboot failed); EX-017 (after one recorded reboot request the controller enumerated again, 98 s later; an intervening power-off could not be excluded, so it does not show that a warm reboot recovers it. Wording corrected 2026-11-24, reviewer 7) |
 | C11 | 12 instances, four kernel builds, three headset models | BRIEF section 2 (kernels `-29`, `-30`, `-31`, `-34`; EX-033..EX-053); EX-024, EX-053 (headsets) |
 | C12 | E1: 58 links over three boots, QCA setup only, 0 timeouts | EX-058 (and EX-056) |
 | C13 | E3: 16 links on one boot, exact entry, 0 timeouts | EX-057 |
@@ -158,7 +158,7 @@ directory still holds 386 files. The rest is the operator's decision (STATUS).
 | change | check |
 |---|---|
 | "first command after link-up timed out, 34 ms to 9.65 s after it" was wrong: the range is when the command was issued | BRIEF section 2 table ("first cmd after link-up" 34 ms to 9,650 ms); command to timeout 2.018 to 2.053 s where given (EX-045, 047, 051, 052, 053) |
-| summary bounded to the twelve recorded failures; "answers nothing until power is removed" dropped (a reboot recovered it once, EX-017) | C10 |
+| summary bounded to the twelve recorded failures; "answers nothing until power is removed" dropped (EX-017: the controller came back after one recorded reboot request, but a power-off in between is not excluded) | C10 |
 | "same alt 1 and 0x0428" only for the 50 mSBC links | CVSD takes another alternate setting |
 | load confirmed by return codes and a later version read, not by the loader's "QCA: patch" line | EX-055 lines 29-35 (`rampatch load returned 0`, `after rampatch: … patch 0x000003e8`, `nvm load returned 0`) |
 | E1's remaining confounders named | `btusb_main.c` 4648-4655: `BTUSB_QCA_ROME` also sets `hdev->shutdown`, `set_bdaddr`, `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, the reset-resume check; E1 removed only `hdev->reset` |

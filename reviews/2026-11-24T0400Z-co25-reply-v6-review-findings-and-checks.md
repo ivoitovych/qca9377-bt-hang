@@ -51,10 +51,11 @@ above, already fixed in v7.
 
 **Not taken from reviewer 1:**
 - "only removing power brought the controller back": stronger than the report, which says "Removing power
-  recovered the controller; a warm reboot did not always." v7 keeps those words. *(Corrected after review: this
-  line first added "so sometimes it did". The wording alone does not imply that, but our own records do show it:
-  one warm reboot recovered the controller, EX-017, `log.md` claim C10. So "only removing power" is wrong on the
-  evidence, not just on the wording.)*
+  recovered the controller; a warm reboot did not always." v7 keeps those words. *(Corrected twice after review. This line first added "so sometimes it did", which does not
+  follow. A later edit claimed EX-017 shows a warm reboot recovering the controller, but EX-017 itself says it
+  "does not establish that a warm reboot recovers the controller": the controller enumerated 98 s after a
+  recorded reboot request, and a power-off in between cannot be excluded (reviewer 7). The mail's sentence rests
+  on EX-028 alone: a reboot after which the controller still failed, then a power-off that recovered it.)*
 - "I am not calling the product a QCA6174A": defensive. The concession of his facts already does this.
 - "Their versions were not measured" for the 2026 IDs is wrong for one of them: `d54601f21faf` records
   "QCA Rome 0x302" for 0b05:1868. v8 claims no version for any of them.
@@ -106,3 +107,13 @@ texts are kept privately; they are treated as opinions.
 | `--confirm=always` shows headers only | 2, 6, 7 | right | in the hand-over |
 
 Reviewers 2 and 7 dry-ran or inspected the committed v9 independently: 7 recipients, threading right.
+
+## The five reviews of the v9 decision: send v9 unchanged (5 of 5)
+
+All five agree to send v9 as it is and to leave the serial firmware pair out of the mail. Reviewer 3 withdrew
+its readback objection after reading EX-055, which shows two reads of 0x3e8. Reviewers 2 and 7 confirmed that the
+v9 blob at `42a5f18` is the one already dry-run (`df4622ac91a5`).
+
+One factual correction, from reviewer 7: EX-017 does not show a warm reboot recovering the controller (see the
+two corrected lines above and `log.md` C10). v9's sentence "a warm reboot did not always" needs only EX-028.
+The review phase for CO-25 is closed. The send is the operator's.
