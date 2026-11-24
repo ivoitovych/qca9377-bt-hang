@@ -34,3 +34,23 @@ quote or the source facts. Reviewer 7 also ran a dry run on the committed bytes:
   questions, each with what its answer would change) is kept.
 - **Reviewer 3's opening,** "I may be using the names too loosely": it puts the fault in our naming, where the
   operator asked for neither blame nor self-blame. The concession of his facts does the same work.
+
+## Reviewer 1 (arrived after v7), checked, and v8
+
+Reviewer 1 also reviewed v6 and also said not to send it. Its five must-fix points are the same as findings 1–7
+above, already fixed in v7.
+
+| finding | check | action |
+|---|---|---|
+| Put back the kernel's own log line: "build 0x111" alone was misread on 11-02 (F-01), and v6 dropped the line; v7 only paraphrased it | right (`log.md`, 11-02) | **v8** quotes `QCA: patch rome 0x302 build 0x3e8, firmware rome 0x302 build 0x111` in place of the paraphrase |
+| `qca_custom_btfws[]` has no 0x302 row, so the plain file names are right | right: two QCA2066 rows only (`btusb_main.c:3625-3629`, bluetooth-next) | added to the check record; no mail change |
+| Send the `.eml`, not a rewrapped paste | right | the send command uses the file |
+
+**Not taken from reviewer 1:**
+- "only removing power brought the controller back": the report says a warm reboot "did not always", so
+  sometimes it did. v7's wording stays.
+- "I am not calling the product a QCA6174A": defensive. The concession of his facts already does this.
+- "Their versions were not measured" for the 2026 IDs is wrong for one of them: `d54601f21faf` records
+  "QCA Rome 0x302" for 0b05:1868. v8 claims no version for any of them.
+
+v8: lint clean, all header checks PASS, and the dry run of the exact file gives 7 `RCPT TO`, "Result: OK".

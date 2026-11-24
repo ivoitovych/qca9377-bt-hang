@@ -22,7 +22,8 @@
 >
 > **v7** (`drafts/reply-1-zijun-hu-v7.eml`, the same night) fixes them after four outside reviews
 > (`../../reviews/2026-11-24T0400Z-co25-reply-v6-review-findings-and-checks.md`). Lint, threading, the 7
-> recipients and a dry run of the exact file pass. Not sent.
+> recipients and a dry run of the exact file pass. **v8** (`drafts/reply-1-zijun-hu-v8.eml`) is v7 with the kernel's
+> own log line quoted again, after reviewer 1. It passes the same checks and is the one to send. Not sent.
 
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; the text below is this page's history and says "no replies yet" from before the

@@ -382,3 +382,4 @@ Not sent; the operator's read and word.
     reason only Qualcomm can answer; the symptom (first HCI command after mSBC link-up) for matching an erratum.
 - **Not sent.** For the real send, use `--confirm=always` in the operator's terminal, after a dry run of the
   exact file.
+- **v8:** reviewer 1, arriving after v7, added one point: quote the kernel's own log line again (F-01 of 11-02), which v6 dropped and v7 paraphrased. v8 = v7 with the line restored. Lint, threading, 7 recipients, exact-file dry run: pass. Not sent.
