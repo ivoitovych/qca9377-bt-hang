@@ -26,8 +26,11 @@ quote or the source facts. Reviewer 7 also ran a dry run on the committed bytes:
 | 16 | `--confirm=never` was for scripted sends; in the operator's terminal use `--confirm=always` | 6 | right (`send/send.sh` uses it) | the send command given uses `--confirm=always` |
 
 **Not taken:**
-- **Reviewer 3's forum logs:** a forum's logs of 0cf3:e500 and 04ca:3015 loading the same files. A forum post is
-  not a source we can cite, and Q1 already says only 13d3:3503 was measured.
+- **Reviewer 3's forum logs:** a forum's logs of 0cf3:e500 and 04ca:3015 loading the same files. Not
+  needed here: Q1 already says only 13d3:3503 was measured, and the commits carry the argument. *(Corrected after
+  review: this first said a forum post "is not a source we can cite", which is too absolute. Kernel commits cite
+  user reports, `0324d19cb998` among them; a forum log can show what one device reported, but not Qualcomm's
+  intent.)*
 - **Reviewer 6's `hci_qca` point:** it maps `qcom,qca9377-bt` to `QCA_ROME`. Left out on that reviewer's own
   advice: it would turn the mail into an argument.
 - **Reviewer 7's structure,** leading with the question: the operator's structure (explain first, then three
@@ -47,10 +50,40 @@ above, already fixed in v7.
 | Send the `.eml`, not a rewrapped paste | right | the send command uses the file |
 
 **Not taken from reviewer 1:**
-- "only removing power brought the controller back": the report says a warm reboot "did not always", so
-  sometimes it did. v7's wording stays.
+- "only removing power brought the controller back": stronger than the report, which says "Removing power
+  recovered the controller; a warm reboot did not always." v7 keeps those words. *(Corrected after review: this
+  line first added "so sometimes it did", which does not follow; "did not always" says only that a reboot failed
+  at least once.)*
 - "I am not calling the product a QCA6174A": defensive. The concession of his facts already does this.
 - "Their versions were not measured" for the 2026 IDs is wrong for one of them: `d54601f21faf` records
   "QCA Rome 0x302" for 0b05:1868. v8 claims no version for any of them.
 
 v8: lint clean, all header checks PASS, and the dry run of the exact file gives 7 `RCPT TO`, "Result: OK".
+
+## The five reviews of v8 (reviewers 1, 2, 3, 6, 7), checked, and v9
+
+All five call v8 sound. Four want a small v9; reviewer 6 calls it sendable, with one fix advised. Only reviewer 6
+checked the sentences new in v7 and v8. The texts are kept privately.
+
+| # | finding | who | check | in v9 |
+|---|---|---|---|---|
+| 1 | "no Bluetooth firmware of its own in linux-firmware" is false: linux-firmware `619d33958d72` (2020) "QCA: Add Bluetooth firmware for QCA9377" added `qca/rampatch_00230302.bin` and `qca/nvm_00230302.bin` (serial). Reviewers 2 and 3 also called it an over-concession | 7 (2, 3) | **right**: commit read via the GitLab API, files at WHENCE l.5297/5301. Our check record had said "QCA9377 appears only under ath10k", now corrected | clause removed; the opening concedes only the product difference |
+| 2 | "58 on a diagnostic build with the same setup": that build had `BTUSB_QCA_ROME` without `BTUSB_WIDEBAND_SPEECH` or the reset callback | 1, 2, 6, 7 | right (report l.87-90) | "58 on a diagnostic build with BTUSB_QCA_ROME only" |
+| 3 | "and with it the hang has not occurred" credits the files alone | 1, 2, 3, 6 | right (the report does not separate them) | the paragraph now states only where the files are listed and what only Qualcomm can tell |
+| 4 | The log line is printed before the download (file build 0x3e8 against the controller's 0x111); restore the separate readback, "both return 0, a later read gives 0x3e8" | 2, 7 (1 notes it) | right: format string before `btusb_setup_qca_download_fw()`; EX-055 has both returns 0 and "after rampatch: … patch 0x000003e8" | sentence added below the log line |
+| 5 | Q3's last sentence ("show whether the same setup is the remedy") re-opens the causal overclaim; restore the report's "affected ROM range" | 2, 3, 7 | right | "an affected ROM range" added; "That would help determine whether other modules with this ROM need the same firmware." |
+| 6 | Q2's "Today an ID is added only after a user reports a failure" is universal | 2, 3, 7 | right: only three cases are shown | the three named as examples; "before users hit failures" (reviewer 6) |
+| 7 | Q1's "further such IDs can be added the same way" is too strong | 2, 3, 7 | right | "that would support using the same setup for other matching IDs"; the no-branch asks about 13d3:3503 (reviewer 7) |
+| 8 | "device table" → btusb's quirks table (`dc16388d45ec`: "the btusb quirks table") | 2, 7 | right | done |
+| 9 | "Rome 3.2" as the source comment spells it | 3 | right | done in Q1 |
+| 10 | The custom-firmware table rules out a subdirectory only; the NVM name can also take a board-ID suffix | 2, 7 | right; the check record already says the suffix needs the multi-NVM flag, and the 11-13 boot shows the plain name | records only |
+| 11 | "did not always" does not imply a reboot ever worked; a forum log can be evidence | 2 | right | both lines of the v6 record corrected |
+| 12 | `--confirm=always` shows the headers and asks; the body is seen by opening the `.eml` or `e` at the prompt | 7 | right as reported | said in the hand-over |
+
+**Not taken:**
+- **Reviewer 3's status sentence** (neither `QCA_PATCH_UPDATED` nor `QCA_SYSCFG_UPDATED` set): true, from the
+  report, but the readback sentence already shows both loaded. One more sentence of mechanism was left out.
+- **Reviewer 6's option of an early ask** ("My main question is…"): the operator's structure is kept.
+  Raised with the operator.
+
+v9: lint clean, header checks PASS, and the dry run of the exact file gives 7 `RCPT TO`, "Result: OK".

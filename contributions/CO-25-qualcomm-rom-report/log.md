@@ -383,3 +383,4 @@ Not sent; the operator's read and word.
 - **Not sent.** For the real send, use `--confirm=always` in the operator's terminal, after a dry run of the
   exact file.
 - **v8:** reviewer 1, arriving after v7, added one point: quote the kernel's own log line again (F-01 of 11-02), which v6 dropped and v7 paraphrased. v8 = v7 with the line restored. Lint, threading, 7 recipients, exact-file dry run: pass. Not sent.
+- **v9:** after five reviews of v8. The concession "no Bluetooth firmware of its own" was false (linux-firmware `619d33958d72`, QCA9377 serial firmware, 2020) and is removed. Also: "58 … with BTUSB_QCA_ROME only"; the readback restored below the pre-download log line; no credit to the files alone; the affected-ROM-range question restored; Q2 and Q1 narrowed. Lint, threading, 7 recipients, exact-file dry run: pass. Not sent.

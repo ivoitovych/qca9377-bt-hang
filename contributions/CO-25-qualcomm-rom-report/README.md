@@ -23,7 +23,9 @@
 > **v7** (`drafts/reply-1-zijun-hu-v7.eml`, the same night) fixes them after four outside reviews
 > (`../../reviews/2026-11-24T0400Z-co25-reply-v6-review-findings-and-checks.md`). Lint, threading, the 7
 > recipients and a dry run of the exact file pass. **v8** (`drafts/reply-1-zijun-hu-v8.eml`) is v7 with the kernel's
-> own log line quoted again, after reviewer 1. It passes the same checks and is the one to send. Not sent.
+> own log line quoted again, after reviewer 1. **v9** (`drafts/reply-1-zijun-hu-v9.eml`) follows five reviews of v8: the
+> concession "no Bluetooth firmware of its own" was false (linux-firmware `619d33958d72`) and is gone, and four
+> claims are narrowed. v9 passes the same checks and is the one to send. Not sent.
 
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; the text below is this page's history and says "no replies yet" from before the

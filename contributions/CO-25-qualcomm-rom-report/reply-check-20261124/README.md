@@ -16,7 +16,7 @@ Source facts: `check-source.sh` → `check-source.out`.
 | sentence in the reply | check | result |
 |---|---|---|
 | quote of his mail | his mail from lore's git archive (`tmp/lore-messages/bf27c4e0-…eml`, machine-local) | identical text |
-| "the absence of a QCA9377-specific USB firmware image in linux-firmware" | `WHENCE` at `9a364ea4` | right: QCA9377 appears only under ath10k (Wi-Fi), never under btqca |
+| "the absence of a QCA9377-specific USB firmware image in linux-firmware" | `WHENCE` at `9a364ea4` | right for USB only. *Corrected 2026-11-24 after review:* WHENCE does not name QCA9377 under btqca, but linux-firmware `619d33958d72` (2020, "QCA: Add Bluetooth firmware for QCA9377") added `qca/rampatch_00230302.bin` and `qca/nvm_00230302.bin` for the serial-attached part (WHENCE l.5297, l.5301). So "no QCA9377 Bluetooth firmware" is false; v9 no longer concedes it |
 | "btusb lists three QCA9377 modules with BTUSB_QCA_ROME: 04ca:3015, 0cf3:e500 and 13d3:3503" | `check-source.out` §1, both trees (`btusb_main.c:293`, `:303`, `:317`) and the commits naming QCA9377 (`0a03f98b98c2`, `0324d19cb998`, `dc16388d45ec`) | right; no other btusb ID's commit names QCA9377 |
 | "its ROM reports rom_version 0x00000302" | EX-055 (09-26, before setup: "rom 0x00000302 patch 0x00000111"); stock boot `af3f9840` of 11-13 (`results/bt16-third-2026-11-13/kernel-boot-af3f9840-control.txt`) | right |
 | "btusb_setup_qca() loads qca/rampatch_usb_00000302.bin and qca/nvm_usb_00000302.bin" | §4: names built as `qca/rampatch_usb_%08x.bin` and `qca/nvm_usb_%08x[_board].bin`; the subdirectory and the board suffix apply only with the multi-NVM flag. The 11-13 stock boot loaded exactly these two names | right |
