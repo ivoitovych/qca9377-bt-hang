@@ -18,8 +18,7 @@ On Thu, 29 Oct 2026 at 18:42 +0800, Zijun Hu wrote:
 >
 > See table @qca_devices_table for supported controllers from ROME.
 
-Thank you. My first mail was dense, so let me say more plainly what I
-am asking and why.
+Thank you. Please let me explain what I am asking and why.
 
 The problem: this laptop's QCA9377 module (USB 13d3:3503) had no btusb
 entry, so its controller ran the ROM firmware. During mSBC (HFP
@@ -31,8 +30,8 @@ occurred.
 
 On the table you pointed to: the controller answers the version
 request with rom_version 0x00000302, which qca_devices_table lists as
-"Rome 3.2". So whatever the product is called, btusb treats its
-Bluetooth part as ROME 3.2, and it works with the ROME 3.2 files.
+"Rome 3.2". So btusb treats its Bluetooth part as ROME 3.2, and it
+works with the ROME 3.2 files.
 
 What would help, and what each answer would change:
 
