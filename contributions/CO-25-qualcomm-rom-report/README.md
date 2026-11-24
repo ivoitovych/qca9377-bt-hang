@@ -5,6 +5,16 @@
 > `git send-email` dry run all pass. **v5** (`drafts/reply-1-zijun-hu-v5.eml`) adds one sentence restating the
 > report's outcome (74 links clean with the files, twelve failures without). v4 is kept. Not sent: the
 > operator's choice and word.
+>
+> **v6, the same night, after the operator's read:** the first mail never said plainly what we want, why, or
+> what an answer would change. `drafts/reply-1-zijun-hu-v6.eml` is rewritten around that:
+> - the problem in one paragraph;
+> - the key fact, gently: his own `qca_devices_table` lists the controller's ROM 0x302 as "Rome 3.2";
+> - three questions, each saying what its answer would change: whether the ROME setup is right for these
+>   modules, a list of the IDs, and whether this is an erratum.
+>
+> Lint, threading, the 7 recipients and a dry run pass. Every fact is from the 11-24 check
+> (`reply-check-20261124/`) or the sent report. Not sent.
 
 > **Current state, 2026-11-12** (the index `../README.md` and `docs/STATUS.md` are the current
 > record; the text below is this page's history and says "no replies yet" from before the
