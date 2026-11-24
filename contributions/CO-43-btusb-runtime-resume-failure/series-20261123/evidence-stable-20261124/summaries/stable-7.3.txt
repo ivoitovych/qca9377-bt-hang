@@ -1,0 +1,57 @@
+s7.3-base k-healthy-1 exit=0 PASS RESULT kml mode=healthy scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=2 tx_timeouts=0
+s7.3-base k-inject1-1 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=3 bluetooth_related=3 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-inject1-2 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=3 bluetooth_related=3 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-inject1-3 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=3 bluetooth_related=3 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-inject2-1 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=2 bluetooth_related=2 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-inject2-2 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=2 bluetooth_related=2 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-inject2-3 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=2 bluetooth_related=2 hci_transfers_received=15 tx_timeouts=1
+s7.3-base k-dead-1 exit=1 FAIL RESULT kml mode=dead scenario_ok=True objects=4 bluetooth_related=4 hci_transfers_received=0 tx_timeouts=1
+s7.3-base k-dead-2 exit=1 FAIL RESULT kml mode=dead scenario_ok=True objects=1 bluetooth_related=1 hci_transfers_received=0 tx_timeouts=1
+s7.3-base k-dead-3 exit=1 FAIL RESULT kml mode=dead scenario_ok=True objects=6 bluetooth_related=6 hci_transfers_received=0 tx_timeouts=1
+s7.3-base k-deadoff-1 exit=1 FAIL RESULT kml mode=dead-off scenario_ok=True objects=1 bluetooth_related=1 hci_transfers_received=0 tx_timeouts=1
+s7.3-base k-deadoff-2 exit=1 FAIL RESULT kml mode=dead-off scenario_ok=True objects=5 bluetooth_related=5 hci_transfers_received=0 tx_timeouts=1
+s7.3-base k-deadoff-3 exit=1 FAIL RESULT kml mode=dead-off scenario_ok=True objects=2 bluetooth_related=2 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-healthy-1 exit=0 PASS RESULT kml mode=healthy scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=2 tx_timeouts=0
+s7.3-p1 k-inject1-1 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-inject1-2 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-inject1-3 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-inject2-1 exit=0 PASS RESULT kml mode=healthy scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-inject2-2 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-inject2-3 exit=1 FAIL RESULT kml mode=healthy scenario_ok=False objects=0 bluetooth_related=0 hci_transfers_received=15 tx_timeouts=1
+s7.3-p1 k-dead-1 exit=0 PASS RESULT kml mode=dead scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-dead-2 exit=0 PASS RESULT kml mode=dead scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-dead-3 exit=0 PASS RESULT kml mode=dead scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-deadoff-1 exit=0 PASS RESULT kml mode=dead-off scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-deadoff-2 exit=0 PASS RESULT kml mode=dead-off scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-p1 k-deadoff-3 exit=0 PASS RESULT kml mode=dead-off scenario_ok=True objects=0 bluetooth_related=0 hci_transfers_received=0 tx_timeouts=1
+s7.3-base multi-cmdfirst-1 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=6 bluetooth_related=6 write_errors=0 tx_timeouts=1
+s7.3-p1 multi-cmdfirst-1 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=0 bluetooth_related=0 write_errors=0 tx_timeouts=1
+s7.3-base multi-cmdfirst-2 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=3 bluetooth_related=3 write_errors=0 tx_timeouts=1
+s7.3-p1 multi-cmdfirst-2 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=0 bluetooth_related=0 write_errors=0 tx_timeouts=1
+s7.3-base multi-cmdfirst-3 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=3 bluetooth_related=3 write_errors=0 tx_timeouts=1
+s7.3-p1 multi-cmdfirst-3 exit=0 PASS RESULT multi order=cmd-first acl=2 deferred_before=3 null_setup=2 tx_in_flight_before=0 tx_in_flight_after=0 anchor_after=empty objects=0 bluetooth_related=0 write_errors=0 tx_timeouts=1
+s7.3-base m-dead-1 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s7.3-base m-recover-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s7.3-base m-close-1 exit=1 FAIL RESULT close-recover bluetooth_works_after=False
+s7.3-base m-dropcmd-1 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=3.910308 transfer_done=3.911623 autosuspended=4.435318 tx_timeout=5.941 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s7.3-base m-wedge-1 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=3.911795 transfer_done=3.913575 autosuspended=4.417049 class-write-status=0x05 reset_seen=6.281196 tx_timeouts=1 (5.940) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=6.144170,6.279947 kernel_reset_line=6.144
+s7.3-base m-cycles-1 exit=0 PASS RESULT cycles n=30 failures=0
+s7.3-p1 m-dead-1 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s7.3-p1 m-recover-1 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s7.3-p1 m-close-1 exit=1 FAIL RESULT close-recover bluetooth_works_after=False
+s7.3-p1 m-dropcmd-1 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=3.930099 transfer_done=3.931234 autosuspended=4.435269 tx_timeout=5.944 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s7.3-p1 m-wedge-1 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=3.926052 transfer_done=3.927269 autosuspended=4.431223 class-write-status=0x05 reset_seen=6.278323 tx_timeouts=1 (5.939) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=6.141222,6.276992 kernel_reset_line=6.141
+s7.3-p1 m-cycles-1 exit=0 PASS RESULT cycles n=30 failures=0
+s7.3-base m-dead-2 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s7.3-base m-recover-2 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s7.3-base m-close-2 exit=1 FAIL RESULT close-recover bluetooth_works_after=False
+s7.3-base m-dropcmd-2 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=3.892339 transfer_done=3.893692 autosuspended=4.396501 tx_timeout=5.908 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s7.3-base m-wedge-2 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=3.982257 transfer_done=3.983637 autosuspended=4.487630 class-write-status=0x05 reset_seen=6.335669 tx_timeouts=1 (6.002) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=6.198849,6.334436 kernel_reset_line=6.199
+s7.3-base m-cycles-2 exit=0 PASS RESULT cycles n=30 failures=0
+s7.3-p1 m-dead-2 exit=0 PASS RESULT bt17 fail_at=1 recover=False class-write-status=0x05 hci0_removed=True back=False powered=False class_write_after=none
+s7.3-p1 m-recover-2 exit=0 PASS RESULT bt17 fail_at=1 recover=True class-write-status=0x05 hci0_removed=True back=True powered=True class_write_after=0x00
+s7.3-p1 m-close-2 exit=1 FAIL RESULT close-recover bluetooth_works_after=False
+s7.3-p1 m-dropcmd-2 exit=0 PASS RESULT dropcmd op=0x0c24 delay_ms=500 send=3.979657 transfer_done=3.981275 autosuspended=4.484578 tx_timeout=6.003 class-write-status=0x05 btusb_reset=resetting hci0=True powered=True final_class_write=0x00 usable=True
+s7.3-p1 m-wedge-2 exit=0 PASS RESULT dropcmd-wedge op=0x0c24 delay_ms=500 send=3.918643 transfer_done=3.919964 autosuspended=4.444160 class-write-status=0x05 reset_seen=6.296157 tx_timeouts=1 (5.943) not_resetting_lines=0 resetting_usb_device_lines=1 hci0=True set_powered_off=0x00 powered_on=True final_class_write=0x00 usable=True desc_read=6.155077,6.294712 kernel_reset_line=6.155
+s7.3-p1 m-cycles-2 exit=0 PASS RESULT cycles n=30 failures=0
+batch: 56 runs, 21 FAIL

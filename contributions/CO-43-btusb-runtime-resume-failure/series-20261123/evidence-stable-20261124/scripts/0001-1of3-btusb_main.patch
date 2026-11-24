@@ -1,0 +1,116 @@
+From 888176e9a640f3d058d533012424bfc52af484c1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 23 Nov 2026 06:47:40 +0100
+Subject: [PATCH] Bluetooth: btusb: Free the skb of a deferred URB that is
+ discarded
+
+A URB parked on data->deferred owns the skb it carries (urb->context)
+and, for an HCI command, its setup packet. Both are freed by
+btusb_tx_complete(), which does not run for a URB that is discarded
+instead of sent. The four places that discard one free neither, or
+only the setup packet:
+
+- btusb_close() and the failure path of btusb_resume() call
+  usb_scuttle_anchored_urbs(), which only unanchors the URBs;
+- play_deferred() frees the URB and the setup packet when a submission
+  fails and for the URBs left after that, but not the skb. Commit
+  19cfe912c37b ("Bluetooth: btusb: Fix memory leak in play_deferred")
+  added those two frees and left the skb out.
+
+With an emulated device that stopped answering, a command deferred
+across a close or a failed resume left a skb and an 8-byte setup packet
+reported by kmemleak each time.
+
+Free the skb and the setup packet with the URB at all four places.
+play_deferred() runs with txlock held and interrupts disabled, so use
+dev_kfree_skb_any().
+
+btusb_close() needs no locking beyond that. Before the HCI core calls
+the driver's close it has flushed and drained its works and cleared
+HCI_RUNNING, so hci_send_frame() refuses new frames and nothing in the
+core can anchor a URB on data->deferred while the anchor is drained. A
+driver that sends a command directly at that moment races with the
+close as it does today; at worst its URB stays parked. A resume
+running at the same time takes URBs from the anchor with
+usb_get_from_anchor() like the drain does, so each URB is freed once.
+
+Fixes: 7bee549e197c ("Bluetooth: Add USB autosuspend support to btusb driver")
+---
+ drivers/bluetooth/btusb_main.c | 32 ++++++++++++++++++++++++--------
+ 1 file changed, 24 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb_main.c b/drivers/bluetooth/btusb_main.c
+index 95398e2ca098..0f01f5fa25db 100644
+--- a/drivers/bluetooth/btusb_main.c
++++ b/drivers/bluetooth/btusb_main.c
+@@ -2100,6 +2100,26 @@ static void btusb_tx_complete(struct urb *urb)
+ 	kfree_skb(skb);
+ }
+ 
++/* Free a deferred URB that will not be sent. btusb_tx_complete() would free
++ * the setup packet and the skb, but it does not run for such a URB. This can
++ * be called with txlock held and interrupts off.
++ */
++static void btusb_free_deferred_urb(struct urb *urb)
++{
++	kfree(urb->setup_packet);
++	dev_kfree_skb_any(urb->context);
++	usb_free_urb(urb);
++}
++
++/* Free all deferred URBs without sending them. */
++static void btusb_discard_deferred(struct btusb_data *data)
++{
++	struct urb *urb;
++
++	while ((urb = usb_get_from_anchor(&data->deferred)))
++		btusb_free_deferred_urb(urb);
++}
++
+ static void btusb_isoc_tx_complete(struct urb *urb)
+ {
+ 	struct sk_buff *skb = urb->context;
+@@ -2235,7 +2255,7 @@ static int btusb_close(struct hci_dev *hdev)
+ 	usb_autopm_put_interface(data->intf);
+ 
+ failed:
+-	usb_scuttle_anchored_urbs(&data->deferred);
++	btusb_discard_deferred(data);
+ 	return 0;
+ }
+ 
+@@ -4999,9 +5019,8 @@ static void play_deferred(struct btusb_data *data)
+ 			if (err != -EPERM && err != -ENODEV)
+ 				BT_ERR("%s urb %p submission failed (%d)",
+ 				       data->hdev->name, urb, -err);
+-			kfree(urb->setup_packet);
+ 			usb_unanchor_urb(urb);
+-			usb_free_urb(urb);
++			btusb_free_deferred_urb(urb);
+ 			break;
+ 		}
+ 
+@@ -5010,10 +5029,7 @@ static void play_deferred(struct btusb_data *data)
+ 	}
+ 
+ 	/* Cleanup the rest deferred urbs. */
+-	while ((urb = usb_get_from_anchor(&data->deferred))) {
+-		kfree(urb->setup_packet);
+-		usb_free_urb(urb);
+-	}
++	btusb_discard_deferred(data);
+ }
+ 
+ static int btusb_resume(struct usb_interface *intf)
+@@ -5073,7 +5089,7 @@ static int btusb_resume(struct usb_interface *intf)
+ 	return 0;
+ 
+ failed:
+-	usb_scuttle_anchored_urbs(&data->deferred);
++	btusb_discard_deferred(data);
+ done:
+ 	spin_lock_irq(&data->txlock);
+ 	clear_bit(BTUSB_SUSPENDING, &data->flags);
+-- 
+2.43.0
+

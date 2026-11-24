@@ -67,5 +67,55 @@ checkpatch errors, and the files apply in order to `cf357cfc025e` and give the s
 2. **Replace the old packages:** add SUPERSEDED.md to `../send-20261113/E/` and `../send-bt24-bt25-20261114/` (done 2026-11-23).
 3. ~~Recipients~~: done, `recipients.txt` (2026-11-23).
 4. **Send day:** the operator's Signed-off-by, checkpatch, the bot checks and a dry run.
-5. **Operator's call:** `Cc: stable` on 1/3, where the reviewers are split. There is none on 2/3 and 3/3.
+5. **`Cc: stable` on 1/3: added 2026-11-24**, now that the operator's bar is met (below). It goes in by the
+   operator's word on the send day. There is none on 2/3 and 3/3.
+   - Reviewers: 5 of 5 for it in the evidence round of 11-23.
+   - 2026-11-24, ~02:40 UTC: 1/3's message gains one sentence below `---` naming the seven lines, and checkpatch is
+     still clean.
+
+## 1/3 on every affected stable line (2026-11-24)
+
+`Fixes: 7bee549e197c` (2014) reaches every maintained line, so 1/3 alone was cherry-picked onto each current
+tip. Each tip was built twice (with and without 1/3), with the same debug-only injection commit and config, and
+run in QEMU with the emulated controller over usbip, under KASAN, lockdep and kmemleak. The tips were 7.3.6,
+6.18.65, 6.12.119, 6.6.163, 6.1.193, 5.15.226 and 5.10.275 (`btusb.c` below 7.3, `btusb_main.c` on 7.3). The
+evidence is in `evidence-stable-20261124/`: per-image `.versions`, summaries, scripts, and the SHA-256 of the
+raw-log archives. The archives are in the private backup, `2026-11-24-co43-stable-runs/`.
+
+- **The applied tree is the real cherry-pick.** On every line, `git merge-tree --write-tree
+  --merge-base=888176e9a640^ <tip> 888176e9a640` is clean, and its `drivers/bluetooth` differs by 0 bytes from
+  the tree tested.
+- **kmemleak**, objects per run (3 runs each), recounted from the raw logs with `scripts/sum-kmemleak-verdicts.sh`:
+
+  | line | failed resume | `play_deferred()` fails | dead, close | dead, powered off | cmd + 2 ACL |
+  |---|---|---|---|---|---|
+  | 7.3.6 | 3,3,3 | 2,2,2 | 4,1,6 | 1,5,2 | 6,3,3 |
+  | 6.18.65 | 3,3,3 | 2,2,2 | 6,6,6 | 6,6,6 | 6,6,6 |
+  | 6.12.119 | 3,3,3 | 2,2,2 | 9,8,9 | 6,6,5 | 6,6,6 |
+  | 6.6.163 | 3,3,2 | 2,2,2 | 9,9,9 | 6,6,6 | 6,6,6 |
+  | 6.1.193 | 3,3,3 | 2,2,2 | 9,9,9 | 6,6,6 | 6,6,6 |
+  | 5.15.226 | 3,3,3 | 2,2,2 | 3,3,3 | 6,6,6 | 6,6,6 |
+  | 5.10.275 | 3,3,3 | 2,2,2 | 3,3,3 | 3,3,3 | 6,6,6 |
+  | **every line with 1/3** | **0** | **0** | **0** | **0** | **0** |
+
+  The healthy control is 0 on both sides everywhere.
+- **Behaviour matrix:** six cases, 2 runs each, identical with and without 1/3 on every line. Lines differ among
+  themselves:
+  - the answers-after-reset and wedge cases fail on 6.12 and older;
+  - the dropped-event case also fails on 5.15 and 5.10;
+  - close fails everywhere.
+
+  These are the lines' own behaviour, not 1/3's.
+- **Kernel reports:** none on 7.3 to 6.1. On 5.15 and 5.10, lockdep "BUG: Invalid wait context" (in
+  `btusb_waker`, under KASAN's stack saving) appears in base and patched logs alike, including healthy runs.
+  It is read as a config artifact of those lines (inferred, not traced).
+- **Guest start on 5.15:** 13 of 56 first runs did not start ("page allocation failure: order:6" before Python
+  could read its library). They were rerun (`summaries/stable-5.15-rerun.txt`), and the first logs are kept.
+- **W=1 builds** of `drivers/bluetooth/`, tip and tip + 1/3, no debug code:
+  - With `CONFIG_PM` on, there is no btusb warning, except one on 5.10, in the tip too (`btusb_match_table`
+    defined but not used).
+  - With `CONFIG_PM` off, there is none on all seven.
+  - 6.6 with PM off needed `BT_HCIBTUSB_MTK` on, or `btmtk.h`'s stubs stop the build, on the tip as well.
+- **Machine after the job:** no guest left, and `dpkg -V systemd bluez linux-firmware-qualcomm-wireless` is
+  clean.
 6. **Laptop soak:** only on the operator's word.
