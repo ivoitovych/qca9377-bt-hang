@@ -14,25 +14,28 @@ its timeout, instance 2 is still advertised but no longer reported.
 
 Compare with le_num_of_adv_sets, as the comment says.
 
-This was found with mgmt-tester while testing advertising instances,
-and reproduced in QEMU with a new mgmt-tester case that adds only
-instance 2: without this patch the reply lists no instance.
+This was found with mgmt-tester while writing tests for advertising
+instances, and reproduced in QEMU with a new mgmt-tester case that adds
+only instance 2: without this patch the reply lists no instance.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
 ---
 Tested in QEMU with a new mgmt-tester case, "Read Advertising
-Features - Success 3 (Instance 2 only)", being submitted to BlueZ
-separately: it adds only instance 2 and expects exactly that instance
-in the reply. With this patch the case passes 3 of 3 runs and without
-it fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
-6.18.65, 6.12.119, 6.6.163 and 6.1.193. In the ten testers of the
-Bluetooth kernel CI, no other observed case changed on any of these
-kernels. Some suites hang on the older ones, identically with and
-without this patch.
+Features - Success 3 (Instance 2 only)", which is being submitted to
+BlueZ separately. The case adds only instance 2 and expects exactly
+that instance in the reply. Without this patch it fails in 3 of 3
+runs, and with it it passes in 3 of 3, on bluetooth-next
+5063a0717aa2, v7.4-rc4, 7.3.6, 6.18.65, 6.12.119, 6.6.163 and
+6.1.193.
 
-The bug also shows on real hardware, a QCA9377 (USB 13d3:3503) with
-Ubuntu's 7.0.0-43 kernel: Add Advertising for instance 2 alone
+In the ten testers of the Bluetooth kernel CI, no other case changed
+on any of these kernels. l2cap-tester hangs on 6.18, 6.12 and 6.6,
+and iso-tester on 6.12, the same way with and without this patch, so
+the cases after those hangs did not run.
+
+The bug also shows on real hardware: on a QCA9377 (USB 13d3:3503)
+with Ubuntu's 7.0.0-43 kernel, Add Advertising for instance 2 alone
 succeeds and the controller accepts LE Set Advertising Enable for it,
 yet Read Advertising Features lists no instance.
 
