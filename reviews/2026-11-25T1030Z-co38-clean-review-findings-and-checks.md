@@ -57,3 +57,20 @@ preferences are weighed on their merits too.
 
 After the edits, checkpatch `--strict` is clean (one too-long line was rewrapped), the patch-id is still
 `a15c80fa`, and the patch applies to bluetooth-next `f57f78086ab5`.
+
+## Reviewer 3
+
+**Verdict:** kernel patch, send after changes; BlueZ test, hold until the kernel fix is in the CI kernel, then send
+after changes. **No defect in either diff.**
+
+| # | finding | check here | decision |
+|---|---|---|---|
+| F2 | "hide only the mesh instance" is false: the ISO/BIS path can take N+1 | same as reviewer 2's F1, already applied | done; the BIS question registered as **BT-29** (`docs/issues.md`), kept out of this patch |
+| F8 | BlueZ: "Without the kernel change … the instance is left out" and "fails on kernels without that fix" are false for kernels before 6.1, which have no filter | **right**: v5.15 copies every instance (`mgmt.c:7509-7513`) | body: "On kernels from 6.1 on without the kernel change …"; below `---`: "fails on kernels that have the bug (6.1 and later) until that fix is in" |
+| F9 | "starts advertising" beyond the evidence | already applied | done |
+| F10 | "still advertised" → "remains active" | third reviewer to ask; the polishing round allows it | "instance 2 remains active but is no longer reported" |
+| F11 | "no other completed case differed" | sharper than "no other case changed" next to a sentence on hangs | "no other case that ran changed its result" |
+| — | Double space before the brace | matches the neighbouring arrays (`mgmt-tester.c:5170`) | kept |
+| — | Send the BlueZ test only after the kernel fix is applied (reviewers 2 and 3); the precedent `923d95d0c2fb` was sent after its kernel fixes were in | spares the maintainer a known red CI run | **recommended to the operator**: the kernel patch first, the BlueZ test once applied, with the lore link and the commit ID |
+
+checkpatch `--strict` is clean, the patch-ids are unchanged (`a15c80fa`, `70a48730`), and both apply to today's tips.

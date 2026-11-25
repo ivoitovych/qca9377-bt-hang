@@ -1275,6 +1275,23 @@ recursive-locking warning on 6.12.114, not analysed.
   and 6.6.163 with and without our patches. 7.3.6 now carries the fix pair. Older lines: CO-35's backports.
 - **6.1's lockdep warning in `discov_off`:** on 6.1.193, as on 6.1.192 earlier the same day.
 
+## BT-29 — ISO broadcast: a user-supplied BIS number is not range-checked before it becomes an advertising instance
+
+**Status 2026-11-25: from source, not reproduced; found by outside reviewers 2 and 3 of CO-38's clean round, and
+checked here.**
+- **What:** for an ISO broadcast source, `qos_set_bis()` picks a free advertising set in 1 to
+  `le_num_of_adv_sets - 1` only when `qos->bcast.bis` is unset (`hci_conn.c:1722`, bluetooth-next
+  `f57f78086ab5`).
+- **A value set by user space** is passed on: `hci_start_per_adv_sync()` → `hci_add_per_instance()` →
+  `hci_add_adv_instance()`, which accepts up to `le_num_of_adv_sets + 1`, the slot the mesh code uses.
+- **No check in between:** `check_bcast_qos()` (`iso.c:2078-2122`) checks packing, framing, the IO QoS,
+  encryption, options, skip, the timeouts, CTE type and MSE, but not `bis`.
+- **Possible effect (unverified):** a broadcast that takes the mesh slot, or a number the controller does not
+  have.
+- **Not part of CO-38:** both predicates in `read_adv_features()` hide that slot alike.
+- **Next:** reproduce with iso-tester (a broadcast source with an explicit BIS of `le_num_of_adv_sets + 1`).
+  Then decide whether it is a bug, and fix it separately.
+
 ---
 
 ## U1–U31 — userspace problems seen during the E1/E3 tests (2026-09-26 →)
