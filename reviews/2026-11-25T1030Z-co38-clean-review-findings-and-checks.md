@@ -26,14 +26,14 @@ were taken as reported. No `checkpatch` was run.
   applied the day it was sent, with `Fixes:`, `Cc: stable` and test notes below `---`. "Unsuccessful" on
   this list usually means superseded or unanswered, rarely rejected.
 
-**Preferences (recorded, not applied, per the stop rule):**
+**Preferences (first recorded, not applied, per the stop rule; then weighed again when the operator opened the round to polishing):**
 1. **Base on `bluetooth.git` for v7.4 instead of v7.5.** As before, the maintainer picks the tree. The
    patch applies there too.
 2. **One sentence on bluetoothd's restart clean-up.** The earlier round's five reviewers advised leaving it
    out.
 3. **Below `---`, say the l2cap and iso hangs and the 6.1 reports were identical with and without the
-   patch,** so that "no other observed case changed" is not over-read. Cheap and accurate; the operator's
-   call.
+   patch,** so that "no other observed case changed" is not over-read. **Applied** with reviewer 2 (F5). Not
+   applied: 1 and 2.
 
 ## Reviewer 2
 

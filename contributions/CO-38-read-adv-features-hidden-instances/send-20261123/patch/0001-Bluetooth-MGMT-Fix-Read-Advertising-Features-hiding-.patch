@@ -4,14 +4,13 @@ Date: Sat, 14 Nov 2026 01:47:30 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
  instances
 
-read_adv_features() means to report instances 1 to
-le_num_of_adv_sets, leaving out the mesh instance, which is numbered
-one past the controller's advertising sets, but it compares each
-instance number with the number of instances instead of the number of
-sets. An instance whose number is greater than the current number of
-instances is left out: with instances 1 and 2 added and instance 1
-removed, for example after its timeout, instance 2 is still advertised
-but no longer reported.
+read_adv_features() is meant to report instances 1 to
+le_num_of_adv_sets and to leave out the mesh instance, which is
+numbered one past the controller's advertising sets. Instead it
+compares each instance number with the number of instances, so an
+instance numbered above the current number of instances is left out:
+with instances 1 and 2 added and instance 1 removed, for example after
+its timeout, instance 2 is still advertised but no longer reported.
 
 Compare with le_num_of_adv_sets, as the comment says.
 
