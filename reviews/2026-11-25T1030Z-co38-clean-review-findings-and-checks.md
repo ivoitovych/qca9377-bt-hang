@@ -34,3 +34,26 @@ were taken as reported. No `checkpatch` was run.
 3. **Below `---`, say the l2cap and iso hangs and the 6.1 reports were identical with and without the
    patch,** so that "no other observed case changed" is not over-read. Cheap and accurate; the operator's
    call.
+
+## Reviewer 2
+
+**Verdict:** kernel patch, send after limited verification and minor corrections; BlueZ test, ready subject to
+its kernel dependency. **No defect in either diff.** Its abstract model of the two predicates (16,368
+configurations) found no assertion failure. Its reconstructed kernel patch-id matches `a15c80fa`.
+
+**The operator relaxed the stop rule for this round (2026-11-25):** this round is for polishing, so
+preferences are weighed on their merits too.
+
+| # | finding | check here | decision |
+|---|---|---|---|
+| F1 | A second path to the id N+1: ISO broadcast with a supplied BIS number reaches `hci_add_adv_instance()`, which allows N+1. So "means to hide only the mesh instance" is not fully established | right: `qos_set_bis()` picks 1..N-1 itself (`hci_conn.c:1722`), but a supplied value goes to the same allocator, which allows N+1 (`hci_core.c`). Both predicates hide N+1, so the fix newly hides or shows nothing there | **opening reworded** to the range the comment states: "means to report instances 1 to le_num_of_adv_sets, leaving out the mesh instance, …" |
+| F2 | `le_num_of_adv_sets` can change in a device's lifetime | it is written only from the controller's Read Number of Supported Advertising Sets at LE init (`hci_event.c:1958`). The mesh instance exists only while powered, after that read, with a 1 s timeout (`mesh_send_sync()`). A change under a live mesh instance needs a controller that reports a different count on a later power-on | recorded; no change |
+| F3 | "the controller starts advertising it": the evidence is a successful command, not a radio observation | right | "the controller accepts LE Set Advertising Enable for it" |
+| F4 | "submitted to BlueZ separately" reads as done, but the kernel mail goes first | right | "being submitted to BlueZ separately" |
+| F5 | Name the hangs, so "no other observed case changed" is not over-read (also reviewer 1) | right | "Some suites hang on the older ones, identically with and without this patch." |
+| — | "still advertised" → "still configured" | in the timeout example, instance 2 *is* still advertised by the kernel. That is the harm | kept |
+| — | Send the BlueZ test only once the kernel fix is in the CI kernel (slight preference) | both orders have precedent | the operator's call; the note below `---` covers same-day sending |
+| — | Mesh + public instance test; ISO BIS boundary; power-cycle lifecycle | bounded above | the mesh test stays a follow-up |
+
+After the edits, checkpatch `--strict` is clean (one too-long line was rewrapped), the patch-id is still
+`a15c80fa`, and the patch applies to bluetooth-next `f57f78086ab5`.

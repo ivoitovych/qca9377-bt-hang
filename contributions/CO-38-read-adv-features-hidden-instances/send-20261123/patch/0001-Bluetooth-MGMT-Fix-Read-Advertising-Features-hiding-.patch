@@ -4,10 +4,11 @@ Date: Sat, 14 Nov 2026 01:47:30 +0100
 Subject: [PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding
  instances
 
-read_adv_features() means to hide only the mesh instance, which is
-numbered one past the controller's advertising sets, but it compares
-each instance number with the number of instances instead of the number
-of sets. An instance whose number is greater than the current number of
+read_adv_features() means to report instances 1 to
+le_num_of_adv_sets, leaving out the mesh instance, which is numbered
+one past the controller's advertising sets, but it compares each
+instance number with the number of instances instead of the number of
+sets. An instance whose number is greater than the current number of
 instances is left out: with instances 1 and 2 added and instance 1
 removed, for example after its timeout, instance 2 is still advertised
 but no longer reported.
@@ -22,18 +23,19 @@ Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
 ---
 Tested in QEMU with a new mgmt-tester case, "Read Advertising
-Features - Success 3 (Instance 2 only)", submitted to BlueZ
+Features - Success 3 (Instance 2 only)", being submitted to BlueZ
 separately: it adds only instance 2 and expects exactly that instance
 in the reply. With this patch the case passes 3 of 3 runs and without
 it fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
 6.18.65, 6.12.119, 6.6.163 and 6.1.193. In the ten testers of the
 Bluetooth kernel CI, no other observed case changed on any of these
-kernels.
+kernels. Some suites hang on the older ones, identically with and
+without this patch.
 
 The bug also shows on real hardware, a QCA9377 (USB 13d3:3503) with
 Ubuntu's 7.0.0-43 kernel: Add Advertising for instance 2 alone
-succeeds and the controller starts advertising it, yet Read
-Advertising Features lists no instance.
+succeeds and the controller accepts LE Set Advertising Enable for it,
+yet Read Advertising Features lists no instance.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
