@@ -74,3 +74,29 @@ after changes. **No defect in either diff.**
 | — | Send the BlueZ test only after the kernel fix is applied (reviewers 2 and 3); the precedent `923d95d0c2fb` was sent after its kernel fixes were in | spares the maintainer a known red CI run | **recommended to the operator**: the kernel patch first, the BlueZ test once applied, with the lore link and the commit ID |
 
 checkpatch `--strict` is clean, the patch-ids are unchanged (`a15c80fa`, `70a48730`), and both apply to today's tips.
+
+## Reviewer 6
+
+**Verdict:** kernel patch, send after one change below `---`; BlueZ test, send. **No defect in either diff.**
+- **Its own runs** on bluetooth-next `f57f78086ab5` in QEMU, without KASAN or lockdep:
+  - the new case: 0/3 before, 3/3 after;
+  - full mgmt-tester: the only difference is this case;
+  - mesh-tester: unchanged.
+- **Three local experiments,** each listing the same instances before and after the fix:
+  - the commit message's timeout example: nothing listed before, 2 after;
+  - instance 2 with a mesh send in flight: 2 listed, mesh hidden, both ways;
+  - mesh only: nothing listed, both ways.
+
+| # | finding | check here | decision |
+|---|---|---|---|
+| 1 | "In the ten testers of the Bluetooth kernel CI": the CI lists eleven, and for `mgmt.c` it runs mgmt-tester and mesh-tester | **right**: our own register says the CI picks testers by file (mgmt.c → mgmt + mesh), and we ran ten | "In ten of the Bluetooth kernel CI's testers, including mgmt-tester and mesh-tester, which it runs for this file, …" |
+| 2 | The BIS path can take sets + 1 | as reviewers 2 and 3 | BT-29 |
+| 3 | Attribution | the operator's decision of 2026-09-24 | no change |
+| 4 | bluetoothd restart sentence (optional, confirm first) | earlier advice: leave out | not taken |
+| 5 | Cc linux-kernel (`get_maintainer.pl` lists it) | reviewers 1, 2 and 7 of 11-24 advised omitting it | the operator's call; omitted for now |
+
+**After the operator's sign-off (2026-11-25):**
+- one `Signed-off-by:` line, after `Cc: stable`;
+- `checkpatch --strict` with the sign-off check on: "0 errors, 0 warnings, 0 checks … ready for submission";
+- the patch-id is unchanged;
+- the dry run of the exact send gives 5 `RCPT TO`: the list, the three named, and stable from the trailer.

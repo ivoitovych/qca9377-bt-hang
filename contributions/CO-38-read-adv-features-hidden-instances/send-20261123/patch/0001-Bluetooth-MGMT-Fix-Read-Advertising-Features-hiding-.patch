@@ -20,6 +20,7 @@ only instance 2: without this patch the reply lists no instance.
 
 Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
 Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
 Tested in QEMU with a new mgmt-tester case, "Read Advertising
 Features - Success 3 (Instance 2 only)", which is being submitted to
@@ -28,7 +29,8 @@ that instance in the reply. It fails in 3 of 3 runs without this
 patch and passes in 3 of 3 with it, on bluetooth-next 5063a0717aa2,
 v7.4-rc4, 7.3.6, 6.18.65, 6.12.119, 6.6.163 and 6.1.193.
 
-In the ten testers of the Bluetooth kernel CI, no other case that ran
+In ten of the Bluetooth kernel CI's testers, including mgmt-tester
+and mesh-tester, which it runs for this file, no other case that ran
 changed its result on any of these kernels. l2cap-tester hangs on 6.18, 6.12 and 6.6,
 and iso-tester on 6.12, the same way with and without this patch, so
 the cases after those hangs did not run.

@@ -8,7 +8,8 @@ Cc: Brian Gix <brian.gix@gmail.com>
 # Brian Gix wrote b338d91703fa, the commit named in Fixes:. get_maintainer.pl gives his
 # Intel address; his last kernel commit (2023-03-06) and BlueZ commits (2023-03-15) use gmail.
 # Not copied: linux-kernel@vger.kernel.org (the fallback list; this subsystem has its own).
-# stable@vger.kernel.org is reached by the Cc: stable trailer.
+# stable@vger.kernel.org: git send-email adds it from the Cc: stable trailer (the stable rules expect
+# that; CO-02 was sent the same way on 10-27). Only --suppress-cc=self is used.
 #
 # BlueZ test (bluez/0001-...instance-2.patch): the same day, after the kernel patch's lore link
 # replaces the placeholder below its ---.
