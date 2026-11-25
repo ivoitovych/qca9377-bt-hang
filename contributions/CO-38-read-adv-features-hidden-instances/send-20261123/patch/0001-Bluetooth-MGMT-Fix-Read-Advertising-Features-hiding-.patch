@@ -30,6 +30,11 @@ it fails 3 of 3, on bluetooth-next 5063a0717aa2, v7.4-rc4, 7.3.6,
 Bluetooth kernel CI, no other observed case changed on any of these
 kernels.
 
+The bug also shows on real hardware, a QCA9377 (USB 13d3:3503) with
+Ubuntu's 7.0.0-43 kernel: Add Advertising for instance 2 alone
+succeeds and the controller starts advertising it, yet Read
+Advertising Features lists no instance.
+
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
