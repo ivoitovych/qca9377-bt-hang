@@ -263,6 +263,25 @@ only with offsets.
 - Project convention, not upstream's: one independent kernel thread per day, its BlueZ test the same day. A stable request may share a day with a simple patch. No ready series waits for review of an unrelated one. Answer what comes back before sending more.
 - Checked: 2026-11-24. Re-check: if a maintainer comments on volume.
 
+**R-7. linux-kernel@ on a Bluetooth kernel patch: the documented default, used by most contributors, never by the
+maintainers, and with no measurable effect on being applied.**
+- **The rules disagree.** `submitting-patches.rst:242`: "linux-kernel@vger.kernel.org should be used by default for
+  all patches". `5.Posting.rst:329`: "Send a copy to the relevant mailing list, or, if nothing else applies, the
+  linux-kernel list". `get_maintainer.pl` adds it through the catch-all entry "THE REST" (`F: *`).
+- **Practice** on 10.5 months of linux-bluetooth (2026-01-12 to 11-26), 2,451 kernel patch postings:
+  - 73% of the non-maintainers' postings copy it (1,594 of 2,171);
+  - the two maintainers' own postings never do (0 of 280);
+  - prolific senders split by employer habit: the Intel engineers do not, the MediaTek and Qualcomm engineers do.
+- **Outcome,** per distinct subject from non-maintainers: 55% applied with linux-kernel (498 of 900), 60% without
+  (185 of 309). For MGMT, 51% (25 of 49) against 36% (5 of 14). The samples are small and the counts descriptive.
+- **No maintainer's own text** in that period mentions LKML or linux-kernel@: no request and no complaint.
+- **Our own record:** `86ef0f58bdec` (MGMT, applied) copied it; CO-02 (unanswered) did not.
+- **Correction:** our records and reviews of 11-24 called it "the fallback when there is no subsystem list". That is
+  `5.Posting.rst`'s wording, contradicted by `submitting-patches.rst`.
+- Evidence: `contributions/CO-38-read-adv-features-hidden-instances/send-20261123/lkml-practice.py` and its output
+  `lkml-practice-20261126.txt` (read-only over `cache/lore-linux-bluetooth-0.git`). Checked: 2026-11-26. Re-check:
+  if a maintainer comments.
+
 ## Message style
 
 **M-1. BlueZ's `HACKING` rules for a patch mail.** Send to the list; `[PATCH BlueZ]` prefix; 50/72 formatting with quoted tool output exempt; split by top-level directory without breaking the build; bug fixes before features; a cover letter when introducing a feature.

@@ -7,7 +7,10 @@ Cc: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
 Cc: Brian Gix <brian.gix@gmail.com>
 # Brian Gix wrote b338d91703fa, the commit named in Fixes:. get_maintainer.pl gives his
 # Intel address; his last kernel commit (2023-03-06) and BlueZ commits (2023-03-15) use gmail.
-# Not copied: linux-kernel@vger.kernel.org (the fallback list; this subsystem has its own).
+# linux-kernel@vger.kernel.org: OPEN, the operator decides (2026-11-26). submitting-patches.rst:242 makes it the
+# default for all patches; get_maintainer.pl lists it via "THE REST". Measured on 10.5 months of
+# linux-bluetooth (lkml-practice-20261126.txt): 73% of non-maintainer kernel patches copy it, the
+# maintainers themselves never do, and the share applied is no different (55% with, 60% without).
 # stable@vger.kernel.org: git send-email adds it from the Cc: stable trailer (the stable rules expect
 # that; CO-02 was sent the same way on 10-27). Only --suppress-cc=self is used.
 #
