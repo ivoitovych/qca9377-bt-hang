@@ -37,3 +37,16 @@ folder. Nothing is installed yet.
 - **The Ubuntu archive pool already holds 7.0.0-44:** unattended upgrades will likely install it, and GRUB 0 would
   boot it. Decide with the operator: build for -44 once it is installed, or keep -43 (hold, or pick it in GRUB).
 - **Not done yet:** the patched build: `build-variant.sh patched` in the machine-local `co38-laptop-module` folder.
+
+**2026-11-26, later: the operator installed 7.0.0-44 (not yet booted).** `/boot` and `/lib/modules/7.0.0-44-generic`
+exist; GRUB 0 will boot -44. **Next:**
+1. Build the control and patched `bluetooth.ko` for **7.0.0-44**, from its Ubuntu source
+   (`scripts/prepare-ubuntu-ksrc.sh 7.0.0-44…`, `--krel 7.0.0-44-generic`).
+2. Gate by a source comparison, not srcversion.
+3. Before the reboot, check that the stock -44 btusb still has `13d3:3503` (`scripts/btusb-has-device.py`, BT-1
+   safeguard).
+4. On the operator's yes: install into `/lib/modules/7.0.0-44-generic/updates/`, `depmod -a 7.0.0-44-generic`, cold
+   boot.
+
+The -43 builds can stay unused. The operator is relaying the reviewers' rechecks of `2026-11-26T0100Z` (reviewer 7
+unavailable).
