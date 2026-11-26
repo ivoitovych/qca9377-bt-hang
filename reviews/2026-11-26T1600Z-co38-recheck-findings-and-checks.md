@@ -97,3 +97,32 @@ Points and checks:
    means only "no scan-build finding in the patched tree"; nothing stronger is claimed.
 6. **The hardware comparison is corroboration, not a controlled hardware A/B.** Agreed. The notes name both Ubuntu
    kernels, and the controlled comparison is the QEMU one.
+
+## Final recheck (the 16:15 UTC request): reviewers 1, 2, 3, 6
+
+Every reviewer said "send" and found both changes acceptable; nothing false was found.
+- **Reviewers 1 and 2 checked in the BlueZ source:** `mgmt-tester.c` never sends `MGMT_OP_MESH_SEND`, and
+  `mesh-tester.c` never sends Read Advertising Features. So the mesh sentence holds.
+- **Reviewer 6 checked the CI's file mapping** (`config.json` of bluez/action-ci maps `net/bluetooth/mgmt.c` to
+  mgmt-tester and mesh-tester), which bears out the CI sentence.
+
+Applied (text only; diff and patch-ids unchanged):
+1. **The first paragraph rewrapped**, in reviewer 6's wrapping (reviewers 1, 2 and 6 noted the short line ending
+   in "Instead it").
+2. **"; of those, the CI runs mgmt-tester and mesh-tester"** became "; the CI itself runs only mgmt-tester and
+   mesh-tester" (reviewer 6: "of those" could be read as "of those kernels").
+3. **"run one at a time" became "run separately"** (reviewer 7, held from the round before).
+
+Then:
+- checkpatch: 0/0/0;
+- every line within 72 columns except the hunk header;
+- the patch applies to bluetooth-next `f57f78086ab5`;
+- dry run "Result: OK", with the same five recipients.
+
+Left for the BlueZ send, which waits until the fix is in bluetooth-next:
+- **The note "Please apply it once the fix is in the kernel the Bluetooth CI runs"** (reviewer 6): it will be
+  rewritten to fit the state at that time, and the patch re-checked then.
+- **"number of advertising sets"** (reviewer 2): a preference, weighed then. Reviewer 1 reads the phrase as naming
+  the reply's field, which is what it is.
+
+The polished version went to a last read as `2026-11-26T1715Z-co38-final-polish-recheck.md`.
