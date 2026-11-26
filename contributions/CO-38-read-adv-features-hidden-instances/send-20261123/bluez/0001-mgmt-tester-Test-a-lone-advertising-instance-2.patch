@@ -14,9 +14,10 @@ of instances instead of the number of advertising sets.
 ---
 Kernel fix: https://lore.kernel.org/linux-bluetooth/20261126161933.923041-1-yaroslav.voytovych@gmail.com/
 
-This case fails on kernels that have the bug (6.1 and later) until
-that fix is in. Please apply it once the fix is in the kernel the
-Bluetooth CI runs.
+Without that fix this case fails, because the reply leaves out
+instance 2 (kernels from 6.1 on); with it the case passes. Applying
+it once the fix is in bluetooth-next keeps the kernel CI runs of
+other patches green.
 
  tools/mgmt-tester.c | 36 +++++++++++++++++++++++++++++++++---
  1 file changed, 33 insertions(+), 3 deletions(-)
