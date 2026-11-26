@@ -62,3 +62,16 @@ unavailable).
   2. `depmod -a 7.0.0-44-generic`, with no reload;
   3. check `modinfo -k 7.0.0-44-generic -n bluetooth` points to `updates/`;
   4. re-check `/boot`; the operator cold-boots.
+
+**2026-11-26, installed on the operator's yes** ("I'm okay to test and install and reboot whatever is needed now"):
+- `scripts/module-updates.sh --krel 7.0.0-44-generic --module bluetooth install …/patched/src-net-bluetooth/bluetooth.ko
+  --trial-open-ok`. The open trial (E3 #14, on the running -43) is not changed by a file for -44; it closes at
+  shutdown as usual.
+- **CRC check:** all 33 dependants of `bluetooth.ko` in -44 accept the build, 0 mismatched (btusb uses 22 symbols).
+- **Next boot resolves** `/lib/modules/7.0.0-44-generic/updates/bluetooth.ko`, srcversion `CA64890CE90A328C6EAC1BF`,
+  SHA-256 `63ebc957…`. The initramfs has no `bluetooth.ko`, so `updates/` + `depmod` is enough.
+- **`/boot`:** -44 is the newest kernel; `vmlinuz` → -44.
+- **Trial label:** the boot's trial will say `BT_BUILD=stock-fixed` (the drop-in is unchanged); this boot runs CO-38's
+  `bluetooth.ko`, to be recorded with `bt-mark` after the boot.
+- **Rollback:** `sudo scripts/module-updates.sh --krel 7.0.0-44-generic remove`, then a reboot; or pick 7.0.0-43 in
+  GRUB's advanced options (its stock btusb has `13d3:3503`).
