@@ -54,8 +54,8 @@ No reviewer found a defect in either diff.
 8. **BlueZ timing.** Reviewers 1 and 3 prefer, and reviewer 2 suggests, sending the test once the fix is in the
    kernel the BlueZ CI runs. Reviewer 6 would send the same day. **Recommendation: wait**, so the CI is never red
    on a case the tree cannot yet pass. The operator decides.
-9. **Dates.** `3a198413bb71` was authored on 2026-11-13 and committed on 2026-11-17 (`git log`: Andrew Morton).
-   The records now say both.
+9. **Dates.** `3a198413bb71` was authored on 2026-11-13 and committed on 2026-11-17 at 21:40 -0800, which is
+   2026-11-18 UTC (`git log`: Andrew Morton). The records now give both dates, the commit date in UTC.
 10. **Brian Gix's address** (reviewer 2). Reviewer 6 checked it against his latest commits, as the recipients file
     records.
 
@@ -72,3 +72,28 @@ No reviewer found a defect in either diff.
   - RCPT TO linux-bluetooth, Marcel Holtmann, Luiz Augusto von Dentz, Brian Gix, and stable, the last added from
     the `Cc: stable` trailer;
   - no linux-kernel.
+
+## Reviewer 7 (answer on the 08:00 UTC version, received after the changes above)
+
+Verdict: kernel patch send; BlueZ test send once its link is filled in; linux-kernel not copied: agree. No technical
+blocker in either diff.
+
+Points and checks:
+1. **The tester sentence:** a wording clarification recommended. The changed sentence of 16:00 UTC already separates
+   the eleven testers from the two the CI selects for `mgmt.c`. No further change.
+2. **"run one at a time" → "run separately":** correct.
+   - **Why:** one filter, "L2CAP Ext-Flowctl Server - PHY", matched three cases in one guest, as the evidence
+     README says.
+   - **Decision:** a two-word change below `---`, held until the final recheck (`2026-11-26T1615Z-co38-final-recheck.md`)
+     answers, so the version under review does not move; then applied with anything else it brings.
+3. **The commit date of `3a198413bb71`:** committed 2026-11-17 21:40:02 -0800, which is 2026-11-18 05:40 UTC (`git
+   log`). Reviewer 7's "November 18" is the UTC date. The records now give the UTC date. The patch itself cites no
+   date.
+4. **The bot's TestFunctional** skips tester-marked tests, so its PASS does not show that the new case ran.
+   - **Checked:** no document here claims it did. The new case's evidence is the QEMU runs.
+   - **Recorded** as a limit of that PASS.
+5. **The bot's ScanBuild** does not compare base and patched trees. The project's tooling index has recorded this
+   since October ("its ScanBuild never checks out the base, so it compares the patched tree with itself"). Its PASS
+   means only "no scan-build finding in the patched tree"; nothing stronger is claimed.
+6. **The hardware comparison is corroboration, not a controlled hardware A/B.** Agreed. The notes name both Ubuntu
+   kernels, and the controlled comparison is the QEMU one.
