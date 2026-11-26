@@ -198,8 +198,13 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - **New bluetooth-next tip `f57f78086ab5` (base and +CO-38):** all 11 CI testers, 6lowpan included. Done:
 >     only CO-38's case changes.
 >   - **6lowpan-tester on the 7 tips of 11-23:** done, 9/9 on both sides everywhere.
->   - **The cases cut off by the hangs, one by one:** l2cap on 6.18, 6.12 and 6.6; iso on 6.12. Running.
->   - **The bot's checks:** the kernel patch on the new tip, the BlueZ test on master `79162c108911`. Queued.
+>   - **The cases cut off by the hangs, one by one:** l2cap on 6.18, 6.12 and 6.6; iso on 6.12. Done: every
+>     verdict identical with and without the patch.
+>   - **The bot's checks:** the kernel patch on the new tip, the BlueZ test on master `79162c108911`. Done: all
+>     PASS, both sides.
+>   - **Records:** `contributions/CO-38-read-adv-features-hidden-instances/send-20261123/evidence/gaps-20261126/`. The
+>     patch's testing notes are updated (patch-id unchanged). The recheck request is
+>     `reviews/2026-11-26T0800Z-co38-recheck-after-hardware.md`.
 >   - **Scripts and logs:** scripts in `tmp/kernel-queue-20261126/`; logs in the machine-local `kernel-queue-20261123`
 >     work area, `tips3/`.
 > - **Housekeeping (operator, 11-26):** free space went from 29 to 72 GB, by deleting the verified journal-scaling
