@@ -4895,6 +4895,51 @@ review records and all outside reviewers' texts yielded 149 candidate facts. A t
 into `docs/upstream-practice.md`: verified facts with evidence, contested questions with both sides, and refuted
 claims dropped.
 
+## Asking clearly, the first send in four weeks, and a fix polished for the maintainer (2026-11-24 → 11-26)
+
+**Something upstream was waiting on us.** The operator sensed it, and a scan of every reply to our mails since
+October confirmed it. Qualcomm's Zijun Hu had answered the CO-25 report on 10-29, saying that QCA9377 is not ROME
+and that btusb does not support it, and our reply had sat unsent for almost four weeks.
+
+Re-reading the first report, the operator saw why the answer had missed. The report was thorough but never said
+plainly what we wanted, why, or what an answer would change. The reply was rebuilt around exactly that, then
+corrected by three outside review rounds:
+- it had called the rampatch the fix, although our tests never separated it from the NVM and the driver's other
+  settings;
+- it had implied all 74 clean links ran on the upstream entry, when 58 were on a diagnostic build;
+- it conceded that QCA9377 has no Bluetooth firmware of its own, which is false: linux-firmware `619d33958d72` added
+  the serial pair in 2020.
+
+The tone was set by the operator: explain, never judge the reader. He sent v9 on 11-24 from his own terminal, and it
+was on the list within minutes, byte-identical.
+
+**CO-38 became the model package.**
+- **On the real laptop,** with the stock kernel, no build and no reboot: adding only instance 2 succeeded, the
+  controller accepted the advertising enable, and the kernel reported no instance. That is the bug on real
+  hardware.
+- **A clean review round,** with no earlier verdicts shown and five reviewers, found no defect in the one-line diff.
+  It did find what earlier rounds had not:
+  - the "only the mesh instance" phrasing was false, because an ISO broadcast with a chosen BIS number can take the
+    same slot (registered as BT-29);
+  - the BlueZ message overclaimed for kernels before 6.1, which have no filter at all;
+  - "ten testers of the CI" was wrong (it lists eleven);
+  - the hangs and the baseline reports needed naming.
+- **The operator's principle:** clearer prose is work saved for the maintainer, so the round was opened to polishing
+  as well as errors.
+- **Two upstream-practice questions were settled by measurement,** not by the reviewers' vote:
+  - nothing spaces independent first postings;
+  - linux-kernel is the documented default, copied by most contributors and never by the maintainers, with no
+    effect on whether a patch is applied. Our records had wrongly called it a fallback.
+- **The operator added his own Signed-off-by,** as the sender certifying the patch.
+
+**CO-43 1/3 was tested alone on all seven stable lines,** and every leak disappears with it; it now carries `Cc:
+stable`. All seven kernel bodies in the queue now say how their bug was found and which test-only kernel change
+reproduced it.
+
+**A lesson about the machine.** The fan that the operator noticed was a forgotten `journalctl` of ours, which had
+run for two hours and forty minutes at full core. It is now a rule: when you give up waiting on a background
+command, stop it.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*

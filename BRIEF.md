@@ -178,6 +178,60 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **UPDATE 2026-11-26, about 01:30 UTC (supersedes everything below where they differ).**
+> - **Sent:** CO-25's reply to Zijun Hu (Qualcomm), v9, by the operator from his own terminal, 2026-11-24 05:33
+>   +0100. Message-ID `<20261124043440.1206949-1-yaroslav.voytovych@gmail.com>`; on lore, body byte-identical. No
+>   answer yet. v1–v8 are superseded. That reply's history: the first report never said plainly what was asked
+>   or why; v6 rewrote it around that; then three review rounds removed overclaims (the rampatch called the fix,
+>   the 74 links all on the upstream entry, a false concession that QCA9377 has no Bluetooth firmware:
+>   linux-firmware `619d33958d72` has the serial pair).
+> - **CO-38, ready to send, waiting only for the operator's send:**
+>   - the kernel patch, signed by the operator, with `Fixes: b338d91703fa` and `Cc: stable`. checkpatch `--strict`
+>     with the sign-off check gives 0/0/0, and the patch-id is `a15c80fa` (the code is unchanged since 11-14);
+>   - the messages were polished through two outside rounds: 5 reviewers on 11-24, and a clean, extended round of
+>     reviewers 1, 2, 3, 6 and 7 on 11-25/26, all with "no defect in either diff";
+>   - the record is `reviews/2026-11-25T1030Z-co38-clean-review-findings-and-checks.md`;
+>   - the latest recheck request is `reviews/2026-11-26T0100Z-co38-recheck-final.md`, at `c2f6914`.
+> - **CO-38 on the laptop:** reproduced with the stock 7.0.0-43, with no build and no reboot
+>   (`contributions/CO-38-read-adv-features-hidden-instances/laptop-20261125/`). The patched kernel on the laptop
+>   is still to do. The operator wants it; it needs `bluetooth.ko` for 7.0.0-43 in `updates/` and a cold boot.
+> - **CO-38 recipients (`send-20261123/recipients.txt`):**
+>   - To linux-bluetooth; Cc Marcel Holtmann, Luiz Augusto von Dentz, and Brian Gix at his gmail address (author of
+>     the commit in `Fixes:`, the operator's decision); stable comes from the trailer;
+>   - **linux-kernel is the operator's open choice.** Register R-7 measured it: the documented default, copied by
+>     73% of non-maintainer patches, never by the maintainers, no effect on being applied. Recommended: copy it;
+>   - the send command is in the last hand-over and in `recipients.txt`.
+> - **The CO-38 BlueZ test:** it has a placeholder for the kernel lore link below `---`. Reviewers 2 and 3
+>   recommend sending it once the kernel fix is in bluetooth-next (precedent `923d95d0c2fb`). The operator's
+>   call.
+> - **CO-43 1/3** was tested alone on all seven stable lines (7.3.6 to 5.10.275): every leak case leaks on base and
+>   none with it, and the matrix is identical. `Cc: stable` was added (`series-20261123/evidence-stable-20261124/`).
+> - **All seven kernel bodies** (CO-38, CO-44, CO-43 1/3–3/3, CO-26 A/B) now say how the bug was found and which
+>   test-only kernel change reproduced it (register M-6). The `[PATCH bluetooth]` tag is not used on this list.
+> - **New register entries:**
+>   - R-6: no rule spaces independent first postings; our convention is one kernel thread a day;
+>   - M-6: the reproduction method goes in the body;
+>   - R-7: the linux-kernel measurement.
+> - **New issues:**
+>   - BT-26 and BT-27: 6.1.193 KASAN use-after-frees;
+>   - BT-28: a 6.12.119 iso hang;
+>   - BT-29: an ISO broadcast BIS number with no range check, from source, unverified.
+> - **Lessons, all in memory:**
+>   - stop any backgrounded command the moment it is abandoned (a forgotten `journalctl -b 0 --grep` ran 2 h 40 at
+>     100%: CO-46's slowdown);
+>   - btmgmt does not work without a terminal; use `laptop-20261125/co38-laptop-repro.py`-style MGMT sockets;
+>   - the `Signed-off-by` is always added by the operator himself;
+>   - check new evidence claims against the code before writing them; several of my own wordings needed
+>     correction this round.
+> - **Next, in order:**
+>   1. the operator sends CO-38;
+>   2. record it, fill the BlueZ link, the BlueZ test send;
+>   3. CO-22 the same day (re-read the stable queues first);
+>   4. CO-44 the next day;
+>   5. CO-43 series, CO-02 v2 (the bot's finding on v1; reply first is optional), CO-26 variant A;
+>   6. the patched CO-38 laptop run;
+>   7. 6lowpan-tester on the tips; the CO-35 backport rebase.
+>
 > **NIGHT UPDATE (2026-11-23, about 22:30 UTC; it supersedes the lines below where they differ).**
 > Nothing was sent.
 > - **The operator's testing standard (2026-11-23):**
