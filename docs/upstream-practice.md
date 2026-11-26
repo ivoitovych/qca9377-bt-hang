@@ -265,7 +265,7 @@ only with offsets.
 
 **R-7. linux-kernel@ on a Bluetooth kernel patch: the documented default, used by most contributors, never by the
 maintainers, and with no measurable effect on being applied.**
-- **Superseded 2026-11-26:** mainline `3a198413bb71` (2026-11-13, in v7.4-rc4) made linux-kernel "a list of last resort" again; the text below was bluetooth-next's older copy, so the advice is now: do not copy it when a subsystem list exists.
+- **Superseded 2026-11-26:** mainline `3a198413bb71` (authored 2026-11-13, committed 2026-11-17, in v7.4-rc4) made linux-kernel "a list of last resort" again; the text below was bluetooth-next's older copy, so the advice is now: do not copy it when a subsystem list exists.
 - **The rules disagreed (old text).** `submitting-patches.rst:242`: "linux-kernel@vger.kernel.org should be used by default for
   all patches". `5.Posting.rst:329`: "Send a copy to the relevant mailing list, or, if nothing else applies, the
   linux-kernel list". `get_maintainer.pl` adds it through the catch-all entry "THE REST" (`F: *`).
