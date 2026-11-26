@@ -191,8 +191,8 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > - **CO-38 recipients: linux-kernel is NOT copied** in `recipients.txt` since 01:24 UTC (`f667c3b`).
 >   - **Why:** mainline `3a198413bb71` (2026-11-13, in v7.4-rc4) makes it "a list of last resort" again;
 >     bluetooth-next's copy still has the old "by default" text. R-7 is marked superseded.
->   - **Whose call:** that was MY change from the documentation. The operator has not chosen. It is to be
->     confirmed with him before the send. The line "operator's open choice… Recommended: copy it" below is
+>   - **Whose call:** proposed from the documentation; **decided by the operator on 2026-11-26** ("please
+>     don't": follow what the maintainers ask). The line "operator's open choice… Recommended: copy it" below is
 >     superseded.
 > - **CO-38 suite gaps, closing now** (operator, 11-26: the full suites before and after, as the standard asks):
 >   - **New bluetooth-next tip `f57f78086ab5` (base and +CO-38):** all 11 CI testers, 6lowpan included. Done:
