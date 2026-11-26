@@ -40,8 +40,9 @@ and the same lockdep report on 6.12.119.
 The bug also shows on real hardware: on a QCA9377 (USB 13d3:3503)
 with Ubuntu's 7.0.0-43 kernel, Add Advertising for instance 2 alone
 succeeds and the controller accepts LE Set Advertising Enable for it,
-yet Read Advertising Features lists no instance. The patched kernel
-has not yet run on that hardware.
+yet Read Advertising Features lists no instance. On the same hardware,
+with this patch on Ubuntu's 7.0.0-44 kernel (whose mgmt.c is
+unchanged from 7.0.0-43), it lists instance 2.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

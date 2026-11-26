@@ -75,3 +75,12 @@ unavailable).
   `bluetooth.ko`, to be recorded with `bt-mark` after the boot.
 - **Rollback:** `sudo scripts/module-updates.sh --krel 7.0.0-44-generic remove`, then a reboot; or pick 7.0.0-43 in
   GRUB's advanced options (its stock btusb has `13d3:3503`).
+
+**2026-11-26 05:41 +0100: cold boot by the operator; RUN DONE (`PATCHED-RUN-20261126.md`).**
+- **Loaded:** `bluetooth` srcversion `CA64890CE90A328C6EAC1BF`; stock btusb.
+- **Result:** instance 2 is listed (`num_instances 1`, reply `7ff001001f1f050102`).
+- **Health:** hci0 healthy before and after (errors 0).
+- **The patch's hardware note** now ends with the result; checkpatch 0/0/0, patch-id unchanged (`a15c80fa`).
+- **Left:**
+  - the module stays in `updates/` for daily use on this boot, unless the operator wants stock back;
+  - regenerate the recheck document; one recheck round; the dry run before the send.

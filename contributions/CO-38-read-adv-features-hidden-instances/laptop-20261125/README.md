@@ -45,10 +45,11 @@ $ python3 -I contributions/CO-38-read-adv-features-hidden-instances/laptop-20261
 - **Read Advertising Features lists no instance** while it exists: `num_instances 0`.
 - **The reply bytes are exactly the unpatched emulator's:** `7ff001001f1f0500`, 8 bytes. The BlueZ test
   expects 9 with the fix: `…05 01 02`.
-- **The instance was on air.** The kernel's debug log (dynamic debug was on; `dmesg`, 10:10:24) shows LE
-  Set Random Address (0x2005), LE Set Advertising Parameters (0x2006) and LE Set Advertising Enable
-  (0x200a), each with status 0x00. Then, at the removal, Set Advertising Enable again (off). So on real
-  hardware the instance was advertised but not reported, as the commit message says.
+- **The controller accepted the instance's advertising.** The kernel's debug log (dynamic debug was on;
+  `dmesg`, 10:10:24) shows LE Set Random Address (0x2005), LE Set Advertising Parameters (0x2006) and LE Set
+  Advertising Enable (0x200a), each with status 0x00. Then, at the removal, Set Advertising Enable again
+  (off). So on real hardware the instance was set up and enabled but not reported, as the commit message
+  says. (Corrected 2026-11-26: this said "on air", but nothing here observed the radio.)
 
 **After:**
 - hci0 `UP RUNNING`, with TX `commands` 569 → 573 and `errors:0` (`hciconfig hci0`, which reads only the
@@ -56,5 +57,6 @@ $ python3 -I contributions/CO-38-read-adv-features-hidden-instances/laptop-20261
 - no Bluetooth error in the kernel log;
 - the USB link back in runtime suspend.
 
-**Not done:** the patched kernel on the laptop. It needs a `bluetooth.ko` built for 7.0.0-43, installed in
-`updates/`, and a cold boot. Planned with the operator, not yet run.
+**The patched kernel on the laptop: done 2026-11-26**, on 7.0.0-44 with CO-38's `bluetooth.ko` in `updates/`
+after a cold boot. Instance 2 is listed (`num_instances 1`, reply `7ff001001f1f050102`):
+`PATCHED-RUN-20261126.md`.
