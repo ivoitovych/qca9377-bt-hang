@@ -63,6 +63,32 @@ The fact comes first, in reviewer 3's terms. The consequence follows as informat
    fail where the bug is.
 5. **The kernel patch's note** "being submitted to BlueZ separately" stays true by sending now (reviewer 6).
 
+## Final recheck (the 22:30 UTC request): reviewers 1, 2, 3, 6
+
+All four: send; nothing false or rejectable.
+
+Two wording points were applied (below `---` only; patch-id unchanged):
+- **"keeps the kernel CI runs of other patches green"** was too categorical (reviewers 2 and 3). The test only
+  avoids adding a known failure.
+- **"it" meant the fix in one sentence and the test in the next** (reviewer 6).
+
+Final notes:
+
+```text
+Without that fix this case fails, because the reply leaves out
+instance 2 (kernels from 6.1 on); with it the case passes. Applying
+this test once the fix is in bluetooth-next avoids a known failure
+in the kernel CI runs of other patches.
+```
+
+Reviewer 6 also saw the kernel patch mirrored by the CI as bluez/bluetooth-next pull 1233. Its checks are still
+to report.
+
+Checked again at 22:25 UTC:
+- BlueZ master is still `79162c108`, and the test applies;
+- bluetooth-next is still `f57f78086ab5`, so the fix is not applied and the notes describe the present state;
+- dry run "Result: OK", to linux-bluetooth only.
+
 ## Checks after the change
 
 - **Patch-id** `70a4873086000186e05d1bbe88d65a75bc3b9e18`, unchanged.
