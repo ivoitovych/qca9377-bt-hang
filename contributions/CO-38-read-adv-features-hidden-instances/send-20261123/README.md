@@ -1,5 +1,10 @@
 # CO-38 kernel send package of 2026-11-23
 
+> **SENT 2026-11-26 17:19:33 +0100** by the operator: the kernel patch in `patch/` as at `ee4fe0d`, Message-ID
+> `<20261126161933.923041-1-yaroslav.voytovych@gmail.com>`, server 250, on lore with the body byte-identical (STATUS
+> row). The BlueZ test in `bluez/` now carries that lore link. It waits until the fix is in bluetooth-next; then its
+> notes below `---` are rewritten to fit and it is re-checked against BlueZ master before its own dry run.
+
 It replaces `../send-20261114/patch/` after the outside review of 2026-11-23
 (`../../../reviews/2026-11-23T0404Z-five-kernel-submissions-review-findings-and-checks.md`,
 findings 1–3, 15, 23).

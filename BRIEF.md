@@ -178,6 +178,21 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **UPDATE 2026-11-26, 16:30 UTC (supersedes everything below where they differ).**
+> - **CO-38 SENT** by the operator, 2026-11-26 17:19:33 +0100, server 250.
+>   - **Recipients:** linux-bluetooth; Marcel Holtmann, Luiz Augusto von Dentz, Brian Gix, and stable from the
+>     trailer; not linux-kernel.
+>   - **Message-ID** `<20261126161933.923041-1-yaroslav.voytovych@gmail.com>`. On lore, the body byte-identical.
+>     Recorded in the STATUS row and `docs/sent-mails.tsv`.
+>   - **Before the send:** five outside reviewers said "send" on the final text, after two small precision edits
+>     and a rewrap (`reviews/2026-11-26T1600Z-co38-recheck-findings-and-checks.md`).
+> - **Next for CO-38:**
+>   - watch for replies;
+>   - the BlueZ test (lore link filled) goes once the fix is in bluetooth-next, with its notes rewritten then and
+>     its own dry run.
+> - **Next in the queue** (one independent kernel thread a day): CO-22 could share today; then CO-44, CO-43, CO-02
+>   v2, CO-26 (see the 11-23 night update below).
+>
 > **UPDATE 2026-11-26, about 05:30 UTC (supersedes everything below where they differ).**
 > - **CO-38 on the laptop with the patch: done.**
 >   - **Setup:** cold boot into Ubuntu `7.0.0-44` at 04:41 UTC, with CO-38's `bluetooth.ko` in `updates/`
