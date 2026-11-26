@@ -33,12 +33,15 @@ In ten of the Bluetooth kernel CI's testers, including mgmt-tester
 and mesh-tester, which it runs for this file, no other case that ran
 changed its result on any of these kernels. l2cap-tester hangs on
 6.18, 6.12 and 6.6, and iso-tester on 6.12, the same way with and
-without this patch, so the cases after those hangs did not run.
+without this patch, so the cases after those hangs did not run. The
+same KASAN and lockdep reports appear with and without it on 6.1.193,
+and the same lockdep report on 6.12.119.
 
 The bug also shows on real hardware: on a QCA9377 (USB 13d3:3503)
 with Ubuntu's 7.0.0-43 kernel, Add Advertising for instance 2 alone
 succeeds and the controller accepts LE Set Advertising Enable for it,
-yet Read Advertising Features lists no instance.
+yet Read Advertising Features lists no instance. The patched kernel
+has not yet run on that hardware.
 
  net/bluetooth/mgmt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

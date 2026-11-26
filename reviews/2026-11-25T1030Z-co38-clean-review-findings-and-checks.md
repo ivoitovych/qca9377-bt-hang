@@ -100,3 +100,30 @@ checkpatch `--strict` is clean, the patch-ids are unchanged (`a15c80fa`, `70a487
 - `checkpatch --strict` with the sign-off check on: "0 errors, 0 warnings, 0 checks … ready for submission";
 - the patch-id is unchanged;
 - the dry run of the exact send gives 5 `RCPT TO`: the list, the three named, and stable from the trailer.
+
+## Reviewer 7 (of the 11-25 text, answered 11-26)
+
+**Verdict:** kernel patch, send after message corrections; BlueZ test, send after small corrections. **No defect in
+either diff.**
+- **Its own checks:**
+  - patch-ids match;
+  - the patch applies to the trees and stable tags named, and to `bluetooth.git` `77bc0f253ff9` and mainline master;
+  - the patched `mgmt.c` and the tester compile;
+  - `mgmt-tester -l` lists the new case;
+  - the extracted `read_adv_features()`, run under ASan and UBSan: 35,175 cases, no fixed-function mismatch.
+- **Not run by it:** QEMU and the hardware.
+
+| finding | check here | decision |
+|---|---|---|
+| "Only mesh" too strong (BIS path) | fixed on 11-25 | done; BT-29 |
+| Unsigned draft not clean under plain strict checkpatch | true of that draft | the signed file now passes `checkpatch --strict` with the sign-off check, in a full kernel tree: 0/0/0 |
+| BlueZ "kernels without that fix" | fixed on 11-25 | done |
+| BlueZ tip moved to `79162c108911` | right; `mgmt-tester.c` unchanged | the recheck document states it |
+| Keep test limits below `---`: hangs, unobserved cases, baseline reports, hardware gap | hangs and unrun cases were already named. The baseline reports are in our evidence: KASAN and lockdep on 6.1.193, lockdep on 6.12.119, identical both ways (`report-diff.txt`) | **added** both clauses: the reports, and "The patched kernel has not yet run on that hardware." |
+| A new subject ("Report sparse advertising instances") and a rewritten body leading with the failure | the current text has passed two review rounds; the subject is named by the BlueZ message | **offered to the operator**, not applied |
+| BlueZ registration CHECK (continuation alignment) | matches the neighbouring registrations | kept |
+| Attribution | the operator's decision of 2026-09-24 | no change |
+| linux-kernel "not a prerequisite" | R-7 measured | the operator's call |
+
+After the edits: checkpatch `--strict` (sign-off on) 0/0/0; no prose line over 72; patch-id `a15c80fa`; the dry run
+gives 6 recipients with linux-kernel.
