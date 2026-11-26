@@ -28,3 +28,12 @@ that it shows there.
 
 **State:** steps 1–3 were given to an agent on 2026-11-26. Its work area is the machine-local `co38-laptop-module`
 folder. Nothing is installed yet.
+
+**2026-11-26, after steps 1-2 (the agent stopped at the gate, as told):**
+- **The source:** `cache/ubuntu-7.0.0-43` comes from the Launchpad librarian `.dsc`/`.diff.gz`, via
+  `scripts/prepare-ubuntu-ksrc.sh`. The control build has vermagic OK, but srcversion `9C7EE8D0C3BC3EC8243BE14`, not
+  `585A17E…`. `hardware-run-plan.md:67` already records that a self-built module never matches stock, so the
+  srcversion gate is unreachable and needs replacing: diff the net/bluetooth sources against the Ubuntu diff.
+- **The Ubuntu archive pool already holds 7.0.0-44:** unattended upgrades will likely install it, and GRUB 0 would
+  boot it. Decide with the operator: build for -44 once it is installed, or keep -43 (hold, or pick it in GRUB).
+- **Not done yet:** the patched build: `build-variant.sh patched` in the machine-local `co38-laptop-module` folder.
