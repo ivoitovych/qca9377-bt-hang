@@ -178,6 +178,24 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **UPDATE 2026-11-26, 20:00 UTC (supersedes everything below where they differ).** An outside audit of every
+> submission (the operator's mail and GitHub, three reviewers) found replies that the records had missed:
+> - **gvfs !368 MERGED today** (`cb179822b576`, Ondrej Holy; read on GNOME's GitHub mirror).
+> - **gvfs !369 reviewed today, four changes requested** (as three reviewers quote the notification; GitLab
+>   refuses this machine). **Next task.**
+> - **CO-25: Zijun Hu answered** at 00:51 UTC (read on lore). The Rome 3.2 rampatch and NVM are **not** the
+>   intended QCA9377 firmware. He will try to upstream QCA9377 BTUSB firmware, and the current files may be used as
+>   a workaround.
+>   - BT-1's fix stands as measured.
+>   - BRIEF §0's "loads the QCA rampatch and NVM" is now known to be Qualcomm's workaround, not its intended
+>     firmware.
+>   - Next: a short acknowledgement (the operator's word); **CO-22 held** until reassessed.
+> - **Not in this project's registers:** the Filelight Noble SRU (LP #2084169) has been "Triaged" since 10-18, with
+>   no assignee (Launchpad API). It lives in its own repository.
+> - **Unchanged:** CO-02 needs a v2, not a resend; CO-38 needs nothing yet. The Tenstorrent history is out of scope
+>   (the operator).
+> - **Order now:** !369, then the CO-25 acknowledgement, then CO-02 v2 / CO-44.
+>
 > **UPDATE 2026-11-26, 16:30 UTC (supersedes everything below where they differ).**
 > - **CO-38 SENT** by the operator, 2026-11-26 17:19:33 +0100, server 250.
 >   - **Recipients:** linux-bluetooth; Marcel Holtmann, Luiz Augusto von Dentz, Brian Gix, and stable from the
