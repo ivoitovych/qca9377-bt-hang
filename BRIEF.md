@@ -178,7 +178,42 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
-> **UPDATE 2026-11-26, about 01:30 UTC (supersedes everything below where they differ).**
+> **UPDATE 2026-11-26, about 05:30 UTC (supersedes everything below where they differ).**
+> - **CO-38 on the laptop with the patch: done.**
+>   - **Setup:** cold boot into Ubuntu `7.0.0-44` at 04:41 UTC, with CO-38's `bluetooth.ko` in `updates/`
+>     (srcversion `CA64890CE90A328C6EAC1BF`) and the stock btusb.
+>   - **Result:** Read Advertising Features lists the lone instance 2: `num_instances 1`, reply
+>     `7ff001001f1f050102`. The stock kernel's was `…0500`, no instance. hci0 was healthy before and after.
+>   - **Records:** `contributions/CO-38-read-adv-features-hidden-instances/laptop-20261125/PATCHED-RUN-20261126.md`.
+>     The patch's hardware note now ends with this result (checkpatch 0/0/0, patch-id unchanged `a15c80fa`).
+>   - **The module stays in `updates/` for daily use on -44**, until the operator wants the stock module back
+>     (`scripts/module-updates.sh --krel 7.0.0-44-generic remove`, then a reboot).
+> - **CO-38 recipients: linux-kernel is NOT copied** in `recipients.txt` since 01:24 UTC (`f667c3b`).
+>   - **Why:** mainline `3a198413bb71` (2026-11-13, in v7.4-rc4) makes it "a list of last resort" again;
+>     bluetooth-next's copy still has the old "by default" text. R-7 is marked superseded.
+>   - **Whose call:** that was MY change from the documentation. The operator has not chosen. It is to be
+>     confirmed with him before the send. The line "operator's open choice… Recommended: copy it" below is
+>     superseded.
+> - **CO-38 suite gaps, closing now** (operator, 11-26: the full suites before and after, as the standard asks):
+>   - **New bluetooth-next tip `f57f78086ab5` (base and +CO-38):** all 11 CI testers, 6lowpan included. Done:
+>     only CO-38's case changes.
+>   - **6lowpan-tester on the 7 tips of 11-23:** done, 9/9 on both sides everywhere.
+>   - **The cases cut off by the hangs, one by one:** l2cap on 6.18, 6.12 and 6.6; iso on 6.12. Running.
+>   - **The bot's checks:** the kernel patch on the new tip, the BlueZ test on master `79162c108911`. Queued.
+>   - **Scripts and logs:** scripts in `tmp/kernel-queue-20261126/`; logs in the machine-local `kernel-queue-20261123`
+>     work area, `tips3/`.
+> - **Housekeeping (operator, 11-26):** free space went from 29 to 72 GB, by deleting the verified journal-scaling
+>   data (decision E1), build trees and three Docker images.
+>   - **Next:** the remaining old work areas, once their unique work is saved privately.
+>   - **New standing rule:** every task cleans its own work area at the end (private memory, housekeeping policy).
+> - **Next:**
+>   1. the gap results into the patch notes;
+>   2. regenerate the recheck document; the one recheck round;
+>   3. the operator confirms linux-kernel and sends.
+>   The order "Next, in order" below put the laptop run 6th; the operator moved it first.
+>
+> **UPDATE 2026-11-26, about 00:30 UTC (its heading said 01:30 UTC, which was local time; supersedes everything
+> below where they differ).**
 > - **Sent:** CO-25's reply to Zijun Hu (Qualcomm), v9, by the operator from his own terminal, 2026-11-24 05:33
 >   +0100. Message-ID `<20261124043440.1206949-1-yaroslav.voytovych@gmail.com>`; on lore, body byte-identical. No
 >   answer yet. v1–v8 are superseded. That reply's history: the first report never said plainly what was asked

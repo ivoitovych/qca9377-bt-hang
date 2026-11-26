@@ -39,6 +39,7 @@ re-read: 3441 list mails (`scripts/lore-git-replies.py` on a fresh fetch), plus 
 not been answered:
 - **CO-25:** Zijun Hu (Qualcomm), 10-29. The reply has been ready since 11-02
   (`contributions/CO-25-qualcomm-rom-report/drafts/reply-1-zijun-hu-v4.eml`), waiting for the operator's word.
+  **Later the same day:** the reply was sent as v9 at 04:33:39 UTC (05:33:39 +0100); see the CO-25 row.
 - **CO-02 v1** has no human reply, so nothing is owed to a person. It is open in two ways:
   - Sashiko (`sashiko-nipa`) rated patch 2 `fail`, high, on 10-29. Patch 2 needs patch 3 (fold them, or stable
     takes both). It is not a deadlock: that was the unsent v2 draft of 11-14.
