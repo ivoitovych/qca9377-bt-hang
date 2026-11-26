@@ -58,3 +58,24 @@ CO-44 and CO-38 follow the practice:
 CO-44's prepared form (`send-20261113/send-commands.txt`, STEP 2a/2b) already does this, and
 CO-38's will do the same. Waiting for the kernel fix to be applied is also within practice, but
 it is the less common choice.
+
+## Addendum 2026-11-26 (an outside reviewer's research, checked here)
+
+- **The maintainer does it himself.** On 2026-11-25 Luiz Augusto von Dentz posted "[PATCH BlueZ v4 0/6] Add tests
+  for security of deferred setup" (linux-bluetooth, 2026-11-25 21:12 UTC). It is a BlueZ test series
+  for his own kernel series, which is still in review. The cover letter lists five tests that "depend on the kernel
+  series … and fail without it" (read in `cache/lore-linux-bluetooth-0.git`).
+- **Posting a tester case does not gate BlueZ.** BlueZ `bed6e3602` (Luiz Augusto von Dentz, 2026-09-08), "test:
+  functional: exclude kernel testers from make check": "they exercise the kernel rather than BlueZ userspace and
+  should not gate a userspace release".
+- **Where a failing case does show:** only in the kernel CI's mgmt-tester run, which uses BlueZ master. So it shows
+  only once the test is applied, and only until the fix is in the tree that CI tests.
+  - Wilken's pair: the kernel fix was applied to bluetooth-next first and the test about 10 minutes later.
+  - Kyle Pepper's pair: the test was applied the same day as the kernel fix, `dd9d5ba1f`. The reviewer's "remained
+    unapplied" is wrong; its CI pull request was closed, which is not a rejection.
+- **Kernel-tree rules.** In-tree tests go in the same series (`5.Posting.rst`; netdev's "Co-posting selftests"),
+  and netdev asks that a test not land in a tree before its fix. A BlueZ tester case is a separate repository, so
+  the netdev model is separate threads that point at each other.
+- **Conclusion for CO-38's test.** Posting it now, as its own BlueZ mail that names the kernel patch and asks for
+  application after the fix, matches what the maintainer himself does. When to apply it is the maintainer's call,
+  and the note tells him when it will pass.
