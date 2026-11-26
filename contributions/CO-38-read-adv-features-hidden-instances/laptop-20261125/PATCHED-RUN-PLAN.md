@@ -50,3 +50,15 @@ exist; GRUB 0 will boot -44. **Next:**
 
 The -43 builds can stay unused. The operator is relaying the reviewers' rechecks of `2026-11-26T0100Z` (reviewer 7
 unavailable).
+
+**2026-11-26: built for 7.0.0-44 (linux-hwe-7.0 7.0.0-44.44~24.04.1, from the archive pool, with the .dsc hash checked).**
+- **Source check:** all 30 net/bluetooth files differing from v7.0.14 are in Ubuntu's diff.
+- **Vermagic:** `7.0.0-44-generic SMP preempt mod_unload modversions` for both.
+- **Patched against control:** exactly the one line in `read_adv_features()`.
+- **Patched module:** srcversion `CA64890CE90A328C6EAC1BF`, SHA-256 `63ebc957…0327e9`. Control `9FF259F9F22159F1DBD28F0`.
+- **BT-1 safeguard:** the stock -44 btusb prints `FOUND 13d3:3503 x1`.
+- **Next, on the operator's yes:**
+  1. copy the patched `bluetooth.ko` to `/lib/modules/7.0.0-44-generic/updates/`;
+  2. `depmod -a 7.0.0-44-generic`, with no reload;
+  3. check `modinfo -k 7.0.0-44-generic -n bluetooth` points to `updates/`;
+  4. re-check `/boot`; the operator cold-boots.
