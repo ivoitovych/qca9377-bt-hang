@@ -178,6 +178,15 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **UPDATE 2026-11-26, 22:40 UTC (supersedes everything below where they differ).**
+> - **CO-38's BlueZ test SENT** 23:36:10 +0100 by the operator, server 250, to linux-bluetooth
+>   (`<20261126223610.1073605-1-yaroslav.voytovych@gmail.com>`; STATUS row). The rule changed today: a companion
+>   BlueZ test goes now, as its own mail naming the kernel fix, and when to apply it is the maintainer's call.
+>   - **Why:** the maintainer's own practice; BlueZ's `make check` excludes kernel testers.
+>   - **Record:** `reviews/2026-11-23T0540Z-bluez-test-with-kernel-fix-practice.md`, addendum, and
+>     `reviews/2026-11-26T2215Z-…`.
+> - **CO-38's kernel patch:** the CI's 15 checks all passed; no maintainer reply yet.
+>
 > **UPDATE 2026-11-26, 20:00 UTC (supersedes everything below where they differ).** An outside audit of every
 > submission (the operator's mail and GitHub, three reviewers) found replies that the records had missed:
 > - **gvfs !368 MERGED today** (`cb179822b576`, Ondrej Holy; read on GNOME's GitHub mirror).
