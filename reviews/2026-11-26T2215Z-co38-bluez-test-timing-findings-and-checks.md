@@ -94,3 +94,13 @@ Checked again at 22:25 UTC:
 - **Patch-id** `70a4873086000186e05d1bbe88d65a75bc3b9e18`, unchanged.
 - **Line widths:** the note lines are within 72 columns; longer lines are the lore URL and code lines of the diff.
 - **Dry run** (`git send-email --dry-run`, project checkout): "Result: OK", RCPT TO linux-bluetooth only.
+
+## Last read of the text as it will be sent (the 22:35 UTC request): reviewers 1, 2, 3, 6, 7
+
+All five: send. The final notes are fine, and nothing is false or rejectable. No change followed:
+- **Reviewer 6's "an expected failure"** is a preference. Reviewer 3 calls "known failure" precise, because a
+  kernel-tester failure counts as a CI failure unless it is marked as expected.
+- **Reviewer 7 notes that the document's "checks still to report" is stale.** The kernel patch's CI reported all
+  checks passing at 22:10 UTC (STATUS row); the patch text is not affected.
+- **Reviewer 6 checked the tips:** BlueZ master `79162c108911` and bluetooth-next `f57f78086ab5` are unchanged, so
+  the notes describe the present state.
