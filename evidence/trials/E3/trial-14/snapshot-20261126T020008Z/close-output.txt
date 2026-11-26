@@ -1,0 +1,44 @@
+trial ended without a probe: no command timeout observed; liveness not measured
+
+  SCO setup requested   : ?
+  SCO -> first timeout  : ? s
+  command timeouts      : 0
+  responds afterwards   : unprobed
+  still on the USB bus  : yes   (bus-loss events: ?)
+  request parameters    : /root/exp/qca9377-bt-hang/tmp/trial-snapshot-20261126T020008Z.wNiW2O/trialdir/sco-params.txt
+  liveness probes       : 0   (btmon aborts: 0)
+  last probe -> timeout : ? s
+  previous shutdown     : unknown   (controller enumerated this boot: no)
+  mid-trial perturbation: unknown — this trial is not comparable
+Trial E3 #14: survived (652323s)
+
+Trial results  (/root/exp/qca9377-bt-hang/tmp/trial-snapshot-20261126T020008Z.wNiW2O/repo/evidence/trials/results.tsv)
+─────────────────────────────────────────────────────────────
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RESCUED  RATE    CENSORED mean dur
+  observational_boot E3     0/1      0/1      0/0      0%      0/1      652323s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+Was the SCO stimulus actually applied, and did it matter?
+─────────────────────────────────────────────────────────────
+                             hung     survived
+  SCO setup requested           0            0
+  no SCO setup                  0            0
+
+  (1 trial(s) with no SCO field — recorded before this was tracked)
+
+  No trial has yet applied the stimulus. Until one does, nothing here
+  distinguishes a build that fixes the bug from a run that never
+  provoked it.
+
+  Gate: stock must reach a high, stable failure rate (target 5/5) before
+  any build is compiled. Compare every build against the SAME protocol.
+
+  A trial that survives WITHOUT provoking SCO setup proves nothing about
+  the build. Check the top row is filling before drawing conclusions.
