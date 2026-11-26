@@ -126,3 +126,12 @@ Left for the BlueZ send, which waits until the fix is in bluetooth-next:
   the reply's field, which is what it is.
 
 The polished version went to a last read as `2026-11-26T1715Z-co38-final-polish-recheck.md`.
+
+## Last read (the 17:15 UTC request): reviewers 1, 2, 3, 6, 7
+
+All five: kernel patch send, the three edits fine, nothing false or rejectable. No change followed.
+
+Rechecked before handing over the send command:
+- bluetooth-next is still `f57f78086ab5`, after a fresh fetch;
+- the patch applies, with patch-id `a15c80fa`;
+- the file to be sent equals the committed one.
