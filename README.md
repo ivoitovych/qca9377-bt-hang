@@ -77,6 +77,23 @@ could be handed a link that was being torn down, reported connected and then clo
 headset codec switch on this laptop, reproduced in QEMU, tested on every affected stable line and
 on the laptop with three headsets. With it, a BlueZ `sco-tester` test that fails without the
 series ([lore](https://lore.kernel.org/linux-bluetooth/20261027165009.2401154-1-yaroslav.voytovych@gmail.com/)).
+As of 2026-11-26 it has had no human review, and the BlueZ CI closed the test's pull request on 11-12 asking for a
+resend, so a v2 is being prepared.
+
+**Submitted 2026-11-26, under review** ([`contributions/CO-38-read-adv-features-hidden-instances/`](contributions/CO-38-read-adv-features-hidden-instances/README.md)):
+"[PATCH] Bluetooth: MGMT: Fix Read Advertising Features hiding instances" (with `Cc: stable`):
+- **The bug:** a lone advertising instance 2 was missing from Read Advertising Features, because each instance
+  number was compared with the count of instances instead of the number of advertising sets.
+- **Tested:** in QEMU on eight kernel trees, with all eleven CI testers compared case by case, and on this laptop
+  with the patched kernel. The list's CI passed all 15 checks.
+- **The companion BlueZ test** went the same day: "mgmt-tester: Test a lone advertising instance 2"
+  ([kernel lore](https://lore.kernel.org/linux-bluetooth/20261126161933.923041-1-yaroslav.voytovych@gmail.com/)).
+
+**Outside Bluetooth** ([`contributions/X1-gvfs-cdda-readahead/`](contributions/X1-gvfs-cdda-readahead/README.md)):
+- **Merged:** GNOME gvfs "cdda: Limit paranoia read-ahead to avoid playback stalls", which ends an audio CD's
+  3-second stall every 16 seconds. Merged on 2026-11-26 as `cb179822b576`, closing issue #893.
+- **In review:** its sibling "cdda: Refuse to open invalid and non-audio tracks" (!369), with four review points
+  to answer.
 
 ## The QCA9377 result
 
@@ -148,18 +165,19 @@ noble-proposed build on 2026-11-11; published in noble-updates and noble-securit
 two-line addition to
 `drivers/bluetooth/btusb.c` (`drivers/bluetooth/btusb_main.c` on bluetooth-next, where the
 driver has been split; no release has that layout yet). Check which `btusb` you run with
-`tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
+`tools/bt-verify-kernel-mechanism`, not the kernel version — backports move. Note that Qualcomm said on
+2026-11-26 that the Rome 3.2 files this entry loads are a workaround for QCA9377. The intended firmware is to be
+upstreamed (CO-25, below).
 
-## Current direction — 2026-11-23 (a summary; the dated state of each item is its row in `docs/STATUS.md`)
+## Current direction — 2026-11-27 (a summary; the dated state of each item is its row in `docs/STATUS.md`)
 
-- **Ready to send, in this order** (2026-11-23, each tested in QEMU on bluetooth-next and, for the
-  first two, on 7.3.5, 6.18.64, 6.12.118, 6.6.162 and 6.1.192; they wait for the author's
-  Signed-off-by and send):
-  - `CO-38`, a hidden advertising instance in the management interface, with its BlueZ test;
-  - `CO-44`, a timed-out management command reported as an authentication failure, with its
-    BlueZ test;
-  - `CO-22`'s stable request;
+- **Sent 2026-11-26:** `CO-38` and its BlueZ test (above). Each companion test now goes as its own BlueZ mail right
+  after its kernel fix, naming it; when to apply it is the maintainer's call.
+- **Next to send, one kernel thread a day:**
+  - `CO-44`, a timed-out management command reported as an authentication failure, with its BlueZ test. Its suites
+    are first rerun on the current bluetooth-next tip.
   - `CO-43`, three btusb fixes for deferred transmit URBs (leaks and two races).
+- **Held:** `CO-22`'s stable request for two more QCA entries, since Qualcomm's answer of 2026-11-26 (below).
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
   sent, with no maintainer reply; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
   to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-15; the
@@ -185,9 +203,14 @@ driver has been split; no release has that layout yet). Check which `btusb` you 
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
   backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
   are released in BlueZ 5.88 (tables above).
-- **A report to Qualcomm on the ROM firmware's hang** (`CO-25`), sent 2026-10-29 to the kernel's
-  Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted, not
-  sent (read again 2026-11-15; no other reply).
+- **A report to Qualcomm on the ROM firmware's hang** (`CO-25`), sent 2026-10-29 to the kernel's Bluetooth list.
+  - **2026-11-24:** our answer to the first reply was sent.
+  - **2026-11-26:** Qualcomm's engineer answered that the Rome 3.2 rampatch and NVM now loaded for `13d3:3503`
+    are not the intended QCA9377 firmware. He will try to upstream QCA9377 BTUSB firmware, and the current files
+    may be used as a workaround meanwhile.
+  - **What this changes:** the measured result (no hang in 74 links) stands, but the files behind it are a
+    workaround in the vendor's view.
+  - **Next:** a short acknowledgement, offering to test the firmware on this module.
 - **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
   with send packages ready or in preparation, waiting for the author's decision (the table "What
   to send" in [`contributions/README.md`](contributions/README.md) names each package's current
@@ -210,9 +233,12 @@ driver has been split; no release has that layout yet). Check which `btusb` you 
   `U16`, `U18`) are still being investigated.
 - **Off-topic, outside Bluetooth:** audio CDs played through GNOME's CD backend paused about
   3 seconds every 16 seconds on this laptop. Two fixes were submitted to gvfs on 2026-11-07
-  ([!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368),
-  [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369);
-  [`contributions/X1-gvfs-cdda-readahead/`](contributions/X1-gvfs-cdda-readahead/README.md)).
+  ([`contributions/X1-gvfs-cdda-readahead/`](contributions/X1-gvfs-cdda-readahead/README.md)):
+  - [!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368) was **merged on 2026-11-26**;
+  - [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369) was reviewed the same day, with four points
+    to answer.
+- **Testing as a sub-project:** [`bt-test-suites/`](bt-test-suites/README.md) holds a design for generated,
+  randomised and whole-stack testing of Linux Bluetooth, derived from the defects found here. Design only so far.
 - **Delivery of the accepted changes** into kernel and BlueZ releases and into Ubuntu:
   tracked. BlueZ 5.88 (2026-11-05) carries all eleven BlueZ commits; Ubuntu 24.04 ships 5.72.
 - **Desktop audio issues** seen while testing the fixed driver are recorded in

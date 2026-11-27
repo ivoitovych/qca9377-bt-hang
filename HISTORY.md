@@ -4940,6 +4940,58 @@ reproduced it.
 run for two hours and forty minutes at full core. It is now a rule: when you give up waiting on a background
 command, stop it.
 
+## The fix on real hardware, both halves sent, and what the inbox had been holding (2026-11-26 → 11-27)
+
+**The fix ran on the laptop.** The operator's doubt was simple: a virtual machine is good, real hardware gives more
+confidence.
+- **How it ran:** CO-38's `bluetooth.ko` was built from Ubuntu's own 7.0.0-44 source, checked against 33 dependent
+  modules, put in `updates/` and loaded by a cold boot.
+- **The result:** Read Advertising Features listed the lone instance 2 that the stock kernel had hidden the day
+  before.
+- **One overstatement in our own README went with it:** it had called the instance "on air". All we had seen was
+  the controller accepting the commands; nothing observed the radio.
+
+**The standard applied to ourselves.** "The full suites before and after" had been met only in part. The gaps were
+closed in one unattended night, under watchdogs at three levels:
+- **6lowpan:** the CI's eleventh tester, never run before;
+- **the new bluetooth-next tip;**
+- **the cases cut off by the l2cap and iso hangs,** run separately. A bug in our own runner, a guest reading the rest
+  of the case list from standard input, was caught by the progress log within a minute.
+- **The result:** only CO-38's own case changed, anywhere.
+
+**Sent, after eight rounds of review that shrank to wording.** The operator sent the kernel patch at 17:19 and its
+BlueZ test at 23:36. Between them, three things changed.
+- **The commit message became exact:** the mesh instance "is numbered `le_num_of_adv_sets + 1`". That value is a
+  default, not the controller's count, on this very controller.
+- **linux-kernel was left out,** by the operator's decision. Mainline had made it "a list of last resort" on 11-13,
+  and the text we had measured against was bluetooth-next's older copy.
+- **A rule we had made was reversed on evidence.** We had decided to hold the test until the fix was applied. Two
+  facts reversed it:
+  - the maintainer had posted, the day before, tests that fail until his own kernel series lands;
+  - BlueZ deliberately keeps kernel testers out of its own checks.
+
+  The lesson we wrote down was a reviewer's: we had been using submission timing to solve an integration-order
+  problem.
+
+**What the inbox had been holding.** An audit of every submission, by four outside reviewers with access to the
+operator's mail, found three replies from that day that no record of ours held:
+- **gvfs !368 was merged;**
+- **gvfs !369 had a review** with four points;
+- **Qualcomm had answered CO-25:** the Rome 3.2 files that end the original hang are, in its view, a workaround for
+  QCA9377, and it will try to upstream the intended firmware.
+
+The notifications sat unread in a category tab. The audit also confirmed what the project had not doubted but never
+counted: twelve BlueZ commits released, the kernel fix in mainline and five stable lines, the device-table backport
+in all seven, nothing of ours reverted.
+
+**Housekeeping, and a sub-project.**
+- **Space:** free disk was 29 GB of 432. Old work areas were exported first, every commit and hand-made file nobody
+  else held, then deleted: 74 GB returned. A rule followed: every task cleans its own area at the end.
+- **A sub-project:** the operator's impression, that Linux Bluetooth lacks the comprehensive, randomised,
+  whole-stack testing that would have caught what we found by hand, became `bt-test-suites/`. It is founded on an
+  outside reviewer's three-part design: inventories of the subsystem, generators walking them, coverage reported
+  against the map. Design only.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
