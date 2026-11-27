@@ -99,3 +99,8 @@ strings on `main` was not repeated in a comparable way and is not reported.
 ---
 
 Complete as of 2026-11-27, not edited afterwards.
+
+**Correction, added the same hour.** Section 6 says "37 of the 85 commits … are CO-38
+rounds". Counted afterwards: 46 of the 85 commit subjects name CO-38; that includes the
+sends, the laptop run and the records, not only review rounds. The number of rounds was not
+counted separately. The remark stands with "about half of the commits concern CO-38".
