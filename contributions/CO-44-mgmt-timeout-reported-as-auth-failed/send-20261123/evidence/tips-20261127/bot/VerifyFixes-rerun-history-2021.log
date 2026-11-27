@@ -1,0 +1,16 @@
+#ci ## CI: VerifyFixes
+#ci CI: VerifyFixes: Run
+#ci ------------- CMD_RUN -------------
+#ci CMD: ['/scripts/verify_fixes.sh', 'origin/master..HEAD^2']
+#ci PROC args: ['/scripts/verify_fixes.sh', 'origin/master..HEAD^2']
+Commit: 7a5e1ce8922 ("Bluetooth: MGMT: Report a timed out command as MGMT_STATUS_TIMEOUT")
+	Fixes tag: Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+	Has these problem(s):
+		- empty lines surround the Fixes tag
+#ci RET: 1
+#ci STDERR:
+#ci ------------- CMD_RUN END (7.24 s) -------------
+#ci Submitting the result to PW: dry_run=True
+#ci Test Ended(Failure): VerifyFixes:FAIL
+#ci CI: VerifyFixes: Post Run...
+#ci ## verdict: VerifyFixes FAIL

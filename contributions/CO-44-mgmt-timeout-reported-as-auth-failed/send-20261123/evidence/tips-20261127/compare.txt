@@ -1,0 +1,426 @@
+== the new case: "Set Device Class - Timeout 1"
+  6.12 base: 0/3 passed
+  6.12 co44: 3/3 passed
+  6.18 base: 0/3 passed
+  6.18 co44: 3/3 passed
+  6.1 base: 0/3 passed
+  6.1 co44: 3/3 passed
+  6.6 base: 0/3 passed
+  6.6 co44: 3/3 passed
+  7.3 base: 0/3 passed
+  7.3 co44: 3/3 passed
+  main base: 0/3 passed
+  main co44: 3/3 passed
+  next base: 0/3 passed
+  next co44: 3/3 passed
+== 6.12-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.12-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.12-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.12-base-iso-full vs co44
+  6.12-base-iso-full: HUNG in: ISO Broadcaster Receiver Defer Get BASE - Success (guest stopped by the watchdog after a 60 s hung-task report)
+  6.12-co44-iso-full: HUNG in: ISO Broadcaster Receiver Defer Get BASE - Success (guest stopped by the watchdog after a 60 s hung-task report)
+  <work area>/runs/6.12-base-iso-full.log: no summary table; using 201 progress lines
+  <work area>/runs/6.12-co44-iso-full.log: no summary table; using 201 progress lines
+  A: 201 cases Failed=73 Passed=124 Timed out=4
+  B: 201 cases Failed=73 Passed=124 Timed out=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 77, B 77)
+== 6.12-base-l2cap-full vs co44
+  6.12-base-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  6.12-co44-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  <work area>/runs/6.12-base-l2cap-full.log: no summary table; using 123 progress lines
+  <work area>/runs/6.12-co44-l2cap-full.log: no summary table; using 123 progress lines
+  A: 123 cases Failed=48 Passed=70 Timed out=5
+  B: 123 cases Failed=48 Passed=70 Timed out=5
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 53, B 53)
+== 6.12-base-mesh-full vs co44
+  A: 10 cases Passed=8 Timed out=2
+  B: 10 cases Passed=8 Timed out=2
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 2, B 2)
+== 6.12-base-mgmt-full vs co44
+  A: 530 cases Failed=47 Passed=478 Timed out=5
+  B: 530 cases Failed=46 Passed=479 Timed out=5
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 52, B 51)
+== 6.12-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.12-base-sco-full vs co44
+  A: 30 cases Failed=3 Passed=26 Timed out=1
+  B: 30 cases Failed=3 Passed=26 Timed out=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 4, B 4)
+== 6.12-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.12-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-iso-full vs co44
+  A: 213 cases Failed=72 Passed=141
+  B: 213 cases Failed=72 Passed=141
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 72, B 72)
+== 6.18-base-l2cap-full vs co44
+  6.18-base-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  6.18-co44-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  <work area>/runs/6.18-base-l2cap-full.log: no summary table; using 123 progress lines
+  <work area>/runs/6.18-co44-l2cap-full.log: no summary table; using 123 progress lines
+  A: 123 cases Failed=38 Passed=81 Timed out=4
+  B: 123 cases Failed=38 Passed=81 Timed out=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 42, B 42)
+== 6.18-base-mesh-full vs co44
+  A: 10 cases Passed=10
+  B: 10 cases Passed=10
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-mgmt-full vs co44
+  A: 530 cases Failed=16 Passed=511 Timed out=3
+  B: 530 cases Failed=15 Passed=512 Timed out=3
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 19, B 18)
+== 6.18-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-sco-full vs co44
+  A: 30 cases Passed=30
+  B: 30 cases Passed=30
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.18-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-iso-full vs co44
+  A: 213 cases Failed=111 Passed=91 Timed out=11
+  B: 213 cases Failed=111 Passed=91 Timed out=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 122, B 122)
+== 6.1-base-l2cap-full vs co44
+  A: 123 cases Failed=58 Passed=60 Timed out=5
+  B: 123 cases Failed=58 Passed=60 Timed out=5
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 63, B 63)
+== 6.1-base-mesh-full vs co44
+  A: 10 cases Passed=8 Timed out=2
+  B: 10 cases Passed=8 Timed out=2
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 2, B 2)
+== 6.1-base-mgmt-full vs co44
+  A: 527 cases Failed=51 Passed=469 Timed out=7
+  B: 527 cases Failed=50 Passed=470 Timed out=7
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 58, B 57)
+== 6.1-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-sco-full vs co44
+  A: 30 cases Failed=3 Passed=25 Timed out=2
+  B: 30 cases Failed=3 Passed=25 Timed out=2
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 5, B 5)
+== 6.1-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.1-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-iso-full vs co44
+  A: 213 cases Failed=86 Passed=116 Timed out=11
+  B: 213 cases Failed=86 Passed=116 Timed out=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 97, B 97)
+== 6.6-base-l2cap-full vs co44
+  6.6-base-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  6.6-co44-l2cap-full: HUNG in: L2CAP Ext-Flowctl Server - Accept 2 Close 1 (guest stopped by the watchdog after a 60 s hung-task report)
+  <work area>/runs/6.6-base-l2cap-full.log: no summary table; using 123 progress lines
+  <work area>/runs/6.6-co44-l2cap-full.log: no summary table; using 123 progress lines
+  A: 123 cases Failed=48 Passed=70 Timed out=5
+  B: 123 cases Failed=48 Passed=70 Timed out=5
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 53, B 53)
+== 6.6-base-mesh-full vs co44
+  A: 10 cases Passed=8 Timed out=2
+  B: 10 cases Passed=8 Timed out=2
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 2, B 2)
+== 6.6-base-mgmt-full vs co44
+  A: 530 cases Failed=47 Passed=476 Timed out=7
+  B: 530 cases Failed=46 Passed=477 Timed out=7
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 54, B 53)
+== 6.6-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-sco-full vs co44
+  A: 30 cases Failed=3 Passed=26 Timed out=1
+  B: 30 cases Failed=3 Passed=26 Timed out=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 4, B 4)
+== 6.6-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 6.6-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-iso-full vs co44
+  A: 213 cases Failed=67 Passed=146
+  B: 213 cases Failed=67 Passed=146
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 67, B 67)
+== 7.3-base-l2cap-full vs co44
+  A: 144 cases Failed=29 Passed=111 Timed out=4
+  B: 144 cases Failed=29 Passed=111 Timed out=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 33, B 33)
+== 7.3-base-mesh-full vs co44
+  A: 10 cases Passed=10
+  B: 10 cases Passed=10
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-mgmt-full vs co44
+  A: 530 cases Failed=9 Passed=518 Timed out=3
+  B: 530 cases Failed=8 Passed=519 Timed out=3
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 12, B 11)
+== 7.3-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-sco-full vs co44
+  A: 30 cases Passed=30
+  B: 30 cases Passed=30
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== 7.3-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-iso-full vs co44
+  A: 213 cases Failed=67 Passed=146
+  B: 213 cases Failed=67 Passed=146
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 67, B 67)
+== main-base-l2cap-full vs co44
+  A: 144 cases Failed=29 Passed=111 Timed out=4
+  B: 144 cases Failed=29 Passed=111 Timed out=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 33, B 33)
+== main-base-mesh-full vs co44
+  A: 10 cases Passed=10
+  B: 10 cases Passed=10
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-mgmt-full vs co44
+  A: 530 cases Failed=5 Passed=524 Timed out=1
+  B: 530 cases Failed=4 Passed=525 Timed out=1
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 6, B 5)
+== main-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-sco-full vs co44
+  A: 30 cases Passed=30
+  B: 30 cases Passed=30
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== main-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-6lowpan-full vs co44
+  A: 9 cases Passed=9
+  B: 9 cases Passed=9
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-bnep-full vs co44
+  A: 1 cases Passed=1
+  B: 1 cases Passed=1
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-ioctl-full vs co44
+  A: 28 cases Passed=28
+  B: 28 cases Passed=28
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-iso-full vs co44
+  A: 213 cases Passed=213
+  B: 213 cases Passed=213
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-l2cap-full vs co44
+  A: 144 cases Passed=144
+  B: 144 cases Passed=144
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-mesh-full vs co44
+  A: 10 cases Passed=10
+  B: 10 cases Passed=10
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-mgmt-full vs co44
+  A: 530 cases Failed=1 Passed=529
+  B: 530 cases Passed=530
+  cases with different verdicts: 1
+    Set Device Class - Timeout 1                            A=Failed     B=Passed
+  not-passed sets identical: False (A 1, B 0)
+== next-base-rfcomm-full vs co44
+  A: 11 cases Passed=11
+  B: 11 cases Passed=11
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-sco-full vs co44
+  A: 30 cases Passed=30
+  B: 30 cases Passed=30
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-smp-full vs co44
+  A: 8 cases Passed=8
+  B: 8 cases Passed=8
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+== next-base-userchan-full vs co44
+  A: 4 cases Passed=4
+  B: 4 cases Passed=4
+  cases with different verdicts: 0
+  not-passed sets identical: True (A 0, B 0)
+kernel-report-scan exit 1 (report-scan.txt, all logs)
+kernel-report-scan base logs exit 1
+kernel-report-scan patched logs exit 1

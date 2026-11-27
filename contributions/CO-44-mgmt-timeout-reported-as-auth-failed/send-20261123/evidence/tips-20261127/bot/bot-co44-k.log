@@ -1,0 +1,75 @@
+2026-11-27 06:32:19 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-27 06:32:19 space kernel; base f57f78086ab54f3b3122fbaeba2c842ba7bb6d00 (Bluetooth: request LE data length for MT7922); BlueZ 79162c1089110c896cb48118c3f7eb0db1fa0f2b; ELL 002b32d7c091993c5036956bf92d2444aca1c799
+2026-11-27 06:32:19 mail mails/0001-Bluetooth-MGMT-Report-a-timed-out-command-as-MGMT_ST.patch
+2026-11-27 06:32:19 patched: blobless clone of bluetooth-next since 2022-06-01
+warning: filtering not recognized by server, ignoring
+2026-11-27 06:35:20 patched: start
+2026-11-27 06:47:19 patched: done, 4 test(s) not PASS
+Test Summary:
+CheckPatch                    FAIL      718.31 seconds
+VerifyFixes                   FAIL      717.93 seconds
+VerifySignedoff               FAIL      717.90 seconds
+GitLint                       FAIL      717.86 seconds
+SubjectPrefix                 PASS      0.00 seconds
+BuildKernel                   PASS      19.80 seconds
+CheckAllWarning               PASS      22.85 seconds
+CheckSparse                   PASS      25.22 seconds
+BuildKernel32                 PASS      20.80 seconds
+CheckKernelLLVM               PASS      21.05 seconds
+TestRunnerSetup               PASS      481.74 seconds
+TestRunner_mgmt-tester        PASS      82.46 seconds
+TestRunner_mesh-tester        PASS      3.84 seconds
+IncrementalBuild              PASS      18.49 seconds
+
+Details
+##############################
+Test: CheckPatch - FAIL
+Desc: Run checkpatch.pl script
+Output:
+Bluetooth: MGMT: Report a timed out command as MGMT_STATUS_TIMEOUT
+ERROR: Missing Signed-off-by: line(s)
+
+total: 1 errors, 0 warnings, 0 checks, 8 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+<work area>/proj/out/bot-co44-k/work/patched/patch/1001.patch has style problems, please review.
+
+NOTE: Ignored message types: UNKNOWN_COMMIT_ID
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+
+##############################
+Test: VerifyFixes - FAIL
+Desc: Verify Fixes tag format and validity
+Output:
+Commit: e8798390cf1 ("Bluetooth: MGMT: Report a timed out command as MGMT_STATUS_TIMEOUT")
+	Fixes tag: Fixes: 161510ccf91c ("Bluetooth: hci_sync: Make use of hci_cmd_sync_queue set 1")
+	Has these problem(s):
+		- Target SHA1 does not exist
+
+##############################
+Test: VerifySignedoff - FAIL
+Desc: Verify Signed-off-by chain
+Output:
+Commit e8798390cf12 ("Bluetooth: MGMT: Report a timed out command as MGMT_STATUS_TIMEOUT")
+	author Signed-off-by missing
+	committer Signed-off-by missing
+	author email:    yaroslav.voytovych@gmail.com
+	committer email: yaroslav.voytovych@gmail.com
+	
+
+Errors in tree with Signed-off-by, please fix!
+
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+Bluetooth: MGMT: Report a timed out command as MGMT_STATUS_TIMEOUT
+
+1: CC1 Body does not contain a 'Signed-off-by' line
+2026-11-27 06:47:19 NOT CLEAN: patched: 4 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-27 06:47:19 ALL DONE, exit 1

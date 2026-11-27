@@ -40,6 +40,18 @@ passes 3/3 patched, and nothing else changes in mgmt-tester, l2cap-tester, smp-t
 mesh-tester. The same holds on 7.3.5 to 6.1.192. The patch's testing note now gives
 `cf357cfc025e`.
 
+**Done 2026-11-27: retested on that day's tips** (`evidence/tips-20261127/README.md`).
+- **Trees:** bluetooth-next `f57f78086ab5`, v7.4-rc4, 7.3.6, 6.18.65, 6.12.119, 6.6.163, 6.1.193.
+- **The new case:** 0/3 on base, 3/3 patched, on every tree.
+- **Everything else:** all eleven CI testers in full on both sides, and the 68 cases after the known hangs run
+  separately: no other case changed. No new KASAN, lockdep or WARN report.
+- **The list's CI locally:** the BlueZ test passes every check. The kernel patch passes every build and test
+  check. CheckPatch, VerifySignedoff and GitLint fail only on the missing Signed-off-by. VerifyFixes fails on the
+  same missing line: its "empty lines surround" rule matches while the Fixes line ends the message.
+- **The patch file is unchanged.** Its testing note still names `5063a0717aa2` and "ten testers". The proposed
+  replacement, for the tips above and eleven testers, is in that README. Changing it is part of the next focused
+  review round, before the operator signs.
+
 **Still to do before a send:**
 1. ~~Rerun mgmt-tester, l2cap-tester and smp-tester, base against patched, on today's tip
    (`mgmt.c` changed by +294/−83 since `da3cc02587c6`), then update the notes.~~ Done, see above.
