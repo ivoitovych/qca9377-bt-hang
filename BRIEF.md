@@ -178,6 +178,23 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 > STATUS has every submission row. Nothing was sent between 11-14 and 11-23. What to send, and
 > from which directory, is the "What to send" table of `contributions/README.md`.
 >
+> **UPDATE 2026-11-27, 05:00 UTC (supersedes everything below where they differ).**
+> - **Upstream, read 04:15–04:50 UTC:** on both CO-38 patches only the CI bot has answered. The BlueZ test is
+>   patchwork 15027599, and its 10 checks all passed (STATUS row). Filelight's Noble task is still Triaged. gvfs
+>   master is unchanged since `cb179822b576`.
+> - **The plan:** `reviews/2026-11-27T0345Z-plan-of-further-actions.md`, with its addendum
+>   `reviews/2026-11-27T0500Z-plan-of-further-actions-addendum.md`. The addendum covers:
+>   - CO-02 v2's shape;
+>   - the bundle's open decisions D3, D6, C1 and C2;
+>   - ready packages the plan missed;
+>   - the D-4 log copy, before about 12-20;
+>   - mSBC and CVSD counted apart.
+> - **In progress, nothing sent:**
+>   - gvfs !369's four review points, as a local revision with reply drafts for the operator;
+>   - CO-44 re-tested on today's tips in QEMU;
+>   - the CO-25 acknowledgement, ready for one review round (`reviews/2026-11-27T0450Z-co25-acknowledgement-review.md`,
+>     dry run OK).
+>
 > **UPDATE 2026-11-26, 22:40 UTC (supersedes everything below where they differ).**
 > - **CO-38's BlueZ test SENT** 23:36:10 +0100 by the operator, server 250, to linux-bluetooth
 >   (`<20261126223610.1073605-1-yaroslav.voytovych@gmail.com>`; STATUS row). The rule changed today: a companion
