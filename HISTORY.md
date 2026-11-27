@@ -4992,6 +4992,41 @@ in all seven, nothing of ours reverted.
   outside reviewer's three-part design: inventories of the subsystem, generators walking them, coverage reported
   against the map. Design only.
 
+## A morning on its own: one reply prepared, one fix retested, and three tools that lied quietly (2026-11-27)
+
+The operator was away for six hours and approved a short plan first: answer what upstream had given, prepare the next
+send, keep the records, send nothing. A timer re-checked the work every fifteen minutes, because the work had stopped
+before on its own.
+
+**What was done.**
+- **gvfs !369:** all four review points are answered in a local revision. The fourth, whether an audio CD's first
+  track can be other than 1, was settled from sources before any code. MMC says the first track number "is not
+  required to be one", and libcdio already uses the real numbers.
+  - The revision makes gvfs list and name tracks correctly on such discs.
+  - On a simulated drive, master and the posted patch get them wrong; the revision gets them right, on master and on
+    Ubuntu 24.04's 1.54.4.
+  - The force-push and the replies wait for the operator.
+- **CO-25:** the acknowledgement to Qualcomm passed its checks and a dry run. Its review request asks one question
+  above all: what "you may override the one loaded currently … as WAR" means.
+- **CO-44:** retested on that day's trees, to CO-38's standard. The new case goes from 0 of 3 to 3 of 3 on all seven
+  lines, and nothing else changed in eleven testers and the 68 cases after the known hangs.
+
+**Three tools that lied quietly, each caught by looking at output rather than status.**
+- **The lore archive:** a plain fetch updated nothing the reply finder reads, so "no replies" would have stayed true
+  forever. It now fetches into `master`.
+- **The cases after the hangs:** the first run reported a result for every case, but every guest had exited 127,
+  because a cleanup had removed the testers. The rerun then skipped eight of those dead logs because they existed.
+- **The list's CI:** VerifyFixes said the fixed commit did not exist, only because its clone was too shallow. Rerun
+  deeper, the one remaining complaint comes from the patch's unsigned ending, which the operator's Signed-off-by
+  ends.
+
+**The records** gained an addendum to the plan, from a re-read of the registers:
+- CO-02 v2's shape was already settled in the package;
+- the Ubuntu bundle's open questions are the operator's decisions, not conflicts;
+- several ready packages were missing from the plan;
+- a log copy (D-4) is due before about 12-20;
+- the 74 links of the original fix are 50 mSBC and 24 CVSD, and only mSBC links ever died.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 *(Edited 2026-11-16 for neutral wording: sentences about how the work was organised were reworded or removed; the findings, numbers and references are unchanged.)*
