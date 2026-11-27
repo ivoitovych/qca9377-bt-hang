@@ -1,0 +1,30 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: Zijun Hu <zijun.hu@oss.qualcomm.com>,
+    linux-bluetooth@vger.kernel.org
+Cc: Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+    Shuai Zhang <shuai.zhang@oss.qualcomm.com>,
+    Bartosz Golaszewski <brgl@kernel.org>,
+    Tibor Harcsa <silurust@gmail.com>
+Subject: Re: [REPORT] btusb: QCA9377 13d3:3503 on ROM firmware: HCI hang
+ during mSBC SCO
+In-Reply-To: <b5219ca5-a8bb-4dd3-a4b1-692ab362d400@oss.qualcomm.com>
+References: <20261029013350.360574-1-yaroslav.voytovych@gmail.com>
+ <bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>
+ <20261124043440.1206949-1-yaroslav.voytovych@gmail.com>
+ <b5219ca5-a8bb-4dd3-a4b1-692ab362d400@oss.qualcomm.com>
+
+On Thu, 26 Nov 2026 at 08:51 +0800, Zijun Hu wrote:
+> no, let me try to up-stream QCA9377 BTUSB firmware, you may override
+> the one loaded currently by QCA9377 as WAR
+> we will think about how to support it.
+
+Thank you, that answers the main question.
+
+So the Rome 3.2 rampatch and NVM that btusb loads for 13d3:3503 today
+are a workaround, and the intended QCA9377 firmware is still to come.
+When it is posted, I can test it on this module (13d3:3503, ROM 0x302
+build 0x111) with the test that showed the hang: mSBC calls with
+headsets, counting HCI command timeouts after each SCO link comes up.
+
+Iaroslav
