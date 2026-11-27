@@ -1,0 +1,176 @@
+The Meson build system
+Version: 1.3.2
+Source dir: /w/tag-rev
+Build dir: /build-tag
+Build type: native build
+Project name: gvfs
+Project version: 1.54.4
+C compiler for the host machine: cc (gcc 13.3.0 "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0")
+C linker for the host machine: cc ld.bfd 2.42
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Checking for function "socketpair" : YES 
+Library util found: YES
+Has header "util.h" with dependency -lutil: NO 
+Checking for function "openpty" with dependency -lutil: YES 
+Checking for function "login_tty" with dependency -lutil: YES 
+Has header "sys/param.h" : YES 
+Has header "sys/mount.h" : YES 
+Has header "sys/statfs.h" : YES 
+Has header "sys/statvfs.h" : YES 
+Has header "sys/vfs.h" : YES 
+Has header "stropts.h" : NO 
+Has header "sys/un.h" : YES 
+Has header "termios.h" : YES 
+Has header "utmp.h" : YES 
+Checking for function "getpt" : YES 
+Checking for function "grantpt" : YES 
+Checking for function "posix_openpt" : YES 
+Checking for function "ptsname" : YES 
+Checking for function "ptsname_r" : YES 
+Checking for function "unlockpt" : YES 
+Checking for function "statfs" : YES 
+Checking for function "statvfs" : YES 
+Header "langinfo.h" has symbol "_NL_ADDRESS_LANG_TERM" : YES 
+Header "langinfo.h" has symbol "_NL_ADDRESS_COUNTRY_AB3" : YES 
+Header "sys/mkdev.h" has symbol "major" : NO 
+Header "sys/sysmacros.h" has symbol "major" : YES 
+Header "sys/sysmacros.h" has symbol "minor" : YES 
+Header "sys/sysmacros.h" has symbol "makedev" : YES 
+Checking for type "gid_t" : YES 
+Checking for type "pid_t" : YES 
+Checking for type "size_t" : YES 
+Checking for type "uid_t" : YES 
+Checking whether type "struct statfs" has members "f_bavail" : YES 
+Checking whether type "struct statvfs" has members "f_basetype" : NO 
+Checking whether type "struct stat" has members "st_atimensec" : NO 
+Checking whether type "struct stat" has members "st_atim.tv_nsec" : YES 
+Checking whether type "struct stat" has members "st_ctimensec" : NO 
+Checking whether type "struct stat" has members "st_ctim.tv_nsec" : YES 
+Checking whether type "struct stat" has members "st_mtimensec" : NO 
+Checking whether type "struct stat" has members "st_mtim.tv_nsec" : YES 
+Compiler for C supports arguments -Wcast-align: YES 
+Compiler for C supports arguments -Wmissing-declarations: YES 
+Compiler for C supports arguments -Wmissing-prototypes: YES 
+Compiler for C supports arguments -Wnested-externs: YES 
+Compiler for C supports arguments -Wno-sign-compare: YES 
+Compiler for C supports arguments -Wno-strict-aliasing: YES 
+Compiler for C supports link arguments -Wl,--version-script,/w/tag-rev/client/symbol.map: YES 
+Found pkg-config: YES (/usr/bin/pkg-config) 1.8.1
+Run-time dependency gio-2.0 found: YES 2.80.0
+Run-time dependency gio-unix-2.0 found: YES 2.80.0
+Run-time dependency glib-2.0 found: YES 2.80.0
+Run-time dependency gobject-2.0 found: YES 2.80.0
+Run-time dependency gsettings-desktop-schemas found: YES 46.1
+Checking for function "g_unix_mount_get_root_path" with dependency gio-2.0: YES 
+Run-time dependency libxml-2.0 found: YES 2.9.14
+Run-time dependency dbus-1 found: YES 1.14.10
+Run-time dependency gudev-1.0 found: YES 238
+Run-time dependency libcdio_paranoia found: YES 10.2+2.0.0
+Has header "cdio/paranoia/paranoia.h" with dependency libcdio_paranoia: YES 
+Dependency gio-2.0 found: YES 2.80.0 (cached)
+Program /usr/bin/gdbus-codegen found: YES (/usr/bin/gdbus-codegen)
+Configuring org.gtk.vfs.Metadata.service using configuration
+Dependency gio-2.0 found: YES 2.80.0 (cached)
+Program /usr/bin/gdbus-codegen found: YES (/usr/bin/gdbus-codegen)
+Configuring org.gtk.vfs.Daemon.service using configuration
+Dependency glib-2.0 found: YES 2.80.0 (cached)
+Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+Configuring localtest.mount using configuration
+Configuring ftp.mount using configuration
+Configuring ftps.mount using configuration
+Configuring ftpis.mount using configuration
+Configuring trash.mount using configuration
+Configuring recent.mount using configuration
+Configuring computer.mount using configuration
+Configuring network.mount using configuration
+Configuring cdda.mount using configuration
+Dependency gio-2.0 found: YES 2.80.0 (cached)
+Program /usr/bin/gdbus-codegen found: YES (/usr/bin/gdbus-codegen)
+Program msgfmt found: YES (/usr/bin/msgfmt)
+Program msginit found: YES (/usr/bin/msginit)
+Program msgmerge found: YES (/usr/bin/msgmerge)
+Program xgettext found: YES (/usr/bin/xgettext)
+Configuring config.h using configuration
+Dependency gio-2.0 found: YES 2.80.0 (cached)
+Program /usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas found: YES (/usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas)
+Dependency gio-2.0 found: YES 2.80.0 (cached)
+Program /usr/lib/x86_64-linux-gnu/glib-2.0/gio-querymodules found: YES (/usr/lib/x86_64-linux-gnu/glib-2.0/gio-querymodules)
+Build targets in project: 108
+
+gvfs 1.54.4
+
+  Configuration
+    systemduserunitdir: no
+    tmpfilesdir       : no
+    privileged_group  : wheel
+
+  Backends
+    admin             : false
+    afc               : false
+    afp               : false
+    archive           : false
+    burn              : false
+    cdda              : true
+    dnssd             : false
+    goa               : false
+    google            : false
+    gphoto2           : false
+    http              : false
+    mtp               : false
+    nfs               : false
+    onedrive          : false
+    sftp              : false
+    smb               : false
+    udisks2           : false
+    wsdd              : false
+
+  Dependencies
+    bluray            : false
+    fuse              : false
+    gcr               : false
+    gcrypt            : false
+    gudev             : true
+    keyring           : false
+    logind            : false
+    libusb            : false
+
+    deprecated_apis   : true
+    devel_utils       : false
+    installed_tests   : false
+    man               : false
+
+  User defined options
+    werror            : true
+    admin             : false
+    afc               : false
+    afp               : false
+    archive           : false
+    bluray            : false
+    cdda              : true
+    devel_utils       : false
+    dnssd             : false
+    fuse              : false
+    gcr               : false
+    gcrypt            : false
+    goa               : false
+    google            : false
+    gphoto2           : false
+    gudev             : true
+    http              : false
+    installed_tests   : false
+    keyring           : false
+    libusb            : false
+    logind            : false
+    man               : false
+    mtp               : false
+    nfs               : false
+    onedrive          : false
+    sftp              : false
+    smb               : false
+    systemduserunitdir: no
+    tmpfilesdir       : no
+    udisks2           : false
+    wsdd              : false
+
+Found ninja-1.11.1 at /usr/bin/ninja

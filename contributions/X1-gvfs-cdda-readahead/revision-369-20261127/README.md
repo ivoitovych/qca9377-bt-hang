@@ -48,8 +48,19 @@ reply drafts. **Nothing is pushed or posted.** The force-push to the fork branch
   - `results/first-run-results.tsv` is a first run whose listing rows failed on harness bugs. It is kept as a
     record; the listing results above are the rerun.
 
+**Ubuntu 24.04 (same day):** ubuntu:24.04 container, gcc 13.3.0, libcdio 2.1.0, libcdio-paranoia 10.2+2.0.0
+(`results/ubuntu-2404/`, script `tests/in-container-2404.sh`).
+- **Apply:** the squashed commit applies to upstream tag 1.54.4 and to Ubuntu's source `1.54.4-0ubuntu1~24.04.5`
+  (the archive no longer serves `.4`). It needs no !368 first, and there is no fuzz, only line offsets.
+- **Build:** 0 warnings with `--werror` on both trees.
+- **Tests:** both, on both trees, give the same results as on master line for line. The revision passes all five
+  listing discs; base and the posted patch fail the discs numbered 2 to 4, 5 to 7, and 2 to 4 with a data track 2.
+
+**gvfs's CI job** (`fedora-test` in `.gitlab-ci.yml`) was not run: its image is on `registry.gitlab.gnome.org`,
+which refuses this machine, as GNOME's GitLab does. Per the dossier, that job does not exercise cdda.
+
 **Not run:** a real disc numbered above 1 (none here; the laptop was not touched); `meson test`, which has no cdda
-coverage; the 1.54.4 build and the gnome-46 to gnome-50 branches; gvfs's CI; the daemon itself.
+coverage; the gnome-46 to gnome-50 branches; the daemon itself.
 
 ## For the operator
 
