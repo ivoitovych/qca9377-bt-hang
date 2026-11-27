@@ -189,11 +189,16 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - ready packages the plan missed;
 >   - the D-4 log copy, before about 12-20;
 >   - mSBC and CVSD counted apart.
-> - **In progress, nothing sent:**
->   - gvfs !369's four review points, as a local revision with reply drafts for the operator;
->   - CO-44 re-tested on today's tips in QEMU;
->   - the CO-25 acknowledgement, ready for one review round (`reviews/2026-11-27T0450Z-co25-acknowledgement-review.md`,
->     dry run OK).
+> - **Done by 08:50 UTC, nothing sent:**
+>   - **gvfs !369:** a local revision for the four review points, with reply drafts
+>     (`contributions/X1-gvfs-cdda-readahead/revision-369-20261127/`). The force-push and the replies are the
+>     operator's.
+>   - **CO-44:** retested on the day's tips (`…/send-20261123/evidence/tips-20261127/`). The case goes from 0/3 to
+>     3/3 everywhere, with no other change. The testing note's update is for its focused round, before the operator
+>     signs.
+>   - **The CO-25 acknowledgement:** ready for one review round
+>     (`reviews/2026-11-27T0450Z-co25-acknowledgement-review.md`, dry run OK). By the operator's rule, CO-44's round
+>     comes after that one.
 >
 > **UPDATE 2026-11-26, 22:40 UTC (supersedes everything below where they differ).**
 > - **CO-38's BlueZ test SENT** 23:36:10 +0100 by the operator, server 250, to linux-bluetooth
