@@ -1,0 +1,197 @@
+From 9595019110888059c92fe4c968f03bbff36d6e66 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 6 Nov 2026 22:29:54 +0100
+Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
+
+With a 13-track disc in a USB drive, `gio cat` of Track 99.wav kept
+the drive busy for more than five minutes until it was stopped, and
+Track 257.wav returned track 1.
+
+do_open_for_read() passes whatever number sscanf() finds in the file
+name to libcdio without checking it. For a track that is not on the
+disc, libcdio returns a negative error code where a sector number is
+expected, and the first read that needs disc data sends paranoia
+there. libcdio's track number is 8 bits wide, so 257 becomes 1.
+Track 4294967297.wav, which sscanf("%d") cannot represent, also opened
+track 1 on the tested build. Track 0 opens too, and so would the data
+tracks of a mixed-mode disc.
+
+Parse the number with g_ascii_string_to_unsigned(), which rejects
+signs, trailing characters and numbers above 99. Leading zeros still
+work: Track 01.wav is track 1. query_info uses the same parser, so a
+name such as Track 1junk.wav, which it treated as track 1, is now
+refused there too.
+
+Open only audio tracks between the disc's first and last track
+numbers; the first need not be 1. Check this in one helper shared
+with do_query_info(), which compared the number only with the track
+count. Refuse a disc whose first or last track number libcdio cannot
+report. If libcdio still reports a bad sector range, fail with an
+error naming libcdio instead of reading.
+
+As the first track need not be 1, list the tracks from the first to
+the last track number in do_enumerate(), and look up the metadata of a
+track by its offset from the first track in set_info_for_track().
+
+This also fixes two leaks: the failure path allocated a GError it
+never freed, and the parser did not free its copy of the name when the
+name did not match.
+
+With this change, Track 0, 14, 99, 257 and 1junk fail at once with
+"No such file", and Track 1 to 13 still read.
+
+Fixes: https://gitlab.gnome.org/GNOME/gvfs/-/work_items/894
+---
+ daemon/gvfsbackendcdda.c | 82 ++++++++++++++++++++++++++++++----------
+ 1 file changed, 61 insertions(+), 21 deletions(-)
+
+diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
+index cb5f648e..74a75467 100644
+--- a/daemon/gvfsbackendcdda.c
++++ b/daemon/gvfsbackendcdda.c
+@@ -446,18 +446,49 @@ do_unmount (GVfsBackend *backend,
+ static int
+ get_track_num_from_name (const char *filename)
+ {
+-  int n;
++  guint64 n;
+   char *basename;
++  int track_num = -1;
+ 
+   basename = g_path_get_basename (filename);
+-  if (sscanf (basename, "Track %d.wav", &n) == 1 &&
++  if (g_str_has_prefix (basename, "Track ") &&
+       g_str_has_suffix (basename, ".wav"))
+     {
+-      g_free (basename);
+-      return n;
++      /* Parse only the number between "Track " and ".wav" */
++      basename[strlen (basename) - strlen (".wav")] = '\0';
++      if (g_ascii_string_to_unsigned (basename + strlen ("Track "), 10,
++                                      1, CDIO_CD_MAX_TRACKS, &n, NULL))
++        track_num = n;
+     }
+ 
+-  return -1;
++  g_free (basename);
++  return track_num;
++}
++
++/* Returns FALSE if libcdio can't tell the track numbers of the disc */
++static gboolean
++get_track_range (GVfsBackendCdda *cdda_backend,
++                 track_t *first_track,
++                 track_t *last_track)
++{
++  *first_track = cdio_get_first_track_num (cdda_backend->drive->p_cdio);
++  *last_track = cdio_get_last_track_num (cdda_backend->drive->p_cdio);
++
++  return *first_track != CDIO_INVALID_TRACK &&
++         *last_track != CDIO_INVALID_TRACK;
++}
++
++/* Only audio tracks between the first and last track number of the disc exist,
++ * the first one need not be 1 */
++static gboolean
++is_audio_track (GVfsBackendCdda *cdda_backend,
++                int track_num)
++{
++  track_t first_track, last_track;
++
++  return get_track_range (cdda_backend, &first_track, &last_track) &&
++         track_num >= first_track && track_num <= last_track &&
++         cdio_cddap_track_audiop (cdda_backend->drive, track_num);
+ }
+ 
+ typedef struct {
+@@ -608,7 +639,6 @@ do_open_for_read (GVfsBackend *backend,
+                   const char *filename)
+ {
+   int track_num;
+-  GError *error;
+   ReadHandle *read_handle;
+   GVfsBackendCdda *cdda_backend = G_VFS_BACKEND_CDDA (backend);
+ 
+@@ -617,18 +647,29 @@ do_open_for_read (GVfsBackend *backend,
+   read_handle = g_new0 (ReadHandle, 1);
+ 
+   track_num = get_track_num_from_name (job->filename);
+-  if (track_num == -1)
++
++  if (!is_audio_track (cdda_backend, track_num))
+     {
+-      error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, 
+-                           _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
+-      g_vfs_job_failed_from_error (G_VFS_JOB (job), error);
++      g_vfs_job_failed (G_VFS_JOB (job), G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
++                        _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
+       free_read_handle (read_handle);
+       return;
+     }
+ 
+-
+   read_handle->first_sector = cdio_cddap_track_firstsector (cdda_backend->drive, track_num);
+   read_handle->last_sector = cdio_cddap_track_lastsector (cdda_backend->drive, track_num);
++
++  /* libcdio returns negative error codes on failure */
++  if (read_handle->first_sector < 0 ||
++      read_handle->last_sector < read_handle->first_sector)
++    {
++      g_vfs_job_failed (G_VFS_JOB (job), G_IO_ERROR, G_IO_ERROR_FAILED,
++                        /* Translators: libcdio is the name of the cd access library */
++                        _("Error from “libcdio” on drive %s"), cdda_backend->device_path);
++      free_read_handle (read_handle);
++      return;
++    }
++
+   read_handle->sector_cursor = -1;
+ 
+   read_handle->cursor = 0;
+@@ -856,7 +897,9 @@ set_info_for_track (GVfsBackendCdda *cdda_backend, GFileInfo *info, int track_nu
+   g_file_info_set_attribute_boolean (info, G_FILE_ATTRIBUTE_ACCESS_CAN_TRASH, FALSE);
+   g_file_info_set_attribute_boolean (info, G_FILE_ATTRIBUTE_ACCESS_CAN_RENAME, FALSE); 
+ 
+-  track = g_list_nth_data (cdda_backend->tracks, track_num - 1);
++  /* The list starts with the first track of the disc, which need not be 1 */
++  track = g_list_nth_data (cdda_backend->tracks,
++                           track_num - cdio_get_first_track_num (cdda_backend->drive->p_cdio));
+   if (track) {
+     if (track->title)
+       g_file_info_set_attribute_string (info, "xattr::org.gnome.audio.title", track->title);
+@@ -924,14 +967,7 @@ do_query_info (GVfsBackend *backend,
+           return;
+         }
+ 
+-      if (track_num > cdda_backend->drive->tracks)
+-        {
+-          error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("File doesn’t exist"));
+-          g_vfs_job_failed_from_error (G_VFS_JOB (job), error);
+-          return;
+-        }
+-
+-      if (! cdio_cddap_track_audiop (cdda_backend->drive, track_num))
++      if (! is_audio_track (cdda_backend, track_num))
+         {
+           error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, _("The file does not exist or isn’t an audio track"));
+           g_vfs_job_failed_from_error (G_VFS_JOB (job), error);
+@@ -955,12 +991,16 @@ do_enumerate (GVfsBackend *backend,
+   GVfsBackendCdda *cdda_backend = G_VFS_BACKEND_CDDA (backend);
+   GFileInfo *info;
+   GList *l;
++  track_t first_track, last_track;
+   int n;
+ 
+   //g_warning ("enumerate (%s)", filename);
+ 
+   l = NULL;
+-  for (n = 1; n <= cdda_backend->drive->tracks; n++)
++  if (!get_track_range (cdda_backend, &first_track, &last_track))
++    last_track = 0;
++
++  for (n = first_track; n <= last_track; n++)
+     {
+       char *name;
+ 
+-- 
+2.43.0
+
