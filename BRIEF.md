@@ -196,9 +196,9 @@ ConnectProfile for the A2DP sink). No tip hash: it rotted within hours (`R2-13`)
 >   - **CO-44:** retested on the day's tips (`…/send-20261123/evidence/tips-20261127/`). The case goes from 0/3 to
 >     3/3 everywhere, with no other change. The testing note's update is for its focused round, before the operator
 >     signs.
->   - **The CO-25 acknowledgement:** ready for one review round
->     (`reviews/2026-11-27T0450Z-co25-acknowledgement-review.md`, dry run OK). By the operator's rule, CO-44's round
->     comes after that one.
+>   - **The CO-25 acknowledgement: SENT 2026-11-27 20:29:02 +0100** by the operator, after three review rounds
+>     (`<20261127193124.2627445-1-yaroslav.voytovych@gmail.com>`; on lore, body byte-identical; STATUS row). CO-44's
+>     focused round is next.
 >
 > **UPDATE 2026-11-26, 22:40 UTC (supersedes everything below where they differ).**
 > - **CO-38's BlueZ test SENT** 23:36:10 +0100 by the operator, server 250, to linux-bluetooth
